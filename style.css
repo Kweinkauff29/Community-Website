@@ -82,3 +82,8 @@ button {
 button:hover {
     background: #0056b3;
 }
+
+/* User override to disable container width restrictions */
+.container {
+    max-width: none !important;
+}
