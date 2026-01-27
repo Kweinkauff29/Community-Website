@@ -58,7 +58,7 @@ nav a {
     padding: 1rem;
     background: #fff;
     margin: 0 10px;
-    box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
 }
 
 footer {
@@ -83,7 +83,11 @@ button:hover {
     background: #0056b3;
 }
 
-/* User override to disable container width restrictions */
+/* User overrides for width restrictions */
 .container {
+    max-width: none !important;
+}
+
+.wrapper {
     max-width: none !important;
 }
