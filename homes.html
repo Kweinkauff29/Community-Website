@@ -1,0 +1,624 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Find Your Home - Bonita Springs & Estero</title>
+
+  <!-- Fonts & Icons -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+
+  <!-- Leaflet CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="" />
+
+  <style>
+    :root {
+      --primary: #1a2a3a;
+      --accent: #4bc6f6;
+      --bg: #f8f9fa;
+      --text: #333;
+      --white: #ffffff;
+      --header-bg: rgba(20, 20, 20, 0.9);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+      background-color: var(--bg);
+      color: var(--text);
+      overflow-x: hidden;
+    }
+
+    /* --- Header Styles (Ported from homepage.html) --- */
+    #top-bar {
+      position: fixed;
+      top: 40px;
+      /* Standardized offset */
+      left: 50%;
+      transform: translateX(-50%);
+      width: 95%;
+      max-width: 1400px;
+      background: var(--header-bg);
+      border-radius: 50px;
+      padding: 10px 20px;
+      z-index: 1000;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      backdrop-filter: blur(5px);
+    }
+
+    #bar-width {
+      display: flex;
+      align-items: center;
+      width: 100%;
+      justify-content: space-between;
+    }
+
+    .brand-wrapper {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+      text-decoration: none;
+    }
+
+    .ber-logo {
+      height: 50px;
+      width: auto;
+    }
+
+    .bser-title {
+      color: var(--white);
+      font-family: 'Oswald', sans-serif;
+      font-size: 1.5rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      line-height: 1;
+    }
+
+    .navbar-expand-md {
+      display: flex;
+      gap: 20px;
+      list-style: none;
+    }
+
+    .navbar-expand-md a {
+      color: var(--white);
+      text-decoration: none;
+      font-weight: 500;
+      font-size: 1rem;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      transition: opacity 0.2s;
+    }
+
+    .navbar-expand-md a:hover {
+      opacity: 0.8;
+      text-decoration: none;
+    }
+
+    /* --- Layout --- */
+    .main-container {
+      display: flex;
+      height: 100vh;
+      padding-top: 100px;
+      /* Space for fixed header */
+    }
+
+    .map-section {
+      flex: 1;
+      position: relative;
+      background: #e5e5e5;
+    }
+
+    #map {
+      height: 100%;
+      width: 100%;
+      z-index: 1;
+    }
+
+    .listings-section {
+      width: 450px;
+      background: var(--bg);
+      overflow-y: auto;
+      border-left: 1px solid #ddd;
+      display: flex;
+      flex-direction: column;
+      box-shadow: -2px 0 10px rgba(0, 0, 0, 0.05);
+      z-index: 5;
+    }
+
+    /* --- Filters --- */
+    .filters-bar {
+      padding: 15px;
+      background: var(--white);
+      border-bottom: 1px solid #eee;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+
+    .filter-row {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+
+    .filter-select {
+      padding: 8px 12px;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      font-size: 0.9rem;
+      background: #fff;
+      flex: 1;
+    }
+
+    .search-btn {
+      background: var(--primary);
+      color: #fff;
+      border: none;
+      padding: 8px 20px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: 600;
+    }
+
+    .search-btn:hover {
+      opacity: 0.9;
+    }
+
+    .results-count {
+      font-size: 0.85rem;
+      color: #666;
+      margin-top: 5px;
+    }
+
+    /* --- Listing Cards --- */
+    .listings-grid {
+      padding: 15px;
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+    }
+
+    .listing-card {
+      background: var(--white);
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+      transition: transform 0.2s;
+      cursor: pointer;
+      border: 1px solid transparent;
+    }
+
+    .listing-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.12);
+    }
+
+    .listing-card.active {
+      border-color: var(--accent);
+      background: #f0f9ff;
+    }
+
+    .card-img-wrapper {
+      position: relative;
+      padding-top: 60%;
+      /* 3:2 Aspect Ratio */
+      background: #eee;
+    }
+
+    .card-img {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .price-badge {
+      position: absolute;
+      bottom: 10px;
+      left: 10px;
+      background: rgba(0, 0, 0, 0.7);
+      color: #fff;
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-weight: 700;
+      font-size: 1.1rem;
+    }
+
+    .card-content {
+      padding: 12px;
+    }
+
+    .card-address {
+      font-weight: 600;
+      margin-bottom: 5px;
+      color: var(--primary);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .card-details {
+      display: flex;
+      gap: 12px;
+      font-size: 0.9rem;
+      color: #555;
+      margin-bottom: 8px;
+    }
+
+    .card-detail-item {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .card-meta {
+      font-size: 0.8rem;
+      color: #888;
+      display: flex;
+      justify-content: space-between;
+    }
+
+    /* --- Loading --- */
+    .loading-overlay {
+      position: absolute;
+      inset: 0;
+      background: rgba(255, 255, 255, 0.8);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 20;
+      backdrop-filter: blur(2px);
+    }
+
+    .spinner {
+      width: 40px;
+      height: 40px;
+      border: 4px solid #ddd;
+      border-top-color: var(--primary);
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
+
+    /* --- Responsive --- */
+    @media (max-width: 900px) {
+      .navbar-expand-md {
+        display: none;
+      }
+
+      /* Hide nav on small screens for now, or add hamburger */
+      .main-container {
+        flex-direction: column-reverse;
+        padding-top: 80px;
+      }
+
+      .listings-section {
+        width: 100%;
+        height: 50vh;
+      }
+
+      .map-section {
+        height: 50vh;
+      }
+
+      #top-bar {
+        width: 95%;
+        top: 20px;
+      }
+
+      .ber-logo {
+        height: 40px;
+      }
+
+      .bser-title {
+        font-size: 1.2rem;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- Header -->
+  <div id="top-bar">
+    <div id="bar-width">
+      <a href="/" class="brand-wrapper">
+        <img class="ber-logo"
+          src="https://www.bonitaesterorealtors.com/wp-content/uploads/2021/08/Untitled-design-24.png"
+          alt="Bonita Springs Estero Realtors">
+        <div class="bser-title">BSER Lifestyles</div>
+      </a>
+      <ul class="navbar-expand-md">
+        <li><a href="https://bonitaspringsesterolifestyles.com/communities/">Communities</a></li>
+        <li><a href="http://bonitaspringsesterorealtorsfl.growthzoneapp.com/realtordirectory/Find">Find a REALTOR</a>
+        </li>
+        <li><a href="/homes.html">Property Search</a></li>
+        <li><a href="https://bonitaspringsesterolifestyles.com/city-info/">City Info</a></li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="main-container">
+    <!-- Map Section -->
+    <div class="map-section">
+      <div id="map"></div>
+    </div>
+
+    <!-- Listings Section -->
+    <div class="listings-section">
+      <div class="filters-bar">
+        <div class="filter-row">
+          <select id="sortFilter" class="filter-select">
+            <option value="dateDesc">Newest Listings</option>
+            <option value="priceDesc">Price: High to Low</option>
+            <option value="priceAsc">Price: Low to High</option>
+          </select>
+          <select id="cityFilter" class="filter-select">
+            <option value="">All Cities</option>
+            <option value="Bonita Springs">Bonita Springs</option>
+            <option value="Estero">Estero</option>
+            <option value="Naples">Naples</option>
+            <option value="Fort Myers">Fort Myers</option>
+          </select>
+        </div>
+        <!-- <div class="filter-row">
+                    <button class="search-btn" id="refreshBtn">Update Search</button>
+                </div> -->
+        <div class="results-count" id="resultsCount">Loading...</div>
+      </div>
+
+      <div class="listings-grid" id="listingsGrid">
+        <!-- Cards injected here -->
+      </div>
+
+      <div class="loading-overlay" id="loading">
+        <div class="spinner"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Scripts -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+  <script>
+    // --- Config ---
+    const WORKER_URL = 'https://listingsworker.bonitaspringsrealtors.workers.dev/api/v2/OData/bsaor/Property'; // Update this once deployed
+    // Fallback or use existing worker for now if new one not deployed yet
+    // const WORKER_URL_FALLBACK = 'https://openhouseworker.bonitaspringsrealtors.workers.dev/api/v2/OData/bsaor/Property';
+
+    // Use the new endpoint structure. Assuming user deploys ListingsWorker.js to a new route or updates existing. 
+    // For now, I will point to where it SHOULD be. 
+    // NOTE: User needs to deploy the worker I created.
+
+    // actually, let's use the origin of the OpenhouseWorker but with the Listings logic if possible? 
+    // No, I created a NEW worker file. I will assume the user creates it at 'listingsworker'.
+    // If not, we can change this constant later.
+    const API_BASE = 'https://listingsworker.bonitaspringsrealtors.workers.dev';
+
+    // State
+    let map;
+    let markers = [];
+    let allListings = [];
+    const formatter = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 });
+
+    // Init
+    document.addEventListener('DOMContentLoaded', () => {
+      initMap();
+      fetchListings();
+      setupFilters();
+    });
+
+    function initMap() {
+      // Center on Bonita Springs/Estero
+      map = L.map('map').setView([26.38, -81.80], 12);
+
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+      }).addTo(map);
+    }
+
+    async function fetchListings() {
+      showLoading(true);
+      try {
+        // Fetch active listings
+        // $filter=StandardStatus eq 'Active' and OriginatingSystemName eq 'Bonita Springs'
+        const filter = "StandardStatus eq 'Active' and OriginatingSystemName eq 'Bonita Springs'";
+        const select = "ListingKey,UnparsedAddress,City,ListPrice,BedroomsTotal,BathroomsTotalInteger,LivingArea,Latitude,Longitude,Media";
+        const top = 100; // Limit for performance demo
+
+        const params = new URLSearchParams({
+          $filter: filter,
+          $select: select,
+          $top: top,
+          $orderby: 'ListingContractDate desc'
+        });
+
+        // NOTE: We're calling the worker here.
+        // If the user hasn't deployed the worker yet, this will fail.
+        // We'll treat this as the target implementation.
+        const response = await fetch(`${API_BASE}/api/v2/OData/bsaor/Property?${params}`);
+
+        if (!response.ok) throw new Error('Failed to fetch listings');
+
+        const data = await response.json();
+        allListings = data.value || [];
+
+        updateUI(allListings);
+
+      } catch (err) {
+        console.error(err);
+        document.getElementById('listingsGrid').innerHTML = '<div style="padding:20px; text-align:center;">User must deploy <code>ListingsWorker.js</code> to Cloudflare to enable data feed.<br><br>Error: ' + err.message + '</div>';
+      } finally {
+        showLoading(false);
+      }
+    }
+
+    function updateUI(listings) {
+      // 1. Update Grid
+      renderGrid(listings);
+
+      // 2. Update Map
+      renderMapMarkers(listings);
+
+      // 3. Update Count
+      document.getElementById('resultsCount').textContent = `${listings.length} Results Found`;
+    }
+
+    function renderGrid(listings) {
+      const grid = document.getElementById('listingsGrid');
+      grid.innerHTML = '';
+
+      listings.forEach(item => {
+        const card = document.createElement('div');
+        card.className = 'listing-card';
+        card.id = `card-${item.ListingKey}`;
+
+        // Image handling (simplistic for now)
+        let imgUrl = 'https://via.placeholder.com/400x300?text=No+Photo';
+        if (item.Media && item.Media.length > 0) {
+          // Sometimes Media is embedded if we used $expand, but OData often requires separate call. 
+          // For this demo, we assume the worker MIGHT expand or we use a placeholder.
+          // The OpenHouse logic fetched media separately. 
+          // IF Media is empty, we might need to fetch it. 
+          // For V1, let's use a generic image if not present.
+        }
+
+        // If not expanded, we might not have Media. 
+        // Let's assume for now we just show data.
+
+        const price = formatter.format(item.ListPrice || 0);
+
+        card.innerHTML = `
+                    <div class="card-img-wrapper">
+                         <!-- Placeholder or real image mechanism -->
+                        <img src="${imgUrl}" class="card-img" alt="${item.UnparsedAddress}" loading="lazy">
+                        <div class="price-badge">${price}</div>
+                    </div>
+                    <div class="card-content">
+                        <div class="card-address">${item.UnparsedAddress || 'Unknown Address'}</div>
+                        <div class="card-details">
+                            <span class="card-detail-item"><i class="fas fa-bed"></i> ${item.BedroomsTotal || 0}</span>
+                            <span class="card-detail-item"><i class="fas fa-bath"></i> ${item.BathroomsTotalInteger || 0}</span>
+                            <span class="card-detail-item"><i class="fas fa-ruler-combined"></i> ${item.LivingArea || 0} sqft</span>
+                        </div>
+                        <div class="card-meta">
+                            <span>${item.City || ''}</span>
+                            <button class="search-btn" style="padding: 4px 10px; font-size: 0.8rem;">Details</button>
+                        </div>
+                    </div>
+                `;
+
+        // Interactive hovers
+        card.addEventListener('mouseenter', () => highlightMarker(item.ListingKey, true));
+        card.addEventListener('mouseleave', () => highlightMarker(item.ListingKey, false));
+        card.addEventListener('click', () => {
+          // Pan map
+          if (item.Latitude && item.Longitude) {
+            map.flyTo([item.Latitude, item.Longitude], 16);
+            highlightMarker(item.ListingKey, true);
+          }
+        });
+
+        grid.appendChild(card);
+      });
+    }
+
+    function renderMapMarkers(listings) {
+      // Clear existing
+      markers.forEach(m => map.removeLayer(m));
+      markers = [];
+
+      listings.forEach(item => {
+        if (item.Latitude && item.Longitude) {
+          const mk = L.marker([item.Latitude, item.Longitude])
+            .bindPopup(`<b>${formatter.format(item.ListPrice)}</b><br>${item.UnparsedAddress}`);
+
+          mk.listingKey = item.ListingKey;
+          mk.on('click', () => {
+            document.getElementById(`card-${item.ListingKey}`).scrollIntoView({ behavior: 'smooth', block: 'center' });
+            document.getElementById(`card-${item.ListingKey}`).classList.add('active');
+            setTimeout(() => document.getElementById(`card-${item.ListingKey}`).classList.remove('active'), 2000);
+          });
+
+          mk.addTo(map);
+          markers.push(mk);
+        }
+      });
+
+      // Fit bounds
+      if (markers.length > 0) {
+        const group = new L.featureGroup(markers);
+        map.fitBounds(group.getBounds().pad(0.1));
+      }
+    }
+
+    function highlightMarker(key, active) {
+      const mk = markers.find(m => m.listingKey === key);
+      if (mk) {
+        if (active) {
+          mk.openPopup();
+          mk._icon.style.filter = "hue-rotate(120deg)"; // Simple highlight effect
+        } else {
+          mk.closePopup();
+          mk._icon.style.filter = "";
+        }
+      }
+    }
+
+    function setupFilters() {
+      const sort = document.getElementById('sortFilter');
+      const city = document.getElementById('cityFilter');
+
+      const apply = () => {
+        let filtered = [...allListings];
+
+        // City
+        if (city.value) {
+          filtered = filtered.filter(x => x.City === city.value);
+        }
+
+        // Sort
+        if (sort.value === 'priceDesc') {
+          filtered.sort((a, b) => (b.ListPrice || 0) - (a.ListPrice || 0));
+        } else if (sort.value === 'priceAsc') {
+          filtered.sort((a, b) => (a.ListPrice || 0) - (b.ListPrice || 0));
+        } else {
+          // Date desc default
+          // simplified
+        }
+
+        updateUI(filtered);
+      };
+
+      sort.addEventListener('change', apply);
+      city.addEventListener('change', apply);
+    }
+
+    function showLoading(show) {
+      document.getElementById('loading').style.display = show ? 'flex' : 'none';
+    }
+
+  </script>
+</body>
+
+</html>

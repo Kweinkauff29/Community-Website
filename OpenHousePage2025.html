@@ -1,0 +1,722 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>IDX – Upcoming Open Houses (BSAOR)</title>
+  <style>
+    :root{
+      --bg:#f6f8fc;--card:#fff;--ink:#101827;--muted:#5e6b85;--line:#e6eaf2;
+      --accent:#1a4b84;--accent2:#d4af37;--cta:#1a4b84;--cta-hover:#163c6a;--chip:#0b6b3a;--warn:#7c3aed;
+    }
+    *{box-sizing:border-box}
+    body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Inter,Helvetica,Arial,sans-serif;background:var(--bg);color:var(--ink)}
+    header{padding:12px 16px;display:grid;grid-template-columns:1fr auto 1fr;grid-template-areas:'title logo right' 'filters filters filters';align-items:center;gap:8px 16px;background:#fff;position:sticky;top:0;z-index:5;border-bottom:1px solid var(--line)}
+    header h1{grid-area:title;font-size:20px;margin:0;color:var(--accent)}
+    .brand{grid-area:logo;justify-self:center;display:flex;align-items:center}
+    .brand img{height:36px;width:auto}
+    @media (max-width:640px){ .brand img{height:26px} }
+    .filters{grid-area:filters;display:flex;flex-wrap:wrap;gap:10px}
+    .filters select,.filters button{padding:10px 12px;border-radius:8px;border:1px solid var(--line);background:#fff;color:var(--ink)}
+        .filters button{background:var(--cta);border-color:transparent;color:#fff;font-weight:600;cursor:pointer}
+    .filters button:hover{background:var(--cta-hover)}
+    .banner{display:none;position:sticky;top:0;z-index:6;margin:0;padding:10px 14px;background:var(--warn);color:#fff;border-bottom:1px solid #0002}
+    .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px;padding:20px;max-width:1400px;margin:0 auto}
+    .card{background:var(--card);border:1px solid var(--line);border-radius:14px;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 4px 14px rgba(15,23,42,.06)}
+    .thumb{position:relative;aspect-ratio:16/10;background:#eef2f7}
+    .thumb img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;transition:opacity .2s ease}
+    .badges{position:absolute;left:10px;bottom:10px;display:flex;flex-wrap:wrap;gap:8px}
+    .badge{background:#0009;border:1px solid #fff3;color:#fff;padding:4px 8px;border-radius:999px;font-size:12px}
+    .badge.oh{background:var(--chip);border-color:#ffffff22}
+    .counter{position:absolute;right:10px;bottom:10px;background:#0009;color:#fff;border:1px solid #fff3;padding:3px 8px;border-radius:999px;font-size:12px}
+    .slide{position:absolute;top:50%;transform:translateY(-50%);background:#0008;border:1px solid #fff3;color:#fff;padding:8px 10px;border-radius:10px;display:block;opacity:0;transition:opacity .2s ease;user-select:none;z-index:2}
+    .slide.prev{left:8px}.slide.next{right:8px}
+    .thumb:hover .slide,.thumb:focus-within .slide{opacity:1}
+    @media (hover:none){ .thumb .slide{opacity:1} }
+    .card main{padding:14px 14px 6px}
+    .price{font-size:20px;font-weight:700;color:#0f172a}
+    .address{color:var(--muted);margin-top:2px}
+    .meta{display:flex;gap:10px;margin-top:8px;color:#66728f;font-size:13px;flex-wrap:wrap}
+    .agent{color:var(--muted);font-size:12.5px;margin-top:6px}
+    .actions{display:flex;gap:8px;padding:10px 14px 14px;flex-wrap:wrap}
+    .btn{flex:1;background:#fff;border:1px solid var(--line);color:var(--accent);border-radius:10px;padding:10px 12px;cursor:pointer;font-weight:600;text-align:center;text-decoration:none}
+    .btn.primary{background:var(--accent);border-color:transparent;color:#fff}
+    .btn.primary:hover{background:var(--cta-hover)}
+    details{border-top:1px solid var(--line)}
+    details[open]{background:#f9fbff}
+    details summary{list-style:none;padding:12px 14px;cursor:pointer;color:var(--accent);font-weight:600}
+    details summary::-webkit-details-marker{display:none}
+    .detail-wrap{padding:0 14px 14px;display:grid;gap:10px}
+    .remarks{background:#fff; border:1px solid var(--line); border-radius:8px; padding:10px; color:#0f172a}
+    .detail-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+    .kv{background:#f6f9ff;border:1px solid var(--line);border-radius:8px;padding:8px}
+    .kv .k{color:#365f99;font-size:12px}
+    .kv .v{font-weight:600;color:#0f172a}
+    .empty{padding:60px;text-align:center;color:var(--muted)}
+    .load-more{display:block;margin:10px auto 40px;background:var(--accent2);border:none;color:#231c0a;font-weight:800;padding:14px 18px;border-radius:12px;cursor:pointer}
+    .lightbox{position:fixed;inset:0;background:#000b;backdrop-filter:saturate(120%) blur(3px);display:none;align-items:center;justify-content:center;z-index:50}
+    .lightbox.open{display:flex}
+    .lb-frame{width:min(96vw,1100px);background:#01050f;border:1px solid #203057;border-radius:14px;overflow:hidden}
+    .lb-bar{display:flex;align-items:center;justify-content:space-between;padding:10px 12px;border-bottom:1px solid #1e2a4a}
+    .lb-title{font-weight:700;color:#fff}
+    .lb-close{background:#111a2e;border:1px solid #2a3b6b;color:#e7eeff;border-radius:8px;padding:8px 10px;cursor:pointer}
+    .lb-img{position:relative;height:min(72vh,820px);background:#0b1220}
+    .lb-img img{position:absolute;inset:0;margin:auto;max-width:100%;max-height:100%;object-fit:contain}
+    .lb-nav{position:absolute;inset:0;display:flex;align-items:center;justify-content:space-between}
+    .lb-nav button{background:#0006;border:1px solid #fff3;color:#fff;padding:12px;border-radius:10px;margin:0 8px;cursor:pointer}
+    .loading{position:fixed;inset:0;display:none;align-items:center;justify-content:center;flex-direction:column;gap:12px;background:linear-gradient(180deg,rgba(246,248,252,.92),rgba(246,248,252,.98));backdrop-filter:saturate(120%) blur(2px);z-index:60}
+    .loading .spinner{width:48px;height:48px;border-radius:50%;border:4px solid #cdd6e7;border-top-color:var(--accent);animation:spin 1s linear infinite}
+    .loading p{margin:0;color:var(--accent);font-weight:700}
+    .loading small{color:var(--muted)}
+    @keyframes spin{to{transform:rotate(360deg)}}
+    .site-footer{padding:20px 24px;text-align:center;color:var(--muted);border-top:1px solid var(--line);font-size:13px}
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Upcoming Open Houses – BSAOR</h1>
+    <a class="brand" href="https://bonitaesterorealtors.com" target="_blank" rel="noopener" aria-label="Bonita Springs-Estero Realtors website">
+      <img src="https://bonitaesterorealtors.com/wp-content/uploads/2021/07/BonitaSpringsEsteroRealtors_Logo_Horizontal-2.png" alt="Bonita Springs-Estero Realtors logo" />
+    </a>
+    <div class="filters">
+      <select id="cityFilter" aria-label="City">
+        <option value="">All cities</option>
+      </select>
+      <select id="commFilter" aria-label="Community">
+        <option value="">All communities</option>
+      </select>
+      <select id="sortFilter" aria-label="Sort">
+        <option value="dateAsc">Sort: Soonest first</option>
+        <option value="dateDesc">Open House: Latest</option>
+        <option value="priceAsc">Price: Low → High</option>
+        <option value="priceDesc">Price: High → Low</option>
+      </select>
+      <button id="clearBtn" title="Reset filters">Clear</button>
+    </div>
+  </header>
+
+  <div id="banner" class="banner" role="status" aria-live="polite"></div>
+
+  <div id="loading" class="loading" aria-live="polite" aria-busy="true">
+    <div class="spinner" aria-hidden="true"></div>
+    <p>Loading listings…</p>
+    <small>Fetching photos and open house times</small>
+  </div>
+
+  <section id="grid" class="grid" aria-live="polite"></section>
+  <button id="loadMore" class="load-more" style="display:none">Load more</button>
+
+  <footer class="site-footer">All listings are provided by the SWFLAMLS and provided by Bonita Springs-Estero Realtors<span aria-hidden="true">®</span>.</footer>
+
+  <div class="lightbox" id="lightbox" role="dialog" aria-modal="true" aria-label="Photo gallery">
+    <div class="lb-frame">
+      <div class="lb-bar">
+        <div class="lb-title" id="lbTitle">Gallery</div>
+        <button class="lb-close" id="lbClose">Close</button>
+      </div>
+      <div class="lb-img">
+        <img id="lbImg" alt="Property photo" />
+        <div class="lb-nav">
+          <button id="prev">◀</button>
+          <button id="next">▶</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+  // ===== CONFIG =====
+  const ACCESS_TOKEN = 'f375ab2b20d02a67acc5b668207e1a26';
+
+
+  const MLS_SLUG = 'bsaor';
+  const API_BASE = 'https://openhouseworker.bonitaspringsrealtors.workers.dev';
+const ODATA_OPENHOUSE = `${API_BASE}/api/v2/OData/${MLS_SLUG}/OpenHouse`;
+const ODATA_PROPERTY  = `${API_BASE}/api/v2/OData/${MLS_SLUG}/Property`;
+const ODATA_MEDIA     = `${API_BASE}/api/v2/OData/${MLS_SLUG}/Media`;
+const MEDIA_BASE      = `${API_BASE}/api/v2/${MLS_SLUG}/media`;
+
+  const MIN_RESULTS = 8;
+  const RANGE_STEPS_DAYS = [7,14,21,30,45,60];
+  const INITIAL_PHOTO_LIMIT = 1;
+  const DEBUG_MEDIA = false;
+
+  // Pull expanded fields for agent contact + “important” property info.
+  const PROPERTY_SELECT_FIELDS = [
+    // basics
+    'ListingKey','ListingId','OriginatingSystemKey','OriginatingSystemName',
+    'UnparsedAddress','City','StateOrProvince','PostalCode','ListPrice',
+    'PropertyType','PropertySubType',
+    'BedroomsTotal','BathroomsTotalInteger','LivingArea','LotSizeSquareFeet','LotSizeAcres','YearBuilt',
+    'DaysOnMarket','StandardStatus','MlsStatus','CountyOrParish','SubdivisionName',
+    // agent/office contact
+    'ListAgentFullName','ListAgentEmail','ListAgentDirectPhone',
+    'ListAgentKey','ListAgentMlsId',
+    'ListOfficeName','ListOfficePhone','ListOfficeKey','ListOfficeMlsId',
+    // “important” consumer details
+    'PublicRemarks','ParkingFeatures','GarageSpaces','CarportSpaces',
+    'PoolPrivateYN','PoolFeatures','SpaYN','SpaFeatures',
+    'WaterfrontYN','WaterfrontFeatures','View','ViewYN',
+    'Stories','StoriesTotal','BuildingName','UnitNumber',
+    'TaxAnnualAmount','TaxYear',
+    'AssociationFee','AssociationFeeFrequency','AssociationFeeIncludes',
+    'Cooling','Heating','Appliances','InteriorFeatures','ExteriorFeatures',
+  ].join(',');
+
+  // ===== STATE =====
+  const grid = document.getElementById('grid');
+  const banner = document.getElementById('banner');
+  const loadingEl = document.getElementById('loading');
+  const cityFilterEl = document.getElementById('cityFilter');
+  const commFilterEl = document.getElementById('commFilter');
+  const sortFilterEl = document.getElementById('sortFilter');
+  const clearBtn = document.getElementById('clearBtn');
+  const loadMoreBtn = document.getElementById('loadMore');
+
+  let visibleCount = 0;
+  let currentView = [];
+  let lastMediaHints = new Map();
+  const PAGE_SIZE = MIN_RESULTS;
+
+  let RATE_COOLDOWN_UNTIL = 0;
+  const mediaCache = new Map();
+  const mediaMiss = new Set();
+  let currentMerged = [];   // [{property, oh}]
+
+  // Lightbox globals
+  let lbPhotos = [];
+  let lbIndex = 0;
+
+  // ===== HELPERS =====
+  const fmt = new Intl.NumberFormat('en-US',{style:'currency',currency:'USD',maximumFractionDigits:0});
+  const dtFmtDay = new Intl.DateTimeFormat(undefined,{weekday:'short',month:'short',day:'numeric'});
+  const dtFmtHM  = new Intl.DateTimeFormat(undefined,{hour:'numeric',minute:'2-digit'});
+  const sleep = (ms)=> new Promise(r=> setTimeout(r, ms));
+  function todayISO(){ return new Date().toISOString().slice(0,10); }
+  function showBanner(msg){ banner.textContent = msg; banner.style.display = 'block'; }
+  function hideBanner(){ banner.style.display='none'; banner.textContent=''; }
+  function showLoadingOverlay(msg){ if(msg){ const p=loadingEl.querySelector('p'); if(p) p.textContent = msg; } loadingEl.style.display='flex'; }
+  function hideLoadingOverlay(){ loadingEl.style.display='none'; }
+  function kv(k,v){ return `<div class=kv><div class=k>${k}</div><div class=v>${(v??'').toString()||'—'}</div></div>` }
+  function text(v){ return (v ?? '').toString().trim(); }
+  function formatOhRange(startISO, endISO){
+    if(!startISO) return ''; try{ const s=new Date(startISO); const e=endISO?new Date(endISO):null; return e ? `${dtFmtDay.format(s)} • ${dtFmtHM.format(s)}–${dtFmtHM.format(e)}` : `${dtFmtDay.format(s)} • ${dtFmtHM.format(s)}` }catch{return ''}
+  }
+  function digitsOnly(s){ return (s||'').replace(/[^\d]/g,''); }
+  function fmtPhone(s){
+    const d = digitsOnly(s);
+    if(d.length===11 && d.startsWith('1')) return `(${d.slice(1,4)}) ${d.slice(4,7)}-${d.slice(7)}`;
+    if(d.length===10) return `(${d.slice(0,3)}) ${d.slice(3,6)}-${d.slice(6)}`;
+    return s||'';
+  }
+
+  function parseRetryAfter(headers, bodyText){
+    const h=headers.get('Retry-After');
+    if(h){ const sec=Number(h); if(Number.isFinite(sec)) return Math.max(0, sec*1000); const t=Date.parse(h); if(!Number.isNaN(t)) return Math.max(0,t-Date.now()); }
+    if(bodyText){ const m=bodyText.match(/reset on ([^"]+)/i); if(m){ const t=Date.parse(m[1]); if(!Number.isNaN(t)) return Math.max(0,t-Date.now()); } }
+    return 15000;
+  }
+  async function fetchJSON(url, opts={}, label='fetch', {maxAttempts=4}={}){
+    for(let attempt=1; attempt<=maxAttempts; attempt++){
+      const res = await fetch(url, opts);
+      if(res.status===429){
+        const body = await res.text().catch(()=> '');
+        const waitMs = parseRetryAfter(res.headers, body) + Math.floor(Math.random()*800);
+        RATE_COOLDOWN_UNTIL = Date.now()+waitMs;
+        showBanner(`Rate limit hit (${label}). Retrying soon…`);
+        while(Date.now()<RATE_COOLDOWN_UNTIL){ await sleep(800); }
+        if(attempt===maxAttempts){ hideBanner(); throw new Error(`Rate limit for ${label} after ${maxAttempts} attempts.`); }
+        continue;
+      }
+      if(!res.ok){ const txt = await res.text().catch(()=> ''); throw new Error(`${label} ${res.status}: ${txt}`); }
+      hideBanner();
+      return await res.json();
+    }
+  }
+  function createLimiter(max){
+    let active=0; const q=[]; const run=async()=>{ if(active>=max||!q.length) return; active++; const {fn,resolve,reject}=q.shift(); try{ resolve(await fn()); }catch(e){ reject(e); } finally{ active--; run(); } };
+    return (fn)=> new Promise((resolve,reject)=>{ q.push({fn,resolve,reject}); run(); });
+  }
+  const mediaLimiter = createLimiter(1);
+
+  // ===== MEDIA PREFETCH (OData /Media chunk) =====
+  function buildMediaURLForChunk(propsChunk){
+    const pairs = propsChunk.map(p=>{
+      const key = String(p.ListingKey||'').replace(/'/g,"''");
+      const id  = String(p.ListingId||'').replace(/'/g,"''");
+      const clauses = [];
+      if(id)  clauses.push(`ResourceRecordID eq '${id}'`);
+      if(key) clauses.push(`ResourceRecordKey eq '${key}'`);
+      return clauses.length?`(${clauses.join(' or ')})`:'';
+    }).filter(Boolean);
+
+    const idFilter = pairs.length? pairs.join(' or ') : 'false';
+    const filter = `(${idFilter}) and (ResourceName eq 'Property' or ResourceName eq 'Listing')`;
+
+    const select = [
+      'MediaURL','MediaUrl','MediaURLText','SecureMediaURL','MediaURLLarge','MediaURLMedium','MediaURLSmall',
+      'MediaCategory','MediaType','Order','MediaOrder','ResourceRecordID','ResourceRecordKey','ResourceName'
+    ].join(',');
+
+    const baseParams = new URLSearchParams({ $top: '500', $orderby: 'Order asc' });
+    const qs = baseParams.toString();
+    const url = `${ODATA_MEDIA}?${qs}&$select=${encodeURIComponent(select)}&$filter=${encodeURIComponent(filter)}`;
+    return url;
+  }
+  async function fetchMediaForProperties(props){
+    if(!props.length) return new Map();
+    const byKey   = new Map(props.map(p=>[p.ListingKey, p]));
+    const byId    = new Map(props.map(p=>[p.ListingId, p]));
+
+    const chunkSize = 20;
+    const chunks = [];
+    for(let i=0;i<props.length;i+=chunkSize) chunks.push(props.slice(i,i+chunkSize));
+
+    const map = new Map();
+    for(const chunk of chunks){
+      const url = buildMediaURLForChunk(chunk);
+      try{
+        let next = url; const records = [];
+        while(next){
+          const data = await fetchJSON(next, {}, 'Media OData', {maxAttempts:3});
+          records.push(...(data.value||[]));
+          next = data['@odata.nextLink'] ?? null; // Worker rewrites for us
+        }
+        for(const m of records){
+          const u = m.MediaURL || m.MediaUrl || m.MediaURLText || m.SecureMediaURL || m.MediaURLLarge || m.MediaURLMedium || m.MediaURLSmall; if(!u) continue;
+          const keyGuess = m.ResourceRecordKey || (byId.get(m.ResourceRecordID)?.ListingKey); if(!keyGuess || !byKey.has(keyGuess)) continue;
+          if(!map.has(keyGuess)) map.set(keyGuess, []);
+          const arr = map.get(keyGuess); if(!arr.includes(u)) arr.push(u);
+        }
+      }catch(e){ /* swallow */ }
+      await sleep(300);
+    }
+    for(const [k,urls] of map.entries()){ if(k) mediaCache.set(k, urls); }
+    return map;
+  }
+
+  // ===== MEDIA PER LISTING (REST /media) fallback =====
+  async function fetchPhotosForIds(ids){
+    if(Date.now() < RATE_COOLDOWN_UNTIL) return [];
+
+    const cached = mediaCache.get(ids.listingKey) || mediaCache.get(ids.listingId);
+    if(cached) return cached;
+
+    const missKey = ids.listingKey || ids.listingId;
+    if(missKey && mediaMiss.has(missKey)) return [];
+
+    const fields = 'fields=MediaURL,MediaUrl,MediaURLText,SecureMediaURL,MediaURLLarge,MediaURLMedium,MediaURLSmall,MediaCategory,MediaType,Order,MediaOrder';
+    const attempts = [];
+    if(ids.listingId) attempts.push(`ResourceName.eq.Property,ResourceRecordID.eq.${encodeURIComponent(ids.listingId)}`);
+    if(ids.listingKey) attempts.push(`ResourceName.eq.Property,ResourceRecordKey.eq.${encodeURIComponent(ids.listingKey)}`);
+    if(ids.listingId) attempts.push(`ResourceRecordID.eq.${encodeURIComponent(ids.listingId)}`);
+    if(ids.listingKey) attempts.push(`ResourceRecordKey.eq.${encodeURIComponent(ids.listingKey)}`);
+
+    // 1) Try REST /media via Worker
+    for(const f of attempts){
+      const url = `${MEDIA_BASE}?limit=100&${fields}&filter=${f}`;
+      try{
+        let next=url; const out=[];
+        while(next){
+          const data=await fetchJSON(next, {}, 'media', {maxAttempts:3});
+          out.push(...(data.bundle||[]));
+          next = data.next ?? null; // Worker rewrites for us
+        }
+        const seen=new Set();
+        const pics = out
+          .filter(m=>/photo|image/i.test(m.MediaCategory||m.MediaType||'photo'))
+          .map(m=>({url:m.MediaURL||m.MediaUrl||m.MediaURLText||m.SecureMediaURL||m.MediaURLLarge||m.MediaURLMedium||m.MediaURLSmall, ord:m.MediaOrder||m.Order||0}))
+          .filter(p=>p.url && !seen.has(p.url) && seen.add(p.url))
+          .sort((a,b)=>a.ord-b.ord)
+          .map(p=>p.url);
+
+        if(pics.length){
+          if(ids.listingKey) mediaCache.set(ids.listingKey,pics);
+          if(ids.listingId)  mediaCache.set(ids.listingId,pics);
+          return pics;
+        }
+      }catch(e){ /* ignore to allow fallback */ }
+    }
+
+    // 2) LAST RESORT: OData Property read (no $select) to get embedded Media[]
+    try{
+      const cond = ids.listingId
+        ? `ListingId eq '${String(ids.listingId).replace(/'/g, "''")}'`
+        : (ids.listingKey ? `ListingKey eq '${String(ids.listingKey).replace(/'/g, "''")}'` : '');
+
+      const filter = cond ? `${cond} and OriginatingSystemName eq 'Bonita Springs'` : '';
+      if(filter){
+        const params = new URLSearchParams({ $top: '1', $filter: filter });
+        const url = `${ODATA_PROPERTY}?${params.toString()}`; // no $select on purpose
+        const data = await fetchJSON(url, {}, 'Property media fallback', {maxAttempts:3});
+        const p = (data.value||[])[0] || null;
+        const mediaArr = Array.isArray(p?.Media) ? p.Media : [];
+
+        if(mediaArr.length){
+          const seen = new Set();
+          const pics = mediaArr
+            .filter(m => /photo|image/i.test(m.MediaCategory || m.MediaType || 'photo'))
+            .map(m => ({ url: m.MediaURL || m.MediaUrl || m.MediaURLText || m.SecureMediaURL || m.MediaURLLarge || m.MediaURLMedium || m.MediaURLSmall, ord: m.MediaOrder || m.Order || 0 }))
+            .filter(p => p.url && !seen.has(p.url) && seen.add(p.url))
+            .sort((a,b) => a.ord - b.ord)
+            .map(p => p.url);
+
+          if(pics.length){
+            if(ids.listingKey) mediaCache.set(ids.listingKey, pics);
+            if(ids.listingId)  mediaCache.set(ids.listingId, pics);
+            return pics;
+          }
+        }
+      }
+    }catch(e){ /* swallow and mark miss */ }
+
+    if(missKey) mediaMiss.add(missKey);
+    return [];
+  }
+
+  // ===== RENDER =====
+  function createCard(property, oh, photosHint = [], opts = {}) {
+    let allPhotos = Array.isArray(photosHint) ? photosHint.slice() : [];
+    let totalKnown = allPhotos.length > 0;
+    let idx = 0;
+
+    const imgFallback = 'https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?q=80&w=1200&auto=format&fit=crop';
+
+    const price = property.ListPrice || 0;
+    const addr1 = property.UnparsedAddress || '';
+    const city = property.City || ''; const state = property.StateOrProvince || 'FL'; const postal = property.PostalCode || '';
+    const beds = property.BedroomsTotal ?? '—'; const baths = property.BathroomsTotalInteger ?? '—';
+    const sqft = property.LivingArea || property.SqFtTotal || property.BuildingAreaTotal || property.LotSizeSquareFeet || '';
+    const ohStart = oh?.OpenHouseStartTime || oh?.OpenHouseDate || null;
+    const ohEnd = oh?.OpenHouseEndTime || null;
+
+    const agentName  = (property.ListAgentFullName || '').trim() || '—';
+    const agentPhone = (property.ListAgentDirectPhone || property.ListOfficePhone || '').trim();
+    const agentEmail = (property.ListAgentEmail || '').trim();
+
+    const chips = [];
+    if (property.PoolPrivateYN) chips.push('Pool');
+    if (property.WaterfrontYN)  chips.push('Waterfront');
+    if (property.GarageSpaces)  chips.push(`${property.GarageSpaces} gar`);
+    if (property.ParkingFeatures) chips.push('Parking');
+
+    const card = document.createElement('article'); card.className = 'card';
+    card.innerHTML = `
+      <div class="thumb">
+        <button class="slide prev" aria-label="Previous photo">◀</button>
+        <button class="slide next" aria-label="Next photo">▶</button>
+        <img alt="${(addr1 || 'Home').replace(/"/g,'')}">
+        <div class="badges">
+          <span class="badge">${beds} bd</span>
+          <span class="badge">${baths} ba</span>
+          <span class="badge">${sqft ? new Intl.NumberFormat().format(Math.round(sqft))+' sf' : '—'}</span>
+          ${chips.map(c=>`<span class="badge">${c}</span>`).join('')}
+          ${ohStart ? `<span class="badge oh">Open House · ${formatOhRange(ohStart, ohEnd)}</span>` : ''}
+        </div>
+        <div class="counter" style="display:none">1/1</div>
+      </div>
+      <main>
+        <div class="price">${fmt.format(price)}</div>
+        <div class="address">${[addr1,city,state,postal].filter(Boolean).join(', ')}</div>
+        <div class="meta">
+          <span>${(property.PropertySubType || property.PropertyType || 'Residential')}</span>
+          <span>MLS#: ${property.ListingId || '—'}</span>
+          ${property.TaxAnnualAmount ? `<span>Taxes: ${fmt.format(property.TaxAnnualAmount)}${property.TaxYear ? ' ('+property.TaxYear+')':''}</span>` : ''}
+        </div>
+        <div class="agent">Listed by <strong>${agentName}</strong>${property.ListOfficeName ? ` • ${property.ListOfficeName}` : ''}</div>
+      </main>
+      <div class="actions">
+        <button class="btn" data-gallery style="display:none">View Gallery</button>
+        ${agentPhone ? `<a class="btn" href="tel:${(agentPhone||'').replace(/[^\d]/g,'')}">Call Agent</a>` : ''}
+        ${agentEmail ? `<a class="btn" href="mailto:${agentEmail}">Email Agent</a>` : ''}
+        <button class="btn primary" data-toggle>Details</button>
+      </div>
+      <details>
+        <summary>Property details</summary>
+        <div class="detail-wrap">
+          ${property.PublicRemarks ? `<div class="remarks"><strong>Remarks:</strong> ${property.PublicRemarks}</div>` : ''}
+          <div class="detail-grid">
+            ${kv('Next Open House', ohStart ? formatOhRange(ohStart, ohEnd) : '—')}
+            ${kv('Open House Notes', oh?.OpenHouseRemarks || '—')}
+            ${kv('Refreshments', oh?.Refreshments || '—')}
+            ${kv('Virtual Open House', oh?.VirtualOpenHouseURL ? `<a href="${oh.VirtualOpenHouseURL}" target="_blank" rel="noopener">Join</a>` : '—')}
+
+            ${kv('Community', property.SubdivisionName || '—')}
+            ${kv('Year Built', property.YearBuilt || '—')}
+            ${kv('Stories', property.StoriesTotal || property.Stories || '—')}
+            ${kv('HOA', property.AssociationFee ? `${fmt.format(property.AssociationFee)}${property.AssociationFeeFrequency ? ' / '+property.AssociationFeeFrequency : ''}` : '—')}
+
+            ${kv('Garage', property.GarageSpaces ?? '—')}
+            ${kv('Carport', property.CarportSpaces ?? '—')}
+            ${kv('Parking', property.ParkingFeatures || '—')}
+
+            ${kv('Pool', property.PoolPrivateYN ? (property.PoolFeatures || 'Yes') : 'No')}
+            ${kv('Spa', property.SpaYN ? (property.SpaFeatures || 'Yes') : 'No')}
+
+            ${kv('Waterfront', property.WaterfrontYN ? (property.WaterfrontFeatures || 'Yes') : 'No')}
+            ${kv('View', property.View || (property.ViewYN ? 'Yes' : '—'))}
+
+            ${kv('Cooling', property.Cooling || '—')}
+            ${kv('Heating', property.Heating || '—')}
+
+            ${kv('Appliances', property.Appliances || '—')}
+            ${kv('Interior', property.InteriorFeatures || '—')}
+            ${kv('Exterior', property.ExteriorFeatures || '—')}
+
+            ${kv('County', property.CountyOrParish || '—')}
+            ${kv('DOM', property.DaysOnMarket || '—')}
+
+            ${kv('Building', property.BuildingName || '—')}
+            ${kv('Unit', property.UnitNumber || '—')}
+
+            ${kv('Agent', agentName)}
+            ${kv('Agent Phone', agentPhone ? `<a href="tel:${agentPhone.replace(/[^\d]/g,'')}">${fmtPhone(agentPhone)}</a>` : '—')}
+            ${kv('Agent Email', agentEmail ? `<a href="mailto:${agentEmail}">${agentEmail}</a>` : '—')}
+            ${kv('Office', property.ListOfficeName || '—')}
+            ${kv('Office Phone', property.ListOfficePhone ? `<a href="tel:${property.ListOfficePhone.replace(/[^\d]/g,'')}">${fmtPhone(property.ListOfficePhone)}</a>` : '—')}
+          </div>
+        </div>
+      </details>`;
+
+    const imgEl = card.querySelector('.thumb img');
+    const galleryBtn = card.querySelector('[data-gallery]');
+    const prevBtn = card.querySelector('.slide.prev');
+    const nextBtn = card.querySelector('.slide.next');
+    const counter = card.querySelector('.counter');
+
+    if (allPhotos.length) {
+      imgEl.src = allPhotos[0];
+    } else {
+      imgEl.src = imgFallback;
+    }
+    counter.style.display = 'none';
+
+    function updateCounter() {
+      if (!totalKnown || !allPhotos.length) { counter.style.display = 'none'; return; }
+      counter.textContent = `${(allPhotos.length ? (idx + 1) : 1)}/${allPhotos.length}`;
+      counter.style.display = 'block';
+    }
+
+    async function ensureFullList() {
+      if (ensureFullList._done) return;
+      ensureFullList._done = true;
+
+      const ids = { listingKey: property.ListingKey || null, listingId: property.ListingId || null };
+      try {
+        const more = await mediaLimiter(() => fetchPhotosForIds(ids));
+        if (Array.isArray(more) && more.length) {
+          const currentFirst = imgEl.getAttribute('src');
+          allPhotos = more.slice();
+          totalKnown = true;
+
+          if (!currentFirst || currentFirst === imgFallback) {
+            imgEl.style.opacity = '0.6';
+            imgEl.src = allPhotos[0];
+            imgEl.onload = () => { imgEl.style.opacity = '1'; };
+            idx = 0;
+          } else {
+            const found = allPhotos.indexOf(currentFirst);
+            if (found >= 0) idx = found;
+          }
+        } else {
+          allPhotos = [imgFallback];
+          totalKnown = true;
+          idx = 0;
+        }
+      } catch {
+        if (!allPhotos.length) { allPhotos = [imgFallback]; totalKnown = true; idx = 0; }
+      }
+      updateCounter();
+      galleryBtn.style.display = (allPhotos.length > 0) ? 'inline-block' : 'none';
+    }
+
+    function show(i) {
+      if (!allPhotos.length) return;
+      idx = (i + allPhotos.length) % allPhotos.length;
+      const nextUrl = allPhotos[idx];
+      imgEl.style.opacity = '0.6';
+      imgEl.src = nextUrl;
+      imgEl.onload = () => { imgEl.style.opacity = '1'; };
+      updateCounter();
+    }
+
+    prevBtn.addEventListener('click', async (e) => {
+      e.stopPropagation();
+      if (!totalKnown) await ensureFullList();
+      if (allPhotos.length > 1) show(idx - 1);
+    });
+    nextBtn.addEventListener('click', async (e) => {
+      e.stopPropagation();
+      if (!totalKnown) await ensureFullList();
+      if (allPhotos.length > 1) show(idx + 1);
+    });
+
+    function openLightbox() {
+      if (!allPhotos.length) return;
+      lbPhotos = allPhotos.slice();
+      lbIndex = idx;
+      document.getElementById('lbImg').src = lbPhotos[lbIndex];
+      document.getElementById('lbTitle').textContent = `${addr1 || 'Gallery'} (${lbPhotos.length})`;
+      document.getElementById('lightbox').classList.add('open');
+    }
+    galleryBtn.addEventListener('click', async () => { await ensureFullList(); openLightbox(); });
+    imgEl.addEventListener('click', async () => { await ensureFullList(); openLightbox(); });
+
+    if ('IntersectionObserver' in window) {
+      const io = new IntersectionObserver((entries) => {
+        if (entries.some(e => e.isIntersecting)) {
+          io.disconnect();
+          ensureFullList(); // fetch list JSON, not images
+        }
+      }, { rootMargin: '200px' });
+      io.observe(card);
+    } else {
+      ensureFullList();
+    }
+
+    galleryBtn.style.display = (allPhotos.length > 0) ? 'inline-block' : 'none';
+
+    card.querySelector('[data-toggle]').addEventListener('click', () => {
+      const d = card.querySelector('details');
+      d.open = !d.open;
+    });
+
+    return card;
+  }
+
+  // ===== DATA =====
+  function mergeEarliestOH(openHouses){
+    const byKey=new Map();
+    for(const r of openHouses){
+      const key=r.ListingKey; if(!key) continue;
+      const start=r.OpenHouseStartTime||r.OpenHouseDate||null; if(!start) continue;
+      const prev=byKey.get(key);
+      if(!prev || new Date(start) < new Date(prev.OpenHouseStartTime||prev.OpenHouseDate||'9999-12-31')) byKey.set(key,r);
+    }
+    return byKey;
+  }
+
+  async function fetchOpenHousesWindow(startISO, endISO){
+    const select=[
+      'OpenHouseKey','ListingKey','OpenHouseStatus','OriginatingSystemName',
+      'OpenHouseStartTime','OpenHouseEndTime','OpenHouseDate',
+      'OpenHouseRemarks','VirtualOpenHouseURL','Refreshments','OpenHouseMethod'
+    ].join(',');
+    const base = ["OpenHouseStatus eq 'Active'","OriginatingSystemName eq 'Bonita Springs'", `OpenHouseDate ge ${startISO}`, `OpenHouseDate le ${endISO}`];
+    const params = new URLSearchParams({ $top:'200', $select: select, $orderby:'OpenHouseStartTime asc', $filter: base.join(' and ') });
+    const url = `${ODATA_OPENHOUSE}?${params.toString()}`;
+    let next=url; const records=[];
+    while(next){
+      const data=await fetchJSON(next, {}, 'OpenHouse', {maxAttempts:4});
+      records.push(...(data.value||[]));
+      next = data['@odata.nextLink'] ?? null; // Worker returns proxy link
+    }
+    return records;
+  }
+
+  function buildPropertyURL(keysChunk){
+    const orExpr = keysChunk.map(k=>`ListingKey eq '${String(k).replace(/'/g, "''")}'`).join(' or ');
+    const filter = `(${orExpr}) and OriginatingSystemName eq 'Bonita Springs'`;
+    const params = new URLSearchParams({ $top:'100', $select: PROPERTY_SELECT_FIELDS, $filter: filter });
+    return `${ODATA_PROPERTY}?${params.toString()}`;
+  }
+  async function fetchPropertiesForListingKeys(keys){
+    if(!keys.length) return [];
+    const chunkSize=15; const chunks=[]; for(let i=0;i<keys.length;i+=chunkSize) chunks.push(keys.slice(i,i+chunkSize));
+    const properties=[];
+    for(const chunk of chunks){
+      const url=buildPropertyURL(chunk);
+      const data=await fetchJSON(url, {}, 'Property', {maxAttempts:4});
+      properties.push(...(data.value||[]));
+      await sleep(250);
+    }
+    return properties;
+  }
+
+  // ===== FILTER UI =====
+  function populateFiltersFrom(merged){
+    const cities=new Set(); const comms=new Set();
+    merged.forEach(({property})=>{ if(property.City) cities.add(property.City); if(property.SubdivisionName) comms.add(property.SubdivisionName); });
+    const cityArr=[...cities].sort((a,b)=>a.localeCompare(b)); const commArr=[...comms].sort((a,b)=>a.localeCompare(b));
+    cityFilterEl.innerHTML = '<option value="">All cities</option>' + cityArr.map(c=>`<option value="${c}">${c}</option>`).join('');
+    commFilterEl.innerHTML = '<option value="">All communities</option>' + commArr.map(c=>`<option value="${c}">${c}</option>`).join('');
+  }
+
+  function applyClientFilters(merged){
+    const city = cityFilterEl.value.trim(); const comm = commFilterEl.value.trim();
+    let out = merged.filter(({property})=> String(property.OriginatingSystemName||'')==='Bonita Springs');
+    if(city) out = out.filter(({property})=> String(property.City||'')===city);
+    if(comm) out = out.filter(({property})=> String(property.SubdivisionName||'')===comm);
+    const sort = sortFilterEl.value || 'dateAsc';
+    const ohTime = (x)=> new Date(x.oh?.OpenHouseStartTime || x.oh?.OpenHouseDate || '9999-12-31').getTime();
+    if(sort==='priceAsc'||sort==='priceDesc') out.sort((a,b)=>(sort==='priceAsc'?1:-1)*((a.property.ListPrice||0)-(b.property.ListPrice||0)));
+    else if(sort==='dateDesc') out.sort((a,b)=>ohTime(b)-ohTime(a));
+    else out.sort((a,b)=>ohTime(a)-ohTime(b));
+    return out;
+  }
+
+  function renderCards(merged, mediaMap=new Map(), {reset=true}={}){
+    if(reset){
+      grid.innerHTML='';
+      visibleCount = 0;
+      currentView = applyClientFilters(merged);
+      lastMediaHints = mediaMap && mediaMap.size ? mediaMap : lastMediaHints;
+    }
+
+    const start = visibleCount;
+    const end = Math.min(visibleCount + PAGE_SIZE, currentView.length);
+
+    for(let i=start; i<end; i++){
+      const row = currentView[i];
+      const hint = lastMediaHints.get(row.property.ListingKey) || lastMediaHints.get(row.property.ListingId) || [];
+      const card = createCard(row.property, row.oh, hint, {priority: i < PAGE_SIZE});
+      grid.appendChild(card);
+    }
+
+    visibleCount = end;
+    loadMoreBtn.style.display = visibleCount < currentView.length ? 'block' : 'none';
+  }
+
+  // ===== INIT LOAD =====
+  async function loadInitial(){
+    showLoadingOverlay('Loading listings…');
+    const start = todayISO(); let merged=[];
+    for(const days of RANGE_STEPS_DAYS){
+      const end = new Date(); end.setDate(end.getDate()+days); const endISO = end.toISOString().slice(0,10);
+      const ohRecords = await fetchOpenHousesWindow(start, endISO);
+      const earliestByKey = mergeEarliestOH(ohRecords);
+      const keys = [...earliestByKey.keys()];
+      const props = await fetchPropertiesForListingKeys(keys);
+      merged = props.map(p=>({property:p, oh: earliestByKey.get(p.ListingKey)||null}))
+                    .filter(x=> String(x.property.OriginatingSystemName||'')==='Bonita Springs');
+      if(merged.length >= MIN_RESULTS){ break; }
+    }
+    currentMerged = merged;
+
+    const prefetchCount = Math.min(MIN_RESULTS, currentMerged.length);
+    const mediaMap = await fetchMediaForProperties(currentMerged.slice(0, prefetchCount).map(x=>x.property));
+
+    populateFiltersFrom(currentMerged);
+    renderCards(currentMerged, mediaMap, {reset:true});
+    hideLoadingOverlay();
+  }
+
+  // Lightbox handlers
+  const lbEl = document.getElementById('lightbox');
+  document.getElementById('lbClose').onclick = ()=> lbEl.classList.remove('open');
+  document.getElementById('prev').onclick = ()=> { if(!lbPhotos.length) return; lbIndex=(lbIndex-1+lbPhotos.length)%lbPhotos.length; document.getElementById('lbImg').src=lbPhotos[lbIndex]; };
+  document.getElementById('next').onclick = ()=> { if(!lbPhotos.length) return; lbIndex=(lbIndex+1)%lbPhotos.length; document.getElementById('lbImg').src=lbPhotos[lbIndex]; };
+  lbEl.addEventListener('click', (e)=>{ if(e.target===lbEl) lbEl.classList.remove('open'); });
+
+  // Filter interactions
+  cityFilterEl.addEventListener('change', ()=> renderCards(currentMerged, lastMediaHints, {reset:true}));
+  commFilterEl.addEventListener('change', ()=> renderCards(currentMerged, lastMediaHints, {reset:true}));
+  sortFilterEl.addEventListener('change', ()=> renderCards(currentMerged, lastMediaHints, {reset:true}));
+  clearBtn.addEventListener('click', ()=>{ cityFilterEl.value=''; commFilterEl.value=''; sortFilterEl.value='dateAsc'; renderCards(currentMerged, lastMediaHints, {reset:true}); });
+  loadMoreBtn.addEventListener('click', ()=> renderCards(currentMerged, lastMediaHints, {reset:false}));
+
+  // Start
+  loadInitial();
+</script>
+</body>
+</html>

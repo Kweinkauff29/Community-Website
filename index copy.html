@@ -1,0 +1,1504 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+  <!-- Required meta tags -->
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <!-- Bootstrap CSS -->
+  <link rel="stylesheet" href=
+"https://maxcdn.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+
+<script src="https://code.jquery.com/jquery-migrate-3.0.0.min.js"></script>
+
+   <script src=
+"https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js">
+   </script>
+
+   <script src=
+"https://maxcdn.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js">
+   </script>
+  <link rel="stylesheet" href="style.css">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Aboreto&display=swap" rel="stylesheet">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Style+Script&display=swap" rel="stylesheet">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@700&display=swap" rel="stylesheet">
+
+<script loading=”eager” src="assets/js/scrollfade.js"></script>
+
+<script>
+
+$(document).ready(function() {
+    $('#body').show();
+    $('#msg').hide();
+});
+
+let video
+
+let images = ["https://www.bonitaesterorealtors.com/wp-content/uploads/2022/08/Untitled-design-10.mp4","https://www.bonitaesterorealtors.com/wp-content/uploads/2022/08/Untitled-design-4.mp4","https://www.bonitaesterorealtors.com/wp-content/uploads/2022/08/Untitled-design-2.mp4","https://www.bonitaesterorealtors.com/wp-content/uploads/2022/08/Untitled-design-5.mp4","https://www.bonitaesterorealtors.com/wp-content/uploads/2022/08/Untitled-design-6.mp4","https://www.bonitaesterorealtors.com/wp-content/uploads/2022/08/Untitled-design-9.mp4","https://www.bonitaesterorealtors.com/wp-content/uploads/2022/08/Untitled-design-10.mp4","https://www.bonitaesterorealtors.com/wp-content/uploads/2022/08/Untitled-design-11.mp4"];
+  let id = 1;
+  let t = 1;
+
+
+window.onload = function() {
+  document.getElementById('beach-photo11').addEventListener('ended', function(){
+    console.log("video has ended");
+    id = 2;
+    document.getElementById("beach-photo11").currentTime = 0;
+    changeImage2();
+  }, false);
+
+  document.getElementById('beach-photo22').addEventListener('ended', function(){
+    console.log("video has ended");
+    id = 1;
+    document.getElementById("beach-photo22").currentTime = 0;
+    changeImage2();
+  }, false);
+  changeImage2();
+}
+
+  function changeImage2() {
+    if (id === 1) {
+      document.getElementById("beach-photo22").style.display = "none";
+      document.getElementById("beach-photo11").style.display = "inherit";
+      document.getElementById("beach-photo11").play();
+      console.log("1");
+      id++;
+    }
+    else if (id === 2) {
+      document.getElementById("beach-photo11").style.display = "none";
+      document.getElementById("beach-photo22").style.display = "inherit";
+      document.getElementById("beach-photo22").play();
+      console.log("2");
+      id++;
+
+    }
+
+    else if (id > 2) {
+      id = 1;
+      changeImage2();
+    }
+  }
+
+function changeImage() {
+
+    if (id === 1) {
+      document.getElementById("beach-photo").style.display = "inherit";
+      document.getElementById("beach-photo7").style.display = "none";
+      console.log("this");
+      if (t === 1) {
+        document.getElementById('beach-photo').addEventListener('ended', function(){
+          console.log("video has ended");
+          id = 2;
+          document.getElementById("beach-photo").currentTime = 0;
+          document.getElementById('beach-photo').removeEventListener('ended', function(){});
+          changeImage();
+        }, false);
+      }
+      else if (t === 2) {
+        document.getElementById("beach-photo").style.display = "inherit";
+        document.getElementById("beach-photo7").style.display = "none";
+      }
+    }
+
+   else if (id === 2) {
+      document.getElementById("beach-photo").style.display = "none";
+      document.getElementById("beach-photo2").style.display = "inherit";
+      document.getElementById("beach-photo2").play();
+      if (t === 1) {
+        document.getElementById('beach-photo2').addEventListener('ended', function(){
+          console.log("video has ended");
+          id = 3;
+          document.getElementById("beach-photo2").pause();
+          document.getElementById("beach-photo2").currentTime = 0;
+          document.getElementById('beach-photo2').removeEventListener('ended', function(){});
+          changeImage();
+        }, false);
+      }
+      else if (t === 2) {
+        document.getElementById("beach-photo").style.display = "none";
+        document.getElementById("beach-photo2").style.display = "inherit";
+      }
+      console.log("other");
+    }
+
+   else if (id === 3) {
+      document.getElementById("beach-photo").style.display = "none";
+      document.getElementById("beach-photo2").style.display = "none";
+      document.getElementById("beach-photo3").style.display = "inherit";
+      document.getElementById("beach-photo3").play();
+      if (t === 1) {
+      document.getElementById('beach-photo3').addEventListener('ended', function(){
+        console.log("video has ended");
+        id = 4;
+        document.getElementById("beach-photo3").pause();
+        document.getElementById("beach-photo3").currentTime = 0;
+        document.getElementById('beach-photo3').removeEventListener('ended', function(){});
+        changeImage();
+      }, false);
+    }
+    else if (t === 2) {
+      document.getElementById("beach-photo").style.display = "none";
+      document.getElementById("beach-photo2").style.display = "none";
+      document.getElementById("beach-photo3").style.display = "inherit";
+    }
+      console.log("other");
+    }
+
+    else if (id === 4) {
+      document.getElementById("beach-photo").style.display = "none";
+      document.getElementById("beach-photo2").style.display = "none";
+      document.getElementById("beach-photo3").style.display = "none";
+      document.getElementById("beach-photo4").style.display = "inherit";
+      document.getElementById("beach-photo4").play();
+      if (t === 1) {
+      document.getElementById('beach-photo4').addEventListener('ended', function(){
+        console.log("video has ended");
+        id = 5;
+        document.getElementById("beach-photo4").pause();
+        document.getElementById("beach-photo4").currentTime = 0;
+        changeImage();
+      }, false);
+    }
+      else if (t === 2) {
+        document.getElementById("beach-photo").style.display = "none";
+        document.getElementById("beach-photo2").style.display = "none";
+        document.getElementById("beach-photo3").style.display = "none";
+        document.getElementById("beach-photo4").style.display = "inherit";
+      }
+      console.log("other");
+    }
+
+    else if (id === 5) {
+      document.getElementById("beach-photo").style.display = "none";
+      document.getElementById("beach-photo2").style.display = "none";
+      document.getElementById("beach-photo3").style.display = "none";
+      document.getElementById("beach-photo4").style.display = "none";
+      document.getElementById("beach-photo5").style.display = "inherit";
+      document.getElementById("beach-photo5").play();
+      if (t === 1) {
+      document.getElementById('beach-photo5').addEventListener('ended', function(){
+        console.log("video has ended");
+        id = 6;
+        document.getElementById("beach-photo5").pause();
+        document.getElementById("beach-photo5").currentTime = 0;
+        changeImage();
+      }, false);
+    }
+      else if (t === 2) {
+        document.getElementById("beach-photo").style.display = "none";
+        document.getElementById("beach-photo2").style.display = "none";
+        document.getElementById("beach-photo3").style.display = "none";
+        document.getElementById("beach-photo4").style.display = "none";
+        document.getElementById("beach-photo5").style.display = "inherit";
+      }
+      console.log("other");
+    }
+
+    else if (id === 6) {
+      document.getElementById("beach-photo").style.display = "none";
+      document.getElementById("beach-photo2").style.display = "none";
+      document.getElementById("beach-photo3").style.display = "none";
+      document.getElementById("beach-photo4").style.display = "none";
+      document.getElementById("beach-photo5").style.display = "none";
+      document.getElementById("beach-photo6").style.display = "inherit";
+      document.getElementById("beach-photo6").play();
+      if (t === 1) {
+      document.getElementById('beach-photo6').addEventListener('ended', function(){
+        console.log("video has ended");
+        id = 7;
+        document.getElementById("beach-photo6").pause();
+        document.getElementById("beach-photo6").currentTime = 0;
+        changeImage();
+      }, false);
+    }
+      else if (t === 2) {
+      document.getElementById("beach-photo").style.display = "none";
+      document.getElementById("beach-photo2").style.display = "none";
+      document.getElementById("beach-photo3").style.display = "none";
+      document.getElementById("beach-photo4").style.display = "none";
+      document.getElementById("beach-photo5").style.display = "none";
+      document.getElementById("beach-photo6").style.display = "inherit";
+      }
+      console.log("other");
+    }
+
+    else if (id === 7) {
+      document.getElementById("beach-photo").style.display = "none";
+      document.getElementById("beach-photo2").style.display = "none";
+      document.getElementById("beach-photo3").style.display = "none";
+      document.getElementById("beach-photo4").style.display = "none";
+      document.getElementById("beach-photo5").style.display = "none";
+      document.getElementById("beach-photo6").style.display = "none";
+      document.getElementById("beach-photo7").style.display = "inherit";
+      document.getElementById("beach-photo7").play();
+      if (t === 1) {
+      document.getElementById('beach-photo7').addEventListener('ended', function(){
+        console.log("video has ended");
+        id = 1;
+        document.getElementById("beach-photo7").pause();
+        document.getElementById("beach-photo7").currentTime = 0;
+        changeImage();
+        t = 2;
+      }, false);
+    }
+      else if (t === 2) {
+        document.getElementById("beach-photo").style.display = "none";
+        document.getElementById("beach-photo2").style.display = "none";
+        document.getElementById("beach-photo3").style.display = "none";
+        document.getElementById("beach-photo4").style.display = "none";
+        document.getElementById("beach-photo5").style.display = "none";
+        document.getElementById("beach-photo6").style.display = "none";
+        document.getElementById("beach-photo7").style.display = "inherit";
+      }
+      console.log("other");
+    }
+
+    else {
+      console.log("that");
+    }
+      document.getElementById("beach-photo").currentTime = 0;
+      document.getElementById("beach-photo2").currentTime = 0;
+      document.getElementById("beach-photo3").currentTime = 0;
+      document.getElementById("beach-photo4").currentTime = 0;
+      document.getElementById("beach-photo5").currentTime = 0;
+      document.getElementById("beach-photo6").currentTime = 0;
+      document.getElementById("beach-photo7").currentTime = 0;
+      console.log(id);
+}
+</script>
+
+  <style>
+
+  @import url('https://fonts.googleapis.com/css2?family=Poppins:[email protected];300;400;500;600;700&display=swap');
+*{
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: "Poppins", sans-serif;
+}
+html{
+  scroll-behavior: smooth;
+}
+body{
+
+}
+::selection{
+  color: #fff;
+}
+.wrapper{
+  max-width: 1080px;
+  margin: 50px auto;
+  padding: 0 20px;
+  position: relative;
+}
+
+.entry ul, .entry ol {
+  margin: 0px 0 0px 30px;
+}
+
+.site-content {
+  height: 4757px;
+}
+
+.container {
+  padding-left: 0;
+  padding-right: 0;
+}
+
+#site-scroll-top {
+  display: none;
+}
+
+.footer-background {
+  z-index: 999;
+  color: white;
+  margin: -15px 5% auto 5%;
+  padding-top: 40px;
+  text-align: center;
+}
+
+.fa-send:before, .fa-paper-plane:before {
+  content: none;
+}
+
+.fa-globe:before {
+  content: none;
+}
+
+.fa-rocket:before {
+  content: none;
+}
+
+.fa-star:before {
+  content: none;
+}
+
+.fa-home:before {
+  content: none;
+}
+
+i {
+  font-size: 16px;
+}
+
+.wrapper .center-line{
+  position: absolute;
+  height: 100%;
+  width: 4px;
+  background: #fff;
+  left: 50%;
+  top: 20px;
+  transform: translateX(-50%);
+}
+.wrapper .row{
+  display: flex;
+}
+.wrapper .row-1{
+  justify-content: flex-start;
+}
+.wrapper .row-2{
+  justify-content: flex-end;
+}
+.wrapper .row section{
+  background: #fff;
+  border-radius: 5px;
+  width: calc(50% - 40px);
+  padding: 20px;
+  position: relative;
+}
+.wrapper .row section::before{
+  position: absolute;
+  content: "";
+  height: 15px;
+  width: 15px;
+  background: #fff;
+  top: 28px;
+  z-index: -1;
+  transform: rotate(45deg);
+}
+.row-1 section::before{
+  right: -7px;
+}
+.row-2 section::before{
+  left: -7px;
+}
+.row section .icon,
+.center-line .scroll-icon{
+  position: absolute;
+  background: #f2f2f2;
+  height: 40px;
+  width: 40px;
+  text-align: center;
+  line-height: 40px;
+  border-radius: 50%;
+  font-size: 17px;
+  box-shadow: 0 0 0 4px #fff, inset 0 2px 0 rgba(0,0,0,0.08), 0 3px 0 4px rgba(0,0,0,0.05);
+}
+.center-line .scroll-icon{
+  bottom: 0px;
+  left: 50%;
+  font-size: 25px;
+  transform: translateX(-50%);
+}
+.row-1 section .icon{
+  top: 15px;
+  right: -60px;
+}
+.row-2 section .icon{
+  top: 15px;
+  left: -65px;
+}
+.row section .details,
+.row section .bottom{
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.row section .details .title{
+  font-size: 22px;
+  font-weight: 600;
+}
+.row section p{
+  margin: 10px 0 17px 0;
+}
+.row section .bottom a{
+  text-decoration: none;
+  background: #ff7979;
+  color: #fff;
+  padding: 7px 15px;
+  border-radius: 5px;
+  /* font-size: 17px; */
+  font-weight: 400;
+  transition: all 0.3s ease;
+}
+.row section .bottom a:hover{
+  transform: scale(0.97);
+}
+@media(max-width: 790px){
+  .wrapper .center-line{
+    left: 40px;
+  }
+  .wrapper .row{
+    margin: 30px 0 3px 60px;
+  }
+  .wrapper .row section{
+    width: 100%;
+  }
+  .row-1 section::before{
+    left: -7px;
+  }
+  .row-1 section .icon{
+    left: -60px;
+  }
+}
+@media (max-width: 576px) {
+  .card-img {
+    display: flex;
+    width: 355px !important;
+    height: auto !important;
+    margin: 10px 0px 10px 0px;
+    justify-content: center;
+  }
+  .fun {
+    margin-left: 0px !important;
+  }
+  #imgtext {
+    margin: auto 0px auto -30px !important;
+  }
+  .map h1 {
+    margin: 0px;
+    font-size: 40px;
+  }
+  .wrapper {
+    max-width: 1080px;
+    margin: 50px 0px 10px 6px;
+    padding: 0px; 
+    position: relative;
+    width: 90%;
+  }
+  .site-content {
+    height: 5650px !important;
+  }
+}
+@media(max-width: 440px){
+  .wrapper .center-line,
+  .row section::before,
+  .row section .icon{
+    display: none;
+  }
+  .wrapper .row{
+    margin: 10px 0;
+  }
+}
+
+    *{
+      padding: 0;
+      margin: 0;
+    }
+
+    html {
+      width: 100%;
+    }
+
+    body {
+      width: 100%;
+      margin: 0 !important;
+    }
+
+    head {
+      width: 80%;
+      height: 100vh;
+      font-family: sans-serif;
+    }
+
+    h1 {
+      font-size: 32px;
+      text-decoration: underline;
+      margin: auto;
+      text-align: center;
+    }
+
+    p {
+      font-size: 15px;
+    }
+
+    #welcome {
+      flex-direction: row;
+      justify-content: center;
+      height: 600px;
+      z-index: -999;
+      animation-name: fromBot;
+      animation-duration: 2s;
+    }
+
+    .ber-logo {
+      width: 170px;
+      position: relative;
+      height: 170px;
+      margin: -30px 0px -28px 0%;
+      animation-duration: 2s;
+      animation-name: run;
+      display: flex;
+      z-index: 3;
+    }
+
+    @keyframes run {
+      0% { left: 1300px; }
+      100% { left: 0; }
+    }
+
+    @media screen and (max-width: 960px){
+      .ber-logo {
+        height: 133px;
+        width: 133px;
+      }
+    }
+
+    @media screen and (max-width: 700px) {
+      .ber-logo {
+        height: 109px;
+        width: 109px;
+        align-content: center;
+        align-items: center;
+      }
+
+      #bar-width {
+        display: block;
+      }
+
+      h1 {
+        font-size: 32px;
+      }
+
+      p {
+        font-size: 13px;
+      }
+    }
+
+    /*Website title once past 1100px*/
+    .bser-title {
+      text-align: left;
+      font-size: 55px;
+      width: 150px;
+      font-family: 'Style Script', cursive;
+      vertical-align: baseline;
+      margin: auto 40px auto 0;
+      color: #FFF;
+      font-weight: 600;
+      line-height: 50px;
+      animation-name: fadeIn;
+      animation-duration: 2s;
+    }
+    /*If screen width is large enough - title fades in*/
+    @keyframes fadeIn {
+      0% {display: none;
+        opacity: 0;}
+      75% {display: none;
+        opacity: 0;}
+      100% {display: block;
+        opacity: 1;}
+    }
+    /*If under 1100px - dispears (Not enough room)*/
+    @media screen and (max-width: 1100px) {
+      .bser-title {display: none;}
+    }
+
+    #top-bar {
+      background-image: linear-gradient(90deg, #0093E9 0%, #8adcf5 100%);
+      justify-content: center;
+      align-items: center;
+      position: relative;
+      width: 100%;
+      vertical-align: middle;
+      animation-name: fadeIn;
+      margin: 25px auto auto auto;
+      box-shadow: 5px 0 10px #888888;
+      z-index: 4;
+    }
+
+    #bar-width {
+      margin: auto;
+      width: 90%;
+      display: flex;
+      justify-content: center;
+    }
+
+    .navbar-expand-md {
+      display: flex;
+      text-align: center;
+      margin: auto;
+      justify-content: center;
+      font-weight: bold;
+      animation-name: fadeIn;
+      animation-duration: 3s;
+      font-size: 1.5em;
+    }
+
+    .navbar-expand-md ul{
+      display: flex;
+      justify-content: space-between;
+      align-content: center;
+      justify-content: center;
+    }
+
+    .navbar-expand-md li{
+      list-style: none;
+      font-size: 1.5em;
+      width: 90px;
+      font-size: 12px;
+      text-align: center;
+      vertical-align: middle;
+      margin: auto;
+      animation-name: fadeIn;
+      animation-duration: 1s;
+      color: #fff;
+      text-shadow: .5px .5px 0px black;
+    }
+
+    @keyframes fadeIn {
+      0% {display: none;
+        opacity: 0;}
+      75% {display: none;
+        opacity: 0;}
+      100% {display: block;
+        opacity: 1;}
+
+    }
+
+    .navbar-expand-md li:hover{
+      list-style: none;
+      cursor: pointer;
+      text-decoration: underline;
+    }
+
+    @media screen and (min-width: 1000px) {
+      .navbar-expand-md li{
+        font-size: 1.3em;
+        width: 150px;
+      }
+    }
+
+    @media screen and (min-width: 800px) and (max-width: 999px) {
+      .navbar-expand-md li{
+        font-size: 16px;
+        width: 115px;
+      }
+    }
+
+    @keyframes fromBot {
+      0% {opacity: 0;
+        left: 200px;}
+      100% {opacity: 1;
+        left: 0px;}
+    }
+
+    .welcome-column {
+      height: auto;
+      position: absolute;
+      background-color: black;
+      display: inline-block;
+      z-index: 3;
+      height: 775px;
+      padding-top: 100px;
+      margin: -175px auto;
+      opacity: .3;
+      animation: fadeIn 1s;
+      animation-play-state: paused;
+    }
+
+    .welcome-column:hover {
+      animation-play-state: running;
+    }
+
+    .welcome-column h1 {
+      font-size: 385px;
+      text-decoration: none;
+      margin-bottom: 5px;
+      margin-top: 50px;
+      font-family: 'Oswald', sans-serif;
+      color: white;
+    }
+
+    .welcome-column p {
+      font-size: 14px;
+      margin: 20px 5% auto 5%;
+    }
+
+    .welcome-column:hover {
+      opacity: .8;
+    }
+
+
+    @keyframes fromTop {
+      0% {top: 0px;
+      opacity: 0;}
+      80% {top: 0px;
+      opacity: 0}
+      100% {top: 170px;}
+    }
+
+    #welcome-header {
+      text-align: center;
+      align-items: center;
+      align-content: center;
+      font-size: 60px;
+      margin: 25px auto auto auto;
+      color: #fff;
+      animation-name: fadeIn;
+      animation-duration: 1s;
+    }
+
+
+    #welcome-text {
+      margin: 10px 5% auto 5%;
+      text-align: center;
+      align-items: center;
+      color: #fff;
+      z-index: 6;
+      animation-name: fadeIn;
+      animation-duration: 1s;
+    }
+
+    .welcome-photo {
+      position: relative;
+      overflow: hidden;
+      vertical-align: bottom;
+    }
+
+    #beach-photo {
+      width: 100%;
+      height: 800px;
+      object-fit: cover;
+      margin: -200px auto;
+      position: fixed;
+      background-color: black;
+      z-index: -995;
+      animation-name: fadeIn;
+      animation-duration: 3s;
+    }
+
+    #beach-photo2 {
+      width: 100%;
+      height: 800px;
+      object-fit: cover;
+      margin: -200px auto;
+      position: fixed;
+      background-color: black;
+      z-index: -995;
+      animation-name: fadeIn;
+      animation-duration: 3s;
+    }
+
+    #beach-photo11 {
+      width: 100%;
+      height: 800px;
+      object-fit: cover;
+      margin: -200px auto;
+      position: fixed;
+      background-color: black;
+      z-index: -995;
+      animation-name: fadeIn;
+      animation-duration: 3s;
+    }
+
+    #beach-photo22 {
+      width: 100%;
+      height: 800px;
+      object-fit: cover;
+      margin: -200px auto;
+      position: fixed;
+      background-color: black;
+      z-index: -995;
+      animation-name: fadeIn;
+      animation-duration: 3s;
+    }
+
+    #beach-photo3 {
+      width: 100%;
+      height: 800px;
+      object-fit: cover;
+      margin: -200px auto;
+      position: fixed;
+      background-color: black;
+      z-index: -995;
+      animation-name: fadeIn;
+      animation-duration: 3s;
+    }
+
+    #beach-photo4 {
+      width: 100%;
+      height: 800px;
+      object-fit: cover;
+      margin: -200px auto;
+      position: fixed;
+      background-color: black;
+      z-index: -995;
+      animation-name: fadeIn;
+      animation-duration: 3s;
+    }
+
+    #beach-photo5 {
+      width: 100%;
+      height: 800px;
+      object-fit: cover;
+      margin: -200px auto;
+      position: fixed;
+      background-color: black;
+      z-index: -995;
+      animation-name: fadeIn;
+      animation-duration: 3s;
+    }
+
+    #beach-photo6 {
+      width: 100%;
+      height: 800px;
+      object-fit: cover;
+      margin: -200px auto;
+      position: fixed;
+      background-color: black;
+      z-index: -995;
+      animation-name: fadeIn;
+      animation-duration: 3s;
+    }
+
+    #beach-photo7 {
+      width: 100%;
+      height: 800px;
+      object-fit: cover;
+      margin: -200px auto;
+      position: fixed;
+      background-color: black;
+      z-index: -995;
+      animation-name: fadeIn;
+      animation-duration: 3s;
+    }
+
+    .background-col {
+      background-color: white;
+      animation-name: fadeIn;
+      animation-duration: 2s;
+      z-index: 999;
+    }
+
+    .inSWFL {
+      display: flex;
+      justify-content: center;
+      box-shadow: 0px 23px 55px black;
+    }
+
+    #SWFLtext {
+      display: flex;
+      font-size: 64px;
+      font-weight: bold;
+      align-content: center;
+      text-align: center;
+      animation-name: fadeIn;
+      animation-duration: 1s;
+      color: #41a2dc;
+      /**animation: fadeLeft ease 4s;**/
+      margin: 20px -5px 20px;
+      position: relative;
+      z-index: 5;
+    }
+
+    #SWFLtext h2 {
+      font-size: 57px;
+      font-weight: bold;
+      align-content: center;
+      text-align: center;
+      color: white;
+      animation: fadeLeft ease 4s;
+      margin: auto;
+      position: relative;
+      z-index: 5;
+    }
+
+    .textback {
+      background-color: #1dc3fe;
+      position: absolute;
+      margin: auto 5% auto 5%;
+      height: 70px;
+      width: 770px;
+      transform: translate(-180px, 102px);
+      z-index: 1;
+    }
+
+    .FLPhoto {
+      width: 250px;
+      height: 250px;
+      margin-left: -70px;
+      margin-bottom: -20px;
+      transform: rotate(5deg);
+      z-index: -5;
+      animation: fadeRight ease 4s;
+    }
+
+    @media screen and (max-width: 1400px) {
+          .welcome-column h1 {
+            font-size: 330px;
+          }
+    }
+
+    @media screen and (max-width: 1240px) {
+      #SWFLtext {
+        font-size: 40px;
+      }
+      .welcome-column h1 {
+        font-size: 300px;
+      }
+      .FLPhoto {
+        width: 175px;
+        height: 175px;
+        margin-left: -20px;
+      }
+      .textback {
+        transform: translate(-174px, 65px);
+        width: 735px;
+      }
+      .site-content {
+        height: 4645px;
+      }
+    }
+
+    @media screen and (max-width: 1140px) {
+      #SWFLtext h2{
+        font-size: 44px !important;
+      }
+      .welcome-column h1 {
+        font-size: 270px;
+      }
+      .textback {
+        transform: translate(-150px, 65px);
+        width: 585px;
+      }
+    }
+
+    @media screen and (max-width: 950px) {
+      #SWFLtext h2{
+        font-size: 40px !important;
+      }
+      .welcome-column h1 {
+        font-size: 230px;
+      }
+      .textback {
+        transform: translate(-145px, 67px);
+        width: 550px;
+      }
+      .site-content {
+        height: 4850px;
+      }
+    }
+
+    @media screen and (max-width: 800px) {
+      #SWFLtext h2{
+        font-size: 32px !important;
+      }
+      .welcome-column h1 {
+        font-size: 200px;
+      }
+      .textback {
+        transform: translate(-125px, 65px);
+        width: 460px;
+      }
+    }
+
+    @media screen and (max-width: 720px) {
+      .welcome-column h1 {
+        font-size: 170px;
+      }
+      .site-content {
+        height: 4000px;
+      }
+    }
+
+    @media screen and (max-width: 680px) {
+      #SWFLtext h2{
+        font-size: 26px !important;
+      }
+      .welcome-column h1 {
+        font-size: 150px;
+      }
+      .textback {
+        transform: translate(-120px, 65px);
+        width: 360px;
+      }
+    }
+
+    @media screen and (max-width: 600px) {
+      #SWFLtext h2{
+        font-size: 20px !important;
+      }
+      .ber-logo {
+        display: grid !important;
+        margin-bottom: 30px;
+        justify-content: center;
+      }
+      #bar-width {
+        display: grid !important;
+      }
+      .welcome-column h1 {
+        font-size: 130px;
+      }
+      .navbar-expand-md li {
+        font-size: 8px;
+      }
+      .textback {
+        transform: translate(-75px, 80px);
+        width: 340px;
+        height: 35px;
+      }
+      .site-content {
+        height: 4530px;
+      }
+      .ber-logo {
+        display: none;
+      }
+      .navbar-expand-md ul{
+        display: inline;
+      }
+      .entry ul {
+        margin: auto;
+        display: grid;
+      }
+      #top-bar a {
+        font-size: 18px !important;
+      }
+      .navbar-expand-md li {
+        margin: 15px auto 15px auto;
+      }
+      .welcome-photo {
+        margin: -390px auto 525px auto;
+      }
+      .background-col {
+        margin: 0px auto 0px auto;
+      }
+      .welcome-column {
+        margin: 120px auto 70px auto;
+        width: 93%;
+        height: 480px;
+        display: none;
+      }
+      .welcome-column h1 {
+        font-size: 44px;
+        margin: 60px auto 0px auto;
+      }
+      #SWFLtext h2 {
+        font-size: 18px !important;
+        margin: 65px auto auto 15px;
+      }
+      .welcome-column p {
+        font-size: 13px;
+      }
+      
+    }
+
+    @keyframes fadeRight {
+    0% {opacity:0;
+      transform: translateX(-1000px);
+    }
+    60% {
+      opacity:0;
+        transform: translateX(-1000px);
+    }
+    100% {
+      opacity:1;,
+      transform: translateY(0);}
+  }
+
+
+    .row {
+      display: flex;
+      max-width: 1200px;
+      margin: 10px auto 5px auto;
+      align-items: center;
+      flex-direction: row;
+    }
+
+    .img-center {
+    text-align: center;
+    width: auto;
+    box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.15), 0 2px 3px 0 rgba(0, 0, 0, 0.1);
+  }
+
+  .container-fluid {
+    position: absolute;
+    padding-left: 0;
+    background-color: white;
+    padding-right: 0;
+  }
+
+  .card-img {
+    max-height: 300px;
+    max-width: 485px;
+    width: inherit;
+    align-items: center;
+    flex-direction: row;
+  }
+
+  #imgtext {
+    font-size: 34px;
+    font-weight: bold;
+    text-shadow: 0 2px 10px #000000;
+    margin: auto;
+    align-items: center;
+    z-index: 5;
+  }
+
+  @media screen and (max-width: 600px){
+    .card-img {
+      height: 80px;
+      width: 140px;
+    }
+
+    .row {
+      margin: auto auto 3px auto;
+    }
+
+    #imgtext {
+      font-size: 24px;
+    }
+  }
+
+  .shopping {
+    margin-right: -17px;
+  }
+
+  .fun {
+    margin-left: -17px;
+  }
+
+  .shopping:hover {
+    cursor: pointer;
+    filter: brightness(70%);
+  }
+
+  .dining:hover {
+    cursor: pointer;
+    filter: brightness(70%);
+  }
+
+  .fun:hover {
+    cursor: pointer;
+    filter: brightness(70%);
+  }
+
+  .map {
+    margin: -100px 0 0 0;
+    padding-top: 200px;
+    animation: fadeUp ease 4s;
+    background-image: linear-gradient(90deg, #0093E9 0%, #8adcf5 100%);
+    padding-bottom: 30px;
+  }
+
+  .map h1 {
+    margin: 25px auto auto 20px;
+    font-size: 60px;
+    padding-top: 30px;
+    color: white;
+    text-decoration: none;
+    font-weight: 700;
+  }
+
+  #mapframe {
+    width: 100%;
+    height: 500px;
+    display: flex;
+    justify-content: center;
+    position: relative;
+    margin: 0;
+    border: 0;
+  }
+
+  footer {
+    width: 100%;
+    position: relative;
+  }
+
+  .footy {
+    background-color: #262626;
+    height: 200px;
+    width: 100%;
+    position: relative;
+    margin: 15px auto auto auto;
+  }
+
+
+  </style>
+
+  <head>
+    <div id="top-bar">
+      <div id="bar-width">
+        <title>Discover Bonita Springs & Estero</title>
+        <a href="https://bonitaspringsesterolifestyles.com/homepage-2022/" target="_blank"><img class="ber-logo" loading=”eager” src="https://www.bonitaesterorealtors.com/wp-content/uploads/2021/08/Untitled-design-24.png" alt="Bonita Springs Lifestyles"></img></a>
+        <div class="bser-title">BSER Lifestyles</div>
+          <ul class="navbar-expand-md navbar-text">
+            <li><a href="https://bonitaspringsesterolifestyles.com/communities/" style="color: white;">Communities</a></li>
+            <li><a href="http://bonitaspringsesterorealtorsfl.growthzoneapp.com/realtordirectory/Find?term=&advFilter=eyJDdXN0b21GaWVsZFZhbHVlcyI6W10sIkNvdW50cmllcyI6W10sIlN0YXRlcyI6W10sIkNpdGllcyI6W10sIlBvc3RhbENvZGVzIjpbXSwiQ2F0ZWdvcnlWYWx1ZXMiOltdLCJSYWRpdXMiOiIwIn0%3D" style="color: white;">Find a REALTOR</a></li>
+            <li><a href="https://bonitaspringsesterolifestyles.com/homes-for-sale-swfl/" style="color: white;">Property Search</a></li>
+            <li><a href="https://bonitaspringsesterolifestyles.com/city-info/" style="color: white;">City Info</a></li>
+            <li><a href="https://bonitaspringsesterolifestyles.com/real-estate-information/" style="color: white;">Become a REALTOR®</a></li>
+          </ul>
+      </div>
+    </div>
+  </head>
+
+  <body>
+    <div id="welcome" onmouseover="textShow()" onmouseout="textHide()">
+      <div class="welcome-column">
+        <div id="welcome-header" style="display: none;">
+          <h1>Welcome</h1>
+        </div>
+        <div id="welcome-text" style="display: none;">
+          <p>Bonita Springs, Florida, is known as the Gateway to the Gulf and the center of the Island Coast. Sand dunes, beaches, and the Gulf of Mexico hug Bonita Springs' western boundary. To the east, tidy neighborhoods and residential communities reach to the borders of flourishing groves and rich farmland. Estero is a delightful and charming residential community that has built itself on a vision that includes fun, family values, and a sense of pride. Learn all about the Southwest Florida lifestyle, look into real estate in the area, or learn more about becoming a realtor. We have a lot of exciting information to share.</p>
+        </div>
+      </div>
+
+      <script type="text/javascript">
+      function textShow() {
+        document.getElementById("welcome").style.backGroundColor = "black";
+        document.getElementById("welcome-text").style.display = "contents";
+        document.getElementById("welcome-header").style.display = "contents";
+      }
+      function textHide() {
+        document.getElementById("beach-photo11").style.opacity = "1";
+        document.getElementById("beach-photo22").style.opacity = "1";
+        document.getElementById("welcome-text").style.display = "none";
+        document.getElementById("welcome-header").style.display = "none";
+      }
+      </script>
+
+        <div class="welcome-photo">
+          <!--<video autoplay muted id="beach-photo" style="display:none;" src="https://www.bonitaesterorealtors.com/wp-content/uploads/2022/08/Untitled-design-10.mp4" alt="beach photo">
+          </video>
+          <video autoplay muted id="beach-photo2" style="display:none;" src="https://www.bonitaesterorealtors.com/wp-content/uploads/2022/08/Untitled-design-4.mp4" alt="beach photo">
+          </video>
+          <video autoplay muted id="beach-photo3" style="display:none;" src="https://www.bonitaesterorealtors.com/wp-content/uploads/2022/08/Untitled-design-2.mp4" alt="beach photo">
+          </video>
+          <video autoplay muted id="beach-photo4" style="display:none;" src="https://www.bonitaesterorealtors.com/wp-content/uploads/2022/08/Untitled-design-5.mp4" alt="beach photo">
+          </video>
+          <video autoplay muted id="beach-photo5" style="display:none;" src="https://www.bonitaesterorealtors.com/wp-content/uploads/2022/08/Untitled-design-6.mp4" alt="beach photo">
+          </video>
+          <video autoplay muted id="beach-photo6" style="display:none;" src="https://www.bonitaesterorealtors.com/wp-content/uploads/2022/08/Untitled-design-9.mp4" alt="beach photo">
+          </video>
+          <video autoplay muted id="beach-photo7" style="display:none;" src="https://www.bonitaesterorealtors.com/wp-content/uploads/2022/08/Untitled-design-10.mp4" alt="beach photo">
+          </video>-->
+          <video autoplay muted preload="auto" id="beach-photo11" src="http://bonitaspringsesterolifestyles.com/wp-content/uploads/2022/08/Untitled-design-5.mov" alt="beach photo" loading="eager">
+          </video>
+          
+          <video autoplay muted id="beach-photo22" style="display:none;" src="http://bonitaspringsesterolifestyles.com/wp-content/uploads/2022/08/Untitled-design-6.mov" alt="beach photo" loading="eager">
+          </video>
+        </div>
+      </div>
+
+      <div class="background-col">
+        <div class="inSWFL">
+          <div id="SWFLtext"><h2>Explore Southwest Florida &nbsp &nbsp &nbsp &nbsp &nbsp &nbsp</h2><img class="FLPhoto" loading=”eager” src="https://www.bonitaesterorealtors.com/wp-content/uploads/2021/08/Userskevinw.DownloadsUntitled-design-16.png.png"></div>
+          <div class="textback"></div>
+        </div>
+      </div>
+
+      <div class="container-fluid">
+
+        <div class="row">
+          <div class="col-sm shopping">
+            <img class="card-img" loading=”eager” src="https://www.bonitaesterorealtors.com/wp-content/uploads/2021/08/pexels-porapak-apichodilok-346748-scaled.jpg"><a href="https://bonitaspringsesterolifestyles.com/places-to-shop/" target="_blank">
+            <div class="card-img-overlay overlay-dark text-white d-flex justify-content-center align-items-end"><p id="imgtext">Shopping</p></div></a>
+          </div>
+          <div class="col-sm dining">
+            <img class="card-img" loading=”eager” src="https://www.bonitaesterorealtors.com/wp-content/uploads/2021/08/pexels-pixabay-262978-scaled.jpg"><a href="https://bonitaspringsesterolifestyles.com/restaurant-in-swfl/">
+            <div class="card-img-overlay overlay-dark text-white d-flex justify-content-center align-items-end"><p id="imgtext">Dining</p></div></a>
+          </div>
+          <div class="col-sm fun" id="formove">
+            <img class="card-img" loading=”eager” src="https://www.bonitaesterorealtors.com/wp-content/uploads/2021/08/pexels-artem-beliaikin-452738-scaled.jpg">
+            <div class="card-img-overlay overlay-dark text-white d-flex justify-content-center align-items-end"><p id="imgtext">Fun</p></div>
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="col-sm shopping">
+            <img class="card-img" loading=”eager” src="https://www.bonitaesterorealtors.com/wp-content/uploads/2022/08/Untitled-design-6.png"><a href="">
+            <div class="card-img-overlay overlay-dark text-white d-flex justify-content-center align-items-end"><p id="imgtext">Area Info</p></div></a>
+          </div>
+          <div class="col-sm dining">
+            <img class="card-img" loading=”eager” src="https://www.bonitaesterorealtors.com/wp-content/uploads/2022/08/Untitled-design-7.png"><a href="https://bonitaspringsesterolifestyles.com/homes-for-sale-swfl/" target="_blank">
+            <div class="card-img-overlay overlay-dark text-white d-flex justify-content-center align-items-end"><p id="imgtext">Homes For Sale</p></div></a>
+          </div>
+          <div class="col-sm fun" onclick="moveToSec()">
+            <img class="card-img" id="someImage" loading=”eager” src="https://www.bonitaesterorealtors.com/wp-content/uploads/2022/08/Untitled-design-9.png">
+            <div class="card-img-overlay overlay-dark text-white d-flex justify-content-center align-items-end"><p id="imgtext">History</p></div>
+          </div>
+        </div>
+
+        <script type="text/javascript">
+          function moveToSec() {
+            const element = document.getElementById("formove"); // Contains .top and .left
+            let pos = element.offsetTop + window.scrollY;
+        
+            let body = document.body;
+            let html = document.documentElement;
+            let height = Math.max(body.scrollHeight, body.offsetHeight, html.clientHeight, html.scrollHeight, html.offsetHeight);
+        
+            if (height > 5000) {
+              element.top = 1400;
+              window.scrollTo(0, 1400);
+            } else if (height < 5000 && height > 4749) {
+              element.top = 1640;
+              window.scrollTo(0, 1640);
+            } else if (height < 4750) {
+              element.top = 1570;
+              window.scrollTo(0, 1570);
+            }
+          }
+        </script>
+        
+
+
+        <div class="map">
+          <h1>History of Bonita Springs/Estero</h1>
+          <div class="wrapper">
+            <div class="center-line">
+            </div>
+            <div class="row row-1">
+              <section>
+                <i class="icon fas fa-home"></i>
+                <div class="details">
+                  <span class="title">Early History</span>
+                  <span>Pre-1900 AD</span>
+                </div>
+                <p>For thousands of years, Florida was home to many Native American villages. In 1513, Ponce de Leon sailed along the SWFL beaches and first made contact with the Calusa Indians. Unfortunately, due to disease and the slave trade, the large Calusa tribe was greatly diminished. In the 1870s, the Army Corps of Engineers surveyed Southwest Florida and created the first village. The town, originally named "Survey," was renamed to "Bonita Springs" in the early 1900s.</p>
+                <div class="bottom">
+                  <a href="https://www.cityofbonitasprings.org/about_us/history" target="_blank">Read more</a>
+                  <i>- Bonita Springs</i>
+                </div>
+              </section>
+            </div>
+            <div class="row row-2">
+              <section>
+                <i class="icon fas fa-star"></i>
+                <div class="details">
+                  <span class="title">Early History </span>
+                  <span>Pre-1910 AD</span>
+                </div>
+                <p>Much of Estero's early history is similar to that of Bonita Springs because at the time, it would have been considered part of the same area. The real beginning of Estero's history is near the late 1800s, when a few farmers called the Estero River home and grew citrus there. The Estero River was the passage ships would take to transport and move much of the harvest from the area north. During this time, a group called the Koreshan Unity inhabited much of the area and was able to claim nearly 110 square miles of land, turning it into the town of Estero in 1904. Sadly, this wouldn't last long, as the city was quickly disbanded in 1907. You can visit the town established by the Koreshans today by visiting the Koreshan State Park. </p>
+                <div class="bottom">
+                  <a href="https://estero-fl.gov/estero-history/" target="_blank">Read more</a>
+                  <i>- Estero</i>
+                </div>
+              </section>
+            </div>
+            <div class="row row-1">
+              <section>
+                <i class="icon fas fa-rocket"></i>
+                <div class="details">
+                  <span class="title">Pre-1940's</span>
+                  <span>1900 - 1940 AD</span>
+                </div>
+                <p>In the early 1920s, Baron Collier extended the Fort Myers-Southern Railroad down to Bonita Springs. At the same time, the Tamiami Trail was nearing completion in 1928. This caused the population to start growing in the area and inevitably led to the incorporation of Bonita Springs as a city a few years later (at least temporarily). During this time, the Everglades Reptile Garden was created in 1936. You can visit it today!</p>
+                <div class="bottom">
+                  <a href="https://bestbonitaspringsvacationrental.com/resources/history-of-bonita-springs-florida/" target="_blank">Read more</a>
+                  <i>- Bonita Springs</i>
+                </div>
+              </section>
+            </div>
+            <div class="row row-2">
+              <section>
+                <i class="icon fas fa-globe"></i>
+                <div class="details">
+                  <span class="title">1900's</span>
+                  <span>1900 - 1990 AD</span>
+                </div>
+                <p>Much of the same benefits that helped Bonita Springs grow also directly benefited Estero. What became of the Koreshean, the true founders of Estero? They slowly dwindled in the mid-1900s. During their time with the land, they had acquired nearly 7,500 acres and constructed more than 70 buildings. Over time, members left the group until 1956, when there were only five members left. A few years later, these five donated 305 acres of the original town to be turned into a historic site. The five stayed on the site until the last member died in 1982.  </p>
+                <div class="bottom">
+                  <a href="https://estero-fl.gov/estero-history/" target="_blank">Read more</a>
+                  <i>- Estero</i>
+                </div>
+              </section>
+            </div>
+            <div class="row row-1">
+              <section>
+                <i class="icon fas fa-paper-plane"></i>
+                <div class="details">
+                  <span class="title">Late 1900's</span>
+                  <span>1940 - 2000 AD</span>
+                </div>
+                <p>Many changes came with the economic boom after World War II. Some of the inventions, like the air conditioner and the construction of I-75, made Bonita Springs a more viable option. The economic freedom of the time also allowed many families to take a risk and move to Bonita Springs. With all the families moving, opportunities for housing and entertainment followed, and the area saw a boom in the 1980s and 1990s. This led to Bonita Springs being reincorporated as a city in 1999.</p>
+                <div class="bottom">
+                  <a href="https://bestbonitaspringsvacationrental.com/resources/history-of-bonita-springs-florida/" target="_blank">Read more</a>
+                  <i>- Bonita Springs</i>
+                </div>
+              </section>
+            </div>
+            <div class="row row-2">
+              <section>
+                <i class="icon fas fa-map-marker-alt"></i>
+                <div class="details">
+                  <span class="title">Recent History</span>
+                  <span>1990 - 2014</span>
+                </div>
+                <p>During the mid-90s and early 2000s, a lot of effort was made to distinguish Estero. This can be seen even today. Estero has a building style and quality that separates it from Bonita Springs and Fort Myers, and this started during this time with the ECCL (Estero Council of Community Leaders). During this time, Estero became a new epicenter for growth. Many new communities and attractions came to be, including the coveted Coconut Point. Thoughts of incorporation started coming together during the early 2010s...</p>
+                <div class="bottom">
+                  <a href="https://estero-fl.gov/estero-history/" target="_blank">Read more</a>
+                  <i>- Estero</i>
+                </div>
+              </section>
+            </div>
+            <div class="row row-1">
+              <section>
+                <i class="icon fas fa-paper-plane"></i>
+                <div class="details">
+                  <span class="title">Bonita Springs Today</span>
+                  <span>2000 to Present</span>
+                </div>
+                <p>In recent times, the population has exploded. Bonita Springs has ensured to preserve many of the old staples of the city, but has also made an effort within the last two decades to ensure smart urban development planning. There have been many renovations to US41, old 41, and the downtown area. Thanks to many of these efforts, Bonita Springs has exploded as a popular tourist destination for many, and has welcomed travelers from foreign countries including, but not limited to, Canada, Germany, the United Kingdom, China, and many others.</p>
+                <div class="bottom">
+                  <a href="https://bestbonitaspringsvacationrental.com/resources/history-of-bonita-springs-florida/" target="_blank">Read more</a>
+                  <i>- Bonita Springs</i>
+                </div>
+              </section>
+            </div>
+            <div class="row row-2">
+              <section>
+                <i class="icon fas fa-map-marker-alt"></i>
+                <div class="details">
+                  <span class="title">Estero Today</span>
+                  <span>2014 to Present</span>
+                </div>
+                <p>A lot has happened in an incredibly short time for Estero. In the summer of 2013, the ECCL, chaired by Nick Batos, started the incorporation efforts, and a resounding 86 percent of Estero residents voted to incorporate in 2014. The 20-mile community officially became the "Village of Estero" on December 31, 2014. On March 17, 2015, Nick Batos was the Village's first mayor. In 2019, Estero's population was estimated to be around 34,000.  </p>
+                <div class="bottom">
+                  <a href="https://estero-fl.gov/estero-history/" target="_blank">Read more</a>
+                  <i>- Estero</i>
+                </div>
+              </section>
+            </div>
+          </div>
+        </div>
+
+        <div class="footy">
+          <div class="footer-background">
+            Copyright © 2022 Bonita Springs-Estero Board of Realtors® • All Rights Reserved • Website Development by Bonita Springs-Estero Realtors • 25300 Bernwood Dr. Suite 7, Bonita Springs, FL 34135 • (239) 992-6771
+          </div>
+        </div>
+
+
+  </body>
+
+      </div>
+  </body>
+
+  <script>
+
+    </script>
+
+
+
+</html>

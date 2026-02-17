@@ -1360,6 +1360,275 @@
                                                                         font-size: 0.9rem;
                                                                         opacity: 0.8;
                                                                     }
+
+                                                                    /* LIVE SITE FIXES & BREAKOUT STYLES - Phase 6 */
+
+                                                                    /* Force Full Width (Break out of WordPress/Elementor containers) */
+                                                                    .explore-section,
+                                                                    .history-section,
+                                                                    #welcome {
+                                                                        width: 100vw !important;
+                                                                        position: relative !important;
+                                                                        left: 50% !important;
+                                                                        right: 50% !important;
+                                                                        margin-left: -50vw !important;
+                                                                        margin-right: -50vw !important;
+                                                                        box-sizing: border-box !important;
+                                                                        max-width: 100vw !important;
+                                                                    }
+
+                                                                    /* Prevent horizontal scroll from breakout */
+                                                                    body,
+                                                                    html {
+                                                                        overflow-x: hidden !important;
+                                                                    }
+
+                                                                    /* Force Explore Title Styling */
+                                                                    .explore-section h2,
+                                                                    .explore-header h2,
+                                                                    .explore-section .title {
+                                                                        font-family: 'Oswald', sans-serif !important;
+                                                                        font-size: 2.5rem !important;
+                                                                        font-weight: 700 !important;
+                                                                        text-transform: uppercase !important;
+                                                                        color: #1a2a3a !important;
+                                                                        /* Secondary Color */
+                                                                        margin-bottom: 20px !important;
+                                                                        line-height: 1.2 !important;
+                                                                        text-align: center !important;
+                                                                        width: 100% !important;
+                                                                    }
+
+                                                                    /* Force Explore Graphic Size */
+                                                                    .FLPhoto {
+                                                                        max-width: 300px !important;
+                                                                        width: 100% !important;
+                                                                        height: auto !important;
+                                                                        /* Maintain aspect ratio */
+                                                                        display: block !important;
+                                                                        margin: 0 auto !important;
+                                                                    }
+
+                                                                    /* Mobile Adjustments */
+                                                                    @media (max-width: 768px) {
+
+                                                                        .explore-section,
+                                                                        .history-section {
+                                                                            padding: 60px 15px !important;
+                                                                            /* Reduced padding for mobile */
+                                                                        }
+
+                                                                        .explore-section h2 {
+                                                                            font-size: 2rem !important;
+                                                                        }
+
+                                                                        .card-img {
+                                                                            height: 250px !important;
+                                                                            /* Smaller cards on mobile */
+                                                                        }
+
+                                                                        #welcome-header {
+                                                                            font-size: 2.5rem !important;
+                                                                        }
+
+                                                                        #welcome-text {
+                                                                            font-size: 1.1rem !important;
+                                                                        }
+
+                                                                        /* Adjust breakout for mobile if needed, though 100vw usually works */
+                                                                        .explore-section,
+                                                                        .history-section,
+                                                                        #welcome {
+                                                                            margin-left: -50vw !important;
+                                                                            margin-right: -50vw !important;
+                                                                        }
+                                                                    }
+
+                                                                    /* PHASE 7: FINAL POLISH & LIVE SITE FIXES */
+
+                                                                    /* 1. Header & Logo Alignment Fixes (Flexbox) */
+                                                                    #bar-width {
+                                                                        display: flex !important;
+                                                                        flex-direction: row !important;
+                                                                        justify-content: space-between !important;
+                                                                        align-items: center !important;
+                                                                        width: 100% !important;
+                                                                        max-width: 1400px !important;
+                                                                        margin: 0 auto !important;
+                                                                    }
+
+                                                                    .brand-wrapper {
+                                                                        display: flex !important;
+                                                                        align-items: center !important;
+                                                                        gap: 15px !important;
+                                                                    }
+
+                                                                    /* Fix Logo Margins & Sizing */
+                                                                    .ber-logo {
+                                                                        margin: 0 !important;
+                                                                        /* Remove negative margins */
+                                                                        max-height: 60px !important;
+                                                                        width: auto !important;
+                                                                        display: block !important;
+                                                                    }
+
+                                                                    /* Update BSER Title Style */
+                                                                    .bser-title {
+                                                                        display: block !important;
+                                                                        color: #ffffff !important;
+                                                                        font-family: 'Oswald', sans-serif !important;
+                                                                        font-size: 1.8rem !important;
+                                                                        font-weight: 700 !important;
+                                                                        text-transform: uppercase !important;
+                                                                        letter-spacing: 1px !important;
+                                                                        margin: 0 !important;
+                                                                        white-space: nowrap !important;
+                                                                        line-height: 1 !important;
+                                                                        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5) !important;
+                                                                    }
+
+                                                                    /* Ensure Nav Items Align */
+                                                                    .navbar-expand-md {
+                                                                        display: flex !important;
+                                                                        align-items: center !important;
+                                                                        margin: 0 !important;
+                                                                        padding: 0 !important;
+                                                                        gap: 20px !important;
+                                                                    }
+
+                                                                    /* PHASE 8: FINAL REFINEMENTS (ROUND 3) */
+
+                                                                    /* 1. Header Position & White Bar Fix */
+                                                                    /* PHASE 11: FINAL LAYOUT ADJUSTMENTS (ROUND 4) - FIXED */
+
+                                                                    /* 1. Explore Section: White Background */
+                                                                    /* Target the wrapper that holds the map and title */
+                                                                    #Explore,
+                                                                    .explore-section,
+                                                                    .background-col {
+                                                                        background-color: #ffffff !important;
+                                                                        background: #ffffff !important;
+                                                                        position: relative !important;
+                                                                        z-index: 10 !important;
+                                                                        padding-top: 50px !important;
+                                                                        padding-bottom: 50px !important;
+                                                                    }
+
+                                                                    /* Force text color for title to be dark on white */
+                                                                    /* Use multiple selectors to ensure override */
+                                                                    #Explore h2,
+                                                                    .explore-section h2,
+                                                                    .explore-header h2,
+                                                                    .background-col h2 {
+                                                                        color: #1a2a3a !important;
+                                                                        /* Dark blue/black */
+                                                                        text-shadow: none !important;
+                                                                    }
+
+                                                                    /* 2. Button Spacing (Card Container) */
+                                                                    /* Add margin/padding to separation buttons from edge */
+                                                                    .explore-grid,
+                                                                    .row.justify-content-center {
+                                                                        padding: 0 5vw !important;
+                                                                        margin-top: 30px !important;
+                                                                        margin-bottom: 30px !important;
+                                                                    }
+
+                                                                    /* 3. Header Position: More space from top */
+                                                                    #top-bar {
+                                                                        top: 40px !important;
+                                                                        /* Increased from 20px */
+                                                                        background: rgba(20, 20, 20, 0.9) !important;
+                                                                        border-radius: 50px !important;
+                                                                        margin-top: 0 !important;
+                                                                        max-width: 95% !important;
+                                                                        left: 50% !important;
+                                                                        transform: translateX(-50%) !important;
+                                                                        width: 95% !important;
+                                                                        z-index: 1000 !important;
+                                                                    }
+
+                                                                    /* PHASE 10 RE-ASSERTIONS (Keep what worked) */
+                                                                    #welcome {
+                                                                        margin-top: -50px !important;
+                                                                        padding-top: 150px !important;
+                                                                        background-color: transparent !important;
+                                                                        background: none !important;
+                                                                    }
+
+                                                                    .welcome-photo {
+                                                                        z-index: 0 !important;
+                                                                        opacity: 1 !important;
+                                                                    }
+
+                                                                    body {
+                                                                        background-color: #000 !important;
+                                                                    }
+
+                                                                    /* Scoped Text Spacing */
+                                                                    .explore-section>h2 {
+                                                                        text-align: left !important;
+                                                                        padding-left: 5vw !important;
+                                                                        margin-left: 0 !important;
+                                                                        width: 100% !important;
+                                                                    }
+
+                                                                    /* Card Text Centering */
+                                                                    .card-overlay h2 {
+                                                                        text-align: center !important;
+                                                                        color: #fff !important;
+                                                                        text-shadow: 0 2px 10px rgba(0, 0, 0, 0.9) !important;
+                                                                    }
+
+                                                                    .card-overlay {
+                                                                        background: linear-gradient(to top, rgba(0, 0, 0, 0.8) 0%, rgba(0, 0, 0, 0.2) 50%, transparent 100%) !important;
+                                                                    }
+
+                                                                    /* History of Bonita Springs/Estero Title */
+                                                                    .history-section h1,
+                                                                    .history-section h2,
+                                                                    .history-section h3 {
+                                                                        text-align: left !important;
+                                                                        padding-left: 5vw !important;
+                                                                        width: 100% !important;
+                                                                    }
+
+                                                                    /* Ensure content containers also align if needed */
+                                                                    .explore-section,
+                                                                    .history-section {
+                                                                        padding-left: 0 !important;
+                                                                        padding-right: 0 !important;
+                                                                    }
+
+                                                                    /* 3. History Padding & Spacing */
+                                                                    .wrapper .row section {
+                                                                        padding: 40px !important;
+                                                                    }
+
+                                                                    /* 4. Footer Whitespace Fix */
+                                                                    body {
+                                                                        min-height: 100vh !important;
+                                                                        display: flex !important;
+                                                                        flex-direction: column !important;
+                                                                    }
+
+                                                                    #primary,
+                                                                    #content,
+                                                                    .site-content {
+                                                                        margin-bottom: 0 !important;
+                                                                        padding-bottom: 0 !important;
+                                                                    }
+
+                                                                    .footy {
+                                                                        margin-top: auto !important;
+                                                                        padding: 40px 20px !important;
+                                                                        width: 100vw !important;
+                                                                        margin-left: -50vw !important;
+                                                                        left: 50% !important;
+                                                                        position: relative !important;
+                                                                        box-sizing: border-box !important;
+                                                                        background: #1a2a3a !important;
+                                                                    }
                                                                 </style>
 
                                                                 <link rel="preconnect"
@@ -1459,12 +1728,15 @@
                                                                 <div id="top-bar">
                                                                     <div id="bar-width">
 
-                                                                        <a href="https://bonitasprings.kinsta.cloud/homepage-2022/"
-                                                                            target="_blank"><img decoding="async"
-                                                                                class="ber-logo" loading="”eager”"
-                                                                                src="https://www.bonitaesterorealtors.com/wp-content/uploads/2021/08/Untitled-design-24.png"
-                                                                                alt="Bonita Springs Lifestyles"></a>
-                                                                        <div class="bser-title">BSER Lifestyles</div>
+                                                                        <div class="brand-wrapper">
+                                                                            <a href="https://bonitasprings.kinsta.cloud/homepage-2022/"
+                                                                                target="_blank"><img decoding="async"
+                                                                                    class="ber-logo" loading="”eager”"
+                                                                                    src="https://www.bonitaesterorealtors.com/wp-content/uploads/2021/08/Untitled-design-24.png"
+                                                                                    alt="Bonita Springs Lifestyles"></a>
+                                                                            <div class="bser-title">BSER Lifestyles
+                                                                            </div>
+                                                                        </div>
                                                                         <ul class="navbar-expand-md">
                                                                             <li><a
                                                                                     href="https://bonitasprings.kinsta.cloud/communities/">Communities</a>
