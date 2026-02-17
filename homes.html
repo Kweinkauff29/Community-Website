@@ -41,91 +41,144 @@
     /* --- Header Styles (Ported from homepage.html) --- */
     #top-bar {
       position: fixed;
-      top: 40px;
+      top: 40px !important;
       /* Standardized offset */
-      left: 50%;
-      transform: translateX(-50%);
-      width: 95%;
-      max-width: 1400px;
-      background: var(--header-bg);
-      border-radius: 50px;
-      padding: 10px 20px;
-      z-index: 1000;
-      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
+      left: 50% !important;
+      transform: translateX(-50%) !important;
+      width: 95% !important;
+      max-width: 1400px !important;
+      background: var(--header-bg) !important;
+      border-radius: 50px !important;
+      padding: 10px 20px !important;
+      z-index: 10000 !important;
+      /* High Z-Index to beat Elementor */
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3) !important;
+      display: flex !important;
+      align-items: center !important;
+      justify-content: space-between !important;
       backdrop-filter: blur(5px);
+      margin: 0 !important;
+      height: auto !important;
     }
 
     #bar-width {
-      display: flex;
-      align-items: center;
-      width: 100%;
-      justify-content: space-between;
+      display: flex !important;
+      align-items: center !important;
+      width: 100% !important;
+      justify-content: space-between !important;
     }
 
     .brand-wrapper {
-      display: flex;
-      align-items: center;
-      gap: 15px;
-      text-decoration: none;
+      display: flex !important;
+      align-items: center !important;
+      gap: 15px !important;
+      text-decoration: none !important;
+      border: none !important;
     }
 
+    /* Strict Logo Sizing to override Elementor/Theme defaults */
     .ber-logo {
-      height: 50px;
-      width: auto;
+      height: 50px !important;
+      width: auto !important;
+      max-width: 200px !important;
+      min-width: 50px !important;
+      object-fit: contain !important;
+      margin: 0 !important;
+      padding: 0 !important;
+      border: none !important;
+      box-shadow: none !important;
+    }
+
+    /* User Requirement: Overwrite Elementor Img styles */
+    .elementor img {
+      width: auto !important;
+      height: auto !important;
+      max-width: 100% !important;
+      border: none !important;
+      box-shadow: none !important;
     }
 
     .bser-title {
-      color: var(--white);
-      font-family: 'Oswald', sans-serif;
-      font-size: 1.5rem;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 1px;
-      line-height: 1;
+      color: var(--white) !important;
+      font-family: 'Oswald', sans-serif !important;
+      font-size: 1.5rem !important;
+      font-weight: 700 !important;
+      text-transform: uppercase !important;
+      letter-spacing: 1px !important;
+      line-height: 1 !important;
+      margin: 0 !important;
     }
 
     .navbar-expand-md {
-      display: flex;
-      gap: 20px;
-      list-style: none;
+      display: flex !important;
+      gap: 20px !important;
+      list-style: none !important;
+      margin: 0 !important;
+      padding: 0 !important;
+    }
+
+    .navbar-expand-md li {
+      margin: 0 !important;
+      padding: 0 !important;
     }
 
     .navbar-expand-md a {
-      color: var(--white);
-      text-decoration: none;
-      font-weight: 500;
-      font-size: 1rem;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
+      color: var(--white) !important;
+      text-decoration: none !important;
+      font-weight: 500 !important;
+      font-size: 1rem !important;
+      text-transform: uppercase !important;
+      letter-spacing: 0.5px !important;
       transition: opacity 0.2s;
+      border: none !important;
     }
 
     .navbar-expand-md a:hover {
       opacity: 0.8;
-      text-decoration: none;
+      text-decoration: none !important;
     }
 
     /* --- Layout --- */
+    .filters-container {
+      position: sticky;
+      top: 100px;
+      /* Below fixed header */
+      z-index: 9;
+      background: #fff;
+      border-bottom: 1px solid #eee;
+      padding: 10px 0;
+    }
+
     .main-container {
       display: flex;
-      height: 100vh;
-      padding-top: 100px;
-      /* Space for fixed header */
+      height: calc(100vh - 220px);
+      /* Adjust for header + filters */
+      padding-top: 0;
+      position: relative;
+      z-index: 1;
     }
 
     .map-section {
       flex: 1;
+      /* Left side by default flex order */
       position: relative;
       background: #e5e5e5;
+      min-width: 0;
     }
 
     #map {
       height: 100%;
       width: 100%;
       z-index: 1;
+    }
+
+    /* Ensure Leaflet Images aren't messed up by global styles */
+    .leaflet-pane img {
+      max-width: none !important;
+      width: auto !important;
+      height: auto !important;
+      box-shadow: none !important;
+      border: none !important;
     }
 
     .listings-section {
@@ -137,6 +190,7 @@
       flex-direction: column;
       box-shadow: -2px 0 10px rgba(0, 0, 0, 0.05);
       z-index: 5;
+      position: relative;
     }
 
     /* --- Filters --- */
@@ -217,15 +271,18 @@
       padding-top: 60%;
       /* 3:2 Aspect Ratio */
       background: #eee;
+      overflow: hidden;
     }
 
     .card-img {
       position: absolute;
       top: 0;
       left: 0;
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
+      width: 100% !important;
+      /* Force width for card images */
+      height: 100% !important;
+      object-fit: cover !important;
+      border: none !important;
     }
 
     .price-badge {
@@ -304,10 +361,10 @@
     /* --- Responsive --- */
     @media (max-width: 900px) {
       .navbar-expand-md {
-        display: none;
+        display: none !important;
       }
 
-      /* Hide nav on small screens for now, or add hamburger */
+      /* Hide nav, use hamburger in future */
       .main-container {
         flex-direction: column-reverse;
         padding-top: 80px;
@@ -323,16 +380,16 @@
       }
 
       #top-bar {
-        width: 95%;
-        top: 20px;
+        width: 95% !important;
+        top: 20px !important;
       }
 
       .ber-logo {
-        height: 40px;
+        height: 40px !important;
       }
 
       .bser-title {
-        font-size: 1.2rem;
+        font-size: 1.2rem !important;
       }
     }
   </style>
@@ -359,6 +416,72 @@
     </div>
   </div>
 
+  <!-- Featured Carousel Section -->
+  <div class="carousels-wrapper" id="carouselsWrapper" style="margin-top: 140px; display:none;">
+    <!-- Just Listed Carousel -->
+    <div class="carousel-container" id="featuredCarousel">
+      <div class="carousel-header">
+        <h2>Just Listed <span class="badge-new">New (7d)</span></h2>
+      </div>
+      <div class="carousel-track" id="carouselTrack"></div>
+    </div>
+
+    <!-- Status Changes Carousel -->
+    <div class="carousel-container" id="statusCarousel" style="display:none; border-top: 1px solid #eee;">
+      <div class="carousel-header">
+        <h2>Price/Status Updates <span class="badge-update">Last 7d</span></h2>
+      </div>
+      <div class="carousel-track" id="statusTrack"></div>
+    </div>
+  </div>
+
+  <!-- Search Bar (Moved Top) -->
+  <div class="filters-container">
+    <div class="filters-bar">
+      <div class="filter-row">
+        <!-- Type Toggle -->
+        <div class="type-toggle"
+          style="display:flex; background:#eee; border-radius:8px; padding:2px; margin-right:10px;">
+          <button class="type-btn active" id="btnSale"
+            style="border:none; background:#fff; padding:6px 12px; border-radius:6px; cursor:pointer; font-weight:600; box-shadow:0 1px 3px rgba(0,0,0,0.1);">For
+            Sale</button>
+          <button class="type-btn" id="btnRent"
+            style="border:none; background:transparent; padding:6px 12px; border-radius:6px; cursor:pointer; font-weight:600; color:#666;">For
+            Rent</button>
+        </div>
+
+        <select id="sortFilter" class="filter-select">
+          <option value="dateDesc">Newest Listings</option>
+          <option value="priceDesc">Price: High to Low</option>
+          <option value="priceAsc">Price: Low to High</option>
+        </select>
+        <select id="cityFilter" class="filter-select">
+          <option value="">All Cities</option>
+          <option value="Bonita Springs">Bonita Springs</option>
+          <option value="Estero">Estero</option>
+          <option value="Naples">Naples</option>
+          <option value="Fort Myers">Fort Myers</option>
+        </select>
+      </div>
+      <!-- Expanded Filters -->
+      <div class="filter-row">
+        <input type="number" id="priceMin" class="filter-select" placeholder="Min Price" style="width: 100px;">
+        <input type="number" id="priceMax" class="filter-select" placeholder="Max Price" style="width: 100px;">
+
+        <select id="bedsFilter" class="filter-select">
+          <option value="">Beds (Any)</option>
+          <option value="2">2+</option>
+          <option value="3">3+</option>
+          <option value="4">4+</option>
+        </select>
+
+        <button class="search-btn" id="applyFiltersBtn">Apply</button>
+        <button class="search-btn" style="background:#666;" id="clearFiltersBtn">Clear</button>
+      </div>
+      <div class="results-count" id="resultsCount" style="margin-left:auto; align-self:center;">Loading...</div>
+    </div>
+  </div>
+
   <div class="main-container">
     <!-- Map Section -->
     <div class="map-section">
@@ -367,27 +490,6 @@
 
     <!-- Listings Section -->
     <div class="listings-section">
-      <div class="filters-bar">
-        <div class="filter-row">
-          <select id="sortFilter" class="filter-select">
-            <option value="dateDesc">Newest Listings</option>
-            <option value="priceDesc">Price: High to Low</option>
-            <option value="priceAsc">Price: Low to High</option>
-          </select>
-          <select id="cityFilter" class="filter-select">
-            <option value="">All Cities</option>
-            <option value="Bonita Springs">Bonita Springs</option>
-            <option value="Estero">Estero</option>
-            <option value="Naples">Naples</option>
-            <option value="Fort Myers">Fort Myers</option>
-          </select>
-        </div>
-        <!-- <div class="filter-row">
-                    <button class="search-btn" id="refreshBtn">Update Search</button>
-                </div> -->
-        <div class="results-count" id="resultsCount">Loading...</div>
-      </div>
-
       <div class="listings-grid" id="listingsGrid">
         <!-- Cards injected here -->
       </div>
@@ -402,23 +504,17 @@
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
   <script>
     // --- Config ---
-    const WORKER_URL = 'https://listingsworker.bonitaspringsrealtors.workers.dev/api/v2/OData/bsaor/Property'; // Update this once deployed
-    // Fallback or use existing worker for now if new one not deployed yet
-    // const WORKER_URL_FALLBACK = 'https://openhouseworker.bonitaspringsrealtors.workers.dev/api/v2/OData/bsaor/Property';
-
-    // Use the new endpoint structure. Assuming user deploys ListingsWorker.js to a new route or updates existing. 
-    // For now, I will point to where it SHOULD be. 
-    // NOTE: User needs to deploy the worker I created.
-
-    // actually, let's use the origin of the OpenhouseWorker but with the Listings logic if possible? 
-    // No, I created a NEW worker file. I will assume the user creates it at 'listingsworker'.
-    // If not, we can change this constant later.
     const API_BASE = 'https://listingsworker.bonitaspringsrealtors.workers.dev';
+    // Use OpenHouse worker for Media since ListingsWorker token is restricted
+    const ODATA_MEDIA = `https://openhouseworker.bonitaspringsrealtors.workers.dev/api/v2/OData/bsaor/Media`;
 
     // State
     let map;
     let markers = [];
     let allListings = [];
+    let mediaCache = new Map(); // Key -> URL (or Array of URLs now)
+    let isRentalMode = false;   // Default to Sale
+
     const formatter = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 });
 
     // Init
@@ -426,121 +522,517 @@
       initMap();
       fetchListings();
       setupFilters();
+      setupTypeToggle();
     });
 
-    function initMap() {
-      // Center on Bonita Springs/Estero
-      map = L.map('map').setView([26.38, -81.80], 12);
+    function setupTypeToggle() {
+      const btnSale = document.getElementById('btnSale');
+      const btnRent = document.getElementById('btnRent');
 
-      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-      }).addTo(map);
+      btnSale.addEventListener('click', () => {
+        if (isRentalMode) {
+          isRentalMode = false;
+          toggleBtns();
+          fetchListings();
+        }
+      });
+
+      btnRent.addEventListener('click', () => {
+        if (!isRentalMode) {
+          isRentalMode = true;
+          toggleBtns();
+          fetchListings();
+        }
+      });
+
+      function toggleBtns() {
+        if (isRentalMode) {
+          btnRent.classList.add('active');
+          btnRent.style.background = '#fff';
+          btnRent.style.color = '#333';
+          btnRent.style.boxShadow = '0 1px 3px rgba(0,0,0,0.1)';
+
+          btnSale.classList.remove('active');
+          btnSale.style.background = 'transparent';
+          btnSale.style.boxShadow = 'none';
+          btnSale.style.color = '#666';
+        } else {
+          btnSale.classList.add('active');
+          btnSale.style.background = '#fff';
+          btnSale.style.color = '#333';
+          btnSale.style.boxShadow = '0 1px 3px rgba(0,0,0,0.1)';
+
+          btnRent.classList.remove('active');
+          btnRent.style.background = 'transparent';
+          btnRent.style.boxShadow = 'none';
+          btnRent.style.color = '#666';
+        }
+      }
     }
 
     async function fetchListings() {
       showLoading(true);
       try {
-        // Fetch active listings
-        // $filter=StandardStatus eq 'Active' and OriginatingSystemName eq 'Bonita Springs'
-        const filter = "StandardStatus eq 'Active' and OriginatingSystemName eq 'Bonita Springs'";
-        const select = "ListingKey,UnparsedAddress,City,ListPrice,BedroomsTotal,BathroomsTotalInteger,LivingArea,Latitude,Longitude,Media";
-        const top = 100; // Limit for performance demo
+        // Base Filter
+        let filter = "StandardStatus eq 'Active' and OriginatingSystemName eq 'Bonita Springs'";
 
-        const params = new URLSearchParams({
-          $filter: filter,
-          $select: select,
-          $top: top,
-          $orderby: 'ListingContractDate desc'
-        });
+        // Rental vs Sale Logic
+        // Using PropertyType to distinguish
+        if (isRentalMode) {
+          filter += " and (PropertyType eq 'Residential Lease' or PropertyType eq 'Rental')";
+        } else {
+          filter += " and (PropertyType eq 'Residential' or PropertyType eq 'Land' or PropertyType eq 'Commercial')";
+          filter += " and PropertyType ne 'Residential Lease' and PropertyType ne 'Rental'";
+        }
 
-        // NOTE: We're calling the worker here.
-        // If the user hasn't deployed the worker yet, this will fail.
-        // We'll treat this as the target implementation.
-        const response = await fetch(`${API_BASE}/api/v2/OData/bsaor/Property?${params}`);
+        // Requesting basic fields first + StatusChangeTimestamp
+        const select = "ListingKey,UnparsedAddress,City,ListPrice,BedroomsTotal,BathroomsTotalInteger,LivingArea,Coordinates,ListingContractDate,StatusChangeTimestamp";
+        const top = 200;
 
-        if (!response.ok) throw new Error('Failed to fetch listings');
+        const params = new URLSearchParams();
+        params.append('$filter', filter);
+        params.append('$select', select);
+        params.append('$top', top);
+        params.append('$orderby', 'ListingContractDate desc');
+
+        const url = `${API_BASE}/api/v2/OData/bsaor/Property?${params.toString()}`;
+
+        const response = await fetch(url);
+
+        if (!response.ok) {
+          const txt = await response.text();
+          throw new Error(`API Error ${response.status}: ${txt}`);
+        }
 
         const data = await response.json();
         allListings = data.value || [];
+
+        // 1. Start fetching media in background
+        fetchMediaBatch(allListings);
+
+        // 2. Render Carousels
+        const now = new Date();
+        const oneWeekAgo = new Date();
+        oneWeekAgo.setDate(now.getDate() - 7);
+
+        // A) Just Listed (Contract Date within last 7 days)
+        const newListings = allListings.filter(x => x.ListingContractDate && new Date(x.ListingContractDate) >= oneWeekAgo);
+        renderCarousel(newListings);
+
+        // B) Status Changes (Status Change within last 7 days AND not just listed)
+        const statusListings = allListings.filter(x => {
+          if (!x.StatusChangeTimestamp) return false;
+          const sc = new Date(x.StatusChangeTimestamp);
+          const lc = x.ListingContractDate ? new Date(x.ListingContractDate) : null;
+          if (sc < oneWeekAgo) return false;
+          if (lc && (sc - lc) < 86400000) return false;
+          return true;
+        });
+        renderStatusCarousel(statusListings);
 
         updateUI(allListings);
 
       } catch (err) {
         console.error(err);
-        document.getElementById('listingsGrid').innerHTML = '<div style="padding:20px; text-align:center;">User must deploy <code>ListingsWorker.js</code> to Cloudflare to enable data feed.<br><br>Error: ' + err.message + '</div>';
+        document.getElementById('listingsGrid').innerHTML = `
+                    <div style="padding:20px; text-align:center; color: red;">
+                        <strong>Error fetching data</strong><br>
+                        ${err.message}<br><br>
+                        <em>Please check console for details.</em>
+                    </div>`;
       } finally {
         showLoading(false);
       }
     }
 
-    function updateUI(listings) {
-      // 1. Update Grid
-      renderGrid(listings);
+    // --- Smart Media Loader ---
+    const MediaLoader = {
+      queue: [],
+      processing: false,
+      observer: null,
+      loadedCount: 0,
+      initialBatchSize: 15,
 
-      // 2. Update Map
-      renderMapMarkers(listings);
+      init() {
+        if (this.observer) return;
+        this.observer = new IntersectionObserver((entries) => {
+          entries.forEach(entry => {
+            if (entry.isIntersecting) {
+              const id = entry.target.dataset.id;
+              if (id && !mediaCache.has(id)) {
+                this.enqueue(id);
+                this.observer.unobserve(entry.target);
+              }
+            }
+          });
+        }, { rootMargin: '200px' });
+      },
 
-      // 3. Update Count
-      document.getElementById('resultsCount').textContent = `${listings.length} Results Found`;
+      observe(el) {
+        if (this.observer) this.observer.observe(el);
+      },
+
+      enqueue(id) {
+        if (!this.queue.includes(id)) {
+          this.queue.push(id);
+          this.process();
+        }
+      },
+
+      async process() {
+        if (this.processing || this.queue.length === 0) return;
+        this.processing = true;
+
+        // Take chunk
+        const chunkKeys = this.queue.splice(0, 10);
+        await this.fetchChunk(chunkKeys);
+
+        // Check loading state
+        this.loadedCount += chunkKeys.length;
+        const loadingOverlay = document.getElementById('loading');
+        if (loadingOverlay && loadingOverlay.style.display !== 'none') {
+          if (this.loadedCount >= this.initialBatchSize || (this.queue.length === 0 && this.loadedCount > 0)) {
+            // Fade out
+            loadingOverlay.style.opacity = '0';
+            setTimeout(() => { loadingOverlay.style.display = 'none'; }, 500);
+          }
+        }
+
+        this.processing = false;
+        if (this.queue.length > 0) this.process();
+      },
+
+      async fetchChunk(keys) {
+        if (keys.length === 0) return;
+        const filter = keys.map(k => `ListingKey eq '${k}'`).join(' or ');
+        const url = `${API_BASE}/api/v2/OData/bsaor/Property`;
+        const params = new URLSearchParams({
+          $filter: filter,
+          $select: 'ListingKey,Media'
+        });
+
+        try {
+          const res = await fetch(`${url}?${params}`);
+          if (res.ok) {
+            const data = await res.json();
+            const items = data.value || [];
+            const foundItems = [];
+
+            items.forEach(p => {
+              if (p.Media && Array.isArray(p.Media) && p.Media.length > 0) {
+                const sorted = p.Media.sort((a, b) => (a.Order || 0) - (b.Order || 0));
+                // Cache FULL array of URLs
+                const urls = sorted.map(m => m.MediaURL || m.MediaUrl || m.MediaURLLarge).filter(u => u);
+
+                if (urls.length > 0) {
+                  mediaCache.set(p.ListingKey, urls);
+                  foundItems.push(p);
+                }
+              }
+            });
+            updateImagesInUI(foundItems);
+          }
+        } catch (e) {
+          console.warn("MediaLoader error", e);
+        }
+      }
+    };
+
+    // --- Legacy Replacement ---
+    async function fetchMediaBatch(listings) {
+      // Initialize Loader
+      MediaLoader.init();
+      // We rely on IntersectionObserver now
     }
 
-    function renderGrid(listings) {
+    async function fetchMediaForChunk(chunk) {
+      // Deprecated: Logic moved to MediaLoader.Process
+    }
+
+    function updateImagesInUI(chunk) {
+      // Find img elements for these keys and update src
+      chunk.forEach(item => {
+        const urls = mediaCache.get(item.ListingKey);
+        if (urls && urls.length > 0) {
+          const url = urls[0]; // Default to first
+
+          // Update grid card
+          const img = document.querySelector(`#img-${item.ListingKey}`);
+          if (img) {
+            img.src = url;
+            // Update count logic if needed
+            const countEl = document.getElementById(`count-${item.ListingKey}`);
+            if (countEl) countEl.innerText = `1 / ${urls.length}`;
+          }
+          // Update featured carousel card
+          const cImg = document.querySelector(`#c-img-${item.ListingKey}`);
+          if (cImg) cImg.src = url;
+          // Update status carousel card
+          const sImg = document.querySelector(`#s-img-${item.ListingKey}`);
+          if (sImg) sImg.src = url;
+        }
+      });
+    }
+
+    function renderCarousel(items) {
+      const track = document.getElementById('carouselTrack');
+      const container = document.getElementById('featuredCarousel');
+      const wrapper = document.getElementById('carouselsWrapper');
+
+      if (items.length === 0) {
+        container.style.display = 'none';
+        checkWrapperVisibility();
+        return;
+      }
+
+      container.style.display = 'block';
+      wrapper.style.display = 'block';
+      track.innerHTML = '';
+
+      items.forEach(item => {
+        const price = formatter.format(item.ListPrice || 0);
+        const el = document.createElement('div');
+        el.className = 'carousel-card';
+        // Add ID for observer and loading hook
+        el.dataset.id = item.ListingKey;
+        el.innerHTML = `
+                <div class="carousel-img-wrapper">
+                     <img src="https://via.placeholder.com/300x200?text=Loading..." id="c-img-${item.ListingKey}" class="carousel-img" loading="lazy">
+                     <div class="price-badge">${price}</div>
+                </div>
+                <div class="card-content">
+                    <div class="card-address" style="font-size:0.9rem;">${item.UnparsedAddress}</div>
+                    <div class="card-meta">${item.City}</div>
+                </div>
+            `;
+        el.onclick = () => {
+          // Scroll to grid item and map
+          const gridCard = document.getElementById(`card-${item.ListingKey}`);
+          if (gridCard) {
+            gridCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            gridCard.click(); // Triggers map flyTo
+          }
+        };
+        track.appendChild(el);
+        MediaLoader.observe(el);
+      });
+    }
+
+    function renderStatusCarousel(items) {
+      const track = document.getElementById('statusTrack');
+      const container = document.getElementById('statusCarousel');
+      const wrapper = document.getElementById('carouselsWrapper');
+
+      if (items.length === 0) {
+        container.style.display = 'none';
+        checkWrapperVisibility();
+        return;
+      }
+
+      container.style.display = 'block';
+      wrapper.style.display = 'block';
+      track.innerHTML = '';
+
+      items.forEach(item => {
+        const price = formatter.format(item.ListPrice || 0);
+        const el = document.createElement('div');
+        el.className = 'carousel-card';
+        // Add ID for helper
+        el.dataset.id = item.ListingKey;
+        el.innerHTML = `
+                <div class="carousel-img-wrapper">
+                     <img src="https://via.placeholder.com/300x200?text=Loading..." id="s-img-${item.ListingKey}" class="carousel-img" loading="lazy">
+                     <div class="price-badge">${price}</div>
+                </div>
+                <div class="card-content">
+                    <div class="card-address" style="font-size:0.9rem;">${item.UnparsedAddress}</div>
+                    <div class="card-meta">${item.City} (Updated)</div>
+                </div>
+            `;
+        el.onclick = () => {
+          const gridCard = document.getElementById(`card-${item.ListingKey}`);
+          if (gridCard) {
+            gridCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            gridCard.click();
+          }
+        };
+        track.appendChild(el);
+        MediaLoader.observe(el);
+      });
+    }
+
+    function checkWrapperVisibility() {
+      const c1 = document.getElementById('featuredCarousel');
+      const c2 = document.getElementById('statusCarousel');
+      const wrapper = document.getElementById('carouselsWrapper');
+      if (c1.style.display === 'none' && c2.style.display === 'none') {
+        wrapper.style.display = 'none';
+      } else {
+        wrapper.style.display = 'block';
+      }
+    }
+
+    // --- Filter Logic ---
+    function setupFilters() {
+      const ids = ['sortFilter', 'cityFilter', 'priceMin', 'priceMax', 'bedsFilter'];
+      const applyBtn = document.getElementById('applyFiltersBtn');
+      const clearBtn = document.getElementById('clearFiltersBtn');
+
+      applyBtn.addEventListener('click', apply);
+      clearBtn.addEventListener('click', () => {
+        ids.forEach(id => document.getElementById(id).value = "");
+        apply();
+      });
+
+      // Allow immediate change on selects too? Maybe just button for complex filters
+      document.getElementById('sortFilter').addEventListener('change', apply);
+      document.getElementById('cityFilter').addEventListener('change', apply);
+
+      function apply() {
+        const sort = document.getElementById('sortFilter').value;
+        const city = document.getElementById('cityFilter').value;
+        const minP = Number(document.getElementById('priceMin').value) || 0;
+        const maxP = Number(document.getElementById('priceMax').value) || Infinity;
+        const beds = Number(document.getElementById('bedsFilter').value) || 0;
+
+        let filtered = allListings.filter(item => {
+          const price = item.ListPrice || 0;
+          const b = item.BedroomsTotal || 0;
+
+          if (city && item.City !== city) return false;
+          if (price < minP) return false;
+          if (price > maxP) return false;
+          if (b < beds) return false;
+
+          return true;
+        });
+
+        // Sort
+        if (sort === 'priceDesc') {
+          filtered.sort((a, b) => (b.ListPrice || 0) - (a.ListPrice || 0));
+        } else if (sort === 'priceAsc') {
+          filtered.sort((a, b) => (a.ListPrice || 0) - (b.ListPrice || 0));
+        } else {
+          // Date desc (default in fetch but good to re-enforce)
+          filtered.sort((a, b) => (b.ListingContractDate || "") > (a.ListingContractDate || "") ? 1 : -1);
+        }
+
+        updateUI(filtered);
+      }
+    }
+
+    function updateUI(listings) {
       const grid = document.getElementById('listingsGrid');
+      const count = document.getElementById('resultsCount');
+
       grid.innerHTML = '';
+      count.innerText = `${listings.length} Properties found`;
 
       listings.forEach(item => {
         const card = document.createElement('div');
         card.className = 'listing-card';
         card.id = `card-${item.ListingKey}`;
 
-        // Image handling (simplistic for now)
+        // Get MEDIA from Cache (Array or single)
+        const cachedMedia = mediaCache.get(item.ListingKey);
         let imgUrl = 'https://via.placeholder.com/400x300?text=No+Photo';
-        if (item.Media && item.Media.length > 0) {
-          // Sometimes Media is embedded if we used $expand, but OData often requires separate call. 
-          // For this demo, we assume the worker MIGHT expand or we use a placeholder.
-          // The OpenHouse logic fetched media separately. 
-          // IF Media is empty, we might need to fetch it. 
-          // For V1, let's use a generic image if not present.
-        }
+        let photoCount = 0;
 
-        // If not expanded, we might not have Media. 
-        // Let's assume for now we just show data.
+        if (cachedMedia && Array.isArray(cachedMedia) && cachedMedia.length > 0) {
+          imgUrl = cachedMedia[0];
+          photoCount = cachedMedia.length;
+        } else if (cachedMedia && typeof cachedMedia === 'string') {
+          imgUrl = cachedMedia;
+          photoCount = 1;
+        }
 
         const price = formatter.format(item.ListPrice || 0);
 
         card.innerHTML = `
-                    <div class="card-img-wrapper">
-                         <!-- Placeholder or real image mechanism -->
-                        <img src="${imgUrl}" class="card-img" alt="${item.UnparsedAddress}" loading="lazy">
-                        <div class="price-badge">${price}</div>
-                    </div>
-                    <div class="card-content">
-                        <div class="card-address">${item.UnparsedAddress || 'Unknown Address'}</div>
-                        <div class="card-details">
-                            <span class="card-detail-item"><i class="fas fa-bed"></i> ${item.BedroomsTotal || 0}</span>
-                            <span class="card-detail-item"><i class="fas fa-bath"></i> ${item.BathroomsTotalInteger || 0}</span>
-                            <span class="card-detail-item"><i class="fas fa-ruler-combined"></i> ${item.LivingArea || 0} sqft</span>
-                        </div>
-                        <div class="card-meta">
-                            <span>${item.City || ''}</span>
-                            <button class="search-btn" style="padding: 4px 10px; font-size: 0.8rem;">Details</button>
-                        </div>
-                    </div>
-                `;
+            <div class="card-img-wrapper">
+                <img src="${imgUrl}" id="img-${item.ListingKey}" class="card-img" alt="${item.UnparsedAddress}" loading="lazy" data-index="0">
+                <div class="price-badge">${price}</div>
+                
+                <!-- Carousel Controls -->
+                <button class="card-arrow left" onclick="changeCardImage(event, '${item.ListingKey}', -1)">&#10094;</button>
+                <button class="card-arrow right" onclick="changeCardImage(event, '${item.ListingKey}', 1)">&#10095;</button>
+                <div class="photo-count" id="count-${item.ListingKey}">1 / ${Math.max(1, photoCount)}</div>
+            </div>
+            <div class="card-content">
+                <div class="card-address">${item.UnparsedAddress || 'Unknown Address'}</div>
+                <div class="card-details">
+                    <span class="card-detail-item"><i class="fas fa-bed"></i> ${item.BedroomsTotal || 0}</span>
+                    <span class="card-detail-item"><i class="fas fa-bath"></i> ${item.BathroomsTotalInteger || 0}</span>
+                    <span class="card-detail-item"><i class="fas fa-ruler-combined"></i> ${item.LivingArea || 0} sqft</span>
+                </div>
+                <div class="card-meta">
+                    <span>${item.City || ''}</span>
+                    <button class="search-btn" style="padding: 4px 10px; font-size: 0.8rem;">Details</button>
+                </div>
+            </div>
+        `;
+
+        card.appendChild(mediaLoaderHook(item)); // Optional hidden hook if needed, but we observe card directly
+
+        // Add ID for observer
+        card.dataset.id = item.ListingKey;
 
         // Interactive hovers
         card.addEventListener('mouseenter', () => highlightMarker(item.ListingKey, true));
         card.addEventListener('mouseleave', () => highlightMarker(item.ListingKey, false));
         card.addEventListener('click', () => {
           // Pan map
-          if (item.Latitude && item.Longitude) {
-            map.flyTo([item.Latitude, item.Longitude], 16);
+          let lat, lng;
+          if (item.Coordinates && Array.isArray(item.Coordinates) && item.Coordinates.length === 2) {
+            lng = item.Coordinates[0];
+            lat = item.Coordinates[1];
+          }
+
+          if (lat && lng) {
+            map.flyTo([lat, lng], 16);
             highlightMarker(item.ListingKey, true);
           }
         });
 
         grid.appendChild(card);
+        MediaLoader.observe(card);
       });
+
+      renderMapMarkers(listings);
+    }
+
+    // --- Carousel Logic ---
+    function changeCardImage(event, key, direction) {
+      event.stopPropagation(); // Stop card click
+      event.preventDefault();
+
+      const urls = mediaCache.get(key);
+      if (!urls || !Array.isArray(urls) || urls.length === 0) return;
+
+      const img = document.getElementById(`img-${key}`);
+      const countEl = document.getElementById(`count-${key}`);
+      if (!img) return;
+
+      let idx = parseInt(img.dataset.index || '0');
+      idx += direction;
+
+      // Wrap
+      if (idx < 0) idx = urls.length - 1;
+      if (idx >= urls.length) idx = 0;
+
+      img.src = urls[idx];
+      img.dataset.index = idx;
+
+      if (countEl) countEl.innerText = `${idx + 1} / ${urls.length}`;
+    }
+
+    // --- Styles for Price Pins & Carousel ---
+    // Creating dynamic styles for pins
+    // We need to define .price-pin in CSS above, let's do it via JS or assume it's added to style block
+
+    function mediaLoaderHook(item) {
+      // No-op for now, was placeholder for future logic
+      return document.createDocumentFragment();
     }
 
     function renderMapMarkers(listings) {
@@ -549,15 +1041,35 @@
       markers = [];
 
       listings.forEach(item => {
-        if (item.Latitude && item.Longitude) {
-          const mk = L.marker([item.Latitude, item.Longitude])
+        // Parse Coordinates: [long, lat]
+        let lat, lng;
+        if (item.Coordinates && Array.isArray(item.Coordinates) && item.Coordinates.length === 2) {
+          lng = item.Coordinates[0];
+          lat = item.Coordinates[1];
+        }
+
+        if (lat && lng) {
+          const priceShort = formatPriceShort(item.ListPrice || 0);
+
+          // Use DivIcon for price label
+          const icon = L.divIcon({
+            className: 'price-pin-container',
+            html: `<div class="price-pin">${priceShort}</div>`,
+            iconSize: [50, 24],
+            iconAnchor: [25, 12]
+          });
+
+          const mk = L.marker([lat, lng], { icon: icon })
             .bindPopup(`<b>${formatter.format(item.ListPrice)}</b><br>${item.UnparsedAddress}`);
 
           mk.listingKey = item.ListingKey;
           mk.on('click', () => {
-            document.getElementById(`card-${item.ListingKey}`).scrollIntoView({ behavior: 'smooth', block: 'center' });
-            document.getElementById(`card-${item.ListingKey}`).classList.add('active');
-            setTimeout(() => document.getElementById(`card-${item.ListingKey}`).classList.remove('active'), 2000);
+            const card = document.getElementById(`card-${item.ListingKey}`);
+            if (card) {
+              card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+              card.classList.add('active');
+              setTimeout(() => card.classList.remove('active'), 2000);
+            }
           });
 
           mk.addTo(map);
@@ -575,43 +1087,32 @@
     function highlightMarker(key, active) {
       const mk = markers.find(m => m.listingKey === key);
       if (mk) {
-        if (active) {
-          mk.openPopup();
-          mk._icon.style.filter = "hue-rotate(120deg)"; // Simple highlight effect
-        } else {
-          mk.closePopup();
-          mk._icon.style.filter = "";
+        const el = mk.getElement(); // Get the divIcon element
+        if (el) {
+          const pin = el.querySelector('.price-pin');
+          if (pin) {
+            if (active) {
+              pin.style.background = '#4bc6f6';
+              pin.style.color = '#fff';
+              pin.style.transform = 'scale(1.1)';
+              pin.style.zIndex = '1000';
+              mk.openPopup();
+            } else {
+              pin.style.background = '';
+              pin.style.color = '';
+              pin.style.transform = '';
+              pin.style.zIndex = '';
+              mk.closePopup();
+            }
+          }
         }
       }
     }
 
-    function setupFilters() {
-      const sort = document.getElementById('sortFilter');
-      const city = document.getElementById('cityFilter');
-
-      const apply = () => {
-        let filtered = [...allListings];
-
-        // City
-        if (city.value) {
-          filtered = filtered.filter(x => x.City === city.value);
-        }
-
-        // Sort
-        if (sort.value === 'priceDesc') {
-          filtered.sort((a, b) => (b.ListPrice || 0) - (a.ListPrice || 0));
-        } else if (sort.value === 'priceAsc') {
-          filtered.sort((a, b) => (a.ListPrice || 0) - (b.ListPrice || 0));
-        } else {
-          // Date desc default
-          // simplified
-        }
-
-        updateUI(filtered);
-      };
-
-      sort.addEventListener('change', apply);
-      city.addEventListener('change', apply);
+    function formatPriceShort(price) {
+      if (price >= 1000000) return '$' + (price / 1000000).toFixed(1) + 'm';
+      if (price >= 1000) return '$' + (price / 1000).toFixed(0) + 'k';
+      return '$' + price;
     }
 
     function showLoading(show) {
@@ -619,6 +1120,204 @@
     }
 
   </script>
+
+  <!-- FINAL CSS OVERRIDE TO FIX ELEMENTOR LOGO ISSUE -->
+  <style>
+    /* New Styles for Carousel & Pins */
+    .carousels-wrapper {
+      width: 100%;
+      background: #fff;
+      border-bottom: 1px solid #eee;
+      /* margin-top is inline in HTML */
+    }
+
+    .carousel-container {
+      width: 100%;
+      background: #fff;
+      padding-left: 0;
+    }
+
+    .carousel-header {
+      padding: 0 20px;
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+    }
+
+    .carousel-header h2 {
+      font-size: 1.1rem;
+      margin: 0;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      color: #333;
+    }
+
+    .badge-new {
+      background: #4bc6f6;
+      color: #fff;
+      font-size: 0.7rem;
+      padding: 3px 8px;
+      border-radius: 12px;
+      text-transform: uppercase;
+      font-weight: 700;
+      vertical-align: middle;
+    }
+
+    .badge-update {
+      background: #9f7aea;
+      /* Purple for updates */
+      color: #fff;
+      font-size: 0.7rem;
+      padding: 3px 8px;
+      border-radius: 12px;
+      text-transform: uppercase;
+      font-weight: 700;
+    }
+
+    /* Adjust main container since carousel pushes it down */
+    .main-container {
+      padding-top: 0 !important;
+      /* Remove padding since carousel takes space */
+      height: calc(100vh - 450px);
+      /* Adjust height for double carousel */
+      min-height: 400px;
+    }
+
+    .carousel-track {
+      display: flex;
+      gap: 15px;
+      overflow-x: auto;
+      padding: 0 20px 20px 20px;
+      scroll-behavior: smooth;
+    }
+
+    .carousel-card {
+      flex: 0 0 240px;
+      background: #fff;
+      border: 1px solid #eee;
+      border-radius: 10px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+      overflow: hidden;
+      cursor: pointer;
+      transition: transform 0.2s;
+    }
+
+    .carousel-card:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+    }
+
+    .carousel-img-wrapper {
+      position: relative;
+      height: 140px;
+      background: #eee;
+    }
+
+    .carousel-img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    /* Carousel Controls in Card */
+    .card-img-wrapper {
+      position: relative;
+    }
+
+    .card-arrow {
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      background: rgba(0, 0, 0, 0.5);
+      color: white;
+      border: none;
+      cursor: pointer;
+      padding: 8px 12px;
+      font-size: 18px;
+      z-index: 10;
+      border-radius: 4px;
+      opacity: 0;
+      transition: opacity 0.2s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .card-img-wrapper:hover .card-arrow {
+      opacity: 1;
+    }
+
+    .card-arrow.left {
+      left: 5px;
+    }
+
+    .card-arrow.right {
+      right: 5px;
+    }
+
+    .card-arrow:hover {
+      background: rgba(0, 0, 0, 0.8);
+    }
+
+    .photo-count {
+      position: absolute;
+      bottom: 5px;
+      right: 5px;
+      background: rgba(0, 0, 0, 0.6);
+      color: white;
+      font-size: 10px;
+      padding: 2px 6px;
+      border-radius: 10px;
+      z-index: 5;
+    }
+
+    /* Price Pin Styles */
+    .price-pin {
+      background: #fff;
+      color: #333;
+      padding: 2px 6px;
+      border-radius: 12px;
+      font-weight: bold;
+      font-size: 11px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+      text-align: center;
+      border: 1px solid #ccc;
+      white-space: nowrap;
+      display: inline-block;
+      transition: all 0.2s;
+    }
+
+    /* Force override of ANY theme or builder styles */
+    html body .ber-logo,
+    html body img.ber-logo,
+    html body .brand-wrapper img,
+    html body .elementor img.ber-logo {
+      width: auto !important;
+      height: 50px !important;
+      /* Fixed height is safest */
+      max-width: 200px !important;
+      min-width: unset !important;
+      object-fit: contain !important;
+      border: none !important;
+      box-shadow: none !important;
+      margin: 0 !important;
+      display: block !important;
+    }
+
+    /* Reset Elementor's global image sizing if it targets generic imgs */
+    html body .elementor-widget-image img {
+      /* Only reset if it's our logo or causing issues */
+      /* checks if this is inside our header */
+    }
+
+    /* Ensure header container doesn't explode */
+    html body #top-bar {
+      max-height: 80px !important;
+      overflow: hidden !important;
+      /* Clipped if something goes wrong */
+    }
+  </style>
 </body>
 
 </html>
