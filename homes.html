@@ -1983,8 +1983,8 @@
         <div class="filter-dropdown-wrap">
           <button class="filter-dropdown-btn" id="cityBtn">City</button>
           <div class="filter-dropdown-panel" id="cityPanel">
-            <label><input type="checkbox" name="city" value="Bonita Springs"> Bonita Springs</label>
-            <label><input type="checkbox" name="city" value="Estero"> Estero</label>
+            <label><input type="checkbox" name="city" value="Bonita Springs" checked> Bonita Springs</label>
+            <label><input type="checkbox" name="city" value="Estero" checked> Estero</label>
             <label><input type="checkbox" name="city" value="Naples"> Naples</label>
             <label><input type="checkbox" name="city" value="Fort Myers"> Fort Myers</label>
             <button class="apply-btn">Apply</button>
@@ -2050,7 +2050,7 @@
     <p>Information on this site was last updated <span id="lastUpdatedDate">Loading...</span>. The listing information
       on this page last changed on <span id="lastChangedDate">Loading...</span>.</p>
     <p>The data relating to real estate for sale on this website comes in part from the Internet Data Exchange program
-      of Delta Media Group MLS (last updated <span id="deltaUpdated">Loading...</span>) or Bonita Springs MLS (last
+      of (last updated <span id="deltaUpdated">Loading...</span>) or Bonita Springs MLS (last
       updated <span id="bsUpdated">Loading...</span>).</p>
     <p>Real estate listings held by brokerage firms other than Bonita Springs-Estero REALTORS&reg; may be marked with
       the Internet Data Exchange logo and detailed information about those properties will include the name of the
@@ -2224,6 +2224,7 @@
       });
 
       setupFilters();
+      updateFilterLabels();
       setupSearch();
       setupMobileUI();
       fetchListings();
@@ -2373,8 +2374,11 @@
     function clearFilters() {
       document.getElementById('priceMin').value = '';
       document.getElementById('priceMax').value = '';
-      document.querySelectorAll('#subTypePanel input').forEach(i => i.checked = true); // Default all checked? Or none? Usually all.
-      document.querySelectorAll('#cityPanel input').forEach(i => i.checked = false);
+      document.querySelectorAll('#subTypePanel input').forEach(i => i.checked = true);
+      document.querySelectorAll('#cityPanel input').forEach(i => {
+        if (i.value === 'Bonita Springs' || i.value === 'Estero') i.checked = true;
+        else i.checked = false;
+      });
       document.querySelectorAll('.filter-option-btn.selected').forEach(b => b.classList.remove('selected'));
       document.querySelectorAll('#bedsGroup .filter-option-btn[data-val="0"]').forEach(b => b.classList.add('selected'));
       document.querySelectorAll('#bathsGroup .filter-option-btn[data-val="0"]').forEach(b => b.classList.add('selected'));
@@ -2457,9 +2461,18 @@
         if (currentStatus === 'Pending') statusFilter = "(StandardStatus eq 'Pending' or StandardStatus eq 'Active Under Contract')";
         else if (currentStatus === 'Closed') statusFilter = "StandardStatus eq 'Closed'";
 
-        // Base Filter - STRICTLY BONITA SPRINGS + Status + COUNTIES (Lee, Collier, Hendry)
-        let baseF = "OriginatingSystemName eq 'Bonita Springs' and " + statusFilter;
-        baseF += " and (CountyOrParish eq 'Lee' or CountyOrParish eq 'Collier' or CountyOrParish eq 'Hendry')";
+        // Base Filter - STRICTLY BONITA SPRINGS + Status + CITIES (Bonita Springs, Estero)
+        // Switch to OriginatingSystemKey 'bsaor' to capture syndicated listings (Naples, etc) that are valid for this board
+        let baseF = "OriginatingSystemKey eq 'bsaor' and " + statusFilter;
+        // Default to just Bonita and Estero if no specific city selected (though UI defaults to them now)
+        // But wait, applyClientFilters handles the city filtering client-side usually? No, let's look at applyClientFilters.
+        // applyClientFilters filters *after* fetch. We want to filter *fetch* to reduce load.
+        // We should add the city filter to OData if the user hasn't selected specific cities?
+        // Actually, let's make the base fetch filter strict to Bonita Springs OR Estero unless overridden?
+        // The request was "Default to just Bonita Springs and Estero listings".
+        // Let's change the county filter to a city filter for the base fetch.
+
+        baseF += " and (City eq 'BONITA SPRINGS' or City eq 'ESTERO')";
 
         // Property Type Logic based on API Discovery - SIMPLIFIED
         // We use parens to ensure 'OR' clauses don't get mixed with the 'AND' clauses from baseF
@@ -2560,7 +2573,7 @@
       showLoading(true);
       try {
         // Try exact ListingKey or Address contains
-        const f = "OriginatingSystemName eq 'Bonita Springs' and (ListingKey eq '" + q + "' or contains(UnparsedAddress, '" + q + "'))";
+        const f = "OriginatingSystemKey eq 'bsaor' and (ListingKey eq '" + q + "' or contains(UnparsedAddress, '" + q + "'))";
         const r = await fetch(API_BASE + '/api/v2/OData/bsaor/Property?$filter=' + encodeURIComponent(f) + '&$select=' + SEL + '&$top=20');
         if (!r.ok) throw new Error('Search failed');
         const d = await r.json();
@@ -2625,7 +2638,10 @@
         // ... (API handles type, this is safety)
 
         const p = i.ListPrice || 0;
-        if (cities.length && !cities.includes(i.City)) return false;
+        if (cities.length) {
+          const itemCity = (i.City || '').toUpperCase();
+          if (!cities.some(c => c.toUpperCase() === itemCity)) return false;
+        }
         if (p < minP || p > maxP) return false;
         if ((i.BedroomsTotal || 0) < beds || (i.BathroomsTotalInteger || 0) < baths) return false;
 
@@ -2928,7 +2944,7 @@
       const grid = document.getElementById('agentListingsGrid'); grid.innerHTML = '<div style="text-align:center;padding:40px;color:#888;grid-column:1/-1"><div class="spinner" style="margin:0 auto 10px"></div>Loading...</div>';
       ov.style.display = 'block';
       try {
-        const f = "ListAgentKey eq '" + ak + "' and StandardStatus eq 'Active' and OriginatingSystemName eq 'Bonita Springs'";
+        const f = "ListAgentKey eq '" + ak + "' and StandardStatus eq 'Active' and OriginatingSystemKey eq 'bsaor'";
         const r = await fetch(API_BASE + '/api/v2/OData/bsaor/Property?$filter=' + encodeURIComponent(f) + '&$select=ListingKey,UnparsedAddress,City,ListPrice,BedroomsTotal,BathroomsTotalInteger,LivingArea,Media&$top=50');
         if (!r.ok) throw new Error('Failed'); const d = await r.json(); const items = d.value || [];
         if (!items.length) { grid.innerHTML = '<div style="padding:40px;text-align:center;color:#888;grid-column:1/-1">No other listings found</div>'; return; }
