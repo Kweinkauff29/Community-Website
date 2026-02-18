@@ -1,530 +1,585 @@
 <!DOCTYPE html>
 <html lang="en" dir="ltr">
-  <!-- Required meta tags -->
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+<!-- Required meta tags -->
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 
-  <!-- Bootstrap CSS -->
-  <link rel="stylesheet" href=
-"https://maxcdn.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
+<!-- Bootstrap CSS -->
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
 
-   <script src=
-"https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js">
-   </script>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js">
+</script>
 
-   <script src=
-"https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js">
-   </script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js">
+</script>
 
-   <script src=
-"https://maxcdn.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js">
-   </script>
-  <link rel="stylesheet" href="style.css">
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js">
+</script>
+<link rel="stylesheet" href="style.css">
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Style+Script&display=swap" rel="stylesheet">
-   <link rel='stylesheet' href='https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css'>
-   <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js">
-   </script>
+<link rel='stylesheet' href='https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css'>
+<script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js">
+</script>
 
-  <style>
+<style>
+  * {
+    padding: 0;
+    margin: 0;
+  }
 
-    *{
-      padding: 0;
-      margin: 0;
+  .titles {
+    font-size: 40px;
+  }
+
+  html {
+    width: 100%;
+  }
+
+  body {
+    width: 100%;
+    margin: 0 !important;
+  }
+
+  head {
+    width: 80%;
+    height: 100vh;
+    font-family: sans-serif;
+  }
+
+  p {
+    font-size: 15px;
+  }
+
+  #shoptitle {
+    font-size: 55px;
+    margin: 200px auto auto 5%;
+    position: absolute;
+    color: white;
+    z-index: 999;
+    background-color: #4bc6f6;
+  }
+
+  #shoptitle2 {
+    font-size: 55px;
+    margin: -66px auto auto 5%;
+    position: absolute;
+    color: white;
+    z-index: 999;
+    background-color: #4bc6f6;
+  }
+
+  #site-scroll-top {
+    display: none;
+  }
+
+  h2 {
+    font-size: 70px;
+    margin: -30px auto 30px auto;
+  }
+
+  #shopimg {
+    height: 280px;
+    width: 100%;
+    opacity: .6;
+    background-color: black;
+    z-index: -999;
+    object-fit: cover;
+  }
+
+  .container {
+    padding-left: 0;
+    padding-right: 0;
+  }
+
+  .footer-background {
+    z-index: 999;
+    color: white;
+    margin: -15px 5% auto 5%;
+    padding-top: 40px;
+    display: flex;
+    text-align: center;
+  }
+
+  .small-img {
+    object-fit: fill;
+    width: 100%;
+    height: 100%;
+  }
+
+  .entry ul,
+  .entry ol {
+    margin: 0 0 0 0;
+  }
+
+  .ber-logo {
+    width: 170px;
+    position: relative;
+    height: 170px;
+    margin: -20px 0px -20px 0%;
+    animation-duration: 2s;
+    animation-name: run;
+    display: flex;
+    z-index: 3;
+  }
+
+  .btn {
+    width: 100%;
+    height: 80px;
+    font-size: 24px;
+  }
+
+  .shop-places {
+    width: 100%;
+    display: grid;
+    margin: 250px auto 0px auto !important;
+    background-color: #eeeeee;
+    ;
+    z-index: 999;
+  }
+
+  #shopping-img {
+    background-image: url("https://www.bonitaesterorealtors.com/wp-content/uploads/2022/08/estero.jpeg");
+    background-repeat: no-repeat;
+    background-size: cover;
+    height: 800px;
+    width: 100%;
+    margin: -200px auto;
+    padding-top: 75px;
+    position: fixed;
+    z-index: -999;
+  }
+
+  @keyframes run {
+    0% {
+      left: 1300px;
     }
 
-    .titles {
-        font-size: 40px;
+    100% {
+      left: 0;
     }
+  }
 
-    html {
-      width: 100%;
-    }
-
-    body {
-      width: 100%;
-      margin: 0 !important;
-    }
-
-    head {
-      width: 80%;
-      height: 100vh;
-      font-family: sans-serif;
-    }
-
-    p {
-      font-size: 15px;
-    }
-
-    #shoptitle {
-      font-size: 55px;
-      margin: 200px auto auto 5%;
-      position: absolute;
-      color: white;
-      z-index: 999;
-      background-color: #4bc6f6;
-    }
-
-    #shoptitle2 {
-      font-size: 55px;
-      margin: -66px auto auto 5%;
-      position: absolute;
-      color: white;
-      z-index: 999;
-      background-color: #4bc6f6;
-    }
-    #site-scroll-top {
-      display: none;
-    }
-
-    h2 {
-      font-size: 70px;
-      margin: -30px auto 30px auto;
-    }
-
-    #shopimg {
-      height: 280px;
-      width: 100%;
-      opacity: .6;
-      background-color: black;
-      z-index: -999;
-      object-fit: cover;
-    }
-
-    .container {
-      padding-left: 0;
-      padding-right: 0;
-    }
-
-    .footer-background {
-      z-index: 999;
-      color: white;
-      margin: -15px 5% auto 5%;
-      padding-top: 40px;
-      display: flex;
-      text-align: center;
-    }
-
-    .small-img {
-      object-fit: fill;
-      width: 100%;
-      height: 100%;
-    }
-
-    .entry ul, .entry ol {
-      margin: 0 0 0 0;
-    }
-
+  @media screen and (max-width: 960px) {
     .ber-logo {
-      width: 170px;
-      position: relative;
-      height: 170px;
-      margin: -20px 0px -20px 0%;
-      animation-duration: 2s;
-      animation-name: run;
-      display: flex;
-      z-index: 3;
+      height: 133px;
+      width: 133px;
     }
+  }
 
-    .btn {
-      width: 100%;
-      height: 80px;
-      font-size: 24px;
-    }
-
-    .shop-places {
-      width: 100%;
-      display: grid;
-      margin: 250px auto 0px auto !important;
-      background-color: #eeeeee;
-;
-      z-index: 999;
-    }
-
-    #shopping-img {
-      background-image: url("https://www.bonitaesterorealtors.com/wp-content/uploads/2022/08/estero.jpeg");
-      background-repeat: no-repeat;
-      background-size: cover;
-      height: 800px;
-      width: 100%;
-      margin: -200px auto;
-      padding-top: 75px;
-      position: fixed;
-      z-index: -999;
-    }
-
-    @keyframes run {
-      0% {left: 1300px;}
-      100% {left: 0;}
-    }
-
-    @media screen and (max-width: 960px){
-      .ber-logo {
-        height: 133px;
-        width: 133px;
-      }
-    }
-
-    @media screen and (max-width: 700px) {
-      .ber-logo {
-        height: 109px;
-        width: 109px;
-        align-content: center;
-        align-items: center;
-      }
-
-      #bar-width {
-        display: block;
-      }
-
-      p {
-        font-size: 13px;
-      }
-    }
-
-    /*Website title once past 1100px*/
-    .bser-title {
-      text-align: left;
-      font-size: 55px;
-      width: 150px;
-      font-family: 'Style Script', cursive;
-      vertical-align: baseline;
-      margin: auto 40px auto 0;
-      color: #FFF;
-      font-weight: 600;
-      line-height: 50px;
-      animation-name: fadeIn;
-      animation-duration: 2s;
-    }
-    /*If screen width is large enough - title fades in*/
-    @keyframes fadeIn {
-      0% {display: none;
-        opacity: 0;}
-      75% {display: none;
-        opacity: 0;}
-      100% {display: block;
-        opacity: 1;}
-    }
-    /*If under 1100px - dispears (Not enough room)*/
-    @media screen and (max-width: 1100px) {
-      .bser-title {display: none;}
-    }
-
-    #top-bar {
-      background-image: linear-gradient(90deg, #0093E9 0%, #8adcf5 100%);
-      justify-content: center;
+  @media screen and (max-width: 700px) {
+    .ber-logo {
+      height: 109px;
+      width: 109px;
+      align-content: center;
       align-items: center;
-      position: relative;
-      width: 100%;
-      vertical-align: middle;
-      animation-name: fadeIn;
-      margin: 25px auto auto auto;
-      box-shadow: 5px 0 10px #888888;
-      z-index: 4;
     }
 
     #bar-width {
-      margin: auto;
-      width: 90%;
-      display: flex;
-      justify-content: center;
+      display: block;
     }
 
-    .navbar-expand-md {
-      display: flex;
-      text-align: center;
-      margin: auto;
-      justify-content: center;
-      font-weight: bold;
-      animation-name: fadeIn;
-      animation-duration: 3s;
+    p {
+      font-size: 13px;
+    }
+  }
+
+  /*Website title once past 1100px*/
+  .bser-title {
+    text-align: left;
+    font-size: 55px;
+    width: 150px;
+    font-family: 'Style Script', cursive;
+    vertical-align: baseline;
+    margin: auto 40px auto 0;
+    color: #FFF;
+    font-weight: 600;
+    line-height: 50px;
+    animation-name: fadeIn;
+    animation-duration: 2s;
+  }
+
+  /*If screen width is large enough - title fades in*/
+  @keyframes fadeIn {
+    0% {
+      display: none;
+      opacity: 0;
     }
 
-    .navbar-expand-md ul{
-      display: flex;
-      justify-content: space-between;
-      align-content: center;
-      justify-content: center;
+    75% {
+      display: none;
+      opacity: 0;
     }
 
-    .navbar-expand-md li{
-      list-style: none;
-      width: 90px;
-      font-size: 12px;
-      text-align: center;
-      vertical-align: middle;
-      margin: auto;
-      animation-name: fadeIn;
-      animation-duration: 1s;
-      color: #fff;
-      text-shadow: .5px .5px 0px black;
-    }
-
-    .footy {
-      background-color: #262626;
-      height: 200px;
-      width: 100%;
-      position: relative;
-      margin: 15px auto auto auto;
-    }
-
-    @keyframes fadeIn {
-      0% {display: none;
-        opacity: 0;}
-      75% {display: none;
-        opacity: 0;}
-      100% {display: block;
-        opacity: 1;}
-
-    }
-
-    .navbar-expand-md li:hover{
-      list-style: none;
-      cursor: pointer;
-      text-decoration: underline;
-    }
-
-    @media screen and (min-width: 1000px) {
-      .navbar-expand-md li{
-        font-size: 1.7em;
-        width: 150px;
-      }
-    }
-
-    @media screen and (min-width: 800px) and (max-width: 999px) {
-      .navbar-expand-md li{
-        font-size: 16px;
-        width: 115px;
-      }
-    }
-
-    .welcome {
-      display: flex;
-      flex-direction: row;
-      justify-content: center;
-      height: 400px;
-      background-color: grey;
-      animation-name: fromBot;
-      animation-duration: 2s;
-    }
-
-    @keyframes fromBot {
-      0% {opacity: 0;
-        left: 200px;}
-      100% {opacity: 1;
-        left: 0px;}
-    }
-
-    .welcome-column {
-      height: auto;
-      position: absolute;
-      background-color: black;
-      z-index: 1;
-      opacity: .3;
-      animation-name: fromTop;
-      animation-duration: 8s;
-    }
-
-    #artcicle-container {
-        max-width: 1100px;
-        display: inline;
-        justify-content: center;
-        margin: 20px auto;
-        background-color: white;
-        padding: 20px 20px 20px 20px;
-        box-shadow: black 0px 0px 21px -17px;
-        border-radius: 10px;
-    }
-
-    .welcome-column h1 {
-      font-size: 32px;
-      margin-bottom: 5px;
-    }
-
-    .welcome-column p {
-      font-size: 12px;
-    }
-
-    .gctc {
-      max-width: 1000px;
-      margin: auto;
-    }
-
-    .miromar {
-      max-width: 1000px;
-      margin: auto;
-    }
-
-    .welcome-column:hover {
-      opacity: .8;
-    }
-
-    .fa-caret-up:hover {
-      opacity: .7;
-      cursor: pointer;
-    }
-
-    .fa-caret-down:hover {
-      opacity: .7;
-      cursor: pointer;
-    }
-
-
-    @keyframes fromTop {
-      0% {top: 0px;
-      opacity: 0;}
-      80% {top: 0px;
-      opacity: 0}
-      100% {top: 170px;}
-    }
-
-    .welcome-header {
-      text-align: center;
-      align-items: center;
-      align-content: center;
-      margin: 5px auto auto auto;
-      color: #fff;
-    }
-
-    .welcome-text {
-      margin: 10px 5% auto 5%;
-      text-align: center;
-      align-items: center;
-      color: #fff;
-    }
-
-    .welcome-photo {
-      position: relative;
-      overflow: hidden;
-      vertical-align: bottom;
-    }
-
-    .r-promo {
-      width: 1000px;
-      margin: auto;
-    }
-
-    @media screen and (max-width: 1240px) {
-      #SWFLtext {
-        font-size: 40px;
-      }
-      .FLPhoto {
-        width: 175px;
-        height: 175px;
-        margin-left: -20px;
-      }
-      .textback {
-        transform: translate(-70px, 110px);
-        width: 980px;
-      }
-    }
-
-    @media screen and (max-width: 1140px) {
-      #SWFLtext h2{
-        font-size: 50px !important;
-      }
-      .textback {
-        transform: translate(-70px, 100px);
-        width: 780px;
-      }
-      .r-promo {
-        margin: auto 5% auto 5% !important;
-        width: auto !important;
-      }
-    }
-
-    @media screen and (max-width: 1070px) {
-      .shop-places {
-        margin: auto 4% auto 4%;
-      }
-      .gctc, .miromar {
-        margin: auto 5% auto 5%;
-      }
-    }
-
-    @media screen and (max-width: 950px) {
-      #SWFLtext h2{
-        font-size: 40px !important;
-      }
-      .textback {
-        transform: translate(-70px, 100px);
-        width: 630px;
-      }
-      #shoptitle {
-        font-size: 45px;
-      }
-      #shoptitle2 {
-        font-size: 45px;
-      }
-    }
-
-    @media screen and (max-width: 800px) {
-      #SWFLtext h2{
-        font-size: 32px !important;
-      }
-      .textback {
-        transform: translate(-75px, 100px);
-        width: 500px;
-      }
-      #shoptitle {
-        font-size: 36px;
-      }
-      #shoptitle2 {
-        font-size: 36px;
-      }
-    }
-
-    @media screen and (max-width: 680px) {
-      #SWFLtext h2{
-        font-size: 26px !important;
-      }
-      .textback {
-        transform: translate(-75px, 100px);
-        width: 430px;
-      }
-    }
-
-    @media screen and (max-width: 600px) {
-      #SWFLtext h2{
-        font-size: 20px !important;
-      }
-      .textback {
-        transform: translate(-75px, 110px);
-        width: 340px;
-        height: 10px;
-      }
-    }
-
-    @keyframes fadeRight {
-    0% {opacity:0;
-      transform: translateX(-1000px);
-    }
-    60% {
-      opacity:0;
-        transform: translateX(-1000px);
-    }
     100% {
-      opacity:1;,
-      transform: translateY(0);}
+      display: block;
+      opacity: 1;
+    }
+  }
+
+  /*If under 1100px - dispears (Not enough room)*/
+  @media screen and (max-width: 1100px) {
+    .bser-title {
+      display: none;
+    }
+  }
+
+  #top-bar {
+    background-image: linear-gradient(90deg, #0093E9 0%, #8adcf5 100%);
+    justify-content: center;
+    align-items: center;
+    position: relative;
+    width: 100%;
+    vertical-align: middle;
+    animation-name: fadeIn;
+    margin: 25px auto auto auto;
+    box-shadow: 5px 0 10px #888888;
+    z-index: 4;
+  }
+
+  #bar-width {
+    margin: auto;
+    width: 90%;
+    display: flex;
+    justify-content: center;
+  }
+
+  .navbar-expand-md {
+    display: flex;
+    text-align: center;
+    margin: auto;
+    justify-content: center;
+    font-weight: bold;
+    animation-name: fadeIn;
+    animation-duration: 3s;
+  }
+
+  .navbar-expand-md ul {
+    display: flex;
+    justify-content: space-between;
+    align-content: center;
+    justify-content: center;
+  }
+
+  .navbar-expand-md li {
+    list-style: none;
+    width: 90px;
+    font-size: 12px;
+    text-align: center;
+    vertical-align: middle;
+    margin: auto;
+    animation-name: fadeIn;
+    animation-duration: 1s;
+    color: #fff;
+    text-shadow: .5px .5px 0px black;
+  }
+
+  .footy {
+    background-color: #262626;
+    height: 200px;
+    width: 100%;
+    position: relative;
+    margin: 15px auto auto auto;
+  }
+
+  @keyframes fadeIn {
+    0% {
+      display: none;
+      opacity: 0;
+    }
+
+    75% {
+      display: none;
+      opacity: 0;
+    }
+
+    100% {
+      display: block;
+      opacity: 1;
+    }
+
+  }
+
+  .navbar-expand-md li:hover {
+    list-style: none;
+    cursor: pointer;
+    text-decoration: underline;
+  }
+
+  @media screen and (min-width: 1000px) {
+    .navbar-expand-md li {
+      font-size: 1.7em;
+      width: 150px;
+    }
+  }
+
+  @media screen and (min-width: 800px) and (max-width: 999px) {
+    .navbar-expand-md li {
+      font-size: 16px;
+      width: 115px;
+    }
+  }
+
+  .welcome {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    height: 400px;
+    background-color: grey;
+    animation-name: fromBot;
+    animation-duration: 2s;
+  }
+
+  @keyframes fromBot {
+    0% {
+      opacity: 0;
+      left: 200px;
+    }
+
+    100% {
+      opacity: 1;
+      left: 0px;
+    }
+  }
+
+  .welcome-column {
+    height: auto;
+    position: absolute;
+    background-color: black;
+    z-index: 1;
+    opacity: .3;
+    animation-name: fromTop;
+    animation-duration: 8s;
+  }
+
+  #artcicle-container {
+    max-width: 1100px;
+    display: inline;
+    justify-content: center;
+    margin: 20px auto;
+    background-color: white;
+    padding: 20px 20px 20px 20px;
+    box-shadow: black 0px 0px 21px -17px;
+    border-radius: 10px;
+  }
+
+  .welcome-column h1 {
+    font-size: 32px;
+    margin-bottom: 5px;
+  }
+
+  .welcome-column p {
+    font-size: 12px;
+  }
+
+  .gctc {
+    max-width: 1000px;
+    margin: auto;
+  }
+
+  .miromar {
+    max-width: 1000px;
+    margin: auto;
+  }
+
+  .welcome-column:hover {
+    opacity: .8;
+  }
+
+  .fa-caret-up:hover {
+    opacity: .7;
+    cursor: pointer;
+  }
+
+  .fa-caret-down:hover {
+    opacity: .7;
+    cursor: pointer;
   }
 
 
-    .row {
-      display: flex;
-      max-width: 1200px;
-      margin: 10px auto 5px auto;
-      align-items: center;
-      flex-direction: row;
+  @keyframes fromTop {
+    0% {
+      top: 0px;
+      opacity: 0;
     }
 
-    .img-center {
+    80% {
+      top: 0px;
+      opacity: 0
+    }
+
+    100% {
+      top: 170px;
+    }
+  }
+
+  .welcome-header {
+    text-align: center;
+    align-items: center;
+    align-content: center;
+    margin: 5px auto auto auto;
+    color: #fff;
+  }
+
+  .welcome-text {
+    margin: 10px 5% auto 5%;
+    text-align: center;
+    align-items: center;
+    color: #fff;
+  }
+
+  .welcome-photo {
+    position: relative;
+    overflow: hidden;
+    vertical-align: bottom;
+  }
+
+  .r-promo {
+    width: 1000px;
+    margin: auto;
+  }
+
+  @media screen and (max-width: 1240px) {
+    #SWFLtext {
+      font-size: 40px;
+    }
+
+    .FLPhoto {
+      width: 175px;
+      height: 175px;
+      margin-left: -20px;
+    }
+
+    .textback {
+      transform: translate(-70px, 110px);
+      width: 980px;
+    }
+  }
+
+  @media screen and (max-width: 1140px) {
+    #SWFLtext h2 {
+      font-size: 50px !important;
+    }
+
+    .textback {
+      transform: translate(-70px, 100px);
+      width: 780px;
+    }
+
+    .r-promo {
+      margin: auto 5% auto 5% !important;
+      width: auto !important;
+    }
+  }
+
+  @media screen and (max-width: 1070px) {
+    .shop-places {
+      margin: auto 4% auto 4%;
+    }
+
+    .gctc,
+    .miromar {
+      margin: auto 5% auto 5%;
+    }
+  }
+
+  @media screen and (max-width: 950px) {
+    #SWFLtext h2 {
+      font-size: 40px !important;
+    }
+
+    .textback {
+      transform: translate(-70px, 100px);
+      width: 630px;
+    }
+
+    #shoptitle {
+      font-size: 45px;
+    }
+
+    #shoptitle2 {
+      font-size: 45px;
+    }
+  }
+
+  @media screen and (max-width: 800px) {
+    #SWFLtext h2 {
+      font-size: 32px !important;
+    }
+
+    .textback {
+      transform: translate(-75px, 100px);
+      width: 500px;
+    }
+
+    #shoptitle {
+      font-size: 36px;
+    }
+
+    #shoptitle2 {
+      font-size: 36px;
+    }
+  }
+
+  @media screen and (max-width: 680px) {
+    #SWFLtext h2 {
+      font-size: 26px !important;
+    }
+
+    .textback {
+      transform: translate(-75px, 100px);
+      width: 430px;
+    }
+  }
+
+  @media screen and (max-width: 600px) {
+    #SWFLtext h2 {
+      font-size: 20px !important;
+    }
+
+    .textback {
+      transform: translate(-75px, 110px);
+      width: 340px;
+      height: 10px;
+    }
+  }
+
+  @keyframes fadeRight {
+    0% {
+      opacity: 0;
+      transform: translateX(-1000px);
+    }
+
+    60% {
+      opacity: 0;
+      transform: translateX(-1000px);
+    }
+
+    100% {
+      opacity: 1;
+      ,
+      transform: translateY(0);
+    }
+  }
+
+
+  .row {
+    display: flex;
+    max-width: 1200px;
+    margin: 10px auto 5px auto;
+    align-items: center;
+    flex-direction: row;
+  }
+
+  .img-center {
     text-align: center;
     width: auto;
     box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.15), 0 2px 3px 0 rgba(0, 0, 0, 0.1);
   }
-  @media screen and (max-width: 600px){
+
+  @media screen and (max-width: 600px) {
     .card-img {
       height: 80px;
       width: 140px;
@@ -548,360 +603,444 @@
     position: relative;
   }
 
-    .tabs {
+  .tabs {
     display: flex;
     flex-direction: column;
     text-decoration: none;
     list-style: none;
-        }
+  }
 
-    .list {
-        list-style-type: none;
-        display: flex;
-        justify-content: center;
-        list-style: none;
-    }
+  .list {
+    list-style-type: none;
+    display: flex;
+    justify-content: center;
+    list-style: none;
+  }
 
-    .tab {
+  .tab {
     padding: 10px;
     list-style: none;
     cursor: pointer;
-    }
+  }
 
-    .tab.active {
+  .tab.active {
     background-color: #ddd;
-    }
+  }
 
-    .tab-content h3 {
-      color: #2a3086;
-    }
+  .tab-content h3 {
+    color: #2a3086;
+  }
 
-    .tab-content {
-        height: 0;
-        overflow: hidden;
-        display: none;
-        transition: height 0.5s;
-        padding: 50px;
-        color: white;
-        }
+  .tab-content {
+    height: 0;
+    overflow: hidden;
+    display: none;
+    transition: height 0.5s;
+    padding: 50px;
+    color: white;
+  }
 
-    .tab-content.right {
-        position: absolute;
-        right: -100%;
-        transition: right 0.5s ease-in-out;
-        }
+  .tab-content.right {
+    position: absolute;
+    right: -100%;
+    transition: right 0.5s ease-in-out;
+  }
 
-    .tab-content.slide-left {
-        transform: translateX(-100%);
-        }
+  .tab-content.slide-left {
+    transform: translateX(-100%);
+  }
 
-    .tab-content.active {
-        height: auto;
-        display: contents;
-        position: inherit;
-    }
+  .tab-content.active {
+    height: auto;
+    display: contents;
+    position: inherit;
+  }
 
-    .tabs li {
-      font-size: 14px;
-    }
+  .tabs li {
+    font-size: 14px;
+  }
 
-    .tab:hover {
-      cursor: pointer;
-      font-size: 16px;
-    }
+  .tab:hover {
+    cursor: pointer;
+    font-size: 16px;
+  }
+</style>
 
-  </style>
-
-  <head>
-    <div id="top-bar">
-      <div id="bar-width">
-        <title>Discover Bonita Springs & Estero</title>
-        <a href="https://bonitaspringsesterolifestyles.com/homepage-2022/" target="_blank"><img class="ber-logo" src="https://www.bonitaesterorealtors.com/wp-content/uploads/2021/08/Untitled-design-24.png" alt="Bonita Springs Lifestyles"></img></a>
-        <div class="bser-title">BSER Lifestyles</div>
-          <ul class="navbar-expand-md navbar-text">
-            <li><a href="https://bonitaspringsesterolifestyles.com/communities/" style="color: white;">Communities</a></li>
-            <li><a href="http://bonitaspringsesterorealtorsfl.growthzoneapp.com/realtordirectory/Find?term=&advFilter=eyJDdXN0b21GaWVsZFZhbHVlcyI6W10sIkNvdW50cmllcyI6W10sIlN0YXRlcyI6W10sIkNpdGllcyI6W10sIlBvc3RhbENvZGVzIjpbXSwiQ2F0ZWdvcnlWYWx1ZXMiOltdLCJSYWRpdXMiOiIwIn0%3D" style="color: white;">Find a REALTOR</a></li>
-            <li><a href="https://bonitaspringsesterolifestyles.com/homes-for-sale-swfl/" style="color: white;">Property Search</a></li>
-            <li><a href="https://bonitaspringsesterolifestyles.com/city-info/" style="color: white;">City Info</a></li>
-            <li>Become a REALTOR®</li>
-          </ul>
-      </div>
-    </div>
-  </head>
-
-  <body>
-
-        <div id="shopping-img">
-          <h1 id="shoptitle">How to Get Your Real Estate License </h1>
-        </div>
-
-        <div class="shop-places">
-              <h1 id="shoptitle2" style="display: none;">How to Get Your Real Estate License </h1>
-
-              <div id="artcicle-container">
-                <br>
-                <br>
-                <h3 class="titles" style="margin: -20px auto 10px auto;">Introduction:</h3>
-                <div class="row" style="padding: 25px 25px 25px 25px;">
-                    <div class="col-sm">
-                        <p style="color: black;">The Southwest Florida real estate market is a vibrant and growing industry, with a diverse range of properties from beachfront condos to luxury waterfront homes. The area, which includes cities such as Fort Myers, Naples, and Cape Coral, is a popular destination for both tourists and retirees, making it a prime location for those interested in a career as a realtor.
-                            <br>
-                            <br>
-                            As a realtor in Southwest Florida, you will have the opportunity to assist buyers and sellers in navigating the complex process of buying or selling a property in this beautiful and desirable region. This includes helping clients find properties that meet their needs and budget, negotiating deals, and providing guidance on legal and financial matters. Real estate professionals in Southwest Florida also play a key role in the local economy by helping to facilitate the buying and selling of properties.
-                            <br>
-                        </p>
-                    </div>
-                    <div class="col-sm">
-                        <p style="color: black;">
-                            In addition to the professional satisfaction that comes with helping people find their dream homes in Southwest Florida, a career in real estate also offers the potential for significant financial rewards. Real estate professionals are typically paid on commission, which means that the more deals you close, the more money you can earn. Additionally, many realtors choose to start their own businesses, which can provide the freedom and flexibility to set your own schedule and build your own client base.
-                            <br>
-                            <br>
-                            Overall, becoming a licensed realtor in Southwest Florida is a great opportunity for those interested in a career in real estate. This guide will provide you with all the information you need to take the first step in becoming a licensed realtor in Southwest Florida, including the requirements, education, and exam information, and resources to help you succeed in your new career.
-                         </p>
-                    </div>
-                </div>
-
-                <hr>
-
-                <div class="tabs">
-                    <ul class="list">
-                      <li class="tab active" id="tab1">Requirements</li>
-                      <li class="tab" id="tab2">Education</li>
-                      <li class="tab" id="tab3">Exam</li>
-                      <li class="tab" id="tab4">Application</li>
-                      <li class="tab" id="tab5">Resources</li>
-                    </ul>
-                </div>
-                
-                    <div class="tab-content" id="tab1-content">
-                        <h3 class="titles" id="t1">Requirements:</h3>
-                        <div style="background-color: royalblue; padding: 20px; border-radius: 10px;">
-                            <p>
-                                To become a licensed realtor in Florida, there are certain requirements that must be met. These include:
-                            </p>
-                                <ul style="margin: 20px 20px 20px 40px;">
-                                    <li>Age: You must be at least 18 years old to apply for a real estate license in Florida.</li>
-                                        <br>
-                                    <li>Education: You must complete 63 hours of pre-licensing education from a Florida Department of Business and Professional Regulation (DBPR) approved school.</li>
-                                        <br>
-                                    <li>Background check: You will be required to submit to a background check and fingerprinting as part of the application process.</li>
-                                        <br>    
-                                    <li>You must pass a state and national exam with a grade of at least 75%</li>
-                                        <br>    
-                                    <li>Once you have passed the exam, you must find a licensed broker to sponsor you.</li>
-                                        <br>
-                                    <li>Application: You must submit an application to the Florida DBPR, along with the appropriate fee, and provide proof of completion of the required education and passing of the exam.</li>
-            
-                                </ul>
-                                <p>
-                                    It's important to note that the requirements may change over time, it's always better to double check with the official website of the Florida Department of Business and Professional Regulation (DBPR) for the most up-to-date information.
-                                </p>
-                        </div>
-                    </div>
-
-                    <div class="tab-content" id="tab2-content">
-                        <h3 class="titles" id="t2">Education:</h3>
-
-                        <div style="background-color: royalblue; padding: 20px; border-radius: 10px;">
-                            <p>
-                                Pre-licensing education is a mandatory requirement for anyone looking to become a licensed realtor in Florida. The education should cover a wide range of topics including real estate principles, practices, and law.
-        
-                                The education is typically divided into several modules and students must complete all the modules to qualify. Some of the topics covered in the education include:
-                            </p>
-        
-                            <ul style="margin: 20px 20px 20px 40px;">
-                                <li>Real estate principles: This includes the basic concepts of real estate such as property ownership, property rights, and property use.</li>
-                                <br>
-                                <li>Real estate practices: This covers the day-to-day aspects of being a realtor, such as marketing, property showings, and contract negotiation.</li>
-                                <li>Real estate law: This covers the laws and regulations that govern the real estate industry, including state and federal laws, and ethical standards for realtors.</li>
-                            </ul>
-                            <br>
-                            <p>You have the option of taking the classes in a traditional classroom setting or online, and many schools offer flexible scheduling to accommodate working professionals. Online classes are becoming more popular as it allows students to complete the coursework at their own pace and on their own schedule.
-                                <br>
-                                <br>
-                                Once you complete the required education, you will receive a certificate of completion that you will need to submit with your application. In order to be approved to take the state and national real estate exam, you will need to present the certificate of completion.
-                                <br>
-                                <br>
-                                Additionally, after becoming a licensed realtor, you will be required to complete continuing education courses to maintain your license. In Florida, realtors must complete 14 hours of continuing education every two years. This is to ensure that realtors are up to date with the latest laws and regulations, as well as industry best practices.
-                                <br>
-                                <br>
-                                You can find DBPR approved schools by visiting the official website of the Florida Department of Business and Professional Regulation (DBPR), and look for the approved schools under the "Education" section. The website typically has a list of all the approved schools and their contact information. It's important to ensure that you choose a school that is approved by the DBPR, otherwise, you will not be able to take the state and national real estate exam.
-        
-                            </p>
-                        </div>
-                    </div>
-
-                    <div class="tab-content" id="tab3-content">
-                        
-                    <h3 class="titles" id="t3">Exam:</h3>
-                        <div style="background-color: royalblue; padding: 20px; border-radius: 10px;">
-                            <p>
-                                After completing the required education, the next step to becoming a licensed realtor in Florida is to pass a state and national real estate exam. The exam is administered by the Florida Department of Business and Professional Regulation (DBPR) and covers the material covered in the pre-licensing education.
-                                <br>
-                                <br>
-                                The exam is divided into two parts: a state exam and a national exam. The state exam covers Florida-specific laws and regulations, while the national exam covers general real estate principles and practices. Both exams are computer-based and consist of multiple-choice questions.
-                                <br>
-                                <br>
-                                To take the exam, you must schedule an appointment with a testing center and pay the exam fee, which is usually around $100 - $200 depending on the center. You will need to present a valid government-issued ID and your certificate of completion from your pre-licensing education.
-                                <br>
-                                <br>
-                                You must pass both the state and national exam with a grade of at least 75%. In case of failure, you will have to retake the exam by paying the exam fee again, and you may need to retake the pre-licensing education if it's been more than a year since you completed it.
-                                <br>
-                                <br>
-                                It's important to note that the exam requirements may change over time, so it's always best to double-check with the official website of the Florida Department of Business and Professional Regulation (DBPR) for the most up-to-date information.
-                            
-                            </p>
-                        </div>
-                    </div>
-
-
-                    <div class="tab-content" id="tab4-content">
-                        <h3 class="titles" id="t4">Application:</h3>
-                        <div style="background-color: royalblue; padding: 20px; border-radius: 10px;">
-                            <p>
-                                Once you have passed the state and national real estate exam, you are ready to submit your application to become a licensed realtor in Florida. The application process is handled by the Florida Department of Business and Professional Regulation (DBPR) and requires the following steps:
-                            </p>
-                            <br>
-                            <ul style="margin: 20px 20px 20px 40px;">
-                                <li>Sponsorship: Before you can submit your application, you must find a licensed broker to sponsor you. The broker will need to sign and submit a form verifying that they will supervise your real estate activities.</li>
-                                <br>
-                                <li>Application Form: You will need to submit an application form to the DBPR, along with the appropriate fee, usually around $200 - $300. The application form can be found on the DBPR website, and will require you to provide personal information such as your name, address, and contact information.</li>
-                                <li>Supporting Documents: You will also need to submit several supporting documents as part of the application process, including:
-                                    <ul style="margin: 20px 20px 20px 40px;">
-                                        <li>Your certificate of completion from your pre-licensing education</li>
-                                        <li>Proof of passing the state and national real estate exam</li>
-                                        <li>A valid government-issued ID</li>
-                                        <li>Fingerprinting and background check results</li>
-                                    </ul>
-                                </li>
-                                <li>After submitting your application, the DBPR will review it and, if everything is in order, they will issue your real estate license.</li>
-                            </ul>
-        
-                            <br>
-        
-                            <p>
-                                It's important to note that the application requirements may change over time, so it's always best to double-check with the official website of the Florida Department of Business and Professional Regulation (DBPR) for the most up-to-date information.
-                            </p>
-                        </div>
-                    </div>
-
-                    <div class="tab-content" id="tab5-content">
-                        <h3 class="titles" id="t5">Resources:</h3>
-
-                        <div style="background-color: royalblue; padding: 20px; border-radius: 10px;">
-                            <p>Becoming a licensed realtor in Florida is just the first step in a successful career in real estate. There are many resources available to help new realtors succeed in their new profession. Some of the resources that may be helpful include:</p>
-        
-                            <br>
-        
-                            <ul style="margin: 20px 20px 20px 40px;">
-                                <li>Professional organizations: Joining a professional organization such as the National Association of Realtors (NAR) or the Florida Association of Realtors (FAR) can provide new realtors with access to training, networking opportunities, and industry-specific resources.</li>
-                                <br>
-                                <li>Mentoring programs: Many real estate brokerages offer mentoring programs for new realtors. These programs provide new realtors with the opportunity to learn from experienced professionals and gain valuable insights into the industry.</li>
-                                <br>
-                                <li>Industry events: Attending industry events such as conventions, trade shows, and seminars can provide new realtors with the opportunity to learn about the latest trends and technologies in the industry, and to network with other professionals.</li>
-                                <br>
-                                <li>Online resources: There are many online resources available to new realtors, including websites, webinars, and e-books. These resources can provide new realtors with valuable information on a wide range of topics, from marketing and sales techniques to legal and financial matters.</li>
-                                <br>
-                                <li>Continuing education: As a licensed professional, it is important to continue learning, to keep up with the latest laws, regulations and market trends in the industry. The DBPR website is a great resource for finding continuing education classes and courses.</li>
-                            </ul>
-        
-                            <br>
-        
-                            <p>By utilizing these resources, new realtors can gain the knowledge and skills they need to be successful in their new profession.</p>
-                        </div>
-                    </div>
-
-                    <br>
-                    <hr>
-                    <br>
-
-                    <h2 class="titles" style="margin: 13px auto 10px auto;">Conclusion:</h2>
-                    <p>Becoming a licensed realtor in Florida is a great opportunity for those interested in a career in real estate. The state's dynamic and diverse real estate market, combined with the earning potential and flexibility of being a realtor, make it an attractive choice for many professionals.
-    
-                        <br>
-                        <br>
-                        This guide has provided you with the information you need to take the first step in becoming a licensed realtor in Florida, including the requirements, education, and exam information, and resources to help you succeed in your new career. By following the steps outlined in this guide, you can start your journey towards a successful career as a licensed realtor in Florida.
-    
-                        <br>
-                        <br>
-                        It is important to keep in mind that the requirements and regulations may change over time, so it's always best to check with the Florida Department of Business and Professional Regulation (DBPR) for the most up-to-date information.
-    
-                        <br>
-                        <br>
-                        Don't hesitate to reach out to real estate professionals, organizations or the DBPR for guidance, and to take advantage of the resources available to you. With hard work, dedication and the right mindset, you can become a successful realtor in Florida and help people achieve their dream of owning a property.
-                    </p>
-                
-            </div>
-
-                <script>
-                    //Work on this
-                    let d1 = document.getElementById("tab1-content");
-                    let d2 = document.getElementById("tab2-content");
-                    let d3 = document.getElementById("tab3-content");
-                    let d4 = document.getElementById("tab4-content");
-                    let d5 = document.getElementById("tab5-content");
-
-
-
-
-                    var tabs = document.querySelectorAll('.tab');
-                    var tabContents = document.querySelectorAll('.tab-content');
-
-                    var tabs = document.querySelectorAll('.tab');
-
-                    tabs.forEach(function(tab) {
-                    tab.addEventListener('click', function() {
-                        // remove active class from all tabs and tab contents
-                        tabs.forEach(function(tab) {
-                        tab.classList.remove('active');
-                        });
-                        tabContents.forEach(function(tabContent) {
-                        tabContent.classList.remove('active');
-                        });
-
-                        // add active class to clicked tab and corresponding tab content
-                        this.classList.add('active');
-                        document.getElementById(this.id + '-content').classList.add('active');
-                    });
-                    });
-                </script>
-    
-
-                <div>
-    
-              <hr>
-              <div class="r-promo row">
-                <div class="col-sm-8">
-                  <p>Found a property that intrests you?</p>
-                  <h2>Find a REALTOR®</h2>
-                </div>
-                <div class="col-sm-4">
-                  <a href="http://bonitaspringsesterorealtorsfl.growthzoneapp.com/realtordirectory/Find?term=&advFilter=eyJDdXN0b21GaWVsZFZhbHVlcyI6W10sIkNvdW50cmllcyI6W10sIlN0YXRlcyI6W10sIkNpdGllcyI6W10sIlBvc3RhbENvZGVzIjpbXSwiQ2F0ZWdvcnlWYWx1ZXMiOltdLCJSYWRpdXMiOiIwIn0%3D" target="_blank"><button class="btn btn-primary">Click Here!</button></a>
-                </div>
-              </div>
-    </div>
-
-
-  </body>
-
-  <div class="footy">
-    <div class="footer-background">
-      Copyright © 2022 Bonita Springs-Estero Board of Realtors® • All Rights Reserved • Website Development by Bonita Springs-Estero Realtors • 25300 Bernwood Dr. Suite 7, Bonita Springs, FL 34135 • (239) 992-6771
+<head>
+  <div id="top-bar">
+    <div id="bar-width">
+      <title>Discover Bonita Springs & Estero</title>
+      <a href="https://bonitaspringsesterolifestyles.com/homepage-2022/" target="_blank"><img class="ber-logo"
+          src="https://www.bonitaesterorealtors.com/wp-content/uploads/2021/08/Untitled-design-24.png"
+          alt="Bonita Springs Lifestyles"></img></a>
+      <div class="bser-title">BSER Lifestyles</div>
+      <ul class="navbar-expand-md navbar-text">
+        <li><a href="https://bonitaspringsesterolifestyles.com/communities/" style="color: white;">Communities</a></li>
+        <li><a
+            href="http://bonitaspringsesterorealtorsfl.growthzoneapp.com/realtordirectory/Find?term=&advFilter=eyJDdXN0b21GaWVsZFZhbHVlcyI6W10sIkNvdW50cmllcyI6W10sIlN0YXRlcyI6W10sIkNpdGllcyI6W10sIlBvc3RhbENvZGVzIjpbXSwiQ2F0ZWdvcnlWYWx1ZXMiOltdLCJSYWRpdXMiOiIwIn0%3D"
+            style="color: white;">Find a REALTOR</a></li>
+        <li><a href="https://bonitaspringsesterolifestyles.com/home-search/" style="color: white;">Homes For Sale</a>
+        </li>
+        <li><a href="https://bonitaspringsesterolifestyles.com/city-info/" style="color: white;">City Info</a></li>
+        <li>Become a REALTOR®</li>
+      </ul>
     </div>
   </div>
+</head>
 
-  <script>
+<body>
+
+  <div id="shopping-img">
+    <h1 id="shoptitle">How to Get Your Real Estate License </h1>
+  </div>
+
+  <div class="shop-places">
+    <h1 id="shoptitle2" style="display: none;">How to Get Your Real Estate License </h1>
+
+    <div id="artcicle-container">
+      <br>
+      <br>
+      <h3 class="titles" style="margin: -20px auto 10px auto;">Introduction:</h3>
+      <div class="row" style="padding: 25px 25px 25px 25px;">
+        <div class="col-sm">
+          <p style="color: black;">The Southwest Florida real estate market is a vibrant and growing industry, with a
+            diverse range of properties from beachfront condos to luxury waterfront homes. The area, which includes
+            cities such as Fort Myers, Naples, and Cape Coral, is a popular destination for both tourists and retirees,
+            making it a prime location for those interested in a career as a realtor.
+            <br>
+            <br>
+            As a realtor in Southwest Florida, you will have the opportunity to assist buyers and sellers in navigating
+            the complex process of buying or selling a property in this beautiful and desirable region. This includes
+            helping clients find properties that meet their needs and budget, negotiating deals, and providing guidance
+            on legal and financial matters. Real estate professionals in Southwest Florida also play a key role in the
+            local economy by helping to facilitate the buying and selling of properties.
+            <br>
+          </p>
+        </div>
+        <div class="col-sm">
+          <p style="color: black;">
+            In addition to the professional satisfaction that comes with helping people find their dream homes in
+            Southwest Florida, a career in real estate also offers the potential for significant financial rewards. Real
+            estate professionals are typically paid on commission, which means that the more deals you close, the more
+            money you can earn. Additionally, many realtors choose to start their own businesses, which can provide the
+            freedom and flexibility to set your own schedule and build your own client base.
+            <br>
+            <br>
+            Overall, becoming a licensed realtor in Southwest Florida is a great opportunity for those interested in a
+            career in real estate. This guide will provide you with all the information you need to take the first step
+            in becoming a licensed realtor in Southwest Florida, including the requirements, education, and exam
+            information, and resources to help you succeed in your new career.
+          </p>
+        </div>
+      </div>
+
+      <hr>
+
+      <div class="tabs">
+        <ul class="list">
+          <li class="tab active" id="tab1">Requirements</li>
+          <li class="tab" id="tab2">Education</li>
+          <li class="tab" id="tab3">Exam</li>
+          <li class="tab" id="tab4">Application</li>
+          <li class="tab" id="tab5">Resources</li>
+        </ul>
+      </div>
+
+      <div class="tab-content" id="tab1-content">
+        <h3 class="titles" id="t1">Requirements:</h3>
+        <div style="background-color: royalblue; padding: 20px; border-radius: 10px;">
+          <p>
+            To become a licensed realtor in Florida, there are certain requirements that must be met. These include:
+          </p>
+          <ul style="margin: 20px 20px 20px 40px;">
+            <li>Age: You must be at least 18 years old to apply for a real estate license in Florida.</li>
+            <br>
+            <li>Education: You must complete 63 hours of pre-licensing education from a Florida Department of Business
+              and Professional Regulation (DBPR) approved school.</li>
+            <br>
+            <li>Background check: You will be required to submit to a background check and fingerprinting as part of the
+              application process.</li>
+            <br>
+            <li>You must pass a state and national exam with a grade of at least 75%</li>
+            <br>
+            <li>Once you have passed the exam, you must find a licensed broker to sponsor you.</li>
+            <br>
+            <li>Application: You must submit an application to the Florida DBPR, along with the appropriate fee, and
+              provide proof of completion of the required education and passing of the exam.</li>
+
+          </ul>
+          <p>
+            It's important to note that the requirements may change over time, it's always better to double check with
+            the official website of the Florida Department of Business and Professional Regulation (DBPR) for the most
+            up-to-date information.
+          </p>
+        </div>
+      </div>
+
+      <div class="tab-content" id="tab2-content">
+        <h3 class="titles" id="t2">Education:</h3>
+
+        <div style="background-color: royalblue; padding: 20px; border-radius: 10px;">
+          <p>
+            Pre-licensing education is a mandatory requirement for anyone looking to become a licensed realtor in
+            Florida. The education should cover a wide range of topics including real estate principles, practices, and
+            law.
+
+            The education is typically divided into several modules and students must complete all the modules to
+            qualify. Some of the topics covered in the education include:
+          </p>
+
+          <ul style="margin: 20px 20px 20px 40px;">
+            <li>Real estate principles: This includes the basic concepts of real estate such as property ownership,
+              property rights, and property use.</li>
+            <br>
+            <li>Real estate practices: This covers the day-to-day aspects of being a realtor, such as marketing,
+              property showings, and contract negotiation.</li>
+            <li>Real estate law: This covers the laws and regulations that govern the real estate industry, including
+              state and federal laws, and ethical standards for realtors.</li>
+          </ul>
+          <br>
+          <p>You have the option of taking the classes in a traditional classroom setting or online, and many schools
+            offer flexible scheduling to accommodate working professionals. Online classes are becoming more popular as
+            it allows students to complete the coursework at their own pace and on their own schedule.
+            <br>
+            <br>
+            Once you complete the required education, you will receive a certificate of completion that you will need to
+            submit with your application. In order to be approved to take the state and national real estate exam, you
+            will need to present the certificate of completion.
+            <br>
+            <br>
+            Additionally, after becoming a licensed realtor, you will be required to complete continuing education
+            courses to maintain your license. In Florida, realtors must complete 14 hours of continuing education every
+            two years. This is to ensure that realtors are up to date with the latest laws and regulations, as well as
+            industry best practices.
+            <br>
+            <br>
+            You can find DBPR approved schools by visiting the official website of the Florida Department of Business
+            and Professional Regulation (DBPR), and look for the approved schools under the "Education" section. The
+            website typically has a list of all the approved schools and their contact information. It's important to
+            ensure that you choose a school that is approved by the DBPR, otherwise, you will not be able to take the
+            state and national real estate exam.
+
+          </p>
+        </div>
+      </div>
+
+      <div class="tab-content" id="tab3-content">
+
+        <h3 class="titles" id="t3">Exam:</h3>
+        <div style="background-color: royalblue; padding: 20px; border-radius: 10px;">
+          <p>
+            After completing the required education, the next step to becoming a licensed realtor in Florida is to pass
+            a state and national real estate exam. The exam is administered by the Florida Department of Business and
+            Professional Regulation (DBPR) and covers the material covered in the pre-licensing education.
+            <br>
+            <br>
+            The exam is divided into two parts: a state exam and a national exam. The state exam covers Florida-specific
+            laws and regulations, while the national exam covers general real estate principles and practices. Both
+            exams are computer-based and consist of multiple-choice questions.
+            <br>
+            <br>
+            To take the exam, you must schedule an appointment with a testing center and pay the exam fee, which is
+            usually around $100 - $200 depending on the center. You will need to present a valid government-issued ID
+            and your certificate of completion from your pre-licensing education.
+            <br>
+            <br>
+            You must pass both the state and national exam with a grade of at least 75%. In case of failure, you will
+            have to retake the exam by paying the exam fee again, and you may need to retake the pre-licensing education
+            if it's been more than a year since you completed it.
+            <br>
+            <br>
+            It's important to note that the exam requirements may change over time, so it's always best to double-check
+            with the official website of the Florida Department of Business and Professional Regulation (DBPR) for the
+            most up-to-date information.
+
+          </p>
+        </div>
+      </div>
+
+
+      <div class="tab-content" id="tab4-content">
+        <h3 class="titles" id="t4">Application:</h3>
+        <div style="background-color: royalblue; padding: 20px; border-radius: 10px;">
+          <p>
+            Once you have passed the state and national real estate exam, you are ready to submit your application to
+            become a licensed realtor in Florida. The application process is handled by the Florida Department of
+            Business and Professional Regulation (DBPR) and requires the following steps:
+          </p>
+          <br>
+          <ul style="margin: 20px 20px 20px 40px;">
+            <li>Sponsorship: Before you can submit your application, you must find a licensed broker to sponsor you. The
+              broker will need to sign and submit a form verifying that they will supervise your real estate activities.
+            </li>
+            <br>
+            <li>Application Form: You will need to submit an application form to the DBPR, along with the appropriate
+              fee, usually around $200 - $300. The application form can be found on the DBPR website, and will require
+              you to provide personal information such as your name, address, and contact information.</li>
+            <li>Supporting Documents: You will also need to submit several supporting documents as part of the
+              application process, including:
+              <ul style="margin: 20px 20px 20px 40px;">
+                <li>Your certificate of completion from your pre-licensing education</li>
+                <li>Proof of passing the state and national real estate exam</li>
+                <li>A valid government-issued ID</li>
+                <li>Fingerprinting and background check results</li>
+              </ul>
+            </li>
+            <li>After submitting your application, the DBPR will review it and, if everything is in order, they will
+              issue your real estate license.</li>
+          </ul>
+
+          <br>
+
+          <p>
+            It's important to note that the application requirements may change over time, so it's always best to
+            double-check with the official website of the Florida Department of Business and Professional Regulation
+            (DBPR) for the most up-to-date information.
+          </p>
+        </div>
+      </div>
+
+      <div class="tab-content" id="tab5-content">
+        <h3 class="titles" id="t5">Resources:</h3>
+
+        <div style="background-color: royalblue; padding: 20px; border-radius: 10px;">
+          <p>Becoming a licensed realtor in Florida is just the first step in a successful career in real estate. There
+            are many resources available to help new realtors succeed in their new profession. Some of the resources
+            that may be helpful include:</p>
+
+          <br>
+
+          <ul style="margin: 20px 20px 20px 40px;">
+            <li>Professional organizations: Joining a professional organization such as the National Association of
+              Realtors (NAR) or the Florida Association of Realtors (FAR) can provide new realtors with access to
+              training, networking opportunities, and industry-specific resources.</li>
+            <br>
+            <li>Mentoring programs: Many real estate brokerages offer mentoring programs for new realtors. These
+              programs provide new realtors with the opportunity to learn from experienced professionals and gain
+              valuable insights into the industry.</li>
+            <br>
+            <li>Industry events: Attending industry events such as conventions, trade shows, and seminars can provide
+              new realtors with the opportunity to learn about the latest trends and technologies in the industry, and
+              to network with other professionals.</li>
+            <br>
+            <li>Online resources: There are many online resources available to new realtors, including websites,
+              webinars, and e-books. These resources can provide new realtors with valuable information on a wide range
+              of topics, from marketing and sales techniques to legal and financial matters.</li>
+            <br>
+            <li>Continuing education: As a licensed professional, it is important to continue learning, to keep up with
+              the latest laws, regulations and market trends in the industry. The DBPR website is a great resource for
+              finding continuing education classes and courses.</li>
+          </ul>
+
+          <br>
+
+          <p>By utilizing these resources, new realtors can gain the knowledge and skills they need to be successful in
+            their new profession.</p>
+        </div>
+      </div>
+
+      <br>
+      <hr>
+      <br>
+
+      <h2 class="titles" style="margin: 13px auto 10px auto;">Conclusion:</h2>
+      <p>Becoming a licensed realtor in Florida is a great opportunity for those interested in a career in real estate.
+        The state's dynamic and diverse real estate market, combined with the earning potential and flexibility of being
+        a realtor, make it an attractive choice for many professionals.
+
+        <br>
+        <br>
+        This guide has provided you with the information you need to take the first step in becoming a licensed realtor
+        in Florida, including the requirements, education, and exam information, and resources to help you succeed in
+        your new career. By following the steps outlined in this guide, you can start your journey towards a successful
+        career as a licensed realtor in Florida.
+
+        <br>
+        <br>
+        It is important to keep in mind that the requirements and regulations may change over time, so it's always best
+        to check with the Florida Department of Business and Professional Regulation (DBPR) for the most up-to-date
+        information.
+
+        <br>
+        <br>
+        Don't hesitate to reach out to real estate professionals, organizations or the DBPR for guidance, and to take
+        advantage of the resources available to you. With hard work, dedication and the right mindset, you can become a
+        successful realtor in Florida and help people achieve their dream of owning a property.
+      </p>
+
+    </div>
+
+    <script>
+      //Work on this
+      let d1 = document.getElementById("tab1-content");
+      let d2 = document.getElementById("tab2-content");
+      let d3 = document.getElementById("tab3-content");
+      let d4 = document.getElementById("tab4-content");
+      let d5 = document.getElementById("tab5-content");
+
+
+
+
+      var tabs = document.querySelectorAll('.tab');
+      var tabContents = document.querySelectorAll('.tab-content');
+
+      var tabs = document.querySelectorAll('.tab');
+
+      tabs.forEach(function (tab) {
+        tab.addEventListener('click', function () {
+          // remove active class from all tabs and tab contents
+          tabs.forEach(function (tab) {
+            tab.classList.remove('active');
+          });
+          tabContents.forEach(function (tabContent) {
+            tabContent.classList.remove('active');
+          });
+
+          // add active class to clicked tab and corresponding tab content
+          this.classList.add('active');
+          document.getElementById(this.id + '-content').classList.add('active');
+        });
+      });
+    </script>
+
+
+    <div>
+
+      <hr>
+      <div class="r-promo row">
+        <div class="col-sm-8">
+          <p>Found a property that intrests you?</p>
+          <h2>Find a REALTOR®</h2>
+        </div>
+        <div class="col-sm-4">
+          <a href="http://bonitaspringsesterorealtorsfl.growthzoneapp.com/realtordirectory/Find?term=&advFilter=eyJDdXN0b21GaWVsZFZhbHVlcyI6W10sIkNvdW50cmllcyI6W10sIlN0YXRlcyI6W10sIkNpdGllcyI6W10sIlBvc3RhbENvZGVzIjpbXSwiQ2F0ZWdvcnlWYWx1ZXMiOltdLCJSYWRpdXMiOiIwIn0%3D"
+            target="_blank"><button class="btn btn-primary">Click Here!</button></a>
+        </div>
+      </div>
+    </div>
+
+
+</body>
+
+<div class="footy">
+  <div class="footer-background">
+    Copyright © 2022 Bonita Springs-Estero Board of Realtors® • All Rights Reserved • Website Development by Bonita
+    Springs-Estero Realtors • 25300 Bernwood Dr. Suite 7, Bonita Springs, FL 34135 • (239) 992-6771
+  </div>
+</div>
+
+<script>
   let shopArray = ["https://www.bonitaesterorealtors.com/wp-content/uploads/2022/08/estero.jpeg", "https://www.bonitaesterorealtors.com/wp-content/uploads/2022/08/R-3.jpeg", "https://www.bonitaesterorealtors.com/wp-content/uploads/2022/08/R-2.jpeg", "https://www.bonitaesterorealtors.com/wp-content/uploads/2022/08/OIP-3.jpeg"]
 
-  window.onload = function() {
+  window.onload = function () {
 
     document.getElementById('tab1').classList.add('active');
     document.getElementById('tab1-content').classList.add('active');
 
     var scrollTop = $(window).scrollTop();
     $('html, body').animate({
-          scrollTop: 0
-          });
+      scrollTop: 0
+    });
     setInterval("changeImage();", 8000);
   }
 
@@ -919,26 +1058,26 @@
 
   });
 
-    function changeImage() {
-      let rando = Math.floor(Math.random() * 6);
-      console.log(rando);
-      var tempurl = shopArray[rando];
-      console.log(tempurl);
-      if (rando == 4) {
-        document.getElementById("shopping-img").style.backgroundImage = "url('http://bonitaspringsesterolifestyles.com/wp-content/uploads/2023/01/pexels-david-mcbee-667221-scaled.jpg')";
-      }
-      else if (rando == 5) {
-        document.getElementById("shopping-img").style.backgroundImage = "url('http://bonitaspringsesterolifestyles.com/wp-content/uploads/2023/01/pexels-energepiccom-313691-scaled.jpg')";
-      }
-      else if (rando == 1) {
-        document.getElementById("shopping-img").style.backgroundImage = "url('http://bonitaspringsesterolifestyles.com/wp-content/uploads/2023/01/pexels-photomix-company-101808-scaled.jpg')";
-      }
-      else if (rando == 3) {
-        document.getElementById("shopping-img").style.backgroundImage = "url('http://bonitaspringsesterolifestyles.com/wp-content/uploads/2023/01/pexels-pixabay-276554-scaled.jpg')";
-      }
-      else if (rando == 2) {
-        document.getElementById("shopping-img").style.backgroundImage = "url('http://bonitaspringsesterolifestyles.com/wp-content/uploads/2023/01/pexels-the-lazy-artist-gallery-1642125-scaled.jpg')";
-      }
+  function changeImage() {
+    let rando = Math.floor(Math.random() * 6);
+    console.log(rando);
+    var tempurl = shopArray[rando];
+    console.log(tempurl);
+    if (rando == 4) {
+      document.getElementById("shopping-img").style.backgroundImage = "url('http://bonitaspringsesterolifestyles.com/wp-content/uploads/2023/01/pexels-david-mcbee-667221-scaled.jpg')";
+    }
+    else if (rando == 5) {
+      document.getElementById("shopping-img").style.backgroundImage = "url('http://bonitaspringsesterolifestyles.com/wp-content/uploads/2023/01/pexels-energepiccom-313691-scaled.jpg')";
+    }
+    else if (rando == 1) {
+      document.getElementById("shopping-img").style.backgroundImage = "url('http://bonitaspringsesterolifestyles.com/wp-content/uploads/2023/01/pexels-photomix-company-101808-scaled.jpg')";
+    }
+    else if (rando == 3) {
+      document.getElementById("shopping-img").style.backgroundImage = "url('http://bonitaspringsesterolifestyles.com/wp-content/uploads/2023/01/pexels-pixabay-276554-scaled.jpg')";
+    }
+    else if (rando == 2) {
+      document.getElementById("shopping-img").style.backgroundImage = "url('http://bonitaspringsesterolifestyles.com/wp-content/uploads/2023/01/pexels-the-lazy-artist-gallery-1642125-scaled.jpg')";
+    }
 
     function closeRow() {
       document.getElementById("gc").style.display = "none";
@@ -962,7 +1101,7 @@
       document.getElementById("mr-down").style.display = "none";
     }
   }
-    </script>
+</script>
 
 
 

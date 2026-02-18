@@ -1,518 +1,574 @@
 <!DOCTYPE html>
 <html lang="en" dir="ltr">
-  <!-- Required meta tags -->
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+<!-- Required meta tags -->
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 
-  <!-- Bootstrap CSS -->
-  <link rel="stylesheet" href=
-"https://maxcdn.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
+<!-- Bootstrap CSS -->
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
 
-   <script src=
-"https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js">
-   </script>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js">
+</script>
 
-   <script src=
-"https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js">
-   </script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js">
+</script>
 
-   <script src=
-"https://maxcdn.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js">
-   </script>
-  <link rel="stylesheet" href="style.css">
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js">
+</script>
+<link rel="stylesheet" href="style.css">
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Style+Script&display=swap" rel="stylesheet">
-   <link rel='stylesheet' href='https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css'>
-   <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
-   <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Aboreto&display=swap" rel="stylesheet">
+<link rel='stylesheet' href='https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css'>
+<script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Aboreto&display=swap" rel="stylesheet">
 
-  <style>
+<style>
+  * {
+    padding: 0;
+    margin: 0;
+  }
 
-    *{
-      padding: 0;
-      margin: 0;
+  html {
+    width: 100%;
+  }
+
+  body {
+    width: 100%;
+    margin: 0 !important;
+  }
+
+  head {
+    width: 80%;
+    height: 100vh;
+    font-family: sans-serif;
+  }
+
+  p {
+    font-size: 15px;
+  }
+
+  h4 {
+    font-size: 1rem;
+    margin: 10px auto;
+  }
+
+  .btn {
+    margin: 0px auto 5px auto;
+    font-size: 2rem;
+  }
+
+  #shoptitle {
+    font-size: 55px;
+    margin: 200px auto auto 5%;
+    position: absolute;
+    color: white;
+    z-index: 999;
+    background-color: #4bc6f6;
+  }
+
+  #shoptitle2 {
+    font-size: 55px;
+    margin: -66px auto auto 5%;
+    position: absolute;
+    color: white;
+    z-index: 999;
+    background-color: #4bc6f6;
+  }
+
+  #shopimg {
+    height: 280px;
+    width: 100%;
+    opacity: .6;
+    background-color: black;
+    z-index: -999;
+    object-fit: cover;
+  }
+
+  h2 {
+    font-family: 'Aboreto', cursive;
+    font-size: 4rem;
+    margin: -5px auto -20px 0px;
+  }
+
+  .small-img {
+    object-fit: fill;
+    width: 100%;
+    height: 100%;
+  }
+
+  .container {
+    padding-left: 0;
+    padding-right: 0;
+  }
+
+  .col-sm-5 {
+    margin-top: -120px;
+  }
+
+  .col-sm-7 {
+    padding-left: 0;
+  }
+
+  .ber-logo {
+    width: 170px;
+    position: relative;
+    height: 170px;
+    margin: -12px 0px -12px 3%;
+    animation-duration: 2s;
+    animation-name: run;
+    display: flex;
+    z-index: 3;
+  }
+
+  #site-scroll-top {
+    display: none;
+  }
+
+  .shop-places {
+    width: 100%;
+    display: grid;
+    margin: 300px auto 0px auto !important;
+    background-color: white;
+    z-index: 999;
+  }
+
+  #shopping-img {
+    background-image: url("https://www.bonitaesterorealtors.com/wp-content/uploads/2022/06/gctc.jpg");
+    background-repeat: no-repeat;
+    background-size: cover;
+    height: 800px;
+    width: 100%;
+    margin: -200px auto;
+    padding-top: 75px;
+    position: fixed;
+    z-index: -999;
+  }
+
+  @keyframes run {
+    0% {
+      left: 1300px;
     }
 
-    html {
-      width: 100%;
+    100% {
+      left: 0;
+    }
+  }
+
+  @media screen and (max-width: 960px) {
+    .ber-logo {
+      height: 133px;
+      width: 133px;
+    }
+  }
+
+  @media screen and (max-width: 700px) {
+    .ber-logo {
+      height: 109px;
+      width: 109px;
+      align-content: center;
+      align-items: center;
     }
 
-    body {
-      width: 100%;
-      margin: 0 !important;
-    }
-
-    head {
-      width: 80%;
-      height: 100vh;
-      font-family: sans-serif;
+    #bar-width {
+      display: block;
     }
 
     p {
-      font-size: 15px;
+      font-size: 13px;
+    }
+  }
+
+  /*Website title once past 1100px*/
+  .bser-title {
+    text-align: left;
+    font-size: 55px;
+    width: 150px;
+    font-family: 'Style Script', cursive;
+    vertical-align: baseline;
+    margin: auto 40px auto 0;
+    color: #FFF;
+    font-weight: 600;
+    line-height: 50px;
+    animation-name: fadeIn;
+    animation-duration: 2s;
+  }
+
+  /*If screen width is large enough - title fades in*/
+  @keyframes fadeIn {
+    0% {
+      display: none;
+      opacity: 0;
     }
 
-    h4 {
-      font-size: 1rem;
-      margin: 10px auto;
+    75% {
+      display: none;
+      opacity: 0;
     }
 
-    .btn {
-      margin: 0px auto 5px auto;
-      font-size: 2rem;
+    100% {
+      display: block;
+      opacity: 1;
+    }
+  }
+
+  /*If under 1100px - dispears (Not enough room)*/
+  @media screen and (max-width: 1100px) {
+    .bser-title {
+      display: none;
+    }
+  }
+
+  #top-bar {
+    background-image: linear-gradient(90deg, #0093E9 0%, #8adcf5 100%);
+    justify-content: center;
+    align-items: center;
+    position: relative;
+    width: 100%;
+    vertical-align: middle;
+    animation-name: fadeIn;
+    margin: 25px auto auto auto;
+    box-shadow: 5px 0 10px #888888;
+    z-index: 4;
+    padding: 0;
+    padding-top: 0;
+    padding-bottom:
+  }
+
+  #bar-width {
+    margin: auto;
+    width: 90%;
+    display: flex;
+    justify-content: center;
+  }
+
+  .navbar-expand-md {
+    display: flex;
+    text-align: center;
+    margin: auto;
+    justify-content: center;
+    font-weight: bold;
+    animation-name: fadeIn;
+    animation-duration: 3s;
+  }
+
+  .navbar-expand-md ul {
+    display: flex;
+    justify-content: space-between;
+    align-content: center;
+    justify-content: center;
+  }
+
+  .navbar-expand-md li {
+    list-style: none;
+    width: 90px;
+    font-size: 1.7em;
+    text-align: center;
+    vertical-align: middle;
+    margin: auto auto 35px auto;
+    animation-name: fadeIn;
+    animation-duration: 1s;
+    color: #fff;
+    text-shadow: .5px .5px 0px black;
+  }
+
+  .footy {
+    background-color: #262626;
+    height: 200px;
+    width: 100%;
+    position: relative;
+    margin: 15px auto auto auto;
+  }
+
+  @keyframes fadeIn {
+    0% {
+      display: none;
+      opacity: 0;
+    }
+
+    75% {
+      display: none;
+      opacity: 0;
+    }
+
+    100% {
+      display: block;
+      opacity: 1;
+    }
+
+  }
+
+  .navbar-expand-md li:hover {
+    list-style: none;
+    cursor: pointer;
+    text-decoration: underline;
+  }
+
+  @media screen and (min-width: 1000px) {
+    .navbar-expand-md li {
+      font-size: 1.3em;
+      width: 150px;
     }
 
     #shoptitle {
       font-size: 55px;
-      margin: 200px auto auto 5%;
-      position: absolute;
-      color: white;
-      z-index: 999;
-      background-color: #4bc6f6;
     }
 
     #shoptitle2 {
       font-size: 55px;
-      margin: -66px auto auto 5%;
-      position: absolute;
-      color: white;
-      z-index: 999;
-      background-color: #4bc6f6;
+    }
+  }
+
+  @media screen and (min-width: 800px) and (max-width: 999px) {
+    .navbar-expand-md li {
+      font-size: 16px;
+      width: 115px;
     }
 
-    #shopimg {
-      height: 280px;
-      width: 100%;
-      opacity: .6;
-      background-color: black;
-      z-index: -999;
-      object-fit: cover;
-    }
-
-    h2 {
-      font-family: 'Aboreto', cursive;
-      font-size: 4rem;
-      margin: -5px auto -20px 0px;
-    }
-
-    .small-img {
-      object-fit: fill;
-      width: 100%;
-      height: 100%;
-    }
-
-    .container {
-      padding-left: 0;
-      padding-right: 0;
-    }
-
-    .col-sm-5 {
-      margin-top: -120px;
-    }
-
-    .col-sm-7 {
-      padding-left: 0;
-    }
-
-    .ber-logo {
-      width: 170px;
-      position: relative;
-      height: 170px;
-      margin: -12px 0px -12px 3%;
-      animation-duration: 2s;
-      animation-name: run;
-      display: flex;
-      z-index: 3;
-    }
-
-    #site-scroll-top {
-      display: none;
-    }
-
-    .shop-places {
-      width: 100%;
-      display: grid;
-      margin: 300px auto 0px auto !important;
-      background-color: white;
-      z-index: 999;
-    }
-
-    #shopping-img {
-      background-image: url("https://www.bonitaesterorealtors.com/wp-content/uploads/2022/06/gctc.jpg");
-      background-repeat: no-repeat;
-      background-size: cover;
-      height: 800px;
-      width: 100%;
-      margin: -200px auto;
-      padding-top: 75px;
-      position: fixed;
-      z-index: -999;
-    }
-
-    @keyframes run {
-      0% {left: 1300px;}
-      100% {left: 0;}
-    }
-
-    @media screen and (max-width: 960px){
-      .ber-logo {
-        height: 133px;
-        width: 133px;
-      }
-    }
-
-    @media screen and (max-width: 700px) {
-      .ber-logo {
-        height: 109px;
-        width: 109px;
-        align-content: center;
-        align-items: center;
-      }
-
-      #bar-width {
-        display: block;
-      }
-
-      p {
-        font-size: 13px;
-      }
-    }
-
-    /*Website title once past 1100px*/
-    .bser-title {
-      text-align: left;
+    #shoptitle {
       font-size: 55px;
-      width: 150px;
-      font-family: 'Style Script', cursive;
-      vertical-align: baseline;
-      margin: auto 40px auto 0;
-      color: #FFF;
-      font-weight: 600;
-      line-height: 50px;
-      animation-name: fadeIn;
-      animation-duration: 2s;
-    }
-    /*If screen width is large enough - title fades in*/
-    @keyframes fadeIn {
-      0% {display: none;
-        opacity: 0;}
-      75% {display: none;
-        opacity: 0;}
-      100% {display: block;
-        opacity: 1;}
-    }
-    /*If under 1100px - dispears (Not enough room)*/
-    @media screen and (max-width: 1100px) {
-      .bser-title {display: none;}
     }
 
-    #top-bar {
-      background-image: linear-gradient(90deg, #0093E9 0%, #8adcf5 100%);
-      justify-content: center;
-      align-items: center;
-      position: relative;
-      width: 100%;
-      vertical-align: middle;
-      animation-name: fadeIn;
-      margin: 25px auto auto auto;
-      box-shadow: 5px 0 10px #888888;
-      z-index: 4;
-      padding: 0;
-      padding-top: 0;
-      padding-bottom: 
+    #shoptitle2 {
+      font-size: 55px;
+    }
+  }
+
+  .welcome {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    height: 400px;
+    background-color: grey;
+    animation-name: fromBot;
+    animation-duration: 2s;
+  }
+
+  @keyframes fromBot {
+    0% {
+      opacity: 0;
+      left: 200px;
     }
 
-    #bar-width {
-      margin: auto;
-      width: 90%;
-      display: flex;
-      justify-content: center;
-    }
-
-    .navbar-expand-md {
-      display: flex;
-      text-align: center;
-      margin: auto;
-      justify-content: center;
-      font-weight: bold;
-      animation-name: fadeIn;
-      animation-duration: 3s;
-    }
-
-    .navbar-expand-md ul{
-      display: flex;
-      justify-content: space-between;
-      align-content: center;
-      justify-content: center;
-    }
-
-    .navbar-expand-md li{
-      list-style: none;
-      width: 90px;
-      font-size: 1.7em;
-      text-align: center;
-      vertical-align: middle;
-      margin: auto auto 35px auto;
-      animation-name: fadeIn;
-      animation-duration: 1s;
-      color: #fff;
-      text-shadow: .5px .5px 0px black;
-    }
-
-    .footy {
-      background-color: #262626;
-      height: 200px;
-      width: 100%;
-      position: relative;
-      margin:  15px auto auto auto;
-    }
-
-    @keyframes fadeIn {
-      0% {display: none;
-        opacity: 0;}
-      75% {display: none;
-        opacity: 0;}
-      100% {display: block;
-        opacity: 1;}
-
-    }
-
-    .navbar-expand-md li:hover{
-      list-style: none;
-      cursor: pointer;
-      text-decoration: underline;
-    }
-
-    @media screen and (min-width: 1000px) {
-      .navbar-expand-md li{
-        font-size: 1.3em;
-        width: 150px;
-      }
-      #shoptitle {
-        font-size: 55px;
-      }
-      #shoptitle2 {
-        font-size: 55px;
-      }
-    }
-
-    @media screen and (min-width: 800px) and (max-width: 999px) {
-      .navbar-expand-md li{
-        font-size: 16px;
-        width: 115px;
-      }
-      #shoptitle {
-        font-size: 55px;
-      }
-      #shoptitle2 {
-        font-size: 55px;
-      }
-    }
-
-    .welcome {
-      display: flex;
-      flex-direction: row;
-      justify-content: center;
-      height: 400px;
-      background-color: grey;
-      animation-name: fromBot;
-      animation-duration: 2s;
-    }
-
-    @keyframes fromBot {
-      0% {opacity: 0;
-        left: 200px;}
-      100% {opacity: 1;
-        left: 0px;}
-    }
-
-    .welcome-column {
-      height: auto;
-      position: absolute;
-      background-color: black;
-      z-index: 1;
-      opacity: .3;
-      animation-name: fromTop;
-      animation-duration: 8s;
-    }
-
-    .welcome-column h1 {
-      font-size: 32px;
-      margin-bottom: 5px;
-    }
-
-    .welcome-column p {
-      font-size: 12px;
-    }
-
-    .gctc {
-      max-width: 1000px;
-      margin: auto;
-    }
-
-    .miromar, .promenade, .edison-mall, .coconut-point {
-      max-width: 1000px;
-      margin: auto;
-    }
-
-    .welcome-column:hover {
-      opacity: .8;
-    }
-
-    .fa {
-      font-size: 24px !important;
-    }
-
-    .fa-caret-up:hover {
-      opacity: .7;
-      cursor: pointer;
-    }
-
-    .fa-caret-down {
-      margin-left: 10px;
-    }
-    .fa-caret-down:hover {
-      opacity: .7;
-      cursor: pointer;
-    }
-
-
-    @keyframes fromTop {
-      0% {top: 0px;
-      opacity: 0;}
-      80% {top: 0px;
-      opacity: 0}
-      100% {top: 170px;}
-    }
-
-    .welcome-header {
-      text-align: center;
-      align-items: center;
-      align-content: center;
-      margin: 5px auto auto auto;
-      color: #fff;
-    }
-
-    .welcome-text {
-      margin: 10px 5% auto 5%;
-      text-align: center;
-      align-items: center;
-      color: #fff;
-    }
-
-    .welcome-photo {
-      position: relative;
-      overflow: hidden;
-      vertical-align: bottom;
-    }
-
-    @media screen and (max-width: 1240px) {
-      #SWFLtext {
-        font-size: 40px;
-      }
-      .FLPhoto {
-        width: 175px;
-        height: 175px;
-        margin-left: -20px;
-      }
-      .textback {
-        transform: translate(-70px, 110px);
-        width: 980px;
-      }
-    }
-
-    @media screen and (max-width: 1140px) {
-      #SWFLtext h2{
-        font-size: 50px !important;
-      }
-      .textback {
-        transform: translate(-70px, 100px);
-        width: 780px;
-      }
-    }
-
-    @media screen and (max-width: 1070px) {
-      .shop-places {
-        margin: auto 4% auto 4%;
-      }
-      .gctc, .miromar {
-        margin: auto 5% auto 5%;
-      }
-    }
-
-    @media screen and (max-width: 950px) {
-      #SWFLtext h2{
-        font-size: 40px !important;
-      }
-      .textback {
-        transform: translate(-70px, 100px);
-        width: 630px;
-      }
-    }
-
-    @media screen and (max-width: 800px) {
-      #SWFLtext h2{
-        font-size: 32px !important;
-      }
-      .textback {
-        transform: translate(-75px, 100px);
-        width: 500px;
-      }
-    }
-
-    @media screen and (max-width: 680px) {
-      #SWFLtext h2{
-        font-size: 26px !important;
-      }
-      .textback {
-        transform: translate(-75px, 100px);
-        width: 430px;
-      }
-    }
-
-    @media screen and (max-width: 600px) {
-      #SWFLtext h2{
-        font-size: 20px !important;
-      }
-      .textback {
-        transform: translate(-75px, 110px);
-        width: 340px;
-        height: 10px;
-      }
-    }
-
-    @keyframes fadeRight {
-    0% {opacity:0;
-      transform: translateX(-1000px);
-    }
-    60% {
-      opacity:0;
-        transform: translateX(-1000px);
-    }
     100% {
-      opacity:1;,
-      transform: translateY(0);}
+      opacity: 1;
+      left: 0px;
+    }
+  }
+
+  .welcome-column {
+    height: auto;
+    position: absolute;
+    background-color: black;
+    z-index: 1;
+    opacity: .3;
+    animation-name: fromTop;
+    animation-duration: 8s;
+  }
+
+  .welcome-column h1 {
+    font-size: 32px;
+    margin-bottom: 5px;
+  }
+
+  .welcome-column p {
+    font-size: 12px;
+  }
+
+  .gctc {
+    max-width: 1000px;
+    margin: auto;
+  }
+
+  .miromar,
+  .promenade,
+  .edison-mall,
+  .coconut-point {
+    max-width: 1000px;
+    margin: auto;
+  }
+
+  .welcome-column:hover {
+    opacity: .8;
+  }
+
+  .fa {
+    font-size: 24px !important;
+  }
+
+  .fa-caret-up:hover {
+    opacity: .7;
+    cursor: pointer;
+  }
+
+  .fa-caret-down {
+    margin-left: 10px;
+  }
+
+  .fa-caret-down:hover {
+    opacity: .7;
+    cursor: pointer;
   }
 
 
-    .row {
-      display: flex;
-      max-width: 1200px;
-      margin: 20px auto 20px auto;
-      align-items: center;
-      flex-direction: row;
+  @keyframes fromTop {
+    0% {
+      top: 0px;
+      opacity: 0;
     }
 
-    .img-center {
+    80% {
+      top: 0px;
+      opacity: 0
+    }
+
+    100% {
+      top: 170px;
+    }
+  }
+
+  .welcome-header {
+    text-align: center;
+    align-items: center;
+    align-content: center;
+    margin: 5px auto auto auto;
+    color: #fff;
+  }
+
+  .welcome-text {
+    margin: 10px 5% auto 5%;
+    text-align: center;
+    align-items: center;
+    color: #fff;
+  }
+
+  .welcome-photo {
+    position: relative;
+    overflow: hidden;
+    vertical-align: bottom;
+  }
+
+  @media screen and (max-width: 1240px) {
+    #SWFLtext {
+      font-size: 40px;
+    }
+
+    .FLPhoto {
+      width: 175px;
+      height: 175px;
+      margin-left: -20px;
+    }
+
+    .textback {
+      transform: translate(-70px, 110px);
+      width: 980px;
+    }
+  }
+
+  @media screen and (max-width: 1140px) {
+    #SWFLtext h2 {
+      font-size: 50px !important;
+    }
+
+    .textback {
+      transform: translate(-70px, 100px);
+      width: 780px;
+    }
+  }
+
+  @media screen and (max-width: 1070px) {
+    .shop-places {
+      margin: auto 4% auto 4%;
+    }
+
+    .gctc,
+    .miromar {
+      margin: auto 5% auto 5%;
+    }
+  }
+
+  @media screen and (max-width: 950px) {
+    #SWFLtext h2 {
+      font-size: 40px !important;
+    }
+
+    .textback {
+      transform: translate(-70px, 100px);
+      width: 630px;
+    }
+  }
+
+  @media screen and (max-width: 800px) {
+    #SWFLtext h2 {
+      font-size: 32px !important;
+    }
+
+    .textback {
+      transform: translate(-75px, 100px);
+      width: 500px;
+    }
+  }
+
+  @media screen and (max-width: 680px) {
+    #SWFLtext h2 {
+      font-size: 26px !important;
+    }
+
+    .textback {
+      transform: translate(-75px, 100px);
+      width: 430px;
+    }
+  }
+
+  @media screen and (max-width: 600px) {
+    #SWFLtext h2 {
+      font-size: 20px !important;
+    }
+
+    .textback {
+      transform: translate(-75px, 110px);
+      width: 340px;
+      height: 10px;
+    }
+  }
+
+  @keyframes fadeRight {
+    0% {
+      opacity: 0;
+      transform: translateX(-1000px);
+    }
+
+    60% {
+      opacity: 0;
+      transform: translateX(-1000px);
+    }
+
+    100% {
+      opacity: 1;
+      ,
+      transform: translateY(0);
+    }
+  }
+
+
+  .row {
+    display: flex;
+    max-width: 1200px;
+    margin: 20px auto 20px auto;
+    align-items: center;
+    flex-direction: row;
+  }
+
+  .img-center {
     text-align: center;
     width: auto;
     box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.15), 0 2px 3px 0 rgba(0, 0, 0, 0.1);
   }
-  @media screen and (max-width: 600px){
+
+  @media screen and (max-width: 600px) {
     .card-img {
       height: 80px;
       width: 140px;
@@ -534,138 +590,182 @@
     padding-top: 40px;
     text-align: center;
   }
+</style>
 
-
-  </style>
-
-  <head>
-    <div id="top-bar">
-      <div id="bar-width">
-        <title>Discover Bonita Springs & Estero</title>
-          <a href="https://bonitaspringsesterolifestyles.com/homepage-2022/" target="_blank"><img class="ber-logo" src="https://www.bonitaesterorealtors.com/wp-content/uploads/2021/08/Untitled-design-24.png" alt="Bonita Springs Lifestyles"></img></a>
-        <div class="bser-title">BSER Lifestyles</div>
-          <ul class="navbar-expand-md navbar-text">
-            <li><a href="https://bonitaspringsesterolifestyles.com/communities/" style="color: white;">Communities</a></li>
-            <li><a href="http://bonitaspringsesterorealtorsfl.growthzoneapp.com/realtordirectory/Find?term=&advFilter=eyJDdXN0b21GaWVsZFZhbHVlcyI6W10sIkNvdW50cmllcyI6W10sIlN0YXRlcyI6W10sIkNpdGllcyI6W10sIlBvc3RhbENvZGVzIjpbXSwiQ2F0ZWdvcnlWYWx1ZXMiOltdLCJSYWRpdXMiOiIwIn0%3D" style="color: white;">Find a REALTOR</a></li>
-            <li><a href="https://bonitaspringsesterolifestyles.com/homes-for-sale-swfl/" style="color: white;">Property Search</a></li>
-            <li><a href="https://bonitaspringsesterolifestyles.com/city-info/" style="color: white;">City Info</a></li>
-            <li>Become a REALTOR®</li>
-          </ul>
-      </div>
+<head>
+  <div id="top-bar">
+    <div id="bar-width">
+      <title>Discover Bonita Springs & Estero</title>
+      <a href="https://bonitaspringsesterolifestyles.com/homepage-2022/" target="_blank"><img class="ber-logo"
+          src="https://www.bonitaesterorealtors.com/wp-content/uploads/2021/08/Untitled-design-24.png"
+          alt="Bonita Springs Lifestyles"></img></a>
+      <div class="bser-title">BSER Lifestyles</div>
+      <ul class="navbar-expand-md navbar-text">
+        <li><a href="https://bonitaspringsesterolifestyles.com/communities/" style="color: white;">Communities</a></li>
+        <li><a
+            href="http://bonitaspringsesterorealtorsfl.growthzoneapp.com/realtordirectory/Find?term=&advFilter=eyJDdXN0b21GaWVsZFZhbHVlcyI6W10sIkNvdW50cmllcyI6W10sIlN0YXRlcyI6W10sIkNpdGllcyI6W10sIlBvc3RhbENvZGVzIjpbXSwiQ2F0ZWdvcnlWYWx1ZXMiOltdLCJSYWRpdXMiOiIwIn0%3D"
+            style="color: white;">Find a REALTOR</a></li>
+        <li><a href="https://bonitaspringsesterolifestyles.com/home-search/" style="color: white;">Homes For Sale</a>
+        </li>
+        <li><a href="https://bonitaspringsesterolifestyles.com/city-info/" style="color: white;">City Info</a></li>
+        <li>Become a REALTOR®</li>
+      </ul>
     </div>
-  </head>
+  </div>
+</head>
 
-  <body>
+<body>
 
-        <div id="shopping-img">
-          <h1 id="shoptitle">Places to Shop in SWFL  </h1>
+  <div id="shopping-img">
+    <h1 id="shoptitle">Places to Shop in SWFL </h1>
+  </div>
+
+  <div class="shop-places">
+    <h1 id="shoptitle2" style="display: none;">Places to Shop in SWFL</h1>
+    <div class="gctc">
+      <div class="row">
+        <h2>Gulf coast town center</h2>
+        <i class='fa fa-caret-down' id="gc-down" onclick="openRow()" style="display: none;"></i>
+      </div>
+      <div class="row" id="gc" style="display: flex;">
+        <div class="col-sm-7">
+          <p>With an initial launch in 2005, Gulf Coast Town Center "Kicked off" the expansion in estero by brining a
+            lot of brand name stores and restraunts right by Florida Gulf Coast University and neighborhoods like
+            Miromar Lakes, Grandezza, etc. There are many diffrent notable shopping brands like Staples, Petco, Babies
+            "R" Us and for a night out at the cinema there is a Regal Cinema visible directly from I-75.</p>
+          <a href="https://goo.gl/maps/oVfcDyqVVcuEK1Wo8" target="_blank"><button type="button" class="btn btn-primary"
+              name="button">Directions</button></a>
+          <a href="https://www.gulfcoasttowncenter.com/" target="_blank">
+            <h4>More About Gulf Coast Town Center</h4>
+          </a>
+          <i onclick="closeRow()" id="gc-up" class='fa fa-caret-up'></i>
         </div>
-
-        <div class="shop-places">
-          <h1 id="shoptitle2" style="display: none;">Places to Shop in SWFL</h1>
-          <div class="gctc">
-            <div class="row">
-                <h2>Gulf coast town center</h2>
-                <i class='fa fa-caret-down' id="gc-down" onclick="openRow()" style="display: none;"></i>
-            </div>
-            <div class="row" id="gc" style="display: flex;">
-              <div class="col-sm-7">
-                <p>With an initial launch in 2005, Gulf Coast Town Center "Kicked off" the expansion in estero by brining a lot of brand name stores and restraunts right by Florida Gulf Coast University and neighborhoods like Miromar Lakes, Grandezza, etc.  There are many diffrent notable shopping brands like Staples, Petco, Babies "R" Us and for a night out at the cinema there is a Regal Cinema visible directly from I-75.</p>
-                <a href="https://goo.gl/maps/oVfcDyqVVcuEK1Wo8" target="_blank"><button type="button" class="btn btn-primary" name="button">Directions</button></a>
-                <a href="https://www.gulfcoasttowncenter.com/" target="_blank"><h4>More About Gulf Coast Town Center</h4></a>
-                <i onclick="closeRow()" id="gc-up" class='fa fa-caret-up'></i>
-              </div>
-              <div class="col-sm-5">
-                <img class="small-img" src="https://www.bonitaesterorealtors.com/wp-content/uploads/2022/08/636449536531176499-GCTC-focal-point-scaled.webp" alt="">
-                </div>
-            </div>
-          </div>
-          <hr>
-          <div class="miromar">
-            <div class="row">
-                <h2>Miromar Outlets</h2>
-                <i class='fa fa-caret-down' id="mr-down" onclick="openRow2()" style="display: none;"></i>
-            </div>
-            <div class="row" id="mr" style="display: flex;">
-              <div class="col-sm-7">
-                <p>Voted the "Best Shopping Mall and Shopping District" in Southwest Florida, Miromar Outlets is one of the largest and best shopping locations in the area.  Miromar features over 140 diffrent brand name outlets including Saks Fifth Avenue OFF 5TH, Neiman Marcus Last Call, Bloomingdale’s The Outlet Store, Nike Factory Store, Polo Ralph Lauren Factory Store, Tommy Hilfiger & More!  Find out more about Miromar Outlets and why it's been voted "Best Shopping Experience" 20 years in a row!</p>
-                <a href="https://goo.gl/maps/veuwk94rudaqugV6A" target="_blank"><button type="button" class="btn btn-primary" name="button">Directions</button></a>
-                <a href="https://miromaroutlets.com/#/" target="_blank"><h4>More About Miromar Outlets</h4></a>
-                <i onclick="closeRow2()" id="mr-up" class='fa fa-caret-up'></i>
-              </div>
-              <div class="col-sm-5">
-                <img class="small-img" src="https://www.bonitaesterorealtors.com/wp-content/uploads/2022/08/R-1.jpeg" alt="">
-                </div>
-            </div>
-          </div>
-          <hr>
-          <div class="coconut-point">
-              <div class="row">
-                  <h2>Coconut Point</h2>
-                  <i class='fa fa-caret-down' id="cp-down" onclick="openRow3()" style="display: none;"></i>
-              </div>
-              <div class="row" id="cp" style="display: flex;">
-                <div class="col-sm-7">
-                  <p>The Coconut Point mall first opened its door in November of 2006 with over 120 stores directly in the heart of Estero FL.  Coconut is located directly off of US 41 and includes many brand name favorites such as: Dillard's, SuperTarget, Best Buy, Office Depot, PetSmart, Total Wine & More, TJ Maxx, Michaels, Home Centric, Ross Dress for Less, DSW, Ulta Beauty, West Elm, Regal Cinemas & More!  There are many communities surronding the mall which makes it a key destination for all who visit Bonita Springs or Estero.  </p>
-                  <a href="https://g.page/ShopCoconutPoint?share" target="_blank"><button type="button" class="btn btn-primary" name="button">Directions</button></a>
-                  <a href="https://www.simon.com/mall/coconut-point" target="_blank"><h4>More About Coconut Point Mall</h4></a>
-                  <i onclick="closeRow3()" id="cp-up" class='fa fa-caret-up'></i>
-                </div>
-                <div class="col-sm-5">
-                  <img class="small-img" src="http://bonitaspringsesterolifestyles.com/wp-content/uploads/2022/08/1000x666.jpg" alt="">
-                  </div>
-            </div>
-          </div>
-          <hr>
-          <div class="promenade">
-              <h2>Promenade at Bonita Bay</h2>
-              <div class="row">
-                  <i class='fa fa-caret-down' id="pm-down" onclick="openRow4()" style="display: none;"></i>
-              </div>
-              <div class="row" id="pm" style="display: flex;">
-                <div class="col-sm-7">
-                  <p>The Promenade is an upscalled outdoor shopping center right next to Bonita Springs's oldest community, Bonita Bay.  This center features fine dining and luxurious shopping.  Some key locations to note are DeRomo's Italian Dining, Roy's, The Center Bar, Little Paris, Coastal Outfitters & More! For those who are looking for a higher quality of experience, the Promenade at Bonita Bay is surely a location that will impress. </p>
-                  <a href="https://g.page/PromenadeAtBonitaBay?share" target="_blank"><button type="button" class="btn btn-primary" name="button">Directions</button></a>
-                  <a href="https://promenadeshops.com/" target="_blank"><h4>More About The Promenade</h4></a>
-                  <i onclick="closeRow4()" id="pm-up" class='fa fa-caret-up'></i>
-                </div>
-                <div class="col-sm-5">
-                  <img class="small-img" src="http://bonitaspringsesterolifestyles.com/wp-content/uploads/2022/08/1395853737000-promenade-1-scaled.webp" alt="">
-                  </div>
-            </div>
-          </div>
-        <hr>
-          <div class="edison-mall">
-                  <h2>Edison Mall</h2>
-                    <div class="row">
-                  <i class='fa fa-caret-down' id="em-down" onclick="openRow5()" style="display: none;"></i>
-              </div>
-              <div class="row" id="em" style="display: flex;">
-                <div class="col-sm-7">
-                  <p>Edison Mall is one of the oldest shopping locations in Southwest Florida that still sees millions of visitors each year.  Originally opening its doors in 1965, the Edison Mall was and still is the premiere shopping desination for those who live farther north in Fort Myers FL.  The mall holds 133+ stores and has recieved multiple updates to stay in tune with what shoppers are looking for today.  If you want a nice break from the heat while shopping at your favorite stores, Edison Mall is a great destination for you!</p>
-                  <a href="https://goo.gl/maps/6Y1dMX1L94z9uMCK9" target="_blank"><button type="button" class="btn btn-primary" name="button">Directions</button></a>
-                  <a href="https://shopedisonmall.com/" target="_blank"><h4>More About the Edison Mall</h4></a>
-                  <i onclick="closeRow5()" id="em-up" class='fa fa-caret-up'></i>
-                </div>
-                <div class="col-sm-5">
-                  <img class="small-img" src="http://bonitaspringsesterolifestyles.com/wp-content/uploads/2022/08/Screen-Shot-2018-10-26-at-11.17.36-PM.jpg" alt="">
-                  </div>
-            </div>
-          </div>
-    </div>
-
-    <div class="footy">
-      <div class="footer-background">
-        Copyright © 2022 Bonita Springs-Estero Board of Realtors® • All Rights Reserved • Website Development by Bonita Springs-Estero Realtors • 25300 Bernwood Dr. Suite 7, Bonita Springs, FL 34135 • (239) 992-6771
+        <div class="col-sm-5">
+          <img class="small-img"
+            src="https://www.bonitaesterorealtors.com/wp-content/uploads/2022/08/636449536531176499-GCTC-focal-point-scaled.webp"
+            alt="">
+        </div>
       </div>
     </div>
+    <hr>
+    <div class="miromar">
+      <div class="row">
+        <h2>Miromar Outlets</h2>
+        <i class='fa fa-caret-down' id="mr-down" onclick="openRow2()" style="display: none;"></i>
+      </div>
+      <div class="row" id="mr" style="display: flex;">
+        <div class="col-sm-7">
+          <p>Voted the "Best Shopping Mall and Shopping District" in Southwest Florida, Miromar Outlets is one of the
+            largest and best shopping locations in the area. Miromar features over 140 diffrent brand name outlets
+            including Saks Fifth Avenue OFF 5TH, Neiman Marcus Last Call, Bloomingdale’s The Outlet Store, Nike Factory
+            Store, Polo Ralph Lauren Factory Store, Tommy Hilfiger & More! Find out more about Miromar Outlets and why
+            it's been voted "Best Shopping Experience" 20 years in a row!</p>
+          <a href="https://goo.gl/maps/veuwk94rudaqugV6A" target="_blank"><button type="button" class="btn btn-primary"
+              name="button">Directions</button></a>
+          <a href="https://miromaroutlets.com/#/" target="_blank">
+            <h4>More About Miromar Outlets</h4>
+          </a>
+          <i onclick="closeRow2()" id="mr-up" class='fa fa-caret-up'></i>
+        </div>
+        <div class="col-sm-5">
+          <img class="small-img" src="https://www.bonitaesterorealtors.com/wp-content/uploads/2022/08/R-1.jpeg" alt="">
+        </div>
+      </div>
+    </div>
+    <hr>
+    <div class="coconut-point">
+      <div class="row">
+        <h2>Coconut Point</h2>
+        <i class='fa fa-caret-down' id="cp-down" onclick="openRow3()" style="display: none;"></i>
+      </div>
+      <div class="row" id="cp" style="display: flex;">
+        <div class="col-sm-7">
+          <p>The Coconut Point mall first opened its door in November of 2006 with over 120 stores directly in the heart
+            of Estero FL. Coconut is located directly off of US 41 and includes many brand name favorites such as:
+            Dillard's, SuperTarget, Best Buy, Office Depot, PetSmart, Total Wine & More, TJ Maxx, Michaels, Home
+            Centric, Ross Dress for Less, DSW, Ulta Beauty, West Elm, Regal Cinemas & More! There are many communities
+            surronding the mall which makes it a key destination for all who visit Bonita Springs or Estero. </p>
+          <a href="https://g.page/ShopCoconutPoint?share" target="_blank"><button type="button" class="btn btn-primary"
+              name="button">Directions</button></a>
+          <a href="https://www.simon.com/mall/coconut-point" target="_blank">
+            <h4>More About Coconut Point Mall</h4>
+          </a>
+          <i onclick="closeRow3()" id="cp-up" class='fa fa-caret-up'></i>
+        </div>
+        <div class="col-sm-5">
+          <img class="small-img" src="http://bonitaspringsesterolifestyles.com/wp-content/uploads/2022/08/1000x666.jpg"
+            alt="">
+        </div>
+      </div>
+    </div>
+    <hr>
+    <div class="promenade">
+      <h2>Promenade at Bonita Bay</h2>
+      <div class="row">
+        <i class='fa fa-caret-down' id="pm-down" onclick="openRow4()" style="display: none;"></i>
+      </div>
+      <div class="row" id="pm" style="display: flex;">
+        <div class="col-sm-7">
+          <p>The Promenade is an upscalled outdoor shopping center right next to Bonita Springs's oldest community,
+            Bonita Bay. This center features fine dining and luxurious shopping. Some key locations to note are DeRomo's
+            Italian Dining, Roy's, The Center Bar, Little Paris, Coastal Outfitters & More! For those who are looking
+            for a higher quality of experience, the Promenade at Bonita Bay is surely a location that will impress. </p>
+          <a href="https://g.page/PromenadeAtBonitaBay?share" target="_blank"><button type="button"
+              class="btn btn-primary" name="button">Directions</button></a>
+          <a href="https://promenadeshops.com/" target="_blank">
+            <h4>More About The Promenade</h4>
+          </a>
+          <i onclick="closeRow4()" id="pm-up" class='fa fa-caret-up'></i>
+        </div>
+        <div class="col-sm-5">
+          <img class="small-img"
+            src="http://bonitaspringsesterolifestyles.com/wp-content/uploads/2022/08/1395853737000-promenade-1-scaled.webp"
+            alt="">
+        </div>
+      </div>
+    </div>
+    <hr>
+    <div class="edison-mall">
+      <h2>Edison Mall</h2>
+      <div class="row">
+        <i class='fa fa-caret-down' id="em-down" onclick="openRow5()" style="display: none;"></i>
+      </div>
+      <div class="row" id="em" style="display: flex;">
+        <div class="col-sm-7">
+          <p>Edison Mall is one of the oldest shopping locations in Southwest Florida that still sees millions of
+            visitors each year. Originally opening its doors in 1965, the Edison Mall was and still is the premiere
+            shopping desination for those who live farther north in Fort Myers FL. The mall holds 133+ stores and has
+            recieved multiple updates to stay in tune with what shoppers are looking for today. If you want a nice break
+            from the heat while shopping at your favorite stores, Edison Mall is a great destination for you!</p>
+          <a href="https://goo.gl/maps/6Y1dMX1L94z9uMCK9" target="_blank"><button type="button" class="btn btn-primary"
+              name="button">Directions</button></a>
+          <a href="https://shopedisonmall.com/" target="_blank">
+            <h4>More About the Edison Mall</h4>
+          </a>
+          <i onclick="closeRow5()" id="em-up" class='fa fa-caret-up'></i>
+        </div>
+        <div class="col-sm-5">
+          <img class="small-img"
+            src="http://bonitaspringsesterolifestyles.com/wp-content/uploads/2022/08/Screen-Shot-2018-10-26-at-11.17.36-PM.jpg"
+            alt="">
+        </div>
+      </div>
+    </div>
+  </div>
 
-  </body>
+  <div class="footy">
+    <div class="footer-background">
+      Copyright © 2022 Bonita Springs-Estero Board of Realtors® • All Rights Reserved • Website Development by Bonita
+      Springs-Estero Realtors • 25300 Bernwood Dr. Suite 7, Bonita Springs, FL 34135 • (239) 992-6771
+    </div>
+  </div>
 
-  <script>
+</body>
+
+<script>
   let shopArray = ["https://www.bonitaesterorealtors.com/wp-content/uploads/2022/07/promenade.jpeg", "https://www.bonitaesterorealtors.com/wp-content/uploads/2022/07/miromar-scaled.jpeg", "https://www.bonitaesterorealtors.com/wp-content/uploads/2022/07/miromar-2.jpeg", "https://www.bonitaesterorealtors.com/wp-content/uploads/2022/07/mercato.jpeg", "https://www.bonitaesterorealtors.com/wp-content/uploads/2022/07/edison-mall-scaled.jpeg", "https://www.bonitaesterorealtors.com/wp-content/uploads/2022/07/coconut-point.jpeg", "https://www.bonitaesterorealtors.com/wp-content/uploads/2022/07/coconut-2.jpeg", "https://www.bonitaesterorealtors.com/wp-content/uploads/2022/06/gctc.jpg"]
 
-  window.onload = function() {
+  window.onload = function () {
     setInterval("changeImage();", 8000);
   }
 
@@ -683,94 +783,94 @@
 
   console.log(height);
 
-  let images = ["https://www.bonitaesterorealtors.com/wp-content/uploads/2021/08/pexels-kindel-media-8352367-scaled.jpg","https://www.bonitaesterorealtors.com/wp-content/uploads/2021/08/51289384826_4690f56cb8_o-scaled.jpg","https://www.bonitaesterorealtors.com/wp-content/uploads/2021/08/50139701353_24a38d677c_o-scaled.jpg"];
+  let images = ["https://www.bonitaesterorealtors.com/wp-content/uploads/2021/08/pexels-kindel-media-8352367-scaled.jpg", "https://www.bonitaesterorealtors.com/wp-content/uploads/2021/08/51289384826_4690f56cb8_o-scaled.jpg", "https://www.bonitaesterorealtors.com/wp-content/uploads/2021/08/50139701353_24a38d677c_o-scaled.jpg"];
 
-    function changeImage() {
-      let rando = Math.floor(Math.random() * 7);
-      console.log(rando);
-      var tempurl = shopArray[rando];
-      console.log(tempurl);
-      if (rando == 7) {
-        document.getElementById("shopping-img").style.backgroundImage = "url('https://www.bonitaesterorealtors.com/wp-content/uploads/2022/06/gctc.jpg')";
-      }
-      else if (rando == 6) {
-        document.getElementById("shopping-img").style.backgroundImage = "url('https://www.bonitaesterorealtors.com/wp-content/uploads/2022/07/coconut-2.jpeg')";
-      }
-      else if (rando == 5) {
-        document.getElementById("shopping-img").style.backgroundImage = "url('https://www.bonitaesterorealtors.com/wp-content/uploads/2022/07/coconut-point.jpeg')";
-      }
-      else if (rando == 4) {
-        document.getElementById("shopping-img").style.backgroundImage = "url('https://www.bonitaesterorealtors.com/wp-content/uploads/2022/07/edison-mall-scaled.jpeg')";
-      }
-      else if (rando == 3) {
-        document.getElementById("shopping-img").style.backgroundImage = "url('https://www.bonitaesterorealtors.com/wp-content/uploads/2022/07/mercato.jpeg')";
-      }
-      else if (rando == 2) {
-        document.getElementById("shopping-img").style.backgroundImage = "url('https://www.bonitaesterorealtors.com/wp-content/uploads/2022/07/miromar-scaled.jpeg')";
-      }
-      else if (rando == 1) {
-        document.getElementById("shopping-img").style.backgroundImage = "url('https://www.bonitaesterorealtors.com/wp-content/uploads/2022/07/miromar-scaled.jpeg')";
-      }
-      else if (rando == 0) {
-        document.getElementById("shopping-img").style.backgroundImage = "url('https://www.bonitaesterorealtors.com/wp-content/uploads/2022/07/promenade.jpeg')";
-      }
+  function changeImage() {
+    let rando = Math.floor(Math.random() * 7);
+    console.log(rando);
+    var tempurl = shopArray[rando];
+    console.log(tempurl);
+    if (rando == 7) {
+      document.getElementById("shopping-img").style.backgroundImage = "url('https://www.bonitaesterorealtors.com/wp-content/uploads/2022/06/gctc.jpg')";
     }
+    else if (rando == 6) {
+      document.getElementById("shopping-img").style.backgroundImage = "url('https://www.bonitaesterorealtors.com/wp-content/uploads/2022/07/coconut-2.jpeg')";
+    }
+    else if (rando == 5) {
+      document.getElementById("shopping-img").style.backgroundImage = "url('https://www.bonitaesterorealtors.com/wp-content/uploads/2022/07/coconut-point.jpeg')";
+    }
+    else if (rando == 4) {
+      document.getElementById("shopping-img").style.backgroundImage = "url('https://www.bonitaesterorealtors.com/wp-content/uploads/2022/07/edison-mall-scaled.jpeg')";
+    }
+    else if (rando == 3) {
+      document.getElementById("shopping-img").style.backgroundImage = "url('https://www.bonitaesterorealtors.com/wp-content/uploads/2022/07/mercato.jpeg')";
+    }
+    else if (rando == 2) {
+      document.getElementById("shopping-img").style.backgroundImage = "url('https://www.bonitaesterorealtors.com/wp-content/uploads/2022/07/miromar-scaled.jpeg')";
+    }
+    else if (rando == 1) {
+      document.getElementById("shopping-img").style.backgroundImage = "url('https://www.bonitaesterorealtors.com/wp-content/uploads/2022/07/miromar-scaled.jpeg')";
+    }
+    else if (rando == 0) {
+      document.getElementById("shopping-img").style.backgroundImage = "url('https://www.bonitaesterorealtors.com/wp-content/uploads/2022/07/promenade.jpeg')";
+    }
+  }
 
-    function closeRow() {
-      document.getElementById("gc").style.display = "none";
-      document.getElementById("gc-down").style.display = "inherit";
-    }
+  function closeRow() {
+    document.getElementById("gc").style.display = "none";
+    document.getElementById("gc-down").style.display = "inherit";
+  }
 
-    function openRow() {
-      document.getElementById("gc").style.display = "flex";
-      document.getElementById("gc-up").style.display = "inherit";
-      document.getElementById("gc-down").style.display = "none";
-    }
+  function openRow() {
+    document.getElementById("gc").style.display = "flex";
+    document.getElementById("gc-up").style.display = "inherit";
+    document.getElementById("gc-down").style.display = "none";
+  }
 
-    function closeRow2() {
-      document.getElementById("mr").style.display = "none";
-      document.getElementById("mr-down").style.display = "inherit";
-    }
+  function closeRow2() {
+    document.getElementById("mr").style.display = "none";
+    document.getElementById("mr-down").style.display = "inherit";
+  }
 
-    function openRow2() {
-      document.getElementById("mr").style.display = "flex";
-      document.getElementById("mr-up").style.display = "inherit";
-      document.getElementById("mr-down").style.display = "none";
-    }
+  function openRow2() {
+    document.getElementById("mr").style.display = "flex";
+    document.getElementById("mr-up").style.display = "inherit";
+    document.getElementById("mr-down").style.display = "none";
+  }
 
-    function closeRow3() {
-      document.getElementById("cp").style.display = "none";
-      document.getElementById("cp-down").style.display = "inherit";
-    }
+  function closeRow3() {
+    document.getElementById("cp").style.display = "none";
+    document.getElementById("cp-down").style.display = "inherit";
+  }
 
-    function openRow3() {
-      document.getElementById("cp").style.display = "flex";
-      document.getElementById("cp-up").style.display = "inherit";
-      document.getElementById("cp-down").style.display = "none";
-    }
+  function openRow3() {
+    document.getElementById("cp").style.display = "flex";
+    document.getElementById("cp-up").style.display = "inherit";
+    document.getElementById("cp-down").style.display = "none";
+  }
 
-    function closeRow4() {
-      document.getElementById("pm").style.display = "none";
-      document.getElementById("pm-down").style.display = "inherit";
-    }
+  function closeRow4() {
+    document.getElementById("pm").style.display = "none";
+    document.getElementById("pm-down").style.display = "inherit";
+  }
 
-    function openRow4() {
-      document.getElementById("pm").style.display = "flex";
-      document.getElementById("pm-up").style.display = "inherit";
-      document.getElementById("pm-down").style.display = "none";
-    }
+  function openRow4() {
+    document.getElementById("pm").style.display = "flex";
+    document.getElementById("pm-up").style.display = "inherit";
+    document.getElementById("pm-down").style.display = "none";
+  }
 
-    function closeRow5() {
-      document.getElementById("em").style.display = "none";
-      document.getElementById("em-down").style.display = "inherit";
-    }
+  function closeRow5() {
+    document.getElementById("em").style.display = "none";
+    document.getElementById("em-down").style.display = "inherit";
+  }
 
-    function openRow5() {
-      document.getElementById("em").style.display = "flex";
-      document.getElementById("em-up").style.display = "inherit";
-      document.getElementById("em-down").style.display = "none";
-    }
-    </script>
+  function openRow5() {
+    document.getElementById("em").style.display = "flex";
+    document.getElementById("em-up").style.display = "inherit";
+    document.getElementById("em-down").style.display = "none";
+  }
+</script>
 
 
 
