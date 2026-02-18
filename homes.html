@@ -1833,6 +1833,32 @@
     .footer-disclaimer strong {
       color: #333;
     }
+
+    /* Map Loader */
+    .map-section {
+      position: relative;
+    }
+
+    .map-loading-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(255, 255, 255, 0.85);
+      z-index: 1000;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      backdrop-filter: blur(2px);
+      transition: opacity 0.3s;
+    }
+
+    .map-loading-overlay.hidden {
+      opacity: 0;
+      pointer-events: none;
+    }
   </style>
 </head>
 
@@ -1905,12 +1931,7 @@
             <button class="apply-btn" id="priceApplyBtn">Apply</button>
           </div>
         </div>
-        <div class="pill-group" id="statusPills">
-          <button class="status-pill active" data-status="Active">For Sale</button>
-          <button class="status-pill" data-status="Pending">Pending</button>
-          <button class="status-pill" data-status="Closed">Sold</button>
-        </div>
-        <div class="filter-divider"></div>
+
 
         <!-- Sub-Type -->
         <div class="filter-dropdown-wrap">
@@ -2007,6 +2028,10 @@
   <div class="main-container" id="mainContainer">
     <div class="map-section">
       <div id="map"></div>
+      <div class="map-loading-overlay center-ref" id="mapLoader">
+        <div class="spinner"></div>
+        <div style="margin-top:10px;font-weight:600;color:#555">Loading Map Properties...</div>
+      </div>
     </div>
     <div class="listings-section">
       <div class="listings-grid" id="listingsGrid"></div>
@@ -2158,11 +2183,10 @@
 
     function initMap() {
       map = L.map('map').setView([26.34, -81.78], 12);
-      L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+      L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png', {
         attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
         subdomains: 'abcd',
-        maxZoom: 20,
-        crossOrigin: true
+        maxZoom: 20
       }).addTo(map);
       markerCluster = L.markerClusterGroup({
         showCoverageOnHover: false,
@@ -2184,8 +2208,21 @@
 
     document.addEventListener('DOMContentLoaded', () => {
       initMap();
-      setupPills('#propertyTypePills', b => { currentPropertyType = b.dataset.type; fetchListings(); });
-      setupPills('#statusPills', b => { currentStatus = b.dataset.status; fetchListings(); });
+      setupPills('#propertyTypePills', b => {
+        currentPropertyType = b.dataset.type;
+        const subTypeBtn = document.getElementById('subTypeBtn');
+        if (currentPropertyType === 'commercial' || currentPropertyType === 'land') {
+          subTypeBtn.style.opacity = '0.5';
+          subTypeBtn.style.pointerEvents = 'none';
+          subTypeBtn.innerText = 'Home Type (N/A)';
+        } else {
+          subTypeBtn.style.opacity = '1';
+          subTypeBtn.style.pointerEvents = 'auto';
+          updateFilterLabels(); // Restore label
+        }
+        fetchListings();
+      });
+
       setupFilters();
       setupSearch();
       setupMobileUI();
@@ -2420,8 +2457,9 @@
         if (currentStatus === 'Pending') statusFilter = "(StandardStatus eq 'Pending' or StandardStatus eq 'Active Under Contract')";
         else if (currentStatus === 'Closed') statusFilter = "StandardStatus eq 'Closed'";
 
-        // Base Filter - STRICTLY BONITA SPRINGS + Status
+        // Base Filter - STRICTLY BONITA SPRINGS + Status + COUNTIES (Lee, Collier, Hendry)
         let baseF = "OriginatingSystemName eq 'Bonita Springs' and " + statusFilter;
+        baseF += " and (CountyOrParish eq 'Lee' or CountyOrParish eq 'Collier' or CountyOrParish eq 'Hendry')";
 
         // Property Type Logic based on API Discovery - SIMPLIFIED
         // We use parens to ensure 'OR' clauses don't get mixed with the 'AND' clauses from baseF
@@ -2590,7 +2628,24 @@
         if (cities.length && !cities.includes(i.City)) return false;
         if (p < minP || p > maxP) return false;
         if ((i.BedroomsTotal || 0) < beds || (i.BathroomsTotalInteger || 0) < baths) return false;
-        if (subTypes.length && !subTypes.includes(i.PropertySubType)) return false;
+
+        if ((currentPropertyType === 'sale' || currentPropertyType === 'rental') && subTypes.length) {
+          // Map simple UI types to complex API subtypes
+          const typeMap = {
+            'Single Family Residence': ['Single Family Residence', 'Manufactured Home'],
+            'Condominium': ['Condominium', 'High Rise (8+)', 'Mid Rise (4-7)', 'Low Rise (1-3)'],
+            'Townhouse': ['Townhouse'],
+            'Multi Family': ['Multi Family', 'Duplex', 'Triplex', 'Quadruplex'],
+            'Villa': ['Villa Attached', 'Villa Detached']
+          };
+
+          let match = false;
+          for (const t of subTypes) {
+            const allowed = typeMap[t] || [t];
+            if (allowed.includes(i.PropertySubType)) { match = true; break; }
+          }
+          if (!match) return false;
+        }
         if (q && !((i.UnparsedAddress || '').toLowerCase().includes(q) || (i.ListingKey || '').toLowerCase().includes(q) || (i.City || '').toLowerCase().includes(q))) return false;
         return true;
       });
@@ -2900,8 +2955,20 @@
       setTxt('bsUpdated', `${fullDate} ${timeStr}`);
     }
 
-    function showLoading(s) { const o = document.getElementById('loadingOverlay'); if (s) { o.classList.remove('hidden'); o.style.display = 'flex'; } else { hideLoadingOverlay(); } }
-    function hideLoadingOverlay() { const o = document.getElementById('loadingOverlay'); o.classList.add('hidden'); setTimeout(() => o.style.display = 'none', 500); }
+    function showLoading(show) {
+      const ml = document.getElementById('mapLoader');
+      if (ml) {
+        if (show) { ml.classList.remove('hidden'); ml.style.display = 'flex'; }
+        else { ml.classList.add('hidden'); setTimeout(() => ml.style.display = 'none', 300); }
+      }
+      const ll = document.getElementById('listLoader');
+      if (ll) ll.style.display = show ? 'inline-block' : 'none';
+
+      // Ensure global overlay is hidden
+      const gl = document.getElementById('loadingOverlay');
+      if (gl) gl.style.display = 'none';
+    }
+    function hideLoadingOverlay() { showLoading(false); }
   </script>
 </body>
 
