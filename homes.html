@@ -2395,11 +2395,20 @@
       // Context Key
       const contextKey = currentStatus + '|' + currentPropertyType;
 
-      // If already fetching or fetched, just re-apply local filters
-      if (fetchedContexts.has(contextKey)) {
-        applyClientFilters();
-        return;
-      }
+      // Clear fetched contexts to force a fresh fetch if we are switching types/status
+      // meaningful only if we were caching, but since we are clearing allListings, we should clear this too for clarity
+      fetchedContexts.clear();
+
+      // If switching context (Type/Status), we MUST clear previous data to avoid mixing
+      // We only use cache if we are NOT switching context, or if we want to restore a previous context
+      // actually, for simplicity, let's just clear and re-fetch if context changes for now to ensure correctness
+
+      // Reset logic
+      allListings = [];
+      markers.forEach(m => m.remove());
+      markers = [];
+      if (markerCluster) markerCluster.clearLayers();
+      document.getElementById('listingsGrid').innerHTML = '';
 
       showLoading(true);
       const loader = document.getElementById('listLoader');
