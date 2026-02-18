@@ -114,11 +114,10 @@
       margin-top: 52px;
       background: var(--white);
       border-bottom: 1px solid #e0e0e0;
-      padding: 8px 0;
+      padding: 12px 0;
       position: sticky;
       top: 52px;
       z-index: 500;
-      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
     }
 
     .filters-outer {
@@ -126,19 +125,20 @@
       align-items: center;
       max-width: 1600px;
       margin: 0 auto;
-      padding: 0 8px;
+      padding: 0 16px;
+      gap: 12px;
     }
 
     .filter-arrow {
-      background: #f0f1f3;
-      border: none;
+      background: transparent;
+      border: 1px solid #ddd;
       cursor: pointer;
-      font-size: 14px;
-      padding: 4px 8px;
-      border-radius: 6px;
-      color: #555;
+      font-size: 12px;
+      padding: 8px 10px;
+      border-radius: 8px;
+      color: #333;
       flex-shrink: 0;
-      transition: background 0.2s;
+      transition: all 0.2s;
     }
 
     .filter-arrow:hover {
@@ -169,21 +169,22 @@
     }
 
     .search-input-wrap input {
-      padding: 5px 8px 5px 28px;
+      padding: 8px 12px 8px 36px;
       border: 1px solid #ddd;
-      border-radius: 6px;
-      font-size: 0.78rem;
+      border-radius: 8px;
+      font-size: 0.9rem;
       font-family: inherit;
-      width: 160px;
+      width: 240px;
+      background: #fff;
     }
 
     .search-input-wrap i {
       position: absolute;
-      left: 8px;
+      left: 12px;
       top: 50%;
       transform: translateY(-50%);
-      font-size: 11px;
-      color: #999;
+      font-size: 14px;
+      color: #666;
     }
 
     /* Generic Dropdown */
@@ -193,19 +194,20 @@
     }
 
     .filter-dropdown-btn {
-      padding: 5px 10px;
+      padding: 8px 16px;
       border: 1px solid #ddd;
-      border-radius: 6px;
-      font-size: 0.78rem;
+      border-radius: 8px;
+      font-size: 0.85rem;
       font-family: inherit;
       background: #fff;
       cursor: pointer;
       font-weight: 600;
-      color: #555;
+      color: #333;
       white-space: nowrap;
       display: flex;
       align-items: center;
-      gap: 4px;
+      gap: 6px;
+      transition: all 0.2s;
     }
 
     .filter-dropdown-btn:after {
@@ -323,50 +325,71 @@
 
     .pill-group {
       display: flex;
-      background: #f0f1f3;
-      border-radius: 6px;
+      background: #f7f7f7;
+      border: 1px solid #ddd;
+      border-radius: 8px;
       padding: 2px;
-      gap: 1px;
+      gap: 2px;
       flex-shrink: 0;
     }
 
     .pill-btn {
       border: none;
       background: transparent;
-      padding: 5px 10px;
-      border-radius: 5px;
+      padding: 6px 14px;
+      border-radius: 6px;
       cursor: pointer;
       font-weight: 600;
-      font-size: 0.75rem;
-      color: #666;
+      font-size: 0.85rem;
+      color: #555;
       transition: all 0.2s;
       white-space: nowrap;
       font-family: inherit;
     }
 
     .pill-btn.active {
-      background: var(--primary);
-      color: var(--white);
-      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
+      background: #1a2a3a;
+      color: #fff;
     }
 
     .pill-btn:hover:not(.active) {
-      background: #e0e2e5;
+      background: #eee;
+    }
+
+    /* Redesigned Status Pills */
+    #statusPills {
+      background: transparent;
+      border: none;
+      gap: 8px;
+    }
+
+    .status-pill {
+      border: 1px solid #e0e0e0;
+      background: #fff;
+      padding: 6px 16px;
+      border-radius: 8px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: #555;
+      transition: all 0.2s;
     }
 
     .status-pill.active[data-status="Active"] {
-      background: var(--success);
+      background: #22c55e;
+      border-color: #22c55e;
       color: #fff;
     }
 
     .status-pill.active[data-status="Pending"] {
-      background: var(--pending);
-      color: #fff;
+      background: #ffecf0;
+      border-color: #e91e63;
+      color: #e91e63;
     }
 
-    .status-pill.active[data-status="Active Under Contract"] {
-      background: var(--warning);
-      color: #fff;
+    .status-pill.active[data-status="Closed"] {
+      background: #f3f4f6;
+      border-color: #d1d5db;
+      color: #374151;
     }
 
     .filter-select {
@@ -408,7 +431,12 @@
     }
 
     .search-btn.secondary {
-      background: #888;
+      background: #adb5bd;
+      border-radius: 20px;
+      padding: 6px 16px;
+      color: #fff;
+      font-weight: 600;
+      font-size: 0.8rem;
     }
 
     .filter-divider {
@@ -516,6 +544,7 @@
       position: relative;
       height: 110px;
       background: #eee;
+      overflow: hidden;
     }
 
     .carousel-img {
@@ -541,7 +570,7 @@
       height: 100%;
     }
 
-    .leaflet-pane img {
+    .leaflet-pane img:not(.popup-img) {
       max-width: none !important;
       width: auto !important;
       height: auto !important;
@@ -762,7 +791,79 @@
       z-index: 5;
     }
 
-    /* --- Price Pins --- */
+    /* --- Map Popups --- */
+    .leaflet-popup-content-wrapper {
+      border-radius: 12px !important;
+      padding: 0 !important;
+      overflow: hidden !important;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2) !important;
+    }
+
+    .leaflet-popup-content {
+      margin: 0 !important;
+      width: 260px !important;
+    }
+
+    .popup-content {
+      padding: 0;
+      width: 260px;
+      background: #fff;
+    }
+
+    .popup-img {
+      width: 100% !important;
+      height: 120px !important;
+      object-fit: cover !important;
+      display: block !important;
+      border-bottom: 1px solid #eee;
+    }
+
+    .popup-info {
+      padding: 12px;
+    }
+
+    .popup-price {
+      font-weight: 700;
+      font-size: 1.2rem;
+      color: var(--primary);
+      margin-bottom: 4px;
+    }
+
+    .popup-address {
+      font-size: 0.85rem;
+      color: #555;
+      margin-bottom: 8px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      line-height: 1.2;
+    }
+
+    .popup-details {
+      display: flex;
+      gap: 12px;
+      font-size: 0.8rem;
+      color: #777;
+      margin-bottom: 12px;
+    }
+
+    .popup-btn {
+      width: 100%;
+      padding: 8px;
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      border-radius: 6px;
+      font-weight: 600;
+      cursor: pointer;
+      font-family: inherit;
+      transition: background 0.2s;
+    }
+
+    .popup-btn:hover {
+      background: #1e7fa3;
+    }
+
     .price-pin {
       background: #fff;
       color: #333;
@@ -784,79 +885,6 @@
       z-index: 1000 !important;
     }
 
-    /* --- Map Popup --- */
-    .popup-content {
-      width: 260px;
-      font-family: 'Inter', sans-serif;
-    }
-
-    .popup-img {
-      width: 100%;
-      height: 140px;
-      object-fit: cover;
-      border-radius: 6px;
-      margin-bottom: 8px;
-      display: block;
-      background: #eee;
-    }
-
-    .popup-price {
-      font-size: 1.1rem;
-      font-weight: 700;
-      color: var(--primary);
-      margin-bottom: 4px;
-    }
-
-    .popup-address {
-      font-size: 0.8rem;
-      color: #555;
-      margin-bottom: 6px;
-      line-height: 1.3;
-    }
-
-    .popup-details {
-      display: flex;
-      gap: 10px;
-      font-size: 0.75rem;
-      color: #666;
-      margin-bottom: 8px;
-    }
-
-    .popup-agent {
-      font-size: 0.72rem;
-      color: #888;
-      margin-bottom: 8px;
-    }
-
-    .popup-btn {
-      display: inline-block;
-      padding: 5px 12px;
-      background: var(--accent);
-      color: #fff;
-      border: none;
-      border-radius: 6px;
-      cursor: pointer;
-      font-size: 0.72rem;
-      font-weight: 600;
-      font-family: inherit;
-      margin-right: 4px;
-      margin-top: 2px;
-    }
-
-    .popup-btn:hover {
-      background: #1e7fa3;
-    }
-
-    .leaflet-popup-content-wrapper {
-      border-radius: 10px !important;
-      padding: 0 !important;
-      overflow: hidden;
-    }
-
-    .leaflet-popup-content {
-      margin: 12px !important;
-      width: 260px !important;
-    }
 
     /* --- Detail Modal --- */
     .detail-overlay {
@@ -908,7 +936,8 @@
 
     .detail-gallery {
       position: relative;
-      height: 380px;
+      height: 240px;
+      max-height: 40vh;
       background: #111;
     }
 
@@ -1912,649 +1941,651 @@
               <button class="filter-option-btn" data-val="2">2+</button>
               <button class="filter-option-btn" data-val="3">3+</button>
               <button class="filter-option-btn" data-val="4">4+</button>
-              <button class="apply-btn" id="bathsApplyBtn">Apply</button>
             </div>
-          </div>
-
-          <!-- City -->
-          <div class="filter-dropdown-wrap">
-            <button class="filter-dropdown-btn" id="cityBtn">City</button>
-            <div class="filter-dropdown-panel" id="cityPanel">
-              <label><input type="checkbox" name="city" value="Bonita Springs"> Bonita Springs</label>
-              <label><input type="checkbox" name="city" value="Estero"> Estero</label>
-              <label><input type="checkbox" name="city" value="Naples"> Naples</label>
-              <label><input type="checkbox" name="city" value="Fort Myers"> Fort Myers</label>
-              <button class="apply-btn">Apply</button>
-            </div>
-          </div>
-
-          <!-- Sort -->
-          <div class="filter-dropdown-wrap">
-            <button class="filter-dropdown-btn" id="sortBtn">Sort</button>
-            <div class="filter-dropdown-panel" id="sortPanel">
-              <label><input type="radio" name="sort" value="dateDesc" checked> Newest Listing</label>
-              <label><input type="radio" name="sort" value="priceDesc"> Price (High to Low)</label>
-              <label><input type="radio" name="sort" value="priceAsc"> Price (Low to High)</label>
-              <button class="apply-btn">Apply</button>
-            </div>
-          </div>
-
-          <button class="search-btn secondary" id="clearFiltersBtn">Clear</button>
-          <div class="results-count">
-            <span class="loading-indicator" id="listLoader"><i class="fas fa-spinner fa-spin"></i></span>
-            <span id="resultsCount">Loading...</span>
+            <button class="apply-btn" id="bathsApplyBtn">Apply</button>
           </div>
         </div>
-        <button class="filter-arrow" id="filterRight" style="margin-left:8px"><i
-            class="fas fa-chevron-right"></i></button>
-      </div>
-    </div>
 
-    <!-- Carousel -->
-    <div class="carousels-wrapper" id="carouselsWrapper">
-      <div class="carousel-container" id="featuredCarousel">
-        <div class="carousel-header">
-          <h2>Just Listed <span class="badge-new" id="newCount">New</span></h2>
-        </div>
-        <div class="carousel-track" id="carouselTrack"></div>
-      </div>
-    </div>
-
-    <!-- Main -->
-    <div class="main-container" id="mainContainer">
-      <div class="map-section">
-        <div id="map"></div>
-      </div>
-      <div class="listings-section">
-        <div class="listings-grid" id="listingsGrid"></div>
-      </div>
-    </div>
-
-    <footer class="footer-disclaimer">
-      <p><strong>Real estate agents ready to serve you | Browse homes and real estate for sale</strong></p>
-      <p>This website is made by <strong>Bonita Springs-Estero REALTORS&reg;</strong>.</p>
-      <p>Disclaimer: All information deemed reliable but not guaranteed. All properties are subject to prior sale,
-        change
-        or withdrawal. Neither listing broker(s) or information provider(s) shall be responsible for any typographical
-        errors, misinformation, misprints and shall be held totally harmless. Listing(s) information is provided for
-        consumers personal, non-commercial use and may not be used for any purpose other than to identify prospective
-        properties consumers may be interested in purchasing.</p>
-      <p>Information on this site was last updated <span id="lastUpdatedDate">Loading...</span>. The listing information
-        on this page last changed on <span id="lastChangedDate">Loading...</span>.</p>
-      <p>The data relating to real estate for sale on this website comes in part from the Internet Data Exchange program
-        of Delta Media Group MLS (last updated <span id="deltaUpdated">Loading...</span>) or Bonita Springs MLS (last
-        updated <span id="bsUpdated">Loading...</span>).</p>
-      <p>Real estate listings held by brokerage firms other than Bonita Springs-Estero REALTORS&reg; may be marked with
-        the Internet Data Exchange logo and detailed information about those properties will include the name of the
-        listing broker(s) when required by the MLS. All rights reserved.</p>
-    </footer>
-
-    <!-- Bottom Sheet (Mobile) -->
-    <div class="bottom-sheet collapsed" id="bottomSheet">
-      <div class="bottom-sheet-handle" id="bottomSheetHandle"></div>
-      <div class="bottom-sheet-header">
-        <h3 id="mobileResultsTitle">0 results</h3>
-        <span>View search stats</span>
-      </div>
-      <div class="bottom-sheet-content">
-        <div class="listings-grid" id="mobileListingsGrid"></div>
-      </div>
-    </div>
-
-    <!-- Bottom Navigation (Mobile) -->
-    <div class="bottom-nav">
-      <a href="#" class="nav-item active">
-        <i class="fas fa-search"></i>
-        <span>Search</span>
-      </a>
-      <a href="#" class="nav-item">
-        <i class="fas fa-users"></i>
-        <span>Clients</span>
-      </a>
-      <a href="#" class="nav-item">
-        <i class="fas fa-comment-dots"></i>
-        <span>Chat</span>
-      </a>
-      <a href="#" class="nav-item">
-        <i class="fas fa-route"></i>
-        <span>Tours</span>
-      </a>
-      <a href="#" class="nav-item">
-        <i class="far fa-user"></i>
-        <span>Account</span>
-      </a>
-    </div>
-
-    <!-- Saved Cart FAB -->
-    <button class="cart-fab" id="cartFab" title="Saved Listings"><i class="fas fa-heart"></i><span class="cart-badge"
-        id="cartBadge" style="display:none">0</span></button>
-    <div class="cart-panel" id="cartPanel">
-      <div class="cart-header">
-        <h3><i class="fas fa-heart" style="color:var(--hot);margin-right:6px"></i>Saved Listings</h3><button
-          class="cart-clear" id="cartClear">Clear All</button>
-      </div>
-      <div class="cart-items" id="cartItems">
-        <div class="cart-empty">No saved listings yet</div>
-      </div>
-    </div>
-
-    <!-- Detail Modal -->
-    <div class="detail-overlay" id="detailOverlay">
-      <div class="detail-modal">
-        <button class="detail-close" id="detailClose">&times;</button>
-        <div class="detail-gallery" id="detailGallery">
-          <img class="detail-gallery-img" id="detailMainImg" src="">
-          <button class="detail-gallery-nav prev" onclick="detailNav(-1)">&#10094;</button>
-          <button class="detail-gallery-nav next" onclick="detailNav(1)">&#10095;</button>
-          <div class="detail-gallery-count" id="detailImgCount"></div>
-        </div>
-        <div class="detail-gallery-thumbs" id="detailThumbs"></div>
-        <div class="detail-body">
-          <div class="detail-actions">
-            <button class="detail-save-btn" id="detailSaveBtn" onclick="toggleSaveFromDetail()"><i
-                class="fas fa-heart"></i> Save</button>
-          </div>
-          <div class="detail-price" id="detailPrice"></div>
-          <div class="detail-addr" id="detailAddr"></div>
-          <div class="detail-badges" id="detailBadges"></div>
-          <div class="detail-stats" id="detailStats"></div>
-          <div class="detail-description" id="detailDesc"></div>
-          <div class="detail-agent-section" id="detailAgentSection">
-            <div class="detail-agent-name" id="detailAgentName"></div>
-            <div class="detail-agent-office" id="detailAgentOffice"></div>
-            <div class="detail-agent-btns">
-              <button class="detail-agent-btn primary" id="detailContactBtn"><i class="fas fa-envelope"></i> Contact
-                Agent</button>
-              <button class="detail-agent-btn outline" id="detailViewAgentBtn"><i class="fas fa-user"></i> View Agent
-                Listings</button>
-            </div>
+        <!-- City -->
+        <div class="filter-dropdown-wrap">
+          <button class="filter-dropdown-btn" id="cityBtn">City</button>
+          <div class="filter-dropdown-panel" id="cityPanel">
+            <label><input type="checkbox" name="city" value="Bonita Springs"> Bonita Springs</label>
+            <label><input type="checkbox" name="city" value="Estero"> Estero</label>
+            <label><input type="checkbox" name="city" value="Naples"> Naples</label>
+            <label><input type="checkbox" name="city" value="Fort Myers"> Fort Myers</label>
+            <button class="apply-btn">Apply</button>
           </div>
         </div>
-      </div>
-    </div>
 
-    <!-- Contact Modal -->
-    <div class="contact-overlay" id="contactOverlay">
-      <div class="contact-modal">
-        <button class="contact-close" id="contactClose">&times;</button>
-        <h3>Contact Agent</h3>
-        <div class="sub" id="contactAgentLabel"></div>
-        <form class="contact-form" id="contactForm">
-          <label>Your Name</label><input type="text" id="contactName" required>
-          <label>Your Email</label><input type="email" id="contactEmail" required>
-          <label>Your Phone (optional)</label><input type="tel" id="contactPhone">
-          <label>Message</label><textarea id="contactMessage"></textarea>
-          <button type="submit" class="send-btn"><i class="fas fa-paper-plane"></i> Send Email</button>
-        </form>
-      </div>
-    </div>
-
-    <!-- Agent Modal -->
-    <div class="agent-modal-overlay" id="agentModalOverlay">
-      <div class="agent-modal">
-        <div class="agent-modal-header">
-          <button class="agent-modal-close" id="agentModalClose">&times;</button>
-          <div class="agent-name" id="agentName"></div>
-          <div class="agent-office" id="agentOffice"></div>
+        <!-- Sort -->
+        <div class="filter-dropdown-wrap">
+          <button class="filter-dropdown-btn" id="sortBtn">Sort</button>
+          <div class="filter-dropdown-panel" id="sortPanel">
+            <label><input type="radio" name="sort" value="dateDesc" checked> Newest Listing</label>
+            <label><input type="radio" name="sort" value="priceDesc"> Price (High to Low)</label>
+            <label><input type="radio" name="sort" value="priceAsc"> Price (Low to High)</label>
+            <button class="apply-btn">Apply</button>
+          </div>
         </div>
-        <div class="agent-listings-grid" id="agentListingsGrid"></div>
+
+        <button class="search-btn secondary" id="clearFiltersBtn">Clear</button>
+      </div><!-- End #filtersBar -->
+
+      <div class="results-count">
+        <span class="loading-indicator" id="listLoader"><i class="fas fa-spinner fa-spin"></i></span>
+        <span id="resultsCount">Loading...</span>
+      </div>
+      <button class="filter-arrow" id="filterRight" style="margin-left:8px"><i
+          class="fas fa-chevron-right"></i></button>
+    </div>
+  </div>
+
+  <!-- Carousel -->
+  <div class="carousels-wrapper" id="carouselsWrapper">
+    <div class="carousel-container" id="featuredCarousel">
+      <div class="carousel-header">
+        <h2>Just Listed <span class="badge-new" id="newCount">New</span></h2>
+      </div>
+      <div class="carousel-track" id="carouselTrack"></div>
+    </div>
+  </div>
+
+  <!-- Main -->
+  <div class="main-container" id="mainContainer">
+    <div class="map-section">
+      <div id="map"></div>
+    </div>
+    <div class="listings-section">
+      <div class="listings-grid" id="listingsGrid"></div>
+    </div>
+  </div>
+
+  <footer class="footer-disclaimer">
+    <p><strong>Real estate agents ready to serve you | Browse homes and real estate for sale</strong></p>
+    <p>This website is made by <strong>Bonita Springs-Estero REALTORS&reg;</strong>.</p>
+    <p>Disclaimer: All information deemed reliable but not guaranteed. All properties are subject to prior sale,
+      change
+      or withdrawal. Neither listing broker(s) or information provider(s) shall be responsible for any typographical
+      errors, misinformation, misprints and shall be held totally harmless. Listing(s) information is provided for
+      consumers personal, non-commercial use and may not be used for any purpose other than to identify prospective
+      properties consumers may be interested in purchasing.</p>
+    <p>Information on this site was last updated <span id="lastUpdatedDate">Loading...</span>. The listing information
+      on this page last changed on <span id="lastChangedDate">Loading...</span>.</p>
+    <p>The data relating to real estate for sale on this website comes in part from the Internet Data Exchange program
+      of Delta Media Group MLS (last updated <span id="deltaUpdated">Loading...</span>) or Bonita Springs MLS (last
+      updated <span id="bsUpdated">Loading...</span>).</p>
+    <p>Real estate listings held by brokerage firms other than Bonita Springs-Estero REALTORS&reg; may be marked with
+      the Internet Data Exchange logo and detailed information about those properties will include the name of the
+      listing broker(s) when required by the MLS. All rights reserved.</p>
+  </footer>
+
+  <!-- Bottom Sheet (Mobile) -->
+  <div class="bottom-sheet collapsed" id="bottomSheet">
+    <div class="bottom-sheet-handle" id="bottomSheetHandle"></div>
+    <div class="bottom-sheet-header">
+      <h3 id="mobileResultsTitle">0 results</h3>
+      <span>View search stats</span>
+    </div>
+    <div class="bottom-sheet-content">
+      <div class="listings-grid" id="mobileListingsGrid"></div>
+    </div>
+  </div>
+
+  <!-- Bottom Navigation (Mobile) -->
+  <div class="bottom-nav">
+    <a href="#" class="nav-item active">
+      <i class="fas fa-search"></i>
+      <span>Search</span>
+    </a>
+    <a href="#" class="nav-item">
+      <i class="fas fa-users"></i>
+      <span>Clients</span>
+    </a>
+    <a href="#" class="nav-item">
+      <i class="fas fa-comment-dots"></i>
+      <span>Chat</span>
+    </a>
+    <a href="#" class="nav-item">
+      <i class="fas fa-route"></i>
+      <span>Tours</span>
+    </a>
+    <a href="#" class="nav-item">
+      <i class="far fa-user"></i>
+      <span>Account</span>
+    </a>
+  </div>
+
+  <!-- Saved Cart FAB -->
+  <button class="cart-fab" id="cartFab" title="Saved Listings"><i class="fas fa-heart"></i><span class="cart-badge"
+      id="cartBadge" style="display:none">0</span></button>
+  <div class="cart-panel" id="cartPanel">
+    <div class="cart-header">
+      <h3><i class="fas fa-heart" style="color:var(--hot);margin-right:6px"></i>Saved Listings</h3><button
+        class="cart-clear" id="cartClear">Clear All</button>
+    </div>
+    <div class="cart-items" id="cartItems">
+      <div class="cart-empty">No saved listings yet</div>
+    </div>
+  </div>
+
+  <!-- Detail Modal -->
+  <div class="detail-overlay" id="detailOverlay">
+    <div class="detail-modal">
+      <button class="detail-close" id="detailClose">&times;</button>
+      <div class="detail-gallery" id="detailGallery">
+        <img class="detail-gallery-img" id="detailMainImg" src="">
+        <button class="detail-gallery-nav prev" onclick="detailNav(-1)">&#10094;</button>
+        <button class="detail-gallery-nav next" onclick="detailNav(1)">&#10095;</button>
+        <div class="detail-gallery-count" id="detailImgCount"></div>
+      </div>
+      <div class="detail-gallery-thumbs" id="detailThumbs"></div>
+      <div class="detail-body">
+        <div class="detail-actions">
+          <button class="detail-save-btn" id="detailSaveBtn" onclick="toggleSaveFromDetail()"><i
+              class="fas fa-heart"></i> Save</button>
+        </div>
+        <div class="detail-price" id="detailPrice"></div>
+        <div class="detail-addr" id="detailAddr"></div>
+        <div class="detail-badges" id="detailBadges"></div>
+        <div class="detail-stats" id="detailStats"></div>
+        <div class="detail-description" id="detailDesc"></div>
+        <div class="detail-agent-section" id="detailAgentSection">
+          <div class="detail-agent-name" id="detailAgentName"></div>
+          <div class="detail-agent-office" id="detailAgentOffice"></div>
+          <div class="detail-agent-btns">
+            <button class="detail-agent-btn primary" id="detailContactBtn"><i class="fas fa-envelope"></i> Contact
+              Agent</button>
+            <button class="detail-agent-btn outline" id="detailViewAgentBtn"><i class="fas fa-user"></i> View Agent
+              Listings</button>
+          </div>
+        </div>
       </div>
     </div>
+  </div>
 
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.5.3/leaflet.markercluster.js"></script>
-    <script>
-      const API_BASE = 'https://listingsworker.bonitaspringsrealtors.workers.dev';
-      const SEL = 'ListingKey,UnparsedAddress,City,ListPrice,BedroomsTotal,BathroomsTotalInteger,LivingArea,Coordinates,ListingContractDate,StatusChangeTimestamp,PropertyType,PropertySubType,StandardStatus,ListAgentKey,ListAgentFullName,ListOfficeName,ListAgentEmail,PublicRemarks,YearBuilt,LotSizeAcres';
-      let map, markers = [], allListings = [], mediaCache = new Map(), currentPropertyType = 'sale', currentStatus = 'Active', currentDetail = null;
-      const fmt = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 });
-      const kFmt = (n) => { if (n >= 1e6) return '$' + (n / 1e6).toFixed(1) + 'm'; if (n >= 1e3) return '$' + (n / 1e3).toFixed(0) + 'k'; return '$' + n; };
-      // Saved cart
-      let savedListings = JSON.parse(localStorage.getItem('savedListings') || '[]');
-      let markerCluster;
+  <!-- Contact Modal -->
+  <div class="contact-overlay" id="contactOverlay">
+    <div class="contact-modal">
+      <button class="contact-close" id="contactClose">&times;</button>
+      <h3>Contact Agent</h3>
+      <div class="sub" id="contactAgentLabel"></div>
+      <form class="contact-form" id="contactForm">
+        <label>Your Name</label><input type="text" id="contactName" required>
+        <label>Your Email</label><input type="email" id="contactEmail" required>
+        <label>Your Phone (optional)</label><input type="tel" id="contactPhone">
+        <label>Message</label><textarea id="contactMessage"></textarea>
+        <button type="submit" class="send-btn"><i class="fas fa-paper-plane"></i> Send Email</button>
+      </form>
+    </div>
+  </div>
 
-      function initMap() {
-        map = L.map('map').setView([26.34, -81.78], 12);
-        L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
-          attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
-          subdomains: 'abcd',
-          maxZoom: 20,
-          crossOrigin: true
-        }).addTo(map);
-        markerCluster = L.markerClusterGroup({
-          showCoverageOnHover: false,
-          maxClusterRadius: 40,
-          iconCreateFunction: function (cluster) {
-            const count = cluster.getChildCount();
-            let level = 'small';
-            if (count > 10) level = 'medium';
-            if (count > 50) level = 'large';
-            return L.divIcon({
-              html: '<div>' + count + '</div>',
-              className: 'marker-cluster marker-cluster-' + level,
-              iconSize: L.point(40, 40)
-            });
+  <!-- Agent Modal -->
+  <div class="agent-modal-overlay" id="agentModalOverlay">
+    <div class="agent-modal">
+      <div class="agent-modal-header">
+        <button class="agent-modal-close" id="agentModalClose">&times;</button>
+        <div class="agent-name" id="agentName"></div>
+        <div class="agent-office" id="agentOffice"></div>
+      </div>
+      <div class="agent-listings-grid" id="agentListingsGrid"></div>
+    </div>
+  </div>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.5.3/leaflet.markercluster.js"></script>
+  <script>
+    const API_BASE = 'https://listingsworker.bonitaspringsrealtors.workers.dev';
+    const SEL = 'ListingKey,UnparsedAddress,City,ListPrice,BedroomsTotal,BathroomsTotalInteger,LivingArea,Coordinates,ListingContractDate,StatusChangeTimestamp,PropertyType,PropertySubType,StandardStatus,ListAgentKey,ListAgentFullName,ListOfficeName,ListAgentEmail,PublicRemarks,YearBuilt,LotSizeAcres';
+    let map, markers = [], allListings = [], mediaCache = new Map(), currentPropertyType = 'sale', currentStatus = 'Active', currentDetail = null;
+    const fmt = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 });
+    const kFmt = (n) => { if (n >= 1e6) return '$' + (n / 1e6).toFixed(1) + 'm'; if (n >= 1e3) return '$' + (n / 1e3).toFixed(0) + 'k'; return '$' + n; };
+    // Saved cart
+    let savedListings = JSON.parse(localStorage.getItem('savedListings') || '[]');
+    let markerCluster;
+
+    function initMap() {
+      map = L.map('map').setView([26.34, -81.78], 12);
+      L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
+        subdomains: 'abcd',
+        maxZoom: 20,
+        crossOrigin: true
+      }).addTo(map);
+      markerCluster = L.markerClusterGroup({
+        showCoverageOnHover: false,
+        maxClusterRadius: 40,
+        iconCreateFunction: function (cluster) {
+          const count = cluster.getChildCount();
+          let level = 'small';
+          if (count > 10) level = 'medium';
+          if (count > 50) level = 'large';
+          return L.divIcon({
+            html: '<div>' + count + '</div>',
+            className: 'marker-cluster marker-cluster-' + level,
+            iconSize: L.point(40, 40)
+          });
+        }
+      });
+      map.addLayer(markerCluster);
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      initMap();
+      setupPills('#propertyTypePills', b => { currentPropertyType = b.dataset.type; fetchListings(); });
+      setupPills('#statusPills', b => { currentStatus = b.dataset.status; fetchListings(); });
+      setupFilters();
+      setupSearch();
+      setupMobileUI();
+      fetchListings();
+      updateDisclaimerDates();
+
+      // Scroll arrows
+      const fb = document.getElementById('filtersBar');
+      document.getElementById('filterLeft').onclick = () => fb.scrollBy({ left: -200, behavior: 'smooth' });
+      document.getElementById('filterRight').onclick = () => fb.scrollBy({ left: 200, behavior: 'smooth' });
+      // Cart FAB
+      document.getElementById('cartFab').onclick = () => { const p = document.getElementById('cartPanel'); p.style.display = p.style.display === 'block' ? 'none' : 'block'; };
+      document.getElementById('cartClear').onclick = () => { savedListings = []; localStorage.setItem('savedListings', '[]'); updateCartUI(); };
+      // Detail close
+      document.getElementById('detailClose').onclick = () => document.getElementById('detailOverlay').style.display = 'none';
+      document.getElementById('detailOverlay').onclick = e => { if (e.target === e.currentTarget) e.currentTarget.style.display = 'none'; };
+      // Agent modal close
+      document.getElementById('agentModalClose').onclick = () => document.getElementById('agentModalOverlay').style.display = 'none';
+      document.getElementById('agentModalOverlay').onclick = e => { if (e.target === e.currentTarget) e.currentTarget.style.display = 'none'; };
+      // Contact close
+      document.getElementById('contactClose').onclick = () => document.getElementById('contactOverlay').style.display = 'none';
+      document.getElementById('contactOverlay').onclick = e => { if (e.target === e.currentTarget) e.currentTarget.style.display = 'none'; };
+      // Contact form
+      document.getElementById('contactForm').onsubmit = e => {
+        e.preventDefault();
+        if (!currentDetail || !currentDetail.ListAgentEmail) return;
+        const name = document.getElementById('contactName').value;
+        const email = document.getElementById('contactEmail').value;
+        const phone = document.getElementById('contactPhone').value;
+        const msg = document.getElementById('contactMessage').value;
+        const subject = encodeURIComponent(`Inquiry about ${currentDetail.UnparsedAddress || 'property'}`);
+        const body = encodeURIComponent(`Hi ${currentDetail.ListAgentFullName || ''},\n\n${msg}\n\nRegarding: ${currentDetail.UnparsedAddress || ''}\nListed at: ${fmt.format(currentDetail.ListPrice || 0)}\n\nFrom: ${name}\nEmail: ${email}${phone ? '\nPhone: ' + phone : ''}`);
+        window.open(`mailto:${currentDetail.ListAgentEmail}?subject=${subject}&body=${body}`, '_blank');
+        document.getElementById('contactOverlay').style.display = 'none';
+      };
+    });
+
+    function setupPills(sel, cb) {
+      document.querySelectorAll(sel + ' .pill-btn').forEach(b => b.onclick = () => {
+        document.querySelectorAll(sel + ' .pill-btn').forEach(x => x.classList.remove('active'));
+        b.classList.add('active'); cb(b);
+      });
+    }
+
+    function setupFilters() {
+      // Generic Dropdown Toggles
+      // Generic Dropdown Toggles - FIXED POSITIONING
+      document.querySelectorAll('.filter-dropdown-btn').forEach(btn => {
+        btn.addEventListener('click', e => {
+          e.stopPropagation();
+          const p = btn.nextElementSibling;
+          // Close others
+          document.querySelectorAll('.filter-dropdown-panel').forEach(x => {
+            if (x !== p) { x.classList.remove('open'); x.style.display = 'none'; }
+          });
+
+          if (p.classList.contains('open')) {
+            p.classList.remove('open'); p.style.display = 'none';
+          } else {
+            // Calculate fixed position
+            const rect = btn.getBoundingClientRect();
+            p.style.position = 'fixed';
+            p.style.top = (rect.bottom + 4) + 'px';
+            p.style.left = Math.max(10, rect.left) + 'px';
+            p.style.minWidth = '200px';
+            p.style.zIndex = '10001';
+            p.style.display = 'block';
+
+            // Adjust if off screen right
+            if (rect.left + 220 > window.innerWidth) {
+              p.style.left = 'auto';
+              p.style.right = '10px';
+            }
+            p.classList.add('open');
           }
         });
-        map.addLayer(markerCluster);
-      }
-
-      document.addEventListener('DOMContentLoaded', () => {
-        initMap();
-        setupPills('#propertyTypePills', b => { currentPropertyType = b.dataset.type; fetchListings(); });
-        setupPills('#statusPills', b => { currentStatus = b.dataset.status; fetchListings(); });
-        setupFilters();
-        setupSearch();
-        setupMobileUI();
-        fetchListings();
-        updateDisclaimerDates();
-
-        // Scroll arrows
-        const fb = document.getElementById('filtersBar');
-        document.getElementById('filterLeft').onclick = () => fb.scrollBy({ left: -200, behavior: 'smooth' });
-        document.getElementById('filterRight').onclick = () => fb.scrollBy({ left: 200, behavior: 'smooth' });
-        // Cart FAB
-        document.getElementById('cartFab').onclick = () => { const p = document.getElementById('cartPanel'); p.style.display = p.style.display === 'block' ? 'none' : 'block'; };
-        document.getElementById('cartClear').onclick = () => { savedListings = []; localStorage.setItem('savedListings', '[]'); updateCartUI(); };
-        // Detail close
-        document.getElementById('detailClose').onclick = () => document.getElementById('detailOverlay').style.display = 'none';
-        document.getElementById('detailOverlay').onclick = e => { if (e.target === e.currentTarget) e.currentTarget.style.display = 'none'; };
-        // Agent modal close
-        document.getElementById('agentModalClose').onclick = () => document.getElementById('agentModalOverlay').style.display = 'none';
-        document.getElementById('agentModalOverlay').onclick = e => { if (e.target === e.currentTarget) e.currentTarget.style.display = 'none'; };
-        // Contact close
-        document.getElementById('contactClose').onclick = () => document.getElementById('contactOverlay').style.display = 'none';
-        document.getElementById('contactOverlay').onclick = e => { if (e.target === e.currentTarget) e.currentTarget.style.display = 'none'; };
-        // Contact form
-        document.getElementById('contactForm').onsubmit = e => {
-          e.preventDefault();
-          if (!currentDetail || !currentDetail.ListAgentEmail) return;
-          const name = document.getElementById('contactName').value;
-          const email = document.getElementById('contactEmail').value;
-          const phone = document.getElementById('contactPhone').value;
-          const msg = document.getElementById('contactMessage').value;
-          const subject = encodeURIComponent(`Inquiry about ${currentDetail.UnparsedAddress || 'property'}`);
-          const body = encodeURIComponent(`Hi ${currentDetail.ListAgentFullName || ''},\n\n${msg}\n\nRegarding: ${currentDetail.UnparsedAddress || ''}\nListed at: ${fmt.format(currentDetail.ListPrice || 0)}\n\nFrom: ${name}\nEmail: ${email}${phone ? '\nPhone: ' + phone : ''}`);
-          window.open(`mailto:${currentDetail.ListAgentEmail}?subject=${subject}&body=${body}`, '_blank');
-          document.getElementById('contactOverlay').style.display = 'none';
-        };
       });
 
-      function setupPills(sel, cb) {
-        document.querySelectorAll(sel + ' .pill-btn').forEach(b => b.onclick = () => {
-          document.querySelectorAll(sel + ' .pill-btn').forEach(x => x.classList.remove('active'));
-          b.classList.add('active'); cb(b);
+      // Close on outside click or scroll
+      const closeAll = () => document.querySelectorAll('.filter-dropdown-panel').forEach(p => { p.classList.remove('open'); p.style.display = 'none'; });
+      document.addEventListener('click', closeAll);
+      document.addEventListener('scroll', closeAll, true); // True to capture all scrolls
+      window.addEventListener('resize', closeAll);
+      document.querySelectorAll('.filter-dropdown-panel').forEach(p => p.addEventListener('click', e => e.stopPropagation()));
+
+      // Button Groups (Beds/Baths)
+      document.querySelectorAll('.filter-option-btn').forEach(b => {
+        b.addEventListener('click', () => {
+          b.parentElement.querySelectorAll('.filter-option-btn').forEach(x => x.classList.remove('selected'));
+          b.classList.add('selected');
         });
-      }
+      });
 
-      function setupFilters() {
-        // Generic Dropdown Toggles
-        // Generic Dropdown Toggles - FIXED POSITIONING
-        document.querySelectorAll('.filter-dropdown-btn').forEach(btn => {
-          btn.addEventListener('click', e => {
-            e.stopPropagation();
-            const p = btn.nextElementSibling;
-            // Close others
-            document.querySelectorAll('.filter-dropdown-panel').forEach(x => {
-              if (x !== p) { x.classList.remove('open'); x.style.display = 'none'; }
-            });
-
-            if (p.classList.contains('open')) {
-              p.classList.remove('open'); p.style.display = 'none';
-            } else {
-              // Calculate fixed position
-              const rect = btn.getBoundingClientRect();
-              p.style.position = 'fixed';
-              p.style.top = (rect.bottom + 4) + 'px';
-              p.style.left = Math.max(10, rect.left) + 'px';
-              p.style.minWidth = '200px';
-              p.style.zIndex = '10001';
-              p.style.display = 'block';
-
-              // Adjust if off screen right
-              if (rect.left + 220 > window.innerWidth) {
-                p.style.left = 'auto';
-                p.style.right = '10px';
-              }
-              p.classList.add('open');
-            }
-          });
+      // Apply Buttons
+      document.querySelectorAll('.apply-btn').forEach(b => {
+        b.addEventListener('click', () => {
+          b.closest('.filter-dropdown-panel').classList.remove('open');
+          updateFilterLabels();
+          applyClientFilters();
         });
+      });
 
-        // Close on outside click or scroll
-        const closeAll = () => document.querySelectorAll('.filter-dropdown-panel').forEach(p => { p.classList.remove('open'); p.style.display = 'none'; });
-        document.addEventListener('click', closeAll);
-        document.addEventListener('scroll', closeAll, true); // True to capture all scrolls
-        window.addEventListener('resize', closeAll);
-        document.querySelectorAll('.filter-dropdown-panel').forEach(p => p.addEventListener('click', e => e.stopPropagation()));
+      // Special handling for beds/baths buttons (no apply needed if you want immediate, but user added Apply to others)
+      // I'll add Apply buttons to Beds/Baths for consistency as per my plan above.
 
-        // Button Groups (Beds/Baths)
-        document.querySelectorAll('.filter-option-btn').forEach(b => {
-          b.addEventListener('click', () => {
-            b.parentElement.querySelectorAll('.filter-option-btn').forEach(x => x.classList.remove('selected'));
-            b.classList.add('selected');
-          });
-        });
+      // Clear Filters
+      document.getElementById('clearFiltersBtn').addEventListener('click', clearFilters);
+    }
 
-        // Apply Buttons
-        document.querySelectorAll('.apply-btn').forEach(b => {
-          b.addEventListener('click', () => {
-            b.closest('.filter-dropdown-panel').classList.remove('open');
-            updateFilterLabels();
-            applyClientFilters();
-          });
-        });
+    function updateFilterLabels() {
+      // Price
+      const min = document.getElementById('priceMin').value, max = document.getElementById('priceMax').value;
+      const pb = document.getElementById('priceBtn');
+      if (min || max) { pb.classList.add('has-value'); pb.innerText = (min ? '$' + kFmt(min) + '+' : '') + (min && max ? '-' : '') + (max ? '<$' + kFmt(max) : ''); }
+      else { pb.classList.remove('has-value'); pb.innerText = 'Price'; }
 
-        // Special handling for beds/baths buttons (no apply needed if you want immediate, but user added Apply to others)
-        // I'll add Apply buttons to Beds/Baths for consistency as per my plan above.
+      // SubType
+      const st = Array.from(document.querySelectorAll('#subTypePanel input:checked')).map(i => i.value);
+      const sb = document.getElementById('subTypeBtn');
+      if (st.length && st.length < 5) { sb.classList.add('has-value'); sb.innerText = st.length + ' Home Types'; } // Adjusted logic
+      else { sb.classList.remove('has-value'); sb.innerText = 'Home Type'; }
 
-        // Clear Filters
-        document.getElementById('clearFiltersBtn').addEventListener('click', clearFilters);
-      }
+      // Beds
+      const bd = document.querySelector('#bedsGroup .selected').dataset.val;
+      const bdB = document.getElementById('bedsBtn');
+      if (bd > 0) { bdB.classList.add('has-value'); bdB.innerText = bd + '+ Beds'; }
+      else { bdB.classList.remove('has-value'); bdB.innerText = 'Beds'; }
 
-      function updateFilterLabels() {
-        // Price
-        const min = document.getElementById('priceMin').value, max = document.getElementById('priceMax').value;
-        const pb = document.getElementById('priceBtn');
-        if (min || max) { pb.classList.add('has-value'); pb.innerText = (min ? '$' + kFmt(min) + '+' : '') + (min && max ? '-' : '') + (max ? '<$' + kFmt(max) : ''); }
-        else { pb.classList.remove('has-value'); pb.innerText = 'Price'; }
+      // Baths
+      const ba = document.querySelector('#bathsGroup .selected').dataset.val;
+      const baB = document.getElementById('bathsBtn');
+      if (ba > 0) { baB.classList.add('has-value'); baB.innerText = ba + '+ Baths'; }
+      else { baB.classList.remove('has-value'); baB.innerText = 'Baths'; }
 
-        // SubType
-        const st = Array.from(document.querySelectorAll('#subTypePanel input:checked')).map(i => i.value);
-        const sb = document.getElementById('subTypeBtn');
-        if (st.length && st.length < 5) { sb.classList.add('has-value'); sb.innerText = st.length + ' Home Types'; } // Adjusted logic
-        else { sb.classList.remove('has-value'); sb.innerText = 'Home Type'; }
+      // City
+      const ct = Array.from(document.querySelectorAll('#cityPanel input:checked')).map(i => i.value);
+      const cb = document.getElementById('cityBtn');
+      if (ct.length) { cb.classList.add('has-value'); cb.innerText = ct.length === 1 ? ct[0] : ct.length + ' Cities'; }
+      else { cb.classList.remove('has-value'); cb.innerText = 'City'; }
 
-        // Beds
-        const bd = document.querySelector('#bedsGroup .selected').dataset.val;
-        const bdB = document.getElementById('bedsBtn');
-        if (bd > 0) { bdB.classList.add('has-value'); bdB.innerText = bd + '+ Beds'; }
-        else { bdB.classList.remove('has-value'); bdB.innerText = 'Beds'; }
+      // Sort
+      const so = document.querySelector('input[name="sort"]:checked').value;
+      const sob = document.getElementById('sortBtn');
+      if (so !== 'dateDesc') { sob.classList.add('has-value'); sob.innerText = so === 'priceDesc' ? 'Price High-Low' : 'Price Low-High'; }
+      else { sob.classList.remove('has-value'); sob.innerText = 'Sort'; }
+    }
 
-        // Baths
-        const ba = document.querySelector('#bathsGroup .selected').dataset.val;
-        const baB = document.getElementById('bathsBtn');
-        if (ba > 0) { baB.classList.add('has-value'); baB.innerText = ba + '+ Baths'; }
-        else { baB.classList.remove('has-value'); baB.innerText = 'Baths'; }
+    function clearFilters() {
+      document.getElementById('priceMin').value = '';
+      document.getElementById('priceMax').value = '';
+      document.querySelectorAll('#subTypePanel input').forEach(i => i.checked = true); // Default all checked? Or none? Usually all.
+      document.querySelectorAll('#cityPanel input').forEach(i => i.checked = false);
+      document.querySelectorAll('.filter-option-btn.selected').forEach(b => b.classList.remove('selected'));
+      document.querySelectorAll('#bedsGroup .filter-option-btn[data-val="0"]').forEach(b => b.classList.add('selected'));
+      document.querySelectorAll('#bathsGroup .filter-option-btn[data-val="0"]').forEach(b => b.classList.add('selected'));
+      document.querySelector('input[name="sort"][value="dateDesc"]').checked = true;
+      document.getElementById('searchInput').value = '';
+      updateFilterLabels();
+      applyClientFilters();
+    }
 
-        // City
-        const ct = Array.from(document.querySelectorAll('#cityPanel input:checked')).map(i => i.value);
-        const cb = document.getElementById('cityBtn');
-        if (ct.length) { cb.classList.add('has-value'); cb.innerText = ct.length === 1 ? ct[0] : ct.length + ' Cities'; }
-        else { cb.classList.remove('has-value'); cb.innerText = 'City'; }
+    function setupSearch() {
+      const inp = document.getElementById('searchInput');
+      const minp = document.getElementById('mobileSearchInput');
 
-        // Sort
-        const so = document.querySelector('input[name="sort"]:checked').value;
-        const sob = document.getElementById('sortBtn');
-        if (so !== 'dateDesc') { sob.classList.add('has-value'); sob.innerText = so === 'priceDesc' ? 'Price High-Low' : 'Price Low-High'; }
-        else { sob.classList.remove('has-value'); sob.innerText = 'Sort'; }
-      }
-
-      function clearFilters() {
-        document.getElementById('priceMin').value = '';
-        document.getElementById('priceMax').value = '';
-        document.querySelectorAll('#subTypePanel input').forEach(i => i.checked = true); // Default all checked? Or none? Usually all.
-        document.querySelectorAll('#cityPanel input').forEach(i => i.checked = false);
-        document.querySelectorAll('.filter-option-btn.selected').forEach(b => b.classList.remove('selected'));
-        document.querySelectorAll('#bedsGroup .filter-option-btn[data-val="0"]').forEach(b => b.classList.add('selected'));
-        document.querySelectorAll('#bathsGroup .filter-option-btn[data-val="0"]').forEach(b => b.classList.add('selected'));
-        document.querySelector('input[name="sort"][value="dateDesc"]').checked = true;
-        document.getElementById('searchInput').value = '';
-        updateFilterLabels();
+      const handleSearch = (v) => {
+        const q = v.trim();
+        document.getElementById('searchInput').value = q;
+        document.getElementById('mobileSearchInput').value = q;
         applyClientFilters();
-      }
-
-      function setupSearch() {
-        const inp = document.getElementById('searchInput');
-        const minp = document.getElementById('mobileSearchInput');
-
-        const handleSearch = (v) => {
-          const q = v.trim();
-          document.getElementById('searchInput').value = q;
-          document.getElementById('mobileSearchInput').value = q;
-          applyClientFilters();
-          if (q.length > 2) searchFullDatabase(q);
-        };
-
-        inp.addEventListener('keyup', (e) => { if (e.key === 'Enter') handleSearch(inp.value); });
-        minp.addEventListener('keyup', (e) => { if (e.key === 'Enter') handleSearch(minp.value); });
-      }
-
-      function setupMobileUI() {
-        const sheet = document.getElementById('bottomSheet');
-        const handle = document.getElementById('bottomSheetHandle');
-        let isDragging = false, startY, startTr;
-
-        handle.addEventListener('click', () => {
-          sheet.classList.toggle('collapsed');
-        });
-
-        // Simple drag logic
-        handle.addEventListener('touchstart', e => {
-          isDragging = true;
-          startY = e.touches[0].clientY;
-          startTr = sheet.getBoundingClientRect().top;
-        });
-
-        document.addEventListener('touchmove', e => {
-          if (!isDragging) return;
-          const delta = e.touches[0].clientY - startY;
-          if (delta < -50) sheet.classList.remove('collapsed');
-          if (delta > 50) sheet.classList.add('collapsed');
-        });
-
-        document.addEventListener('touchend', () => isDragging = false);
-      }
-
-      let fetchedContexts = new Set(); // Tracks "Status|Type" combinations fully loaded
-
-      async function fetchListings() {
-        // Context Key
-        const contextKey = currentStatus + '|' + currentPropertyType;
-
-        // If already fetching or fetched, just re-apply local filters
-        if (fetchedContexts.has(contextKey)) {
-          applyClientFilters();
-          return;
-        }
-
-        showLoading(true);
-        const loader = document.getElementById('listLoader');
-        if (loader) loader.style.display = 'inline-block';
-
-        try {
-          // Status Logic
-          let statusFilter = "StandardStatus eq '" + currentStatus + "'";
-          if (currentStatus === 'Pending') statusFilter = "(StandardStatus eq 'Pending' or StandardStatus eq 'Active Under Contract')";
-          else if (currentStatus === 'Closed') statusFilter = "StandardStatus eq 'Closed'";
-
-          // Base Filter - STRICTLY BONITA SPRINGS + Status
-          let baseF = "OriginatingSystemName eq 'Bonita Springs' and " + statusFilter;
-          if (currentPropertyType === 'sale') baseF += " and (PropertyType eq 'Residential' and PropertySubType ne 'Residential Lease')";
-          else if (currentPropertyType === 'rental') baseF += " and (PropertyType eq 'Residential' and PropertySubType eq 'Residential Lease')";
-          else if (currentPropertyType === 'commercial') baseF += " and (PropertyType eq 'Commercial Sale' or PropertyType eq 'Commercial')";
-          else if (currentPropertyType === 'land') baseF += " and PropertyType eq 'Land'";
-
-          let hasMore = true;
-          let skip = 0;
-          let lastPrice = null;
-          const BATCH = 200;
-
-          while (hasMore) {
-            const p = new URLSearchParams();
-            let f = baseF;
-            if (lastPrice !== null) f += " and ListPrice le " + lastPrice;
-
-            p.append('$filter', f);
-            p.append('$select', SEL);
-            p.append('$top', BATCH);
-            p.append('$skip', skip);
-            p.append('$orderby', 'ListPrice desc');
-
-            const r = await fetch(API_BASE + '/api/v2/OData/bsaor/Property?' + p);
-            if (!r.ok) throw new Error('API Error ' + r.status);
-            const d = await r.json();
-            const items = d.value || [];
-
-            if (!items.length) { hasMore = false; break; }
-
-            // Deduplicate and Add
-            let added = 0;
-            items.forEach(i => {
-              if (!allListings.some(x => x.ListingKey === i.ListingKey)) {
-                allListings.push(i);
-                added++;
-              }
-            });
-
-            if (items.length < BATCH) hasMore = false;
-            else {
-              const lastItem = items[items.length - 1];
-              const newLastPrice = lastItem.ListPrice || 0;
-
-              if (lastPrice !== null && newLastPrice === lastPrice) {
-                skip += items.length; // Same price block, skip forward
-              } else {
-                lastPrice = newLastPrice; // New price block, reset skip
-                skip = 0;
-              }
-            }
-
-            // Update loading text
-            const lt = document.getElementById('loadingText');
-            if (lt) lt.innerText = `Loading... (${allListings.length} cached)`;
-
-            // Progressive Render
-            if (added > 0 && (skip === BATCH || skip % 900 === 0)) {
-              MediaLoader.init();
-              if (skip === BATCH) renderCarousel(allListings);
-              applyClientFilters();
-            }
-
-            // Safety
-            if (skip > 6000) hasMore = false;
-          }
-
-          // Mark context as fetched so we don't re-fetch
-          fetchedContexts.add(contextKey);
-
-          // Final Update
-          MediaLoader.init();
-          renderCarousel(allListings); // Update carousel with all data
-          applyClientFilters();
-
-        } catch (e) { console.error(e); document.getElementById('listingsGrid').innerHTML = '<div style="padding:20px;text-align:center;color:red">' + e.message + '</div>'; }
-        finally {
-          showLoading(false);
-          if (loader) loader.style.display = 'none';
-        }
-      }
-
-      async function searchFullDatabase(q) {
-        if (!q || q.length < 3) return;
-        showLoading(true);
-        try {
-          // Try exact ListingKey or Address contains
-          const f = "OriginatingSystemName eq 'Bonita Springs' and (ListingKey eq '" + q + "' or contains(UnparsedAddress, '" + q + "'))";
-          const r = await fetch(API_BASE + '/api/v2/OData/bsaor/Property?$filter=' + encodeURIComponent(f) + '&$select=' + SEL + '&$top=20');
-          if (!r.ok) throw new Error('Search failed');
-          const d = await r.json();
-          const newItems = d.value || [];
-          if (newItems.length) {
-            // Merge new items avoiding duplicates
-            newItems.forEach(ni => { if (!allListings.some(x => x.ListingKey === ni.ListingKey)) allListings.push(ni); });
-            applyClientFilters();
-          } else {
-            alert('No specific matches found in database for "' + q + '"');
-          }
-        } catch (e) { console.error(e); }
-        finally { showLoading(false); }
-      }
-
-      const MediaLoader = {
-        queue: [], processing: false, observer: null, loadedCount: 0,
-        init() { if (this.observer) return; this.observer = new IntersectionObserver(es => { es.forEach(e => { if (e.isIntersecting) { const id = e.target.dataset.id; if (id && !mediaCache.has(id)) { this.enqueue(id); this.observer.unobserve(e.target); } } }); }, { rootMargin: '300px' }); },
-        observe(el) { if (this.observer) this.observer.observe(el); },
-        enqueue(id) { if (!this.queue.includes(id)) { this.queue.push(id); this.process(); } },
-        async process() { if (this.processing || !this.queue.length) return; this.processing = true; const ck = this.queue.splice(0, 10); await this.fetchChunk(ck); this.loadedCount += ck.length; if (this.loadedCount >= 8) hideLoadingOverlay(); this.processing = false; if (this.queue.length) this.process(); },
-        async fetchChunk(keys) { if (!keys.length) return; const f = keys.map(k => "ListingKey eq '" + k + "'").join(' or '); try { const r = await fetch(API_BASE + '/api/v2/OData/bsaor/Property?$filter=' + encodeURIComponent(f) + '&$select=ListingKey,Media'); if (!r.ok) return; const d = await r.json(); (d.value || []).forEach(p => { if (p.Media && p.Media.length) { const urls = p.Media.sort((a, b) => (a.Order || 0) - (b.Order || 0)).map(m => m.MediaURL || m.MediaUrl || m.MediaURLLarge).filter(Boolean); if (urls.length) { mediaCache.set(p.ListingKey, urls); updImg(p.ListingKey, urls); } } }); } catch (e) { console.warn('ML err', e); } }
+        if (q.length > 2) searchFullDatabase(q);
       };
 
-      function updImg(k, urls) { ['img-', 'c-img-'].forEach(px => { const i = document.getElementById(px + k); if (i) i.src = urls[0]; }); const c = document.getElementById('count-' + k); if (c) c.innerText = '1/' + urls.length; }
+      inp.addEventListener('keyup', (e) => { if (e.key === 'Enter') handleSearch(inp.value); });
+      minp.addEventListener('keyup', (e) => { if (e.key === 'Enter') handleSearch(minp.value); });
+    }
 
-      function renderCarousel(items) {
-        const t = document.getElementById('carouselTrack'), w = document.getElementById('carouselsWrapper');
-        const now = new Date(), wk = new Date(); wk.setDate(now.getDate() - 7);
-        const ni = items.filter(x => x.ListingContractDate && new Date(x.ListingContractDate) >= wk);
-        if (!ni.length) { w.style.display = 'none'; return; }
-        w.style.display = 'block'; document.getElementById('newCount').textContent = ni.length + ' New';
-        const max = Math.max(1, Math.floor((window.innerWidth - 32) / 212));
-        t.innerHTML = ''; ni.slice(0, max).forEach(item => {
-          const el = document.createElement('div'); el.className = 'carousel-card'; el.dataset.id = item.ListingKey;
-          el.innerHTML = '<div class="carousel-img-wrapper"><img src="" id="c-img-' + item.ListingKey + '" class="carousel-img" loading="lazy"><div class="price-badge">' + fmt.format(item.ListPrice || 0) + '</div></div><div class="card-content"><div class="card-address" style="font-size:0.78rem">' + (item.UnparsedAddress || '') + '</div><div class="card-meta">' + (item.City || '') + '</div></div>';
-          el.onclick = () => { openDetail(item); };
-          t.appendChild(el); MediaLoader.enqueue(item.ListingKey);
-        });
+    function setupMobileUI() {
+      const sheet = document.getElementById('bottomSheet');
+      const handle = document.getElementById('bottomSheetHandle');
+      let isDragging = false, startY, startTr;
+
+      handle.addEventListener('click', () => {
+        sheet.classList.toggle('collapsed');
+      });
+
+      // Simple drag logic
+      handle.addEventListener('touchstart', e => {
+        isDragging = true;
+        startY = e.touches[0].clientY;
+        startTr = sheet.getBoundingClientRect().top;
+      });
+
+      document.addEventListener('touchmove', e => {
+        if (!isDragging) return;
+        const delta = e.touches[0].clientY - startY;
+        if (delta < -50) sheet.classList.remove('collapsed');
+        if (delta > 50) sheet.classList.add('collapsed');
+      });
+
+      document.addEventListener('touchend', () => isDragging = false);
+    }
+
+    let fetchedContexts = new Set(); // Tracks "Status|Type" combinations fully loaded
+
+    async function fetchListings() {
+      // Context Key
+      const contextKey = currentStatus + '|' + currentPropertyType;
+
+      // If already fetching or fetched, just re-apply local filters
+      if (fetchedContexts.has(contextKey)) {
+        applyClientFilters();
+        return;
       }
-      window.addEventListener('resize', () => { if (allListings.length) renderCarousel(allListings); });
 
-      function applyClientFilters() {
-        // Read state from inputs
-        const sort = document.querySelector('input[name="sort"]:checked').value;
-        const cities = Array.from(document.querySelectorAll('#cityPanel input:checked')).map(i => i.value);
-        const minP = Number(document.getElementById('priceMin').value) || 0, maxP = Number(document.getElementById('priceMax').value) || Infinity;
-        const beds = Number(document.querySelector('#bedsGroup .selected').dataset.val) || 0;
-        const baths = Number(document.querySelector('#bathsGroup .selected').dataset.val) || 0;
-        const subTypes = Array.from(document.querySelectorAll('#subTypePanel input:checked')).map(i => i.value);
-        const q = (document.getElementById('searchInput').value || '').toLowerCase();
+      showLoading(true);
+      const loader = document.getElementById('listLoader');
+      if (loader) loader.style.display = 'inline-block';
 
-        // Client-Side Status Mapping
-        const targetStatus = currentStatus === 'Pending' ? ['Pending', 'Active Under Contract'] : [currentStatus];
+      try {
+        // Status Logic
+        let statusFilter = "StandardStatus eq '" + currentStatus + "'";
+        if (currentStatus === 'Pending') statusFilter = "(StandardStatus eq 'Pending' or StandardStatus eq 'Active Under Contract')";
+        else if (currentStatus === 'Closed') statusFilter = "StandardStatus eq 'Closed'";
 
-        let fl = allListings.filter(i => {
-          // Status Check
-          if (!targetStatus.includes(i.StandardStatus || 'Active')) return false;
+        // Base Filter - STRICTLY BONITA SPRINGS + Status
+        let baseF = "OriginatingSystemName eq 'Bonita Springs' and " + statusFilter;
+        if (currentPropertyType === 'sale') baseF += " and (PropertyType eq 'Residential' and PropertySubType ne 'Residential Lease')";
+        else if (currentPropertyType === 'rental') baseF += " and (PropertyType eq 'Residential' and PropertySubType eq 'Residential Lease')";
+        else if (currentPropertyType === 'commercial') baseF += " and (PropertyType eq 'Commercial Sale' or PropertyType eq 'Commercial')";
+        else if (currentPropertyType === 'land') baseF += " and PropertyType eq 'Land'";
 
-          // Type Check (Rough client-side approximation)
-          if (currentPropertyType === 'sale' && i.PropertyType === 'Residential Lease') return false;
-          // ... (API handles type, this is safety)
+        let hasMore = true;
+        let skip = 0;
+        let lastPrice = null;
+        const BATCH = 200;
 
-          const p = i.ListPrice || 0;
-          if (cities.length && !cities.includes(i.City)) return false;
-          if (p < minP || p > maxP) return false;
-          if ((i.BedroomsTotal || 0) < beds || (i.BathroomsTotalInteger || 0) < baths) return false;
-          if (subTypes.length && !subTypes.includes(i.PropertySubType)) return false;
-          if (q && !((i.UnparsedAddress || '').toLowerCase().includes(q) || (i.ListingKey || '').toLowerCase().includes(q) || (i.City || '').toLowerCase().includes(q))) return false;
-          return true;
-        });
+        while (hasMore) {
+          const p = new URLSearchParams();
+          let f = baseF;
+          if (lastPrice !== null) f += " and ListPrice le " + lastPrice;
 
-        if (sort === 'priceDesc') fl.sort((a, b) => (b.ListPrice || 0) - (a.ListPrice || 0));
-        else if (sort === 'priceAsc') fl.sort((a, b) => (a.ListPrice || 0) - (b.ListPrice || 0));
-        else fl.sort((a, b) => (b.ListingContractDate || '') > (a.ListingContractDate || '') ? 1 : -1);
+          p.append('$filter', f);
+          p.append('$select', SEL);
+          p.append('$top', BATCH);
+          p.append('$skip', skip);
+          p.append('$orderby', 'ListPrice desc');
 
-        updateUI(fl);
-        renderMapMarkers(fl, false, minP, maxP);
-        const resText = fl.length + ' Listings';
-        document.getElementById('resultsCount').innerText = resText;
-        document.getElementById('mobileResultsTitle').innerText = fl.length + ' results';
+          const r = await fetch(API_BASE + '/api/v2/OData/bsaor/Property?' + p);
+          if (!r.ok) throw new Error('API Error ' + r.status);
+          const d = await r.json();
+          const items = d.value || [];
+
+          if (!items.length) { hasMore = false; break; }
+
+          // Deduplicate and Add
+          let added = 0;
+          items.forEach(i => {
+            if (!allListings.some(x => x.ListingKey === i.ListingKey)) {
+              allListings.push(i);
+              added++;
+            }
+          });
+
+          if (items.length < BATCH) hasMore = false;
+          else {
+            const lastItem = items[items.length - 1];
+            const newLastPrice = lastItem.ListPrice || 0;
+
+            if (lastPrice !== null && newLastPrice === lastPrice) {
+              skip += items.length; // Same price block, skip forward
+            } else {
+              lastPrice = newLastPrice; // New price block, reset skip
+              skip = 0;
+            }
+          }
+
+          // Update loading text
+          const lt = document.getElementById('loadingText');
+          if (lt) lt.innerText = `Loading... (${allListings.length} cached)`;
+
+          // Progressive Render
+          if (added > 0 && (skip === BATCH || skip % 900 === 0)) {
+            MediaLoader.init();
+            if (skip === BATCH) renderCarousel(allListings);
+            applyClientFilters();
+          }
+
+          // Safety
+          if (skip > 6000) hasMore = false;
+        }
+
+        // Mark context as fetched so we don't re-fetch
+        fetchedContexts.add(contextKey);
+
+        // Final Update
+        MediaLoader.init();
+        renderCarousel(allListings); // Update carousel with all data
+        applyClientFilters();
+
+      } catch (e) { console.error(e); document.getElementById('listingsGrid').innerHTML = '<div style="padding:20px;text-align:center;color:red">' + e.message + '</div>'; }
+      finally {
+        showLoading(false);
+        if (loader) loader.style.display = 'none';
       }
-    </script>
-    <script>
-      function updateUI(listings) {
-        const grid = document.getElementById('listingsGrid');
-        const mGrid = document.getElementById('mobileListingsGrid');
-        grid.innerHTML = '';
-        if (mGrid) mGrid.innerHTML = '';
-        const minP = Number(document.getElementById('priceMin').value) || 0, maxP = Number(document.getElementById('priceMax').value) || 0;
-        const heat = minP > 0 && maxP > minP;
-        listings.forEach(item => {
-          const card = document.createElement('div'); card.className = 'listing-card'; card.id = 'card-' + item.ListingKey;
-          const cached = mediaCache.get(item.ListingKey); let imgUrl = '', pc = 0;
-          if (cached && cached.length) { imgUrl = cached[0]; pc = cached.length; }
-          const sc = item.StandardStatus === 'Pending' ? 'pending' : item.StandardStatus === 'Active Under Contract' ? 'auc' : 'active';
-          const sl = item.StandardStatus === 'Active Under Contract' ? 'Under Contract' : item.StandardStatus || 'Active';
-          const isSaved = savedListings.some(s => s.key === item.ListingKey);
-          card.innerHTML = `<div class="card-img-wrapper">
+    }
+
+    async function searchFullDatabase(q) {
+      if (!q || q.length < 3) return;
+      showLoading(true);
+      try {
+        // Try exact ListingKey or Address contains
+        const f = "OriginatingSystemName eq 'Bonita Springs' and (ListingKey eq '" + q + "' or contains(UnparsedAddress, '" + q + "'))";
+        const r = await fetch(API_BASE + '/api/v2/OData/bsaor/Property?$filter=' + encodeURIComponent(f) + '&$select=' + SEL + '&$top=20');
+        if (!r.ok) throw new Error('Search failed');
+        const d = await r.json();
+        const newItems = d.value || [];
+        if (newItems.length) {
+          // Merge new items avoiding duplicates
+          newItems.forEach(ni => { if (!allListings.some(x => x.ListingKey === ni.ListingKey)) allListings.push(ni); });
+          applyClientFilters();
+        } else {
+          alert('No specific matches found in database for "' + q + '"');
+        }
+      } catch (e) { console.error(e); }
+      finally { showLoading(false); }
+    }
+
+    const MediaLoader = {
+      queue: [], processing: false, observer: null, loadedCount: 0,
+      init() { if (this.observer) return; this.observer = new IntersectionObserver(es => { es.forEach(e => { if (e.isIntersecting) { const id = e.target.dataset.id; if (id && !mediaCache.has(id)) { this.enqueue(id); this.observer.unobserve(e.target); } } }); }, { rootMargin: '300px' }); },
+      observe(el) { if (this.observer) this.observer.observe(el); },
+      enqueue(id) { if (!this.queue.includes(id)) { this.queue.push(id); this.process(); } },
+      async process() { if (this.processing || !this.queue.length) return; this.processing = true; const ck = this.queue.splice(0, 10); await this.fetchChunk(ck); this.loadedCount += ck.length; if (this.loadedCount >= 8) hideLoadingOverlay(); this.processing = false; if (this.queue.length) this.process(); },
+      async fetchChunk(keys) { if (!keys.length) return; const f = keys.map(k => "ListingKey eq '" + k + "'").join(' or '); try { const r = await fetch(API_BASE + '/api/v2/OData/bsaor/Property?$filter=' + encodeURIComponent(f) + '&$select=ListingKey,Media'); if (!r.ok) return; const d = await r.json(); (d.value || []).forEach(p => { if (p.Media && p.Media.length) { const urls = p.Media.sort((a, b) => (a.Order || 0) - (b.Order || 0)).map(m => m.MediaURL || m.MediaUrl || m.MediaURLLarge).filter(Boolean); if (urls.length) { mediaCache.set(p.ListingKey, urls); updImg(p.ListingKey, urls); } } }); } catch (e) { console.warn('ML err', e); } }
+    };
+
+    function updImg(k, urls) { ['img-', 'c-img-'].forEach(px => { const i = document.getElementById(px + k); if (i) i.src = urls[0]; }); const c = document.getElementById('count-' + k); if (c) c.innerText = '1/' + urls.length; }
+
+    function renderCarousel(items) {
+      const t = document.getElementById('carouselTrack'), w = document.getElementById('carouselsWrapper');
+      const now = new Date(), wk = new Date(); wk.setDate(now.getDate() - 7);
+      const ni = items.filter(x => x.ListingContractDate && new Date(x.ListingContractDate) >= wk);
+      if (!ni.length) { w.style.display = 'none'; return; }
+      w.style.display = 'block'; document.getElementById('newCount').textContent = ni.length + ' New';
+      const max = Math.max(1, Math.floor((window.innerWidth - 32) / 212));
+      t.innerHTML = ''; ni.slice(0, max).forEach(item => {
+        const el = document.createElement('div'); el.className = 'carousel-card'; el.dataset.id = item.ListingKey;
+        el.innerHTML = '<div class="carousel-img-wrapper"><img src="" id="c-img-' + item.ListingKey + '" class="carousel-img" loading="lazy"><div class="price-badge">' + fmt.format(item.ListPrice || 0) + '</div></div><div class="card-content"><div class="card-address" style="font-size:0.78rem">' + (item.UnparsedAddress || '') + '</div><div class="card-meta">' + (item.City || '') + '</div></div>';
+        el.onclick = () => { openDetail(item); };
+        t.appendChild(el); MediaLoader.enqueue(item.ListingKey);
+      });
+    }
+    window.addEventListener('resize', () => { if (allListings.length) renderCarousel(allListings); });
+
+    function applyClientFilters() {
+      // Read state from inputs
+      const sort = document.querySelector('input[name="sort"]:checked').value;
+      const cities = Array.from(document.querySelectorAll('#cityPanel input:checked')).map(i => i.value);
+      const minP = Number(document.getElementById('priceMin').value) || 0, maxP = Number(document.getElementById('priceMax').value) || Infinity;
+      const beds = Number(document.querySelector('#bedsGroup .selected').dataset.val) || 0;
+      const baths = Number(document.querySelector('#bathsGroup .selected').dataset.val) || 0;
+      const subTypes = Array.from(document.querySelectorAll('#subTypePanel input:checked')).map(i => i.value);
+      const q = (document.getElementById('searchInput').value || '').toLowerCase();
+
+      // Client-Side Status Mapping
+      const targetStatus = currentStatus === 'Pending' ? ['Pending', 'Active Under Contract'] : [currentStatus];
+
+      let fl = allListings.filter(i => {
+        // Status Check
+        if (!targetStatus.includes(i.StandardStatus || 'Active')) return false;
+
+        // Type Check (Rough client-side approximation)
+        if (currentPropertyType === 'sale' && i.PropertyType === 'Residential Lease') return false;
+        // ... (API handles type, this is safety)
+
+        const p = i.ListPrice || 0;
+        if (cities.length && !cities.includes(i.City)) return false;
+        if (p < minP || p > maxP) return false;
+        if ((i.BedroomsTotal || 0) < beds || (i.BathroomsTotalInteger || 0) < baths) return false;
+        if (subTypes.length && !subTypes.includes(i.PropertySubType)) return false;
+        if (q && !((i.UnparsedAddress || '').toLowerCase().includes(q) || (i.ListingKey || '').toLowerCase().includes(q) || (i.City || '').toLowerCase().includes(q))) return false;
+        return true;
+      });
+
+      if (sort === 'priceDesc') fl.sort((a, b) => (b.ListPrice || 0) - (a.ListPrice || 0));
+      else if (sort === 'priceAsc') fl.sort((a, b) => (a.ListPrice || 0) - (b.ListPrice || 0));
+      else fl.sort((a, b) => (b.ListingContractDate || '') > (a.ListingContractDate || '') ? 1 : -1);
+
+      updateUI(fl);
+      renderMapMarkers(fl, false, minP, maxP);
+      const resText = fl.length + ' Listings';
+      document.getElementById('resultsCount').innerText = resText;
+      document.getElementById('mobileResultsTitle').innerText = fl.length + ' results';
+    }
+  </script>
+  <script>
+    function updateUI(listings) {
+      const grid = document.getElementById('listingsGrid');
+      const mGrid = document.getElementById('mobileListingsGrid');
+      grid.innerHTML = '';
+      if (mGrid) mGrid.innerHTML = '';
+      const minP = Number(document.getElementById('priceMin').value) || 0, maxP = Number(document.getElementById('priceMax').value) || 0;
+      const heat = minP > 0 && maxP > minP;
+      listings.forEach(item => {
+        const card = document.createElement('div'); card.className = 'listing-card'; card.id = 'card-' + item.ListingKey;
+        const cached = mediaCache.get(item.ListingKey); let imgUrl = '', pc = 0;
+        if (cached && cached.length) { imgUrl = cached[0]; pc = cached.length; }
+        const sc = item.StandardStatus === 'Pending' ? 'pending' : item.StandardStatus === 'Active Under Contract' ? 'auc' : 'active';
+        const sl = item.StandardStatus === 'Active Under Contract' ? 'Under Contract' : item.StandardStatus || 'Active';
+        const isSaved = savedListings.some(s => s.key === item.ListingKey);
+        card.innerHTML = `<div class="card-img-wrapper">
           <img src="${imgUrl}" id="img-${item.ListingKey}" class="card-img" loading="lazy" data-index="0">
           <div class="price-badge">${fmt.format(item.ListPrice || 0)}</div>
           <div class="status-badge-card ${sc}">${sl}</div>
@@ -2572,270 +2603,270 @@
           </div>
           <div class="card-meta"><span>${item.City || ''}</span><span>${item.ListAgentFullName || ''}</span></div>
         </div>`;
-          card.dataset.id = item.ListingKey;
-          card.addEventListener('mouseenter', () => highlightMarker(item.ListingKey, true));
-          card.addEventListener('mouseleave', () => highlightMarker(item.ListingKey, false));
-          card.addEventListener('click', () => openDetail(item));
+        card.dataset.id = item.ListingKey;
+        card.addEventListener('mouseenter', () => highlightMarker(item.ListingKey, true));
+        card.addEventListener('mouseleave', () => highlightMarker(item.ListingKey, false));
+        card.addEventListener('click', () => openDetail(item));
 
-          grid.appendChild(card);
-          if (mGrid) {
-            const mCard = card.cloneNode(true);
-            mCard.onclick = () => openDetail(item);
-            mGrid.appendChild(mCard);
-          }
-          MediaLoader.observe(card);
-        });
-        renderMapMarkers(listings, heat, minP, maxP);
-      }
+        grid.appendChild(card);
+        if (mGrid) {
+          const mCard = card.cloneNode(true);
+          mCard.onclick = () => openDetail(item);
+          mGrid.appendChild(mCard);
+        }
+        MediaLoader.observe(card);
+      });
+      renderMapMarkers(listings, heat, minP, maxP);
+    }
 
-      function chImg(e, key, dir) {
-        e.stopPropagation(); e.preventDefault();
-        const urls = mediaCache.get(key); if (!urls || !urls.length) return;
-        const img = document.getElementById('img-' + key), ct = document.getElementById('count-' + key); if (!img) return;
-        let idx = parseInt(img.dataset.index || '0') + dir; if (idx < 0) idx = urls.length - 1; if (idx >= urls.length) idx = 0;
-        img.src = urls[idx]; img.dataset.index = idx; if (ct) ct.innerText = (idx + 1) + '/' + urls.length;
-      }
+    function chImg(e, key, dir) {
+      e.stopPropagation(); e.preventDefault();
+      const urls = mediaCache.get(key); if (!urls || !urls.length) return;
+      const img = document.getElementById('img-' + key), ct = document.getElementById('count-' + key); if (!img) return;
+      let idx = parseInt(img.dataset.index || '0') + dir; if (idx < 0) idx = urls.length - 1; if (idx >= urls.length) idx = 0;
+      img.src = urls[idx]; img.dataset.index = idx; if (ct) ct.innerText = (idx + 1) + '/' + urls.length;
+    }
 
-      // --- Detail Modal ---
-      let detailIdx = 0;
-      function openDetail(item) {
-        currentDetail = item; detailIdx = 0;
-        const ov = document.getElementById('detailOverlay'); ov.style.display = 'block';
-        const urls = mediaCache.get(item.ListingKey) || [];
-        const mainImg = document.getElementById('detailMainImg');
-        mainImg.src = urls[0] || '';
-        document.getElementById('detailImgCount').textContent = urls.length ? (1 + '/' + urls.length) : '';
-        // Thumbs
-        const thumbs = document.getElementById('detailThumbs'); thumbs.innerHTML = '';
-        urls.slice(0, 20).forEach((u, i) => {
-          const t = document.createElement('img'); t.className = 'detail-thumb' + (i === 0 ? ' active' : ''); t.src = u;
-          t.onclick = () => {
-            detailIdx = i; mainImg.src = u; document.getElementById('detailImgCount').textContent = (i + 1) + '/' + urls.length;
-            thumbs.querySelectorAll('.detail-thumb').forEach(x => x.classList.remove('active')); t.classList.add('active');
-          };
-          thumbs.appendChild(t);
-        });
-        document.getElementById('detailPrice').textContent = fmt.format(item.ListPrice || 0);
-        document.getElementById('detailAddr').textContent = (item.UnparsedAddress || '') + ', ' + (item.City || '');
-        // Badges
-        const badges = document.getElementById('detailBadges'); badges.innerHTML = '';
-        const addBadge = (txt, bg) => { const b = document.createElement('span'); b.className = 'detail-badge'; b.style.background = bg; b.style.color = '#fff'; b.textContent = txt; badges.appendChild(b); };
-        addBadge(item.StandardStatus || 'Active', item.StandardStatus === 'Pending' ? 'var(--pending)' : item.StandardStatus === 'Active Under Contract' ? 'var(--warning)' : 'var(--success)');
-        if (item.PropertySubType) addBadge(item.PropertySubType, 'var(--primary)');
-        if (item.PropertyType) addBadge(item.PropertyType, '#666');
-        // Stats
-        const stats = document.getElementById('detailStats'); stats.innerHTML = '';
-        const addStat = (icon, txt) => { stats.innerHTML += `<div class="detail-stat"><i class="fas fa-${icon}"></i>${txt}</div>`; };
-        if (item.BedroomsTotal) addStat('bed', item.BedroomsTotal + ' Beds');
-        if (item.BathroomsTotalInteger) addStat('bath', item.BathroomsTotalInteger + ' Baths');
-        if (item.LivingArea) addStat('ruler-combined', (item.LivingArea).toLocaleString() + ' sqft');
-        if (item.YearBuilt) addStat('calendar', 'Built ' + item.YearBuilt);
-        if (item.LotSizeAcres) addStat('tree', item.LotSizeAcres + ' acres');
-        // Description
-        document.getElementById('detailDesc').textContent = item.PublicRemarks || 'No description available.';
-        // Agent
-        document.getElementById('detailAgentName').textContent = item.ListAgentFullName || 'Unknown Agent';
-        document.getElementById('detailAgentOffice').textContent = item.ListOfficeName || '';
-        // Contact button
-        const contactBtn = document.getElementById('detailContactBtn');
-        contactBtn.onclick = () => openContact(item);
-        contactBtn.style.display = item.ListAgentEmail ? '' : 'none';
-        // View agent button
-        document.getElementById('detailViewAgentBtn').onclick = () => {
-          document.getElementById('detailOverlay').style.display = 'none';
-          openAgentModal(item.ListAgentKey, item.ListAgentFullName || '', item.ListOfficeName || '');
+    // --- Detail Modal ---
+    let detailIdx = 0;
+    function openDetail(item) {
+      currentDetail = item; detailIdx = 0;
+      const ov = document.getElementById('detailOverlay'); ov.style.display = 'block';
+      const urls = mediaCache.get(item.ListingKey) || [];
+      const mainImg = document.getElementById('detailMainImg');
+      mainImg.src = urls[0] || '';
+      document.getElementById('detailImgCount').textContent = urls.length ? (1 + '/' + urls.length) : '';
+      // Thumbs
+      const thumbs = document.getElementById('detailThumbs'); thumbs.innerHTML = '';
+      urls.slice(0, 20).forEach((u, i) => {
+        const t = document.createElement('img'); t.className = 'detail-thumb' + (i === 0 ? ' active' : ''); t.src = u;
+        t.onclick = () => {
+          detailIdx = i; mainImg.src = u; document.getElementById('detailImgCount').textContent = (i + 1) + '/' + urls.length;
+          thumbs.querySelectorAll('.detail-thumb').forEach(x => x.classList.remove('active')); t.classList.add('active');
         };
-        // Save state
-        const sb = document.getElementById('detailSaveBtn');
-        const isSaved = savedListings.some(s => s.key === item.ListingKey);
-        sb.className = 'detail-save-btn' + (isSaved ? ' saved' : '');
-        sb.innerHTML = '<i class="fas fa-heart"></i> ' + (isSaved ? 'Saved' : 'Save');
-        // Pan map
-        let lat, lng; if (item.Coordinates && item.Coordinates.length === 2) { lng = item.Coordinates[0]; lat = item.Coordinates[1]; }
-        if (lat && lng) map.flyTo([lat, lng], 16);
-      }
-      function detailNav(dir) {
-        if (!currentDetail) return;
-        const urls = mediaCache.get(currentDetail.ListingKey) || []; if (!urls.length) return;
-        detailIdx += dir; if (detailIdx < 0) detailIdx = urls.length - 1; if (detailIdx >= urls.length) detailIdx = 0;
-        document.getElementById('detailMainImg').src = urls[detailIdx];
-        document.getElementById('detailImgCount').textContent = (detailIdx + 1) + '/' + urls.length;
-        const thumbs = document.getElementById('detailThumbs').querySelectorAll('.detail-thumb');
-        thumbs.forEach((t, i) => { t.classList.toggle('active', i === detailIdx); });
-      }
+        thumbs.appendChild(t);
+      });
+      document.getElementById('detailPrice').textContent = fmt.format(item.ListPrice || 0);
+      document.getElementById('detailAddr').textContent = (item.UnparsedAddress || '') + ', ' + (item.City || '');
+      // Badges
+      const badges = document.getElementById('detailBadges'); badges.innerHTML = '';
+      const addBadge = (txt, bg) => { const b = document.createElement('span'); b.className = 'detail-badge'; b.style.background = bg; b.style.color = '#fff'; b.textContent = txt; badges.appendChild(b); };
+      addBadge(item.StandardStatus || 'Active', item.StandardStatus === 'Pending' ? 'var(--pending)' : item.StandardStatus === 'Active Under Contract' ? 'var(--warning)' : 'var(--success)');
+      if (item.PropertySubType) addBadge(item.PropertySubType, 'var(--primary)');
+      if (item.PropertyType) addBadge(item.PropertyType, '#666');
+      // Stats
+      const stats = document.getElementById('detailStats'); stats.innerHTML = '';
+      const addStat = (icon, txt) => { stats.innerHTML += `<div class="detail-stat"><i class="fas fa-${icon}"></i>${txt}</div>`; };
+      if (item.BedroomsTotal) addStat('bed', item.BedroomsTotal + ' Beds');
+      if (item.BathroomsTotalInteger) addStat('bath', item.BathroomsTotalInteger + ' Baths');
+      if (item.LivingArea) addStat('ruler-combined', (item.LivingArea).toLocaleString() + ' sqft');
+      if (item.YearBuilt) addStat('calendar', 'Built ' + item.YearBuilt);
+      if (item.LotSizeAcres) addStat('tree', item.LotSizeAcres + ' acres');
+      // Description
+      document.getElementById('detailDesc').textContent = item.PublicRemarks || 'No description available.';
+      // Agent
+      document.getElementById('detailAgentName').textContent = item.ListAgentFullName || 'Unknown Agent';
+      document.getElementById('detailAgentOffice').textContent = item.ListOfficeName || '';
+      // Contact button
+      const contactBtn = document.getElementById('detailContactBtn');
+      contactBtn.onclick = () => openContact(item);
+      contactBtn.style.display = item.ListAgentEmail ? '' : 'none';
+      // View agent button
+      document.getElementById('detailViewAgentBtn').onclick = () => {
+        document.getElementById('detailOverlay').style.display = 'none';
+        openAgentModal(item.ListAgentKey, item.ListAgentFullName || '', item.ListOfficeName || '');
+      };
+      // Save state
+      const sb = document.getElementById('detailSaveBtn');
+      const isSaved = savedListings.some(s => s.key === item.ListingKey);
+      sb.className = 'detail-save-btn' + (isSaved ? ' saved' : '');
+      sb.innerHTML = '<i class="fas fa-heart"></i> ' + (isSaved ? 'Saved' : 'Save');
+      // Pan map
+      let lat, lng; if (item.Coordinates && item.Coordinates.length === 2) { lng = item.Coordinates[0]; lat = item.Coordinates[1]; }
+      if (lat && lng) map.flyTo([lat, lng], 16);
+    }
+    function detailNav(dir) {
+      if (!currentDetail) return;
+      const urls = mediaCache.get(currentDetail.ListingKey) || []; if (!urls.length) return;
+      detailIdx += dir; if (detailIdx < 0) detailIdx = urls.length - 1; if (detailIdx >= urls.length) detailIdx = 0;
+      document.getElementById('detailMainImg').src = urls[detailIdx];
+      document.getElementById('detailImgCount').textContent = (detailIdx + 1) + '/' + urls.length;
+      const thumbs = document.getElementById('detailThumbs').querySelectorAll('.detail-thumb');
+      thumbs.forEach((t, i) => { t.classList.toggle('active', i === detailIdx); });
+    }
 
-      // --- Contact ---
-      function openContact(item) {
-        currentDetail = item;
-        document.getElementById('contactOverlay').style.display = 'block';
-        document.getElementById('contactAgentLabel').textContent = (item.ListAgentFullName || 'Agent') + ' • ' + (item.ListOfficeName || '');
-        document.getElementById('contactMessage').value = 'I am interested in the property at ' + (item.UnparsedAddress || '') + ' listed at ' + fmt.format(item.ListPrice || 0) + '. Please contact me with more information.';
-      }
+    // --- Contact ---
+    function openContact(item) {
+      currentDetail = item;
+      document.getElementById('contactOverlay').style.display = 'block';
+      document.getElementById('contactAgentLabel').textContent = (item.ListAgentFullName || 'Agent') + ' • ' + (item.ListOfficeName || '');
+      document.getElementById('contactMessage').value = 'I am interested in the property at ' + (item.UnparsedAddress || '') + ' listed at ' + fmt.format(item.ListPrice || 0) + '. Please contact me with more information.';
+    }
 
-      // --- Saved Cart ---
-      function toggleSave(key) {
-        const idx = savedListings.findIndex(s => s.key === key);
-        if (idx >= 0) { savedListings.splice(idx, 1); }
-        else { const item = allListings.find(i => i.ListingKey === key); if (item) { const urls = mediaCache.get(key); savedListings.push({ key: key, addr: item.UnparsedAddress || '', price: item.ListPrice || 0, img: urls && urls.length ? urls[0] : '' }); } }
-        localStorage.setItem('savedListings', JSON.stringify(savedListings)); updateCartUI();
-        // Update button states
-        const btn = document.querySelector('.card-save-btn[data-key="' + key + '"]'); if (btn) btn.classList.toggle('saved');
-      }
-      function toggleSaveFromDetail() {
-        if (!currentDetail) return; toggleSave(currentDetail.ListingKey);
-        const sb = document.getElementById('detailSaveBtn'); const isSaved = savedListings.some(s => s.key === currentDetail.ListingKey);
-        sb.className = 'detail-save-btn' + (isSaved ? ' saved' : ''); sb.innerHTML = '<i class="fas fa-heart"></i> ' + (isSaved ? 'Saved' : 'Save');
-      }
-      function updateCartUI() {
-        const badge = document.getElementById('cartBadge');
-        badge.style.display = savedListings.length ? 'flex' : 'none'; badge.textContent = savedListings.length;
-        const items = document.getElementById('cartItems');
-        if (!savedListings.length) { items.innerHTML = '<div class="cart-empty">No saved listings yet.<br>Click the <i class="fas fa-heart"></i> on listings to save them.</div>'; return; }
-        items.innerHTML = '';
-        savedListings.forEach(s => {
-          const el = document.createElement('div'); el.className = 'cart-item';
-          el.innerHTML = `${s.img ? '<img src="' + s.img + '" class="cart-item-img">' : '<div class="cart-item-img"></div>'}
+    // --- Saved Cart ---
+    function toggleSave(key) {
+      const idx = savedListings.findIndex(s => s.key === key);
+      if (idx >= 0) { savedListings.splice(idx, 1); }
+      else { const item = allListings.find(i => i.ListingKey === key); if (item) { const urls = mediaCache.get(key); savedListings.push({ key: key, addr: item.UnparsedAddress || '', price: item.ListPrice || 0, img: urls && urls.length ? urls[0] : '' }); } }
+      localStorage.setItem('savedListings', JSON.stringify(savedListings)); updateCartUI();
+      // Update button states
+      const btn = document.querySelector('.card-save-btn[data-key="' + key + '"]'); if (btn) btn.classList.toggle('saved');
+    }
+    function toggleSaveFromDetail() {
+      if (!currentDetail) return; toggleSave(currentDetail.ListingKey);
+      const sb = document.getElementById('detailSaveBtn'); const isSaved = savedListings.some(s => s.key === currentDetail.ListingKey);
+      sb.className = 'detail-save-btn' + (isSaved ? ' saved' : ''); sb.innerHTML = '<i class="fas fa-heart"></i> ' + (isSaved ? 'Saved' : 'Save');
+    }
+    function updateCartUI() {
+      const badge = document.getElementById('cartBadge');
+      badge.style.display = savedListings.length ? 'flex' : 'none'; badge.textContent = savedListings.length;
+      const items = document.getElementById('cartItems');
+      if (!savedListings.length) { items.innerHTML = '<div class="cart-empty">No saved listings yet.<br>Click the <i class="fas fa-heart"></i> on listings to save them.</div>'; return; }
+      items.innerHTML = '';
+      savedListings.forEach(s => {
+        const el = document.createElement('div'); el.className = 'cart-item';
+        el.innerHTML = `${s.img ? '<img src="' + s.img + '" class="cart-item-img">' : '<div class="cart-item-img"></div>'}
           <div class="cart-item-info"><div class="cart-item-price">${fmt.format(s.price)}</div><div class="cart-item-addr">${s.addr}</div></div>
           <button class="cart-item-remove" onclick="event.stopPropagation();toggleSave('${s.key}')"><i class="fas fa-times"></i></button>`;
-          el.onclick = () => { const item = allListings.find(i => i.ListingKey === s.key); if (item) openDetail(item); document.getElementById('cartPanel').style.display = 'none'; };
-          items.appendChild(el);
-        });
-      }
+        el.onclick = () => { const item = allListings.find(i => i.ListingKey === s.key); if (item) openDetail(item); document.getElementById('cartPanel').style.display = 'none'; };
+        items.appendChild(el);
+      });
+    }
 
-      // --- Map ---
-      function renderMapMarkers(listings, heat, minP, maxP) {
-        if (markers.length) {
-          markerCluster.clearLayers();
+    // --- Map ---
+    function renderMapMarkers(listings, heat, minP, maxP) {
+      if (markers.length) {
+        markerCluster.clearLayers();
+      }
+      markers = [];
+      listings.forEach(item => {
+        let lat, lng;
+        if (item.Coordinates && item.Coordinates.length === 2) {
+          lng = Number(item.Coordinates[0]);
+          lat = Number(item.Coordinates[1]);
+        } else if (item.Latitude && item.Longitude) {
+          lat = Number(item.Latitude);
+          lng = Number(item.Longitude);
         }
-        markers = [];
-        listings.forEach(item => {
-          let lat, lng;
-          if (item.Coordinates && item.Coordinates.length === 2) {
-            lng = Number(item.Coordinates[0]);
-            lat = Number(item.Coordinates[1]);
-          } else if (item.Latitude && item.Longitude) {
-            lat = Number(item.Latitude);
-            lng = Number(item.Longitude);
-          }
-          if (isNaN(lat) || isNaN(lng)) return;
-          const price = item.ListPrice || 0;
-          let color = '#22c55e', border = '#16a34a', text = '#fff'; // Green as default for "Active"
+        if (isNaN(lat) || isNaN(lng)) return;
+        const price = item.ListPrice || 0;
+        let color = '#22c55e', border = '#16a34a', text = '#fff'; // Green as default for "Active"
 
-          if (item.StandardStatus === 'Pending' || item.StandardStatus === 'Active Under Contract') {
-            color = '#8b5cf6'; border = '#7c3aed';
-          }
+        if (item.StandardStatus === 'Pending' || item.StandardStatus === 'Active Under Contract') {
+          color = '#8b5cf6'; border = '#7c3aed';
+        }
 
-          if (heat && minP && maxP) {
-            const ratio = Math.min(1, Math.max(0, (price - minP) / (maxP - minP)));
-            const r = Math.round(34 + ratio * (239 - 34));
-            const g = Math.round(197 - ratio * (197 - 68));
-            const b = Math.round(94 - ratio * (94 - 68));
-            color = `rgb(${r},${g},${b})`;
-            border = `rgb(${Math.max(0, r - 40)},${Math.max(0, g - 40)},${Math.max(0, b - 40)})`;
-          }
+        if (heat && minP && maxP) {
+          const ratio = Math.min(1, Math.max(0, (price - minP) / (maxP - minP)));
+          const r = Math.round(34 + ratio * (239 - 34));
+          const g = Math.round(197 - ratio * (197 - 68));
+          const b = Math.round(94 - ratio * (94 - 68));
+          color = `rgb(${r},${g},${b})`;
+          border = `rgb(${Math.max(0, r - 40)},${Math.max(0, g - 40)},${Math.max(0, b - 40)})`;
+        }
 
-          const icon = L.divIcon({
-            className: 'custom-pin',
-            html: `<div class="price-pin" style="background:${color};border-color:${border};color:${text};display:block;min-width:40px;text-align:center;border-radius:6px;font-weight:700;padding:2px 4px;font-size:11px">${kFmt(price)}</div>`,
-            iconSize: [54, 26], iconAnchor: [27, 26]
-          });
-
-          const m = L.marker([lat, lng], { icon, zIndexOffset: 1000 });
-          m.listingKey = item.ListingKey;
-
-          m.bindPopup(() => {
-            const cached = mediaCache.get(item.ListingKey);
-            let imgHtml = '';
-            if (cached && cached.length) imgHtml = `<img src="${cached[0]}" class="popup-img">`;
-            else {
-              MediaLoader.enqueue(item.ListingKey);
-              setTimeout(() => {
-                const c = mediaCache.get(item.ListingKey);
-                if (c && c.length) {
-                  const img = document.querySelector('.leaflet-popup-content .popup-img');
-                  if (img) img.src = c[0];
-                }
-              }, 800);
-              imgHtml = `<img src="" class="popup-img">`;
-            }
-            return `<div class="popup-content">
-            ${imgHtml}
-            <div class="popup-price">${fmt.format(price)}</div>
-            <div class="popup-address">${item.UnparsedAddress}</div>
-            <div class="popup-details">
-              <span>${item.BedroomsTotal} bd</span>
-              <span>${item.BathroomsTotalInteger} ba</span>
-              <span>${(item.LivingArea || 0).toLocaleString()} sqft</span>
-            </div>
-            <div class="popup-agent">${item.ListAgentFullName}</div>
-            <button class="popup-btn" onclick="openDetailByKey('${item.ListingKey}')">Details</button>
-            <button class="popup-btn" onclick="openContactByKey('${item.ListingKey}')">Agent</button>
-          </div>`;
-          });
-          m.on('mouseover', function () { this.openPopup(); });
-          m.on('click', () => {
-            const c = document.getElementById('card-' + item.ListingKey);
-            if (c) {
-              c.scrollIntoView({ behavior: 'smooth', block: 'center' });
-              c.classList.add('active');
-              setTimeout(() => c.classList.remove('active'), 2000);
-            }
-            // If on mobile, expand sheet
-            if (window.innerWidth < 900) {
-              const sheet = document.getElementById('bottomSheet');
-              sheet.classList.remove('collapsed');
-              const mc = document.querySelector('#mobileListingsGrid #card-' + item.ListingKey);
-              if (mc) mc.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            }
-          });
-          markerCluster.addLayer(m);
-          markers.push(m);
+        const icon = L.divIcon({
+          className: 'custom-pin',
+          html: `<div class="price-pin" style="background:${color};border-color:${border};color:${text};display:block;min-width:40px;text-align:center;border-radius:6px;font-weight:700;padding:2px 4px;font-size:11px">${kFmt(price)}</div>`,
+          iconSize: [54, 26], iconAnchor: [27, 26]
         });
-        if (markers.length) map.fitBounds(markerCluster.getBounds().pad(0.1));
-      }
-      function openContactByKey(k) { const item = allListings.find(i => i.ListingKey === k); if (item) openContact(item); }
-      function openDetailByKey(key) { const item = allListings.find(i => i.ListingKey === key); if (item) openDetail(item); }
-      function esc(s) { return s.replace(/'/g, "\\'"); }
-      function heatC(r) { return 'rgb(' + Math.round(59 + r * 180) + ',' + Math.round(130 - r * 62) + ',' + Math.round(246 - r * 178) + ')'; }
-      function highlightMarker(k, a) { const mk = markers.find(m => m.listingKey === k); if (!mk) return; const el = mk.getElement(); if (!el) return; const p = el.querySelector('.price-pin'); if (!p) return; if (a) { p.style.transform = 'scale(1.2)'; p.style.zIndex = '1000'; mk.openPopup(); } else { p.style.transform = ''; p.style.zIndex = ''; mk.closePopup(); } }
-      function fmtShort(p) { if (p >= 1e6) return '$' + (p / 1e6).toFixed(1) + 'm'; if (p >= 1e3) return '$' + (p / 1e3).toFixed(0) + 'k'; return '$' + p; }
 
-      // --- Agent Modal ---
-      async function openAgentModal(ak, an, on) {
-        const ov = document.getElementById('agentModalOverlay'); document.getElementById('agentName').textContent = an; document.getElementById('agentOffice').textContent = on;
-        const grid = document.getElementById('agentListingsGrid'); grid.innerHTML = '<div style="text-align:center;padding:40px;color:#888;grid-column:1/-1"><div class="spinner" style="margin:0 auto 10px"></div>Loading...</div>';
-        ov.style.display = 'block';
-        try {
-          const f = "ListAgentKey eq '" + ak + "' and StandardStatus eq 'Active' and OriginatingSystemName eq 'Bonita Springs'";
-          const r = await fetch(API_BASE + '/api/v2/OData/bsaor/Property?$filter=' + encodeURIComponent(f) + '&$select=ListingKey,UnparsedAddress,City,ListPrice,BedroomsTotal,BathroomsTotalInteger,LivingArea,Media&$top=50');
-          if (!r.ok) throw new Error('Failed'); const d = await r.json(); const items = d.value || [];
-          if (!items.length) { grid.innerHTML = '<div style="padding:40px;text-align:center;color:#888;grid-column:1/-1">No other listings found</div>'; return; }
-          grid.innerHTML = ''; items.forEach(item => {
-            let iu = ''; if (item.Media && item.Media.length) { const s = item.Media.sort((a, b) => (a.Order || 0) - (b.Order || 0)); iu = s[0].MediaURL || s[0].MediaUrl || s[0].MediaURLLarge || ''; }
-            const c = document.createElement('div'); c.className = 'agent-listing-card';
-            c.innerHTML = (iu ? '<img src="' + iu + '" class="agent-card-img">' : '<div class="agent-card-img" style="display:flex;align-items:center;justify-content:center;color:#aaa;font-size:0.75rem">No Photo</div>') + '<div class="agent-card-info"><div class="agent-card-price">' + fmt.format(item.ListPrice || 0) + '</div><div class="agent-card-addr">' + (item.UnparsedAddress || '') + '</div><div style="font-size:0.68rem;color:#888;margin-top:2px">' + (item.BedroomsTotal || 0) + ' bd · ' + (item.BathroomsTotalInteger || 0) + ' ba · ' + (item.LivingArea || 0).toLocaleString() + ' sqft</div></div>';
-            grid.appendChild(c);
-          });
-        } catch (e) { grid.innerHTML = '<div style="padding:40px;text-align:center;color:red;grid-column:1/-1">Error loading</div>'; }
-      }
+        const m = L.marker([lat, lng], { icon, zIndexOffset: 1000 });
+        m.listingKey = item.ListingKey;
 
-      function updateDisclaimerDates() {
-        const now = new Date();
-        const dateStr = now.toLocaleDateString('en-US', { month: '2-digit', day: '2-digit', year: 'numeric' });
-        const dayStr = now.toLocaleDateString('en-US', { weekday: 'short' });
-        const timeStr = now.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', second: '2-digit', timeZoneName: 'short' });
-        const fullDate = `${dayStr} ${dateStr}`;
+        m.bindPopup(() => {
+          const cached = mediaCache.get(item.ListingKey);
+          let imgHtml = '';
+          if (cached && cached.length) imgHtml = `<img src="${cached[0]}" class="popup-img">`;
+          else {
+            MediaLoader.enqueue(item.ListingKey);
+            setTimeout(() => {
+              const c = mediaCache.get(item.ListingKey);
+              if (c && c.length) {
+                const img = document.querySelector('.leaflet-popup-content .popup-img');
+                if (img) img.src = c[0];
+              }
+            }, 800);
+            imgHtml = `<img src="" class="popup-img">`;
+          }
+          return `<div class="popup-content">
+            ${imgHtml}
+            <div class="popup-info">
+              <div class="popup-price">${fmt.format(price)}</div>
+              <div class="popup-address">${item.UnparsedAddress}</div>
+              <div class="popup-details">
+                <span>${item.BedroomsTotal} bd</span>
+                <span>${item.BathroomsTotalInteger} ba</span>
+                <span>${(item.LivingArea || 0).toLocaleString()} sqft</span>
+              </div>
+              <button class="popup-btn" onclick="openDetailByKey('${item.ListingKey}')">View Details</button>
+            </div>
+          </div>`;
+        });
+        m.on('mouseover', function () { this.openPopup(); });
+        m.on('click', () => {
+          const c = document.getElementById('card-' + item.ListingKey);
+          if (c) {
+            c.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            c.classList.add('active');
+            setTimeout(() => c.classList.remove('active'), 2000);
+          }
+          // If on mobile, expand sheet
+          if (window.innerWidth < 900) {
+            const sheet = document.getElementById('bottomSheet');
+            sheet.classList.remove('collapsed');
+            const mc = document.querySelector('#mobileListingsGrid #card-' + item.ListingKey);
+            if (mc) mc.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          }
+        });
+        markerCluster.addLayer(m);
+        markers.push(m);
+      });
+      if (markers.length) map.fitBounds(markerCluster.getBounds().pad(0.1));
+    }
+    function openContactByKey(k) { const item = allListings.find(i => i.ListingKey === k); if (item) openContact(item); }
+    function openDetailByKey(key) { const item = allListings.find(i => i.ListingKey === key); if (item) openDetail(item); }
+    function esc(s) { return s.replace(/'/g, "\\'"); }
+    function heatC(r) { return 'rgb(' + Math.round(59 + r * 180) + ',' + Math.round(130 - r * 62) + ',' + Math.round(246 - r * 178) + ')'; }
+    function highlightMarker(k, a) { const mk = markers.find(m => m.listingKey === k); if (!mk) return; const el = mk.getElement(); if (!el) return; const p = el.querySelector('.price-pin'); if (!p) return; if (a) { p.style.transform = 'scale(1.2)'; p.style.zIndex = '1000'; mk.openPopup(); } else { p.style.transform = ''; p.style.zIndex = ''; mk.closePopup(); } }
+    function fmtShort(p) { if (p >= 1e6) return '$' + (p / 1e6).toFixed(1) + 'm'; if (p >= 1e3) return '$' + (p / 1e3).toFixed(0) + 'k'; return '$' + p; }
 
-        const setTxt = (id, txt) => { const el = document.getElementById(id); if (el) el.textContent = txt; };
-        setTxt('lastUpdatedDate', dateStr);
-        setTxt('lastChangedDate', dateStr);
-        setTxt('deltaUpdated', `${fullDate} ${timeStr}`);
-        setTxt('bsUpdated', `${fullDate} ${timeStr}`);
-      }
+    // --- Agent Modal ---
+    async function openAgentModal(ak, an, on) {
+      const ov = document.getElementById('agentModalOverlay'); document.getElementById('agentName').textContent = an; document.getElementById('agentOffice').textContent = on;
+      const grid = document.getElementById('agentListingsGrid'); grid.innerHTML = '<div style="text-align:center;padding:40px;color:#888;grid-column:1/-1"><div class="spinner" style="margin:0 auto 10px"></div>Loading...</div>';
+      ov.style.display = 'block';
+      try {
+        const f = "ListAgentKey eq '" + ak + "' and StandardStatus eq 'Active' and OriginatingSystemName eq 'Bonita Springs'";
+        const r = await fetch(API_BASE + '/api/v2/OData/bsaor/Property?$filter=' + encodeURIComponent(f) + '&$select=ListingKey,UnparsedAddress,City,ListPrice,BedroomsTotal,BathroomsTotalInteger,LivingArea,Media&$top=50');
+        if (!r.ok) throw new Error('Failed'); const d = await r.json(); const items = d.value || [];
+        if (!items.length) { grid.innerHTML = '<div style="padding:40px;text-align:center;color:#888;grid-column:1/-1">No other listings found</div>'; return; }
+        grid.innerHTML = ''; items.forEach(item => {
+          let iu = ''; if (item.Media && item.Media.length) { const s = item.Media.sort((a, b) => (a.Order || 0) - (b.Order || 0)); iu = s[0].MediaURL || s[0].MediaUrl || s[0].MediaURLLarge || ''; }
+          const c = document.createElement('div'); c.className = 'agent-listing-card';
+          c.innerHTML = (iu ? '<img src="' + iu + '" class="agent-card-img">' : '<div class="agent-card-img" style="display:flex;align-items:center;justify-content:center;color:#aaa;font-size:0.75rem">No Photo</div>') + '<div class="agent-card-info"><div class="agent-card-price">' + fmt.format(item.ListPrice || 0) + '</div><div class="agent-card-addr">' + (item.UnparsedAddress || '') + '</div><div style="font-size:0.68rem;color:#888;margin-top:2px">' + (item.BedroomsTotal || 0) + ' bd · ' + (item.BathroomsTotalInteger || 0) + ' ba · ' + (item.LivingArea || 0).toLocaleString() + ' sqft</div></div>';
+          grid.appendChild(c);
+        });
+      } catch (e) { grid.innerHTML = '<div style="padding:40px;text-align:center;color:red;grid-column:1/-1">Error loading</div>'; }
+    }
 
-      function showLoading(s) { const o = document.getElementById('loadingOverlay'); if (s) { o.classList.remove('hidden'); o.style.display = 'flex'; } else { hideLoadingOverlay(); } }
-      function hideLoadingOverlay() { const o = document.getElementById('loadingOverlay'); o.classList.add('hidden'); setTimeout(() => o.style.display = 'none', 500); }
-    </script>
+    function updateDisclaimerDates() {
+      const now = new Date();
+      const dateStr = now.toLocaleDateString('en-US', { month: '2-digit', day: '2-digit', year: 'numeric' });
+      const dayStr = now.toLocaleDateString('en-US', { weekday: 'short' });
+      const timeStr = now.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', second: '2-digit', timeZoneName: 'short' });
+      const fullDate = `${dayStr} ${dateStr} `;
+
+      const setTxt = (id, txt) => { const el = document.getElementById(id); if (el) el.textContent = txt; };
+      setTxt('lastUpdatedDate', dateStr);
+      setTxt('lastChangedDate', dateStr);
+      setTxt('deltaUpdated', `${fullDate} ${timeStr} `);
+      setTxt('bsUpdated', `${fullDate} ${timeStr}`);
+    }
+
+    function showLoading(s) { const o = document.getElementById('loadingOverlay'); if (s) { o.classList.remove('hidden'); o.style.display = 'flex'; } else { hideLoadingOverlay(); } }
+    function hideLoadingOverlay() { const o = document.getElementById('loadingOverlay'); o.classList.add('hidden'); setTimeout(() => o.style.display = 'none', 500); }
+  </script>
 </body>
 
 </html>
