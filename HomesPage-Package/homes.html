@@ -2249,6 +2249,7 @@
       setupMobileUI();
       fetchListings();
       updateDisclaimerDates();
+      checkUrlParams();
 
       // Scroll arrows
       const fb = document.getElementById('filtersBar');
@@ -2955,6 +2956,38 @@
     }
     function openContactByKey(k) { const item = allListings.find(i => i.ListingKey === k); if (item) openContact(item); }
     function openDetailByKey(key) { const item = allListings.find(i => i.ListingKey === key); if (item) openDetail(item); }
+
+    function checkUrlParams() {
+      const params = new URLSearchParams(window.location.search);
+      const mls = params.get('mls');
+      if (mls) {
+        fetchListingByMls(mls);
+      }
+    }
+
+    async function fetchListingByMls(mlsId) {
+      showLoading(true);
+      try {
+        const url = `${API_BASE}/api/v2/OData/bsaor/Property?$filter=ListingId eq '${mlsId}'&$select=${SEL}`;
+        const res = await fetch(url);
+        if (!res.ok) throw new Error('Search failed');
+        const data = await res.json();
+        const item = data.value && data.value[0];
+
+        if (item) {
+          // Fetch media separately
+          await MediaLoader.fetchChunk([item.ListingKey]);
+          openDetail(item);
+        } else {
+          console.warn('Listing not found:', mlsId);
+        }
+      } catch (err) {
+        console.error('Error fetching deep-linked listing:', err);
+      } finally {
+        showLoading(false);
+      }
+    }
+
     function esc(s) { return s.replace(/'/g, "\\'"); }
     function heatC(r) { return 'rgb(' + Math.round(59 + r * 180) + ',' + Math.round(130 - r * 62) + ',' + Math.round(246 - r * 178) + ')'; }
     function highlightMarker(k, a) { const mk = markers.find(m => m.listingKey === k); if (!mk) return; const el = mk.getElement(); if (!el) return; const p = el.querySelector('.price-pin'); if (!p) return; if (a) { p.style.transform = 'scale(1.2)'; p.style.zIndex = '1000'; mk.openPopup(); } else { p.style.transform = ''; p.style.zIndex = ''; mk.closePopup(); } }
