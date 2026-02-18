@@ -2422,10 +2422,18 @@
 
         // Base Filter - STRICTLY BONITA SPRINGS + Status
         let baseF = "OriginatingSystemName eq 'Bonita Springs' and " + statusFilter;
-        if (currentPropertyType === 'sale') baseF += " and (PropertyType eq 'Residential' and PropertySubType ne 'Residential Lease')";
-        else if (currentPropertyType === 'rental') baseF += " and (PropertyType eq 'Residential' and PropertySubType eq 'Residential Lease')";
-        else if (currentPropertyType === 'commercial') baseF += " and (PropertyType eq 'Commercial Sale' or PropertyType eq 'Commercial')";
-        else if (currentPropertyType === 'land') baseF += " and PropertyType eq 'Land'";
+
+        // Property Type Logic based on API Discovery
+        if (currentPropertyType === 'sale') {
+          // Residential + Residential Income (excluding Leases since they are a separate type)
+          baseF += " and (PropertyType eq 'Residential' or PropertyType eq 'Residential Income')";
+        } else if (currentPropertyType === 'rental') {
+          baseF += " and PropertyType eq 'Residential Lease'";
+        } else if (currentPropertyType === 'commercial') {
+          baseF += " and (PropertyType eq 'Commercial Sale' or PropertyType eq 'Commercial')";
+        } else if (currentPropertyType === 'land') {
+          baseF += " and PropertyType eq 'Land'";
+        }
 
         let hasMore = true;
         let skip = 0;
