@@ -122,11 +122,29 @@
 
     .filters-outer {
       display: flex;
-      align-items: center;
+      flex-direction: column;
+      align-items: stretch;
       max-width: 1600px;
       margin: 0 auto;
       padding: 0 16px;
+      gap: 16px;
+    }
+
+    .filters-row-top,
+    .filters-row-bottom {
+      display: flex;
+      align-items: center;
       gap: 12px;
+    }
+
+    .filters-row-top {
+      justify-content: flex-start;
+      border-bottom: 1px solid #f0f0f0;
+      padding-bottom: 8px;
+    }
+
+    .filters-row-bottom {
+      justify-content: flex-start;
     }
 
     .filter-arrow {
@@ -1906,13 +1924,8 @@
   <!-- Compact Filter Bar -->
   <div class="filters-container">
     <div class="filters-outer">
-      <div class="search-input-wrap">
-        <i class="fas fa-search"></i>
-        <input type="text" id="searchInput" placeholder="Address, ZIP, MLS...">
-      </div>
-      <button class="filter-arrow" id="filterLeft" style="margin:0 8px 0 4px"><i
-          class="fas fa-chevron-left"></i></button>
-      <div class="filters-bar" id="filtersBar">
+      <!-- Top Row: Filters -->
+      <div class="filters-row-top">
         <div class="pill-group" id="propertyTypePills">
           <button class="pill-btn active" data-type="sale">For Sale</button>
           <button class="pill-btn" data-type="rental">Rental</button>
@@ -1920,97 +1933,104 @@
           <button class="pill-btn" data-type="land">Lot &amp; Land</button>
         </div>
         <div class="filter-divider"></div>
-        <div class="filter-dropdown-wrap">
-          <button class="filter-dropdown-btn" id="priceBtn">Price</button>
-          <div class="filter-dropdown-panel" id="pricePanel">
-            <label>Price Range</label>
-            <div class="filter-btn-group">
-              <input type="number" id="priceMin" placeholder="No Min">
-              <input type="number" id="priceMax" placeholder="No Max">
+        <button class="filter-arrow" id="filterLeft"><i class="fas fa-chevron-left"></i></button>
+        <div class="filters-bar" id="filtersBar">
+          <div class="filter-dropdown-wrap">
+            <button class="filter-dropdown-btn" id="priceBtn">Price</button>
+            <div class="filter-dropdown-panel" id="pricePanel">
+              <label>Price Range</label>
+              <div class="filter-btn-group">
+                <input type="number" id="priceMin" placeholder="No Min">
+                <input type="number" id="priceMax" placeholder="No Max">
+              </div>
+              <button class="apply-btn" id="priceApplyBtn">Apply</button>
             </div>
-            <button class="apply-btn" id="priceApplyBtn">Apply</button>
           </div>
-        </div>
 
-
-        <!-- Sub-Type -->
-        <div class="filter-dropdown-wrap">
-          <button class="filter-dropdown-btn" id="subTypeBtn">Home Type</button>
-          <div class="filter-dropdown-panel" id="subTypePanel" style="width:220px">
-            <label><input type="checkbox" value="Single Family Residence" checked> Single Family</label>
-            <label><input type="checkbox" value="Condominium" checked> Condo</label>
-            <label><input type="checkbox" value="Townhouse" checked> Townhouse</label>
-            <label><input type="checkbox" value="Multi Family" checked> Multi Family</label>
-            <label><input type="checkbox" value="Villa" checked> Villa</label>
-            <button class="apply-btn">Apply</button>
-          </div>
-        </div>
-
-        <!-- Beds -->
-        <div class="filter-dropdown-wrap">
-          <button class="filter-dropdown-btn" id="bedsBtn">Beds</button>
-          <div class="filter-dropdown-panel" id="bedsPanel" style="width:280px">
-            <label>Bedrooms</label>
-            <div class="filter-btn-group" id="bedsGroup">
-              <button class="filter-option-btn selected" data-val="0">Any</button>
-              <button class="filter-option-btn" data-val="1">1+</button>
-              <button class="filter-option-btn" data-val="2">2+</button>
-              <button class="filter-option-btn" data-val="3">3+</button>
-              <button class="filter-option-btn" data-val="4">4+</button>
-              <button class="filter-option-btn" data-val="5">5+</button>
+          <div class="filter-dropdown-wrap">
+            <button class="filter-dropdown-btn" id="subTypeBtn">Home Type</button>
+            <div class="filter-dropdown-panel" id="subTypePanel" style="width:220px">
+              <label><input type="checkbox" value="Single Family Residence" checked> Single Family</label>
+              <label><input type="checkbox" value="Condominium" checked> Condo</label>
+              <label><input type="checkbox" value="Townhouse" checked> Townhouse</label>
+              <label><input type="checkbox" value="Multi Family" checked> Multi Family</label>
+              <label><input type="checkbox" value="Villa" checked> Villa</label>
+              <button class="apply-btn">Apply</button>
             </div>
-            <button class="apply-btn" id="bedsApplyBtn">Apply</button>
           </div>
-        </div>
 
-        <!-- Baths -->
-        <div class="filter-dropdown-wrap">
-          <button class="filter-dropdown-btn" id="bathsBtn">Baths</button>
-          <div class="filter-dropdown-panel" id="bathsPanel" style="width:240px">
-            <label>Bathrooms</label>
-            <div class="filter-btn-group" id="bathsGroup">
-              <button class="filter-option-btn selected" data-val="0">Any</button>
-              <button class="filter-option-btn" data-val="1">1+</button>
-              <button class="filter-option-btn" data-val="2">2+</button>
-              <button class="filter-option-btn" data-val="3">3+</button>
-              <button class="filter-option-btn" data-val="4">4+</button>
+          <div class="filter-dropdown-wrap">
+            <button class="filter-dropdown-btn" id="bedsBtn">Beds</button>
+            <div class="filter-dropdown-panel" id="bedsPanel" style="width:280px">
+              <label>Bedrooms</label>
+              <div class="filter-btn-group" id="bedsGroup">
+                <button class="filter-option-btn selected" data-val="0">Any</button>
+                <button class="filter-option-btn" data-val="1">1+</button>
+                <button class="filter-option-btn" data-val="2">2+</button>
+                <button class="filter-option-btn" data-val="3">3+</button>
+                <button class="filter-option-btn" data-val="4">4+</button>
+                <button class="filter-option-btn" data-val="5">5+</button>
+              </div>
+              <button class="apply-btn" id="bedsApplyBtn">Apply</button>
             </div>
-            <button class="apply-btn" id="bathsApplyBtn">Apply</button>
+          </div>
+
+          <div class="filter-dropdown-wrap">
+            <button class="filter-dropdown-btn" id="bathsBtn">Baths</button>
+            <div class="filter-dropdown-panel" id="bathsPanel" style="width:240px">
+              <label>Bathrooms</label>
+              <div class="filter-btn-group" id="bathsGroup">
+                <button class="filter-option-btn selected" data-val="0">Any</button>
+                <button class="filter-option-btn" data-val="1">1+</button>
+                <button class="filter-option-btn" data-val="2">2+</button>
+                <button class="filter-option-btn" data-val="3">3+</button>
+                <button class="filter-option-btn" data-val="4">4+</button>
+              </div>
+              <button class="apply-btn" id="bathsApplyBtn">Apply</button>
+            </div>
+          </div>
+
+          <div class="filter-dropdown-wrap">
+            <button class="filter-dropdown-btn" id="cityBtn">City</button>
+            <div class="filter-dropdown-panel" id="cityPanel">
+              <label><input type="checkbox" name="city" value="Bonita Springs" checked> Bonita Springs</label>
+              <label><input type="checkbox" name="city" value="Estero" checked> Estero</label>
+              <label><input type="checkbox" name="city" value="Naples"> Naples</label>
+              <label><input type="checkbox" name="city" value="Fort Myers"> Fort Myers</label>
+              <button class="apply-btn">Apply</button>
+            </div>
+          </div>
+
+          <div class="filter-dropdown-wrap">
+            <button class="filter-dropdown-btn" id="sortBtn">Sort</button>
+            <div class="filter-dropdown-panel" id="sortPanel">
+              <label><input type="radio" name="sort" value="dateDesc" checked> Newest Listing</label>
+              <label><input type="radio" name="sort" value="priceDesc"> Price (High to Low)</label>
+              <label><input type="radio" name="sort" value="priceAsc"> Price (Low to High)</label>
+              <button class="apply-btn">Apply</button>
+            </div>
           </div>
         </div>
-
-        <!-- City -->
-        <div class="filter-dropdown-wrap">
-          <button class="filter-dropdown-btn" id="cityBtn">City</button>
-          <div class="filter-dropdown-panel" id="cityPanel">
-            <label><input type="checkbox" name="city" value="Bonita Springs" checked> Bonita Springs</label>
-            <label><input type="checkbox" name="city" value="Estero" checked> Estero</label>
-            <label><input type="checkbox" name="city" value="Naples"> Naples</label>
-            <label><input type="checkbox" name="city" value="Fort Myers"> Fort Myers</label>
-            <button class="apply-btn">Apply</button>
-          </div>
-        </div>
-
-        <!-- Sort -->
-        <div class="filter-dropdown-wrap">
-          <button class="filter-dropdown-btn" id="sortBtn">Sort</button>
-          <div class="filter-dropdown-panel" id="sortPanel">
-            <label><input type="radio" name="sort" value="dateDesc" checked> Newest Listing</label>
-            <label><input type="radio" name="sort" value="priceDesc"> Price (High to Low)</label>
-            <label><input type="radio" name="sort" value="priceAsc"> Price (Low to High)</label>
-            <button class="apply-btn">Apply</button>
-          </div>
-        </div>
-
+        <button class="filter-arrow" id="filterRight"><i class="fas fa-chevron-right"></i></button>
         <button class="search-btn secondary" id="clearFiltersBtn">Clear</button>
-      </div><!-- End #filtersBar -->
-
-      <div class="results-count">
-        <span class="loading-indicator" id="listLoader"><i class="fas fa-spinner fa-spin"></i></span>
-        <span id="resultsCount">Loading...</span>
       </div>
-      <button class="filter-arrow" id="filterRight" style="margin-left:8px"><i
-          class="fas fa-chevron-right"></i></button>
+
+      <!-- Bottom Row: Search & Info -->
+      <div class="filters-row-bottom">
+        <div class="search-input-wrap">
+          <i class="fas fa-search"></i>
+          <input type="text" id="searchInput" placeholder="Address, ZIP, MLS...">
+        </div>
+        <div id="capBanner"
+          style="display:none;background:linear-gradient(135deg,#1e3a5f,#2563eb);color:#fff;padding:8px 16px;border-radius:10px;font-size:0.85rem;text-align:center;box-shadow:0 2px 8px rgba(0,0,0,0.15);flex:1">
+          <i class="fas fa-info-circle" style="margin-right:6px"></i>
+          <span id="capBannerText"></span>
+        </div>
+        <div class="results-count">
+          <span class="loading-indicator" id="listLoader"><i class="fas fa-spinner fa-spin"></i></span>
+          <span id="resultsCount">Loading...</span>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -2174,7 +2194,7 @@
   <script>
     const API_BASE = 'https://listingsworker.bonitaspringsrealtors.workers.dev';
     const SEL = 'ListingKey,UnparsedAddress,City,ListPrice,BedroomsTotal,BathroomsTotalInteger,LivingArea,Coordinates,ListingContractDate,StatusChangeTimestamp,PropertyType,PropertySubType,StandardStatus,ListAgentKey,ListAgentFullName,ListOfficeName,ListAgentEmail,PublicRemarks,YearBuilt,LotSizeAcres';
-    let map, markers = [], allListings = [], mediaCache = new Map(), currentPropertyType = 'sale', currentStatus = 'Active', currentDetail = null;
+    let map, markers = [], allListings = [], totalListingCount = 0, mediaCache = new Map(), currentPropertyType = 'sale', currentStatus = 'Active', currentDetail = null;
     const fmt = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 });
     const kFmt = (n) => { if (n >= 1e6) return '$' + (n / 1e6).toFixed(1) + 'm'; if (n >= 1e3) return '$' + (n / 1e3).toFixed(0) + 'k'; return '$' + n; };
     // Saved cart
@@ -2446,14 +2466,18 @@
 
       // Reset logic
       allListings = [];
+      totalListingCount = 0;
       markers.forEach(m => m.remove());
       markers = [];
       if (markerCluster) markerCluster.clearLayers();
       document.getElementById('listingsGrid').innerHTML = '';
+      document.getElementById('capBanner').style.display = 'none';
 
       showLoading(true);
       const loader = document.getElementById('listLoader');
       if (loader) loader.style.display = 'inline-block';
+
+      const MAX_LISTINGS = 500;
 
       try {
         // Status Logic
@@ -2461,21 +2485,10 @@
         if (currentStatus === 'Pending') statusFilter = "(StandardStatus eq 'Pending' or StandardStatus eq 'Active Under Contract')";
         else if (currentStatus === 'Closed') statusFilter = "StandardStatus eq 'Closed'";
 
-        // Base Filter - STRICTLY BONITA SPRINGS + Status + CITIES (Bonita Springs, Estero)
-        // Switch to OriginatingSystemKey 'bsaor' to capture syndicated listings (Naples, etc) that are valid for this board
+        // Base Filter
         let baseF = "OriginatingSystemKey eq 'bsaor' and " + statusFilter;
-        // Default to just Bonita and Estero if no specific city selected (though UI defaults to them now)
-        // But wait, applyClientFilters handles the city filtering client-side usually? No, let's look at applyClientFilters.
-        // applyClientFilters filters *after* fetch. We want to filter *fetch* to reduce load.
-        // We should add the city filter to OData if the user hasn't selected specific cities?
-        // Actually, let's make the base fetch filter strict to Bonita Springs OR Estero unless overridden?
-        // The request was "Default to just Bonita Springs and Estero listings".
-        // Let's change the county filter to a city filter for the base fetch.
-
         baseF += " and (City eq 'BONITA SPRINGS' or City eq 'ESTERO')";
 
-        // Property Type Logic based on API Discovery - SIMPLIFIED
-        // We use parens to ensure 'OR' clauses don't get mixed with the 'AND' clauses from baseF
         if (currentPropertyType === 'sale') {
           baseF += " and (PropertyType eq 'Residential' or PropertyType eq 'Residential Income')";
         } else if (currentPropertyType === 'rental') {
@@ -2486,19 +2499,30 @@
           baseF += " and (PropertyType eq 'Land')";
         }
 
+        // Get total count (non-blocking)
+        const countParams = new URLSearchParams();
+        countParams.append('$filter', baseF);
+        countParams.append('$top', 0);
+        countParams.append('$count', 'true');
+        fetch(API_BASE + '/api/v2/OData/bsaor/Property?' + countParams)
+          .then(r => r.json())
+          .then(d => { totalListingCount = d['@odata.count'] || d.value?.length || 0; })
+          .catch(() => { });
+
         let hasMore = true;
         let skip = 0;
         let lastPrice = null;
         const BATCH = 200;
 
-        while (hasMore) {
+        while (hasMore && allListings.length < MAX_LISTINGS) {
           const p = new URLSearchParams();
           let f = baseF;
           if (lastPrice !== null) f += " and ListPrice le " + lastPrice;
 
+          const remaining = MAX_LISTINGS - allListings.length;
           p.append('$filter', f);
           p.append('$select', SEL);
-          p.append('$top', BATCH);
+          p.append('$top', Math.min(BATCH, remaining));
           p.append('$skip', skip);
           p.append('$orderby', 'ListPrice desc');
 
@@ -2509,56 +2533,44 @@
 
           if (!items.length) { hasMore = false; break; }
 
-          // Deduplicate and Add
           let added = 0;
           items.forEach(i => {
-            if (!allListings.some(x => x.ListingKey === i.ListingKey)) {
+            if (allListings.length < MAX_LISTINGS && !allListings.some(x => x.ListingKey === i.ListingKey)) {
               allListings.push(i);
               added++;
             }
           });
 
-          if (items.length < BATCH) hasMore = false;
+          if (allListings.length >= MAX_LISTINGS) hasMore = false;
+          else if (items.length < BATCH) hasMore = false;
           else {
             const lastItem = items[items.length - 1];
             const newLastPrice = lastItem.ListPrice || 0;
-
             if (lastPrice !== null && newLastPrice === lastPrice) {
-              skip += items.length; // Same price block, skip forward
+              skip += items.length;
             } else {
-              lastPrice = newLastPrice; // New price block, reset skip
+              lastPrice = newLastPrice;
               skip = 0;
             }
           }
 
-          // Update loading text
           const lt = document.getElementById('loadingText');
           if (lt) lt.innerText = `Loading... (${allListings.length} cached)`;
 
-          // Progressive Render & Unblock
-          // Unblock UI after the first batch (200 items) so it's usable immediately
-          if (added > 0) {
-            if (allListings.length >= BATCH && document.getElementById('loadingOverlay').style.display !== 'none') {
-              showLoading(false); // UNBLOCK UI specifically here
-              MediaLoader.init();
-              renderCarousel(allListings); // Setup carousel once
-              applyClientFilters(); // Render what we have
-            } else if (allListings.length % 1000 === 0) {
-              // Update periodically (every 1000 items) to show progress without freezing
-              applyClientFilters();
-            }
+          if (added > 0 && allListings.length >= BATCH && document.getElementById('loadingOverlay').style.display !== 'none') {
+            showLoading(false);
+            MediaLoader.init();
+            renderCarousel(allListings);
+            applyClientFilters();
           }
 
-          // Safety
           if (skip > 6000) hasMore = false;
         }
 
-        // Mark context as fetched so we don't re-fetch
         fetchedContexts.add(contextKey);
 
-        // Final Update
         MediaLoader.init();
-        renderCarousel(allListings); // Update carousel with all data
+        renderCarousel(allListings);
         applyClientFilters();
 
       } catch (e) { console.error(e); document.getElementById('listingsGrid').innerHTML = '<div style="padding:20px;text-align:center;color:red">' + e.message + '</div>'; }
@@ -2675,6 +2687,16 @@
       const resText = fl.length + ' Listings';
       document.getElementById('resultsCount').innerText = resText;
       document.getElementById('mobileResultsTitle').innerText = fl.length + ' results';
+
+      // Show cap banner if we hit the limit
+      const banner = document.getElementById('capBanner');
+      const bannerText = document.getElementById('capBannerText');
+      if (totalListingCount > allListings.length) {
+        banner.style.display = 'block';
+        bannerText.innerText = `Showing ${fl.length} of ${totalListingCount.toLocaleString()} listings — Add search criteria to narrow results`;
+      } else {
+        banner.style.display = 'none';
+      }
     }
   </script>
   <script>
