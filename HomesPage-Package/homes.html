@@ -2716,7 +2716,7 @@
           }
           if (!match) return false;
         }
-        if (q && !((i.UnparsedAddress || '').toLowerCase().includes(q) || (i.ListingKey || '').toLowerCase().includes(q) || (i.City || '').toLowerCase().includes(q))) return false;
+        if (q && !((i.UnparsedAddress || '').toLowerCase().includes(q) || (i.ListingKey || '').toLowerCase().includes(q) || (i.City || '').toLowerCase().includes(q) || (i.ListAgentFullName || '').toLowerCase().includes(q) || (i.ListAgentMlsId || '').toLowerCase() === q)) return false;
         return true;
       });
 
