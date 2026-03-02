@@ -1993,8 +1993,8 @@
           <div class="filter-dropdown-wrap">
             <button class="filter-dropdown-btn" id="cityBtn">City</button>
             <div class="filter-dropdown-panel" id="cityPanel">
-              <label><input type="checkbox" name="city" value="Bonita Springs" checked> Bonita Springs</label>
-              <label><input type="checkbox" name="city" value="Estero" checked> Estero</label>
+              <label><input type="checkbox" name="city" value="Bonita Springs"> Bonita Springs</label>
+              <label><input type="checkbox" name="city" value="Estero"> Estero</label>
               <label><input type="checkbox" name="city" value="Naples"> Naples</label>
               <label><input type="checkbox" name="city" value="Fort Myers"> Fort Myers</label>
               <button class="apply-btn">Apply</button>
@@ -2194,7 +2194,7 @@
   <script>
     const API_BASE = 'https://listingsworker.bonitaspringsrealtors.workers.dev';
     const SEL = 'ListingKey,UnparsedAddress,City,ListPrice,BedroomsTotal,BathroomsTotalInteger,LivingArea,Coordinates,ListingContractDate,StatusChangeTimestamp,PropertyType,PropertySubType,StandardStatus,ListAgentKey,ListAgentFullName,ListOfficeName,ListAgentEmail,PublicRemarks,YearBuilt,LotSizeAcres';
-    let map, markers = [], allListings = [], totalListingCount = 0, mediaCache = new Map(), currentPropertyType = 'sale', currentStatus = 'Active', currentDetail = null;
+    let map, markers = [], allListings = [], totalListingCount = 0, mediaCache = new Map(), currentPropertyType = 'sale', currentStatus = 'Active', currentDetail = null, currentPriceMin = 0, currentPriceMax = 0, currentBeds = 0, currentBaths = 0;
     const fmt = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 });
     const kFmt = (n) => { if (n >= 1e6) return '$' + (n / 1e6).toFixed(1) + 'm'; if (n >= 1e3) return '$' + (n / 1e3).toFixed(0) + 'k'; return '$' + n; };
     // Saved cart
@@ -2397,8 +2397,7 @@
       document.getElementById('priceMax').value = '';
       document.querySelectorAll('#subTypePanel input').forEach(i => i.checked = true);
       document.querySelectorAll('#cityPanel input').forEach(i => {
-        if (i.value === 'Bonita Springs' || i.value === 'Estero') i.checked = true;
-        else i.checked = false;
+        i.checked = false;
       });
       document.querySelectorAll('.filter-option-btn.selected').forEach(b => b.classList.remove('selected'));
       document.querySelectorAll('#bedsGroup .filter-option-btn[data-val="0"]').forEach(b => b.classList.add('selected'));
@@ -2478,9 +2477,40 @@
       const loader = document.getElementById('listLoader');
       if (loader) loader.style.display = 'inline-block';
 
-      const MAX_LISTINGS = 500;
-
       try {
+        // --- 1. Try D1 Cached Endpoint for Default View ---
+        // Basic regional view with no specific price/bed/bath filters
+        const isDefault = currentPriceMin === 0 && currentPriceMax === 0 && currentBeds === 0 && currentBaths === 0;
+        if (isDefault) {
+          const lt = document.getElementById('loadingText');
+          if (lt) lt.innerText = "Loading Cached SWFL Inventory...";
+          const cacheUrl = API_BASE + '/api/cached-listings';
+          const cr = await fetch(cacheUrl);
+          if (cr.ok) {
+            const cacheData = await cr.json();
+            if (cacheData && cacheData.length > 500) {
+              // Map D1 columns back to the object structure expected by rendering
+              allListings = cacheData.map(i => ({
+                ...i,
+                Coordinates: [i.Longitude, i.Latitude],
+                Media: i.PrimaryPhoto ? [{ MediaURL: i.PrimaryPhoto, Order: 0 }] : []
+              }));
+              // Populate mediaCache with primary photo so grid loads instantly
+              allListings.forEach(l => {
+                if (l.PrimaryPhoto) mediaCache.set(l.ListingKey, [l.PrimaryPhoto]);
+              });
+              fetchedContexts.add(contextKey);
+              MediaLoader.init();
+              renderCarousel(allListings);
+              applyClientFilters();
+              showLoading(false);
+              if (loader) loader.style.display = 'none';
+              return; // Success
+            }
+          }
+        }
+
+        // --- 2. Fallback to Live OData API (for specific filters or if cache fails) ---
         // Status Logic
         let statusFilter = "StandardStatus eq '" + currentStatus + "'";
         if (currentStatus === 'Pending') statusFilter = "(StandardStatus eq 'Pending' or StandardStatus eq 'Active Under Contract')";
@@ -2488,7 +2518,7 @@
 
         // Base Filter
         let baseF = "OriginatingSystemKey eq 'bsaor' and " + statusFilter;
-        baseF += " and (City eq 'BONITA SPRINGS' or City eq 'ESTERO')";
+        baseF += " and (CountyOrParish eq 'Lee' or CountyOrParish eq 'Collier' or CountyOrParish eq 'Hendry')";
 
         if (currentPropertyType === 'sale') {
           baseF += " and (PropertyType eq 'Residential' or PropertyType eq 'Residential Income')";
@@ -2498,6 +2528,13 @@
           baseF += " and (PropertyType eq 'Commercial Sale' or PropertyType eq 'Commercial')";
         } else if (currentPropertyType === 'land') {
           baseF += " and (PropertyType eq 'Land')";
+        }
+
+        // Apply selected cities if any
+        const cities = Array.from(document.querySelectorAll('#cityPanel input:checked')).map(i => i.value);
+        if (cities.length) {
+          const cityFilters = cities.map(c => `City eq '${c}'`).join(' or ');
+          baseF = `(${baseF}) and (${cityFilters})`;
         }
 
         // Get total count (non-blocking)
@@ -2515,15 +2552,14 @@
         let lastPrice = null;
         const BATCH = 200;
 
-        while (hasMore && allListings.length < MAX_LISTINGS) {
+        while (hasMore) {
           const p = new URLSearchParams();
           let f = baseF;
           if (lastPrice !== null) f += " and ListPrice le " + lastPrice;
 
-          const remaining = MAX_LISTINGS - allListings.length;
           p.append('$filter', f);
           p.append('$select', SEL);
-          p.append('$top', Math.min(BATCH, remaining));
+          p.append('$top', BATCH);
           p.append('$skip', skip);
           p.append('$orderby', 'ListPrice desc');
 
@@ -2534,16 +2570,13 @@
 
           if (!items.length) { hasMore = false; break; }
 
-          let added = 0;
           items.forEach(i => {
-            if (allListings.length < MAX_LISTINGS && !allListings.some(x => x.ListingKey === i.ListingKey)) {
+            if (!allListings.some(x => x.ListingKey === i.ListingKey)) {
               allListings.push(i);
-              added++;
             }
           });
 
-          if (allListings.length >= MAX_LISTINGS) hasMore = false;
-          else if (items.length < BATCH) hasMore = false;
+          if (items.length < BATCH) hasMore = false;
           else {
             const lastItem = items[items.length - 1];
             const newLastPrice = lastItem.ListPrice || 0;
@@ -2556,9 +2589,12 @@
           }
 
           const lt = document.getElementById('loadingText');
-          if (lt) lt.innerText = `Loading... (${allListings.length} cached)`;
+          if (lt) {
+            const pct = totalListingCount ? Math.round((allListings.length / totalListingCount) * 100) : 0;
+            lt.innerText = `Downloading Listings: ${allListings.length} / ${totalListingCount || '...'} (${pct}%)`;
+          }
 
-          if (added > 0 && allListings.length >= BATCH && document.getElementById('loadingOverlay').style.display !== 'none') {
+          if (allListings.length >= BATCH && document.getElementById('loadingOverlay').style.display !== 'none') {
             showLoading(false);
             MediaLoader.init();
             renderCarousel(allListings);
@@ -2569,7 +2605,6 @@
         }
 
         fetchedContexts.add(contextKey);
-
         MediaLoader.init();
         renderCarousel(allListings);
         applyClientFilters();
@@ -2581,12 +2616,18 @@
       }
     }
 
-    async function searchFullDatabase(q) {
-      if (!q || q.length < 3) return;
+    async function searchFullDatabase(q, agentKey = null) {
+      if (!q && !agentKey) return;
+      if (q && q.length < 3 && !agentKey) return;
       showLoading(true);
       try {
-        // Try exact ListingKey or Address contains
-        const f = "OriginatingSystemKey eq 'bsaor' and (ListingKey eq '" + q + "' or contains(UnparsedAddress, '" + q + "'))";
+        // Try exact ListingKey, Address contains, or Agent MLS ID/Name contains
+        let f = "OriginatingSystemKey eq 'bsaor' and (CountyOrParish eq 'Lee' or CountyOrParish eq 'Collier' or CountyOrParish eq 'Hendry')";
+        if (agentKey) {
+          f += " and ListAgentMlsId eq '" + agentKey + "'";
+        } else {
+          f += " and (ListingKey eq '" + q + "' or contains(UnparsedAddress, '" + q + "') or contains(ListAgentFullName, '" + q + "'))";
+        }
         const r = await fetch(API_BASE + '/api/v2/OData/bsaor/Property?$filter=' + encodeURIComponent(f) + '&$select=' + SEL + '&$top=20');
         if (!r.ok) throw new Error('Search failed');
         const d = await r.json();
@@ -2608,7 +2649,7 @@
       observe(el) { if (this.observer) this.observer.observe(el); },
       enqueue(id) { if (!this.queue.includes(id)) { this.queue.push(id); this.process(); } },
       async process() { if (this.processing || !this.queue.length) return; this.processing = true; const ck = this.queue.splice(0, 10); await this.fetchChunk(ck); this.loadedCount += ck.length; if (this.loadedCount >= 8) hideLoadingOverlay(); this.processing = false; if (this.queue.length) this.process(); },
-      async fetchChunk(keys) { if (!keys.length) return; const f = keys.map(k => "ListingKey eq '" + k + "'").join(' or '); try { const r = await fetch(API_BASE + '/api/v2/OData/bsaor/Property?$filter=' + encodeURIComponent(f) + '&$select=ListingKey,Media'); if (!r.ok) return; const d = await r.json(); (d.value || []).forEach(p => { if (p.Media && p.Media.length) { const urls = p.Media.sort((a, b) => (a.Order || 0) - (b.Order || 0)).map(m => m.MediaURL || m.MediaUrl || m.MediaURLLarge).filter(Boolean); if (urls.length) { mediaCache.set(p.ListingKey, urls); updImg(p.ListingKey, urls); } } }); } catch (e) { console.warn('ML err', e); } }
+      async fetchChunk(keys) { if (!keys.length) return; const f = keys.map(k => "ListingKey eq '" + k + "'").join(' or '); try { const r = await fetch(API_BASE + '/api/v2/OData/bsaor/Property?$filter=' + encodeURIComponent(f) + '&$select=ListingKey,Media&_limitMedia=1'); if (!r.ok) return; const d = await r.json(); (d.value || []).forEach(p => { if (p.Media && p.Media.length) { const urls = p.Media.sort((a, b) => (a.Order || 0) - (b.Order || 0)).map(m => m.MediaURL || m.MediaUrl || m.MediaURLLarge).filter(Boolean); if (urls.length) { mediaCache.set(p.ListingKey, urls); updImg(p.ListingKey, urls); } } }); } catch (e) { console.warn('ML err', e); } }
     };
 
     function updImg(k, urls) { ['img-', 'c-img-'].forEach(px => { const i = document.getElementById(px + k); if (i) i.src = urls[0]; }); const c = document.getElementById('count-' + k); if (c) c.innerText = '1/' + urls.length; }
@@ -2622,7 +2663,7 @@
       const max = Math.max(1, Math.floor((window.innerWidth - 32) / 212));
       t.innerHTML = ''; ni.slice(0, max).forEach(item => {
         const el = document.createElement('div'); el.className = 'carousel-card'; el.dataset.id = item.ListingKey;
-        el.innerHTML = '<div class="carousel-img-wrapper"><img src="" id="c-img-' + item.ListingKey + '" class="carousel-img" loading="lazy"><div class="price-badge">' + fmt.format(item.ListPrice || 0) + '</div></div><div class="card-content"><div class="card-address" style="font-size:0.78rem">' + (item.UnparsedAddress || '') + '</div><div class="card-meta">' + (item.City || '') + '</div></div>';
+        el.innerHTML = '<div class="carousel-img-wrapper"><img src="" id="c-img-' + item.ListingKey + '" class="carousel-img" loading="lazy"><div class="price-badge">' + fmt.format(item.ListPrice || 0) + '</div></div><div class="card-content"><div class="card-address" style="font-size:0.78rem">' + (item.UnparsedAddress || '') + '</div><div class="card-meta">' + (item.City || '') + '</div><div class="card-agent-info" style="font-size:0.7rem; color:#666; margin-top:4px;"><div><i class="fas fa-building"></i> ' + (item.ListOfficeName || '') + '</div><div><i class="fas fa-phone"></i> ' + (item.ListOfficePhone || '') + '</div></div></div>';
         el.onclick = () => { openDetail(item); };
         t.appendChild(el); MediaLoader.enqueue(item.ListingKey);
       });
@@ -2731,7 +2772,11 @@
             <span class="card-detail-item"><i class="fas fa-bath"></i> ${item.BathroomsTotalInteger || 0}</span>
             <span class="card-detail-item"><i class="fas fa-ruler-combined"></i> ${(item.LivingArea || 0).toLocaleString()} sqft</span>
           </div>
-          <div class="card-meta"><span>${item.City || ''}</span><span>${item.ListAgentFullName || ''}</span></div>
+          <div class="card-meta" style="flex-direction: column; align-items: flex-start; gap: 4px;">
+            <div style="font-weight: bold; color: var(--primary);"><i class="fas fa-map-marker-alt"></i> ${item.City || ''}</div>
+            <div style="font-size: 0.75rem; color: #777;"><i class="fas fa-building"></i> ${item.ListOfficeName || ''}</div>
+            ${item.ListOfficePhone ? `<div style="font-size: 0.75rem; color: #777;"><i class="fas fa-phone"></i> ${item.ListOfficePhone}</div>` : ''}
+          </div>
         </div>`;
         card.dataset.id = item.ListingKey;
         card.addEventListener('mouseenter', () => highlightMarker(item.ListingKey, true));
@@ -2759,16 +2804,62 @@
 
     // --- Detail Modal ---
     let detailIdx = 0;
-    function openDetail(item) {
+    async function openDetail(item) {
       currentDetail = item; detailIdx = 0;
       const ov = document.getElementById('detailOverlay'); ov.style.display = 'block';
-      const urls = mediaCache.get(item.ListingKey) || [];
+
+      // Initial render with cached (likely single) photo
+      let urls = mediaCache.get(item.ListingKey) || [];
       const mainImg = document.getElementById('detailMainImg');
       mainImg.src = urls[0] || '';
       document.getElementById('detailImgCount').textContent = urls.length ? (1 + '/' + urls.length) : '';
+
+      // Initial Description Fallback (Async fetch will overwrite this if successful)
+      document.getElementById('detailDesc').textContent = item.PublicRemarks || 'No description available.';
+
+      // Fetch full media array and full property details if we lack photos or remarks
+      if (urls.length <= 1 || !item.PublicRemarks) {
+        try {
+          // Fetch the complete property record without restricting to just Media 
+          const r = await fetch(API_BASE + `/api/v2/OData/bsaor/Property?$filter=ListingKey eq '${item.ListingKey}'`);
+          if (r.ok) {
+            const d = await r.json();
+            const p = d.value?.[0];
+            if (p) {
+              // Update our current detail object with the fresh, complete data
+              currentDetail = { ...currentDetail, ...p };
+
+              // Process full media array
+              if (p.Media && p.Media.length) {
+                const fullUrls = p.Media.sort((a, b) => (a.Order || 0) - (b.Order || 0))
+                  .map(m => m.MediaURL || m.MediaUrl || m.MediaURLLarge)
+                  .filter(Boolean);
+                if (fullUrls.length) {
+                  mediaCache.set(item.ListingKey, fullUrls);
+                  urls = fullUrls;
+                  // Update grid image count if it exists
+                  const countEl = document.getElementById('count-' + item.ListingKey);
+                  if (countEl) countEl.innerText = '1/' + urls.length;
+                }
+              }
+              // DOM updates required by new text data
+              document.getElementById('detailDesc').innerHTML = (currentDetail.PublicRemarks || 'No description available for this property.');
+              if (currentDetail.YearBuilt) {
+                const stats = document.getElementById('detailStats');
+                // Only append if it wasn't added in the initial fast-render
+                if (!stats.innerHTML.includes('Built ' + currentDetail.YearBuilt)) {
+                  stats.innerHTML += `<div class="detail-stat"><i class="fas fa-calendar"></i>Built ${currentDetail.YearBuilt}</div>`;
+                }
+              }
+            }
+          }
+        } catch (e) { console.warn('Detail fetch err', e); }
+      }
+
+      document.getElementById('detailImgCount').textContent = urls.length ? (1 + '/' + urls.length) : '';
       // Thumbs
       const thumbs = document.getElementById('detailThumbs'); thumbs.innerHTML = '';
-      urls.slice(0, 20).forEach((u, i) => {
+      urls.slice(0, 50).forEach((u, i) => {
         const t = document.createElement('img'); t.className = 'detail-thumb' + (i === 0 ? ' active' : ''); t.src = u;
         t.onclick = () => {
           detailIdx = i; mainImg.src = u; document.getElementById('detailImgCount').textContent = (i + 1) + '/' + urls.length;
@@ -2790,10 +2881,8 @@
       if (item.BedroomsTotal) addStat('bed', item.BedroomsTotal + ' Beds');
       if (item.BathroomsTotalInteger) addStat('bath', item.BathroomsTotalInteger + ' Baths');
       if (item.LivingArea) addStat('ruler-combined', (item.LivingArea).toLocaleString() + ' sqft');
-      if (item.YearBuilt) addStat('calendar', 'Built ' + item.YearBuilt);
+      if (item.YearBuilt) addStat('calendar', 'Built ' + parseInt(item.YearBuilt));
       if (item.LotSizeAcres) addStat('tree', item.LotSizeAcres + ' acres');
-      // Description
-      document.getElementById('detailDesc').textContent = item.PublicRemarks || 'No description available.';
       // Agent
       document.getElementById('detailAgentName').textContent = item.ListAgentFullName || 'Unknown Agent';
       document.getElementById('detailAgentOffice').textContent = item.ListOfficeName || '';
@@ -2804,7 +2893,10 @@
       // View agent button
       document.getElementById('detailViewAgentBtn').onclick = () => {
         document.getElementById('detailOverlay').style.display = 'none';
-        openAgentModal(item.ListAgentKey, item.ListAgentFullName || '', item.ListOfficeName || '');
+        if (item.ListAgentMlsId || item.ListAgentFullName) {
+          document.getElementById('searchInput').value = item.ListAgentFullName || item.ListAgentMlsId;
+          searchFullDatabase(item.ListAgentFullName ? item.ListAgentFullName.toLowerCase() : '', item.ListAgentMlsId);
+        }
       };
       // Save state
       const sb = document.getElementById('detailSaveBtn');

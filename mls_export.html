@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MLS Data Export Tool - BSER</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <style>
+        :root {
+            --primary: #1e293b;
+            --accent: #2563eb;
+            --bg: #f8fafc;
+            --card-bg: rgba(255, 255, 255, 0.8);
+            --border: #e2e8f0;
+            --text-main: #0f172a;
+            --text-muted: #64748b;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg);
+            color: var(--text-main);
+            margin: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .export-card {
+            background: var(--card-bg);
+            backdrop-filter: blur(12px);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 40px;
+            width: 100%;
+            max-width: 600px;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 32px;
+        }
+
+        .header h1 {
+            font-size: 1.75rem;
+            font-weight: 700;
+            margin: 0 0 8px;
+            color: var(--primary);
+        }
+
+        .header p {
+            color: var(--text-muted);
+            font-size: 0.95rem;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 24px;
+        }
+
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .input-group label {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--text-main);
+        }
+
+        .input-group input,
+        .input-group select {
+            padding: 12px;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            font-family: inherit;
+            font-size: 0.95rem;
+            background: #fff;
+            transition: border-color 0.2s;
+        }
+
+        .input-group input:focus {
+            outline: none;
+            border-color: var(--accent);
+        }
+
+        .full-width {
+            grid-column: span 2;
+        }
+
+        .btn-start {
+            width: 100%;
+            padding: 14px;
+            background: var(--accent);
+            color: #fff;
+            border: none;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.1s, opacity 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .btn-start:hover {
+            opacity: 0.9;
+        }
+
+        .btn-start:active {
+            transform: scale(0.98);
+        }
+
+        .btn-start:disabled {
+            background: var(--text-muted);
+            cursor: not-allowed;
+        }
+
+        .progress-section {
+            margin-top: 32px;
+            display: none;
+        }
+
+        .progress-bar-bg {
+            background: #e2e8f0;
+            height: 10px;
+            border-radius: 5px;
+            overflow: hidden;
+            margin-bottom: 12px;
+        }
+
+        .progress-bar-fill {
+            background: var(--accent);
+            height: 100%;
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+
+        .status-text {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .log-area {
+            margin-top: 20px;
+            background: rgba(0, 0, 0, 0.03);
+            border-radius: 10px;
+            padding: 15px;
+            font-family: monospace;
+            font-size: 0.8rem;
+            max-height: 150px;
+            overflow-y: auto;
+            border: 1px solid var(--border);
+        }
+
+        .log-entry {
+            margin-bottom: 4px;
+        }
+
+        .log-entry.success {
+            color: #059669;
+        }
+
+        .log-entry.error {
+            color: #dc2626;
+        }
+
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="export-card">
+        <div class="header">
+            <h1>MLS Property Export</h1>
+            <p>Export historical property data to Excel (2011 - 2023)</p>
+        </div>
+
+        <div class="form-grid">
+            <div class="input-group">
+                <label>Start Date</label>
+                <input type="date" id="startDate" value="2011-01-01">
+            </div>
+            <div class="input-group">
+                <label>End Date</label>
+                <input type="date" id="endDate" value="2023-12-31">
+            </div>
+            <div class="input-group full-width">
+                <label>Property Type</label>
+                <select id="propertyType">
+                    <option value="Residential" selected>Single Family Residences</option>
+                    <option value="Residential Income">Multi-Family</option>
+                    <option value="Residential Lease">Rentals</option>
+                    <option value="Land">Lots & Land</option>
+                </select>
+            </div>
+            <div class="input-group full-width">
+                <label>Counties (Comma separated)</label>
+                <input type="text" id="counties" value="Lee, Collier, Hendry, Charlotte"
+                    placeholder="e.g. Lee, Collier">
+            </div>
+        </div>
+
+        <button class="btn-start" id="startBtn">
+            <i class="fas fa-download"></i> Start Export Process
+        </button>
+
+        <div class="progress-section" id="progressSection">
+            <div class="progress-bar-bg">
+                <div class="progress-bar-fill" id="progressFill"></div>
+            </div>
+            <div class="status-text">
+                <span id="progressLabel">Initializing...</span>
+                <span id="countLabel">0 items</span>
+            </div>
+            <div class="log-area" id="logArea"></div>
+        </div>
+
+        <button class="btn-start hidden" id="downloadBtn" style="background: #059669; margin-top: 20px;">
+            <i class="fas fa-file-excel"></i> Download Excel Spreadsheet
+        </button>
+    </div>
+
+    <script>
+        const API_BASE = 'https://listingsworker.bonitaspringsrealtors.workers.dev';
+        const SEL = 'ListingKey,ListingId,ParcelNumber,UnparsedAddress,City,CountyOrParish,PostalCode,ListPrice,ClosePrice,CloseDate,ListingContractDate,OriginalEntryTimestamp,BedroomsTotal,BathroomsTotalInteger,LivingArea,YearBuilt,PoolFeatures,WaterfrontFeatures,LotSizeAcres,PropertySubType,StandardStatus,ModificationTimestamp';
+
+        let allData = [];
+        let isExporting = false;
+
+        function log(msg, type = '') {
+            const logArea = document.getElementById('logArea');
+            const div = document.createElement('div');
+            div.className = 'log-entry ' + type;
+            div.innerText = `[${new Date().toLocaleTimeString()}] ${msg}`;
+            logArea.appendChild(div);
+            logArea.scrollTop = logArea.scrollHeight;
+        }
+
+        async function startExport() {
+            if (isExporting) return;
+
+            const startStr = document.getElementById('startDate').value;
+            const endStr = document.getElementById('endDate').value;
+            const counties = document.getElementById('counties').value.split(',').map(s => s.trim());
+            const propType = document.getElementById('propertyType').value;
+
+            if (!startStr || !endStr) {
+                alert('Please select both start and end dates.');
+                return;
+            }
+
+            isExporting = true;
+            allData = [];
+            document.getElementById('startBtn').disabled = true;
+            document.getElementById('progressSection').style.display = 'block';
+            document.getElementById('downloadBtn').classList.add('hidden');
+            document.getElementById('logArea').innerHTML = '';
+
+            log(`Starting export for ${propType} in ${counties.join(', ')}...`);
+
+            // Build base filter
+            let baseF = `PropertyType eq '${propType}' and CloseDate ge ${startStr} and CloseDate le ${endStr}`;
+
+            // County filter
+            if (counties.length > 0) {
+                const countyClause = counties.map(c => `CountyOrParish eq '${c}'`).join(' or ');
+                baseF += ` and (${countyClause})`;
+            }
+
+            try {
+                // 1. Get total count
+                log('Fetching total record count...');
+                const countParams = new URLSearchParams({
+                    '$filter': baseF,
+                    '$top': 0,
+                    '$count': 'true'
+                });
+                const countRes = await fetch(`${API_BASE}/api/v2/OData/bsaor/Property?${countParams}`);
+                const countJson = await countRes.json();
+                const total = parseInt(countJson['@odata.count'] || 0);
+
+                log(`Found ${total.toLocaleString()} records to download.`);
+                if (total === 0) {
+                    log('No records found for the selected criteria.', 'error');
+                    isExporting = false;
+                    document.getElementById('startBtn').disabled = false;
+                    return;
+                }
+
+                document.getElementById('countLabel').innerText = `0 / ${total.toLocaleString()}`;
+
+                // 2. Start batching
+                let skip = 0; // Still useful for progress, but we won't use it in API if nextLink exists
+                let nextUrl = null;
+                const BATCH_SIZE = 200;
+                const sleep = ms => new Promise(res => setTimeout(res, ms));
+
+                while (skip < total) {
+                    let success = false;
+                    let retries = 0;
+                    const MAX_RETRIES = 20; // Increased retries
+
+                    while (!success && retries < MAX_RETRIES) {
+                        try {
+                            log(`Fetching batch ${Math.floor(skip / BATCH_SIZE) + 1}... ${retries > 0 ? '(Retry ' + retries + ')' : ''}`);
+
+                            let url;
+                            if (nextUrl) {
+                                url = nextUrl;
+                            } else {
+                                const params = new URLSearchParams({
+                                    '$filter': baseF,
+                                    '$select': SEL,
+                                    '$top': BATCH_SIZE,
+                                    // Use skip only if under 10k, or if we don't have a nextLink yet
+                                    // But actually, starting with $skip=0 is fine. 
+                                    '$skip': skip,
+                                    '$orderby': 'ListingKey asc' // Use ListingKey asc for stable keyset pagination
+                                });
+                                url = `${API_BASE}/api/v2/OData/bsaor/Property?${params}`;
+                            }
+
+                            const res = await fetch(url);
+
+                            if (res.status === 429 || res.status === 400) {
+                                if (res.status === 400 && skip >= 10000 && !nextUrl) {
+                                    log(`Reached 10,000 record skip limit. Switching to keyset pagination...`, 'warning');
+                                    // Fallback logic for keyset:
+                                    const lastKey = allData.length > 0 ? allData[allData.length - 1].ListingKey : null;
+                                    if (lastKey) {
+                                        const ksFilter = `${baseF} and ListingKey gt '${lastKey}'`;
+                                        const params = new URLSearchParams({
+                                            '$filter': ksFilter,
+                                            '$select': SEL,
+                                            '$top': BATCH_SIZE,
+                                            '$orderby': 'ListingKey asc'
+                                        });
+                                        nextUrl = `${API_BASE}/api/v2/OData/bsaor/Property?${params}`;
+                                        continue;
+                                    }
+                                }
+
+                                const waitTime = Math.min(120000, 10000 * Math.pow(1.5, retries)); // Exponential backoff up to 2m
+                                log(`Rate limited or Error ${res.status}. Pausing for ${Math.round(waitTime / 1000)}s...`, 'error');
+                                await sleep(waitTime);
+                                retries++;
+                                continue;
+                            }
+
+                            if (!res.ok) throw new Error(`API Error: ${res.status}`);
+
+                            const data = await res.json();
+                            const items = data.value || [];
+
+                            if (items.length === 0) {
+                                success = true;
+                                skip = total; // Force break
+                                break;
+                            }
+
+                            allData = allData.concat(items);
+                            skip += items.length;
+                            success = true;
+
+                            // Set nextUrl from @odata.nextLink if it exists
+                            nextUrl = data['@odata.nextLink'] || null;
+
+                            // Update Progress
+                            const pct = Math.min(100, Math.floor((skip / total) * 100));
+                            document.getElementById('progressFill').style.width = pct + '%';
+                            document.getElementById('progressLabel').innerText = `${pct}% Complete`;
+                            document.getElementById('countLabel').innerText = `${allData.length.toLocaleString()} / ${total.toLocaleString()}`;
+
+                        } catch (err) {
+                            retries++;
+                            log(`Batch failed: ${err.message}. Retrying in 10s...`, 'error');
+                            await sleep(10000);
+                        }
+                    }
+
+                    if (!success) {
+                        log(`Failed to download batch after ${MAX_RETRIES} retries. Stopping.`, 'error');
+                        break;
+                    }
+                }
+
+                if (allData.length > 0) {
+                    log(`Successfully downloaded ${allData.length.toLocaleString()} records.`, 'success');
+                    document.getElementById('downloadBtn').classList.remove('hidden');
+                }
+
+            } catch (err) {
+                log(`Error: ${err.message}`, 'error');
+                console.error(err);
+            } finally {
+                isExporting = false;
+                document.getElementById('startBtn').disabled = false;
+                document.getElementById('progressLabel').innerText = 'Finished';
+            }
+        }
+
+        function downloadExcel() {
+            if (allData.length === 0) return;
+
+            const ROWS_PER_FILE = 100000;
+            const totalParts = Math.ceil(allData.length / ROWS_PER_FILE);
+
+            log(`Generating ${totalParts} Excel file(s)...`);
+
+            for (let i = 0; i < totalParts; i++) {
+                const start = i * ROWS_PER_FILE;
+                const end = start + ROWS_PER_FILE;
+                const chunk = allData.slice(start, end);
+
+                const ws = XLSX.utils.json_to_sheet(chunk);
+                const wb = XLSX.utils.book_new();
+                XLSX.utils.book_append_sheet(wb, ws, "Property Data");
+
+                const dateStr = new Date().toISOString().split('T')[0];
+                const partStr = totalParts > 1 ? `_Part${i + 1}` : '';
+                const filename = `MLS_Export_${dateStr}${partStr}.xlsx`;
+
+                log(`Downloading ${filename}...`);
+                XLSX.writeFile(wb, filename);
+            }
+
+            log('All downloads triggered.', 'success');
+        }
+
+        document.getElementById('startBtn').addEventListener('click', startExport);
+        document.getElementById('downloadBtn').addEventListener('click', downloadExcel);
+
+    </script>
+</body>
+
+</html>
