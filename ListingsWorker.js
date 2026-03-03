@@ -95,7 +95,7 @@ export default {
         // Daily Sync Logic
         console.log("Starting Daily Listing Sync...");
         const SEL = "ListingKey,ListingId,ListPrice,UnparsedAddress,City,CountyOrParish,BedroomsTotal,BathroomsTotalInteger,LivingArea,StandardStatus,PropertyType,PropertySubType,Media,ListingContractDate,Coordinates,ModificationTimestamp,YearBuilt,LotSizeAcres,ListAgentFullName,ListOfficeName,ListOfficePhone,ListAgentMlsId";
-        const baseF = "OriginatingSystemKey eq 'bsaor' and (StandardStatus eq 'Active' or StandardStatus eq 'Active Under Contract' or StandardStatus eq 'Pending') and (CountyOrParish eq 'Lee' or CountyOrParish eq 'Collier' or CountyOrParish eq 'Hendry')";
+        const baseF = "OriginatingSystemKey eq 'bsaor' and StateOrProvince eq 'FL' and (StandardStatus eq 'Active' or StandardStatus eq 'Active Under Contract' or StandardStatus eq 'Pending') and (CountyOrParish eq 'Lee' or CountyOrParish eq 'Collier' or CountyOrParish eq 'Hendry')";
 
         let hasMore = true;
         let skip = 0;

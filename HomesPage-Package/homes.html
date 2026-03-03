@@ -2501,8 +2501,7 @@
               });
               fetchedContexts.add(contextKey);
               MediaLoader.init();
-              renderCarousel(allListings);
-              applyClientFilters();
+              applyClientFilters(); // applyClientFilters will handle both grid and carousel now
               showLoading(false);
               if (loader) loader.style.display = 'none';
               return; // Success
@@ -2517,7 +2516,7 @@
         else if (currentStatus === 'Closed') statusFilter = "StandardStatus eq 'Closed'";
 
         // Base Filter
-        let baseF = "OriginatingSystemKey eq 'bsaor' and " + statusFilter;
+        let baseF = "OriginatingSystemKey eq 'bsaor' and StateOrProvince eq 'FL' and " + statusFilter;
         baseF += " and (CountyOrParish eq 'Lee' or CountyOrParish eq 'Collier' or CountyOrParish eq 'Hendry')";
 
         if (currentPropertyType === 'sale') {
@@ -2597,7 +2596,6 @@
           if (allListings.length >= BATCH && document.getElementById('loadingOverlay').style.display !== 'none') {
             showLoading(false);
             MediaLoader.init();
-            renderCarousel(allListings);
             applyClientFilters();
           }
 
@@ -2606,7 +2604,6 @@
 
         fetchedContexts.add(contextKey);
         MediaLoader.init();
-        renderCarousel(allListings);
         applyClientFilters();
 
       } catch (e) { console.error(e); document.getElementById('listingsGrid').innerHTML = '<div style="padding:20px;text-align:center;color:red">' + e.message + '</div>'; }
@@ -2622,7 +2619,7 @@
       showLoading(true);
       try {
         // Try exact ListingKey, Address contains, or Agent MLS ID/Name contains
-        let f = "OriginatingSystemKey eq 'bsaor' and (CountyOrParish eq 'Lee' or CountyOrParish eq 'Collier' or CountyOrParish eq 'Hendry')";
+        let f = "OriginatingSystemKey eq 'bsaor' and StateOrProvince eq 'FL' and (CountyOrParish eq 'Lee' or CountyOrParish eq 'Collier' or CountyOrParish eq 'Hendry')";
         if (agentKey) {
           f += " and ListAgentMlsId eq '" + agentKey + "'";
         } else {
@@ -2687,9 +2684,16 @@
         // Status Check
         if (!targetStatus.includes(i.StandardStatus || 'Active')) return false;
 
-        // Type Check (Rough client-side approximation)
-        if (currentPropertyType === 'sale' && i.PropertyType === 'Residential Lease') return false;
-        // ... (API handles type, this is safety)
+        // Type Check
+        if (currentPropertyType === 'sale') {
+          if (i.PropertyType !== 'Residential' && i.PropertyType !== 'Residential Income') return false;
+        } else if (currentPropertyType === 'rental') {
+          if (i.PropertyType !== 'Residential Lease') return false;
+        } else if (currentPropertyType === 'commercial') {
+          if (i.PropertyType !== 'Commercial Sale' && i.PropertyType !== 'Commercial Lease' && i.PropertyType !== 'Business Opportunity' && i.PropertyType !== 'Commercial') return false;
+        } else if (currentPropertyType === 'land') {
+          if (i.PropertyType !== 'Land') return false;
+        }
 
         const p = i.ListPrice || 0;
         if (cities.length) {
@@ -2726,6 +2730,7 @@
 
       updateUI(fl);
       renderMapMarkers(fl, false, minP, maxP);
+      renderCarousel(fl); // Ensure the carousel respects the current filters
       const resText = fl.length + ' Listings';
       document.getElementById('resultsCount').innerText = resText;
       document.getElementById('mobileResultsTitle').innerText = fl.length + ' results';
@@ -2970,7 +2975,9 @@
           lat = Number(item.Latitude);
           lng = Number(item.Longitude);
         }
-        if (isNaN(lat) || isNaN(lng)) return;
+        if (isNaN(lat) || isNaN(lng) || lat === 0 || lng === 0) return;
+        // Strictly ignore map pins that are obviously not in Florida (e.g. 0,0 or bad agent entry)
+        if (lat < 24 || lat > 32 || lng > -79 || lng < -88) return;
         const price = item.ListPrice || 0;
         let color = '#22c55e', border = '#16a34a', text = '#fff'; // Green as default for "Active"
 
