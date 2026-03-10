@@ -1,0 +1,982 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<meta content="" name="keywords">
+<meta name="description" content="">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=0">
+<title>Populife Open API 文档</title>
+<link rel="icon" href="//populife.co/favicon.ico">
+<meta name="viewport" content="user-scalable=no, width=device-width">
+<link rel="stylesheet" href="index.css" id="stylesheetLight">
+</head>
+<body>
+	<header class="navbar navbar-inverse" role="banner">
+		<div class="container">
+
+			<nav class="collapse navbar-collapse bs-navbar-collapse" role="navigation">
+				<ul class="nav navbar-nav">
+					<li><a href="#top"><img src="logo.png" height="28" /> Open API 文档</a></li>
+				</ul>
+				<ul class="nav navbar-nav navbar-right" style="font-size: 14px;">
+					<li><a href="index_en.html"><img src="us.svg" heigh="12"> English</a></li>
+					<li><a href="index.html"><img src="cn.svg" heigh="12"> 中文</a></li>
+					<li><a href="index_jp.html"><img src="jp.svg" heigh="12"> 日本語</a></li>
+				</ul>
+			</nav>
+		</div>
+	</header>
+	<div class="container" style="padding-top: 70px;">
+		<div class="row">
+			<div class="col-md-3">
+				<div id="slide_nav">
+					<ul class="nav list-group bs_list_group">
+						<li><span>Open API Doc</span>
+							<ul class="nav list-group bs_list_group">
+								<ul class="nav list-group">
+									<li><a href="#291c17e53a074876a84a87da7c368bd3">获取 Access Token</a></li>
+									<li><a href="#766575fd3f2f44a789337b9d8ca28129">获取锁列表</a></li>
+									<li><a href="#766575fd3f2f44a789337b9d8ca28130">转移锁</a></li>
+								</ul>
+								<li><span class="category-lv2">按键数字密码</span>
+									<ul class="nav list-group category-lv2">
+										<li><a href="#eef374747a794848b282774d6d1d1641">获取密码列表</a></li>
+										<li><a href="#58d8a308130b41198f69bc945c23fd6c">生成限时密码</a></li>
+										<li><a href="#dad917a69b6b492b9bc58da7eacc395a">生成永久密码</a></li>
+										<li><a href="#51a26b1a33b74ae8b5fe223e6fbaa55f">生成一次性密码</a></li>
+									</ul></li>
+							</ul>
+							<ul class="nav list-group">
+								<span>附录</span>
+								<li><a href="#errorcodes">状态码</a></li>
+							</ul></li>
+					</ul>
+				</div>
+			</div>
+			<div class="col-md-9 docs_main">
+				<div class="block-doc-one">
+
+					<h1>Open API Doc</h1>
+					<div>
+						<img src="flow.png" style="width: 100%;">
+					</div>
+					<div class="api-one">
+						<h3 id="291c17e53a074876a84a87da7c368bd3">获取 Access Token</h3>
+						<p>请求方式：GET</p>
+						<p>请求地址：https://open.populife.co/api/auth/access_token/get</p>
+						<table class="table table-hover">
+							<colgroup>
+								<col class="col-xs-2">
+								<col class="col-xs-1">
+								<col class="col-xs-1">
+								<col class="col-xs-7">
+								<col class="col-xs-2">
+							</colgroup>
+							<thead>
+								<tr>
+									<th><span class="label label-success">Query参数名</span></th>
+									<th>类型</th>
+									<th>必需</th>
+									<th>描述</th>
+									<th>示例 e.g.</th>
+								</tr>
+							</thead>
+							<tbody>
+								<tr>
+									<td>appKey</td>
+									<td>string</td>
+									<td>是</td>
+									<td>由Populife 开放平台提供的应用Key</td>
+									<td>9JQJEPC0ZR9TC4</td>
+								</tr>
+								<tr>
+									<td>appSecret</td>
+									<td>string</td>
+									<td>是</td>
+									<td>由Populife 开放平台提供的应用密码</td>
+									<td>b8047ecdb32dca1b0a6d5133fae43c60</td>
+								</tr>
+							</tbody>
+						</table>
+						<p>详细说明：</p>
+						<p>
+						<div class="detail-info">
+							<div>
+								<p>Access token是Populife Open API授权的安全访问凭据。 在调用其他接口之前，必须先获取access token。 每次获取的access token的有效期为120分钟，再次获取会刷新有效期时间，同时前一次获取的access token会失效。 为避免重复调用资源浪费，请在本地服务器上有期限的缓存access token。</p>
+							</div>
+						</div>
+						</p>
+						<p>返回示例：</p>
+						<div class="highlight">
+							<pre>
+                                <code class="json hljs">{
+									    "success": true,
+									    "code": 200,
+									    "msg": null,
+									    "data": {
+									        "expire": 7200,
+									        "accessToken": "NzMyNmU4MGJjYTk3OTgzODJmYzlhOTc0NWQxMzBlNzFmNTZhMTlmNTdkYjQ2NDFmNmM1OWZiM2JlOTI0ZjE2MQ=="
+									    }
+									}</code>
+                            </pre>
+						</div>
+						<table class="table table-hover" style="margin-top: 7px;">
+							<colgroup>
+								<col class="col-xs-4">
+								<col class="col-xs-8">
+							</colgroup>
+							<thead>
+								<tr>
+									<th style="padding-left: 0px;"><span class="label label-success">Response参数名</span></th>
+									<th>描述</th>
+									<th>类型</th>
+								</tr>
+							</thead>
+							<tbody>
+								<tr>
+									<td>data.expire</td>
+									<td>有效时间，单位：秒</td>
+									<th>number</th>
+								</tr>
+								<tr>
+									<td>data.accessToken</td>
+									<td>由Populife 开放平台提供的Access Token</td>
+									<th>string</th>
+								</tr>
+							</tbody>
+						</table>
+					</div>
+					<div class="api-one">
+						<h3 id="766575fd3f2f44a789337b9d8ca28129">获取锁列表</h3>
+						<p>请求方式：GET</p>
+						<p>请求地址：https://open.populife.co/api/lock/list</p>
+						<table class="table table-hover">
+							<colgroup>
+								<col class="col-xs-2">
+								<col class="col-xs-1">
+								<col class="col-xs-1">
+								<col class="col-xs-7">
+								<col class="col-xs-2">
+							</colgroup>
+							<thead>
+								<tr>
+									<th><span class="label label-success">Query参数名</span></th>
+									<th>类型</th>
+									<th>必需</th>
+									<th>描述</th>
+									<th>示例 e.g.</th>
+								</tr>
+							</thead>
+							<tbody>
+								<tr>
+									<td>appKey</td>
+									<td>string</td>
+									<td>是</td>
+									<td>由Populife 开放平台提供的应用Key</td>
+									<td>9JQJEPC0ZR9TC4</td>
+								</tr>
+								<tr>
+									<td>accessToken</td>
+									<td>string</td>
+									<td>是</td>
+									<td>由Populife 开放平台授权的Access Token</td>
+									<td>1OWZiM2JlOTI0ZjE2MQ...==</td>
+								</tr>
+								<tr>
+									<td>pageNo</td>
+									<td>string</td>
+									<td>是</td>
+									<td>页码，起始值为1</td>
+									<td>1</td>
+								</tr>
+								<tr>
+									<td>pageSize</td>
+									<td>string</td>
+									<td>是</td>
+									<td>页数据行数，即每一页显示多少行数据</td>
+									<td>20</td>
+								</tr>
+							</tbody>
+						</table>
+						<p>详细说明：</p>
+						<p>
+						<div class="detail-info">
+							<div>
+								<p>查询当前AppKey账户下拥有的所有锁列表信息。 在您向Populife取得appKey和appSecret后，请将您在Populife App中注册的用户账号提供给Populife技术支持人员， 技术支持人员会将您的Populife App用户与appKey关联在一起。 最后您可以通过本接口查询你的企业关联用户在Populife App绑定的锁列表信息。 获取锁信息后，您可以通过生成按键密码接口生成某一把锁的按键开锁密码。</p>
+							</div>
+						</div>
+						</p>
+						<p>返回示例：</p>
+						<div class="highlight">
+							<pre>
+                                <code class="json hljs">{
+								    "success": true,
+								    "code": 200,
+								    "msg": null,
+								    "data": [
+								        {
+								            "lockId": 723716,
+								            "name": "PPL-ML-E6DE5",
+								            "alias": "PPL-ML-E6DE5",
+								            "mac": "C4:E8:4D:34:32:A5",
+								            "electricQuantity": 100,
+								            "modelNum": "SN138_PPL-DB",
+								            "hardwareRevision": "1.0",
+								            "firmwareRevision": "1.0.0.1108",
+								            "initDate": 1623314021000
+								        }
+								    ]
+								}</code>
+                            </pre>
+						</div>
+						<table class="table table-hover" style="margin-top: 7px;">
+							<colgroup>
+								<col class="col-xs-4">
+								<col class="col-xs-8">
+							</colgroup>
+							<thead>
+								<tr>
+									<th style="padding-left: 0px;"><span class="label label-success">Response参数名</span></th>
+									<th>描述</th>
+									<th>类型</th>
+								</tr>
+							</thead>
+							<tbody>
+								<tr>
+									<td>data.hardwareRevision</td>
+									<td>锁的硬件版本</td>
+									<th>string</th>
+								</tr>
+								<tr>
+									<td>data.lockId</td>
+									<td>Populife锁类产品的数字标识</td>
+									<th>number</th>
+								</tr>
+								<tr>
+									<td>data.name</td>
+									<td>锁的蓝牙名称，即绑定设备时蓝牙扫描到的产品序列号</td>
+									<th>string</th>
+								</tr>
+								<tr>
+									<td>data.alias</td>
+									<td>锁的别名，即用户定义的的锁名称</td>
+									<th>string</th>
+								</tr>
+								<tr>
+									<td>data.mac</td>
+									<td>MAC地址</td>
+									<th>string</th>
+								</tr>
+								<tr>
+									<td>data.electricQuantity</td>
+									<td>锁的电量百分比，非实时更新，获取App上一次蓝牙同步的电量</td>
+									<th>number</th>
+								</tr>
+								<tr>
+									<td>data.modelNum</td>
+									<td>锁型号</td>
+									<th>string</th>
+								</tr>
+								<tr>
+									<td>data.firmwareRevision</td>
+									<td>锁的固件版本</td>
+									<th>string</th>
+								</tr>
+								<tr>
+									<td>data.initDate</td>
+									<td>用户在App将锁初始化的时间</td>
+									<th>number</th>
+								</tr>
+							</tbody>
+						</table>
+					</div>
+					<div class="api-one">
+						<h3 id="766575fd3f2f44a789337b9d8ca28130">转移锁</h3>
+						<p>请求方式：POST</p>
+						<p>请求地址：https://open.populife.co/api/lock/transfer</p>
+						<table class="table table-hover">
+							<colgroup>
+								<col class="col-xs-2">
+								<col class="col-xs-1">
+								<col class="col-xs-1">
+								<col class="col-xs-7">
+								<col class="col-xs-2">
+							</colgroup>
+							<thead>
+								<tr>
+									<th><span class="label label-success">Query参数名</span></th>
+									<th>类型</th>
+									<th>必需</th>
+									<th>描述</th>
+									<th>示例 e.g.</th>
+								</tr>
+							</thead>
+							<tbody>
+								<tr>
+									<td>appKey</td>
+									<td>string</td>
+									<td>是</td>
+									<td>由Populife 开放平台提供的应用Key</td>
+									<td>9JQJEPC0ZR9TC4</td>
+								</tr>
+								<tr>
+									<td>accessToken</td>
+									<td>string</td>
+									<td>是</td>
+									<td>由Populife 开放平台授权的Access Token</td>
+									<td>1OWZiM2JlOTI0ZjE2MQ...==</td>
+								</tr>
+								<tr>
+									<td>lockIds</td>
+									<td>string</td>
+									<td>是</td>
+									<td>锁IDs（一个或多，多个个以,分隔）</td>
+									<td>2059328,2059901,12695599</td>
+								</tr>
+								<tr>
+									<td>recUsername</td>
+									<td>string</td>
+									<td>是</td>
+									<td>接收者的用户名（注册Populife App的邮箱或手机号）</td>
+									<td>a49871322@gmail | +1638472744948</td>
+								</tr>
+							</tbody>
+						</table>
+						<p>详细说明：</p>
+						<p>
+						<div class="detail-info">
+							<div>
+								<p>
+									本接口适用于将当前企业下的锁转移到任意的Populife用户账户下，转移后的锁所有权归目标所有，不可恢复，请慎重使用。
+								</p>
+							</div>
+						</div>
+						</p>
+						<p>返回示例：</p>
+						<div class="highlight">
+							<pre>
+                                <code class="json hljs">{"success":true,"code":200,"msg":null,"data":null}</code>
+                            </pre>
+						</div>
+					</div>
+					<div class="api-one">
+						<h3 id="eef374747a794848b282774d6d1d1641">获取密码列表</h3>
+						<p>请求方式：GET</p>
+						<p>请求地址：https://open.populife.co/api/password/list</p>
+
+
+						<table class="table table-hover">
+							<colgroup>
+								<col class="col-xs-2">
+								<col class="col-xs-1">
+								<col class="col-xs-1">
+								<col class="col-xs-7">
+								<col class="col-xs-2">
+							</colgroup>
+							<thead>
+								<tr>
+									<th><span class="label label-success">Query参数名</span></th>
+									<th>类型</th>
+									<th>必需</th>
+									<th>描述</th>
+									<th>示例 e.g.</th>
+								</tr>
+							</thead>
+							<tbody>
+								<tr>
+									<td>appKey</td>
+									<td>string</td>
+									<td>是</td>
+									<td>由Populife 开放平台提供的应用Key</td>
+									<td>9JQJEPC0ZR9TC4</td>
+								</tr>
+								<tr>
+									<td>accessToken</td>
+									<td>string</td>
+									<td>是</td>
+									<td>由Populife 开放平台授权的Access Token</td>
+									<td>1OWZiM2JlOTI0ZjE2MQ...==</td>
+								</tr>
+								<tr>
+									<td>lockId</td>
+									<td>string</td>
+									<td>是</td>
+									<td>Populife锁类产品的数字标识</td>
+									<td>3212108</td>
+								</tr>
+								<tr>
+									<td>pageNo</td>
+									<td>string</td>
+									<td>是</td>
+									<td>页码，起始值为1</td>
+									<td>1</td>
+								</tr>
+								<tr>
+									<td>pageSize</td>
+									<td>string</td>
+									<td>是</td>
+									<td>页数据行数，即每一页显示多少行数据</td>
+									<td>20</td>
+								</tr>
+							</tbody>
+						</table>
+
+
+						<p>详细说明：</p>
+						<p>
+						<div class="detail-info">
+							<div>
+								<p>获取用户其中一把锁的按键密码列表</p>
+							</div>
+						</div>
+						</p>
+						<p>返回示例：</p>
+						<div class="highlight">
+							<pre>
+                                <code class="json hljs">{
+    "success": true,
+    "code": 200,
+    "msg": null,
+    "data": [
+        {
+            "keyboardPwdId": 43859773,
+            "keyboardPwd": "06607711",
+            "keyboardPwdType": 2,
+            "startDate": null,
+            "endDate": null,
+            "createDate": 1590485654000,
+            "alias": "Home",
+            "sendUser": " 8613201812820",
+            "status": 2
+        }, {
+            "keyboardPwdId": 43859772,
+            "keyboardPwd": "06600532",
+            "keyboardPwdType": 3,
+            "startDate": 1590485653860,
+            "endDate": 1590485721300,
+            "createDate": 1590485654000,
+            "alias": "Office",
+            "sendUser": " 8613201812820",
+            "status": 2
+        }
+    ]
+}</code>
+                            </pre>
+						</div>
+						<table class="table table-hover" style="margin-top: 7px;">
+							<colgroup>
+								<col class="col-xs-4">
+								<col class="col-xs-8">
+							</colgroup>
+							<thead>
+								<tr>
+									<th style="padding-left: 0px;"><span class="label label-success">Response参数名</span></th>
+									<th>描述</th>
+									<th>类型</th>
+								</tr>
+							</thead>
+							<tbody>
+								<tr>
+									<td>data.keyboardPwdType</td>
+									<td>按键密码类型（1：单次，2：永久，3：限时，15：自定义-限时）</td>
+									<th>number</th>
+								</tr>
+								<tr>
+									<td>data.keyboardPwdId</td>
+									<td>密码ID</td>
+									<th>number</th>
+								</tr>
+								<tr>
+									<td>data.keyboardPwd</td>
+									<td>按键密码的开锁数字</td>
+									<th>string</th>
+								</tr>
+								<tr>
+									<td>data.startDate</td>
+									<td>按键密码的开始生效时间戳，GMT+8</td>
+									<th>number</th>
+								</tr>
+								<tr>
+									<td>data.endDate</td>
+									<td>按键密码的失效时间戳，GMT+8</td>
+									<th>number</th>
+								</tr>
+								<tr>
+									<td>data.sendUser</td>
+									<td>创建密码的用户</td>
+									<th>string</th>
+								</tr>
+								<tr>
+									<td>data.createDate</td>
+									<td>创建密码的时间</td>
+									<th>number</th>
+								</tr>
+								<tr>
+									<td>data.alias</td>
+									<td>密码别名</td>
+									<th>string</th>
+								</tr>
+								<tr>
+									<td>data.status</td>
+									<td>密码状态（0：删除，1：未激活，2：失效， 3：正常）</td>
+									<th>number</th>
+								</tr>
+							</tbody>
+						</table>
+					</div>
+					<div class="api-one">
+						<h3 id="58d8a308130b41198f69bc945c23fd6c">生成限期密码</h3>
+						<p>请求方式：POST</p>
+						<p>请求地址：https://open.populife.co/api/password/generate/deadline</p>
+
+						<table class="table table-hover">
+							<colgroup>
+								<col class="col-xs-2">
+								<col class="col-xs-1">
+								<col class="col-xs-1">
+								<col class="col-xs-3">
+								<col class="col-xs-6">
+							</colgroup>
+							<thead>
+								<tr>
+									<th><span class="label label-success">Header参数名</span></th>
+									<th>类型</th>
+									<th>必需</th>
+									<th>描述</th>
+									<th>示例 e.g.</th>
+								</tr>
+							</thead>
+							<tbody>
+								<tr>
+									<td>Content-Type</td>
+									<td>string</td>
+									<td>是</td>
+									<td></td>
+									<td>application/x-www-form-urlencoded;charset=utf-8</td>
+								</tr>
+							</tbody>
+						</table>
+
+
+						<table class="table table-hover">
+							<colgroup>
+								<col class="col-xs-2">
+								<col class="col-xs-1">
+								<col class="col-xs-1">
+								<col class="col-xs-3">
+								<col class="col-xs-6">
+							</colgroup>
+							<thead>
+								<tr>
+									<th><span class="label label-success">Body参数名</span></th>
+									<th>类型</th>
+									<th>必需</th>
+									<th>描述</th>
+									<th>示例 e.g.</th>
+								</tr>
+							</thead>
+							<tbody>
+								<tr>
+									<td>appKey</td>
+									<td>string</td>
+									<td>是</td>
+									<td>由Populife 开放平台提供的应用Key</td>
+									<td>9JQJEPC0ZR9TC4</td>
+								</tr>
+								<tr>
+									<td>accessToken</td>
+									<td>string</td>
+									<td>是</td>
+									<td>由Populife 开放平台授权的Access Token</td>
+									<td>1OWZiM2JlOTI0ZjE2MQ...==</td>
+								</tr>
+								<tr>
+									<td>lockId</td>
+									<td>string</td>
+									<td>是</td>
+									<td>Populife锁类产品的数字标识</td>
+									<td>371920</td>
+								</tr>
+								<tr>
+									<td>startDate</td>
+									<td>string</td>
+									<td>是</td>
+									<td>按键密码的开始生效时间（年月日小时）</td>
+									<td>2018-08-12 12:00</td>
+								</tr>
+								<tr>
+									<td>endDate</td>
+									<td>string</td>
+									<td>是</td>
+									<td>按键密码的失效时间（年月日小时）</td>
+									<td>2018-08-13 13:00</td>
+								</tr>
+								<tr>
+									<td>timeZone</td>
+									<td>string</td>
+									<td>是</td>
+									<td>密码有效期的时区</td>
+									<td>8</td>
+								</tr>
+								<tr>
+									<td>alias</td>
+									<td>string</td>
+									<td>否</td>
+									<td>密码别名</td>
+									<td>Home</td>
+								</tr>
+							</tbody>
+						</table>
+						<p>详细说明：</p>
+						<p>
+						<div class="detail-info">
+							<div>
+								<p>基于某个锁，生成一个某时间段内有效的密码。同一个锁在每一次初始化后，同一个时段内（相同的开始时间和结束时间）只能生成一次密码。 限时密码在生效时间后24小时内必须在锁上使用一次（以激活密码），否则该密码自动失效。 一个锁内可以同时存储的有效密码（所有密码类型）总数不超过150个。限时密码的时间精度是小时（00分整点生效以及失效）。 请基于不同国家地区，设置正确的GMT时区值。</p>
+							</div>
+						</div>
+						</p>
+						<p>返回示例：</p>
+						<div class="highlight">
+							<pre>
+                                <code class="json hljs">{
+    "success": true,
+    "code": 200,
+    "msg": null,
+    "data": {
+        "keyboardPwdId": 109954189,
+        "keyboardPwd": "93157137"
+    }
+}</code>
+                            </pre>
+						</div>
+						<table class="table table-hover" style="margin-top: 7px;">
+							<colgroup>
+								<col class="col-xs-4">
+								<col class="col-xs-8">
+							</colgroup>
+							<thead>
+								<tr>
+									<th style="padding-left: 0px;"><span class="label label-success">Response参数名</span></th>
+									<th>描述</th>
+									<th>类型</th>
+								</tr>
+							</thead>
+							<tbody>
+								<tr>
+									<td>data.keyboardPwdId</td>
+									<td>密码ID</td>
+									<th>number</th>
+								</tr>
+								<tr>
+									<td>data.keyboardPwd</td>
+									<td>按键密码的开锁数字</td>
+									<th>string</th>
+								</tr>
+							</tbody>
+						</table>
+					</div>
+					<div class="api-one">
+						<h3 id="dad917a69b6b492b9bc58da7eacc395a">生成永久密码</h3>
+						<p>请求方式：POST</p>
+						<p>请求地址：https://open.populife.co/api/password/generate/permanent</p>
+
+						<table class="table table-hover">
+							<colgroup>
+								<col class="col-xs-2">
+								<col class="col-xs-1">
+								<col class="col-xs-1">
+								<col class="col-xs-3">
+								<col class="col-xs-6">
+							</colgroup>
+							<thead>
+								<tr>
+									<th><span class="label label-success">Header参数名</span></th>
+									<th>类型</th>
+									<th>必需</th>
+									<th>描述</th>
+									<th>示例 e.g.</th>
+								</tr>
+							</thead>
+							<tbody>
+								<tr>
+									<td>Content-Type</td>
+									<td>string</td>
+									<td>是</td>
+									<td></td>
+									<td>application/x-www-form-urlencoded;charset=utf-8</td>
+								</tr>
+							</tbody>
+						</table>
+
+
+						<table class="table table-hover">
+							<colgroup>
+								<col class="col-xs-2">
+								<col class="col-xs-1">
+								<col class="col-xs-1">
+								<col class="col-xs-3">
+								<col class="col-xs-6">
+							</colgroup>
+							<thead>
+								<tr>
+									<th><span class="label label-success">Body参数名</span></th>
+									<th>类型</th>
+									<th>必需</th>
+									<th>描述</th>
+									<th>示例 e.g.</th>
+								</tr>
+							</thead>
+							<tbody>
+								<tr>
+									<td>appKey</td>
+									<td>string</td>
+									<td>是</td>
+									<td>由Populife 开放平台提供的应用Key</td>
+									<td>9JQJEPC0ZR9TC4</td>
+								</tr>
+								<tr>
+									<td>accessToken</td>
+									<td>string</td>
+									<td>是</td>
+									<td>由Populife 开放平台授权的Access Token</td>
+									<td>1OWZiM2JlOTI0ZjE2MQ...==</td>
+								</tr>
+								<tr>
+									<td>lockId</td>
+									<td>string</td>
+									<td>是</td>
+									<td>Populife锁类产品的数字标识</td>
+									<td>371920</td>
+								</tr>
+								<tr>
+									<td>alias</td>
+									<td>string</td>
+									<td>否</td>
+									<td>密码别名</td>
+									<td>Home</td>
+								</tr>
+							</tbody>
+						</table>
+						<p>详细说明：</p>
+						<p>
+						<div class="detail-info">
+							<div>
+								<p>基于某个锁，生成一个永久有效密码（除非删除密码或锁被重置，密码才会失效） 限时密码在生成后24小时内必须在锁上使用一次（以激活密码），否者该密码自动失效。 一个锁内可以同时存储的有效密码（所有密码类型）总数不超过150个。</p>
+							</div>
+						</div>
+						</p>
+						<p>返回示例：</p>
+						<div class="highlight">
+							<pre>
+                                <code class="json hljs">{
+    "success": true,
+    "code": 200,
+    "msg": null,
+    "data": {
+        "keyboardPwdId": 109954189,
+        "keyboardPwd": "93157137"
+    }
+}</code>
+                            </pre>
+						</div>
+						<table class="table table-hover" style="margin-top: 7px;">
+							<colgroup>
+								<col class="col-xs-4">
+								<col class="col-xs-8">
+							</colgroup>
+							<thead>
+								<tr>
+									<th style="padding-left: 0px;"><span class="label label-success">Response参数名</span></th>
+									<th>描述</th>
+									<th>类型</th>
+								</tr>
+							</thead>
+							<tbody>
+								<tr>
+									<td>data.keyboardPwdId</td>
+									<td>密码ID</td>
+									<th>number</th>
+								</tr>
+								<tr>
+									<td>data.keyboardPwd</td>
+									<td>按键密码的开锁数字</td>
+									<th>string</th>
+								</tr>
+							</tbody>
+						</table>
+					</div>
+					<div class="api-one">
+						<h3 id="51a26b1a33b74ae8b5fe223e6fbaa55f">生成一次性密码</h3>
+						<p>请求方式：POST</p>
+						<p>请求地址：https://open.populife.co/api/password/generate/oneTime</p>
+
+						<table class="table table-hover">
+							<colgroup>
+								<col class="col-xs-2">
+								<col class="col-xs-1">
+								<col class="col-xs-1">
+								<col class="col-xs-3">
+								<col class="col-xs-6">
+							</colgroup>
+							<thead>
+								<tr>
+									<th><span class="label label-success">Header参数名</span></th>
+									<th>类型</th>
+									<th>必需</th>
+									<th>描述</th>
+									<th>示例 e.g.</th>
+								</tr>
+							</thead>
+							<tbody>
+								<tr>
+									<td>Content-Type</td>
+									<td>string</td>
+									<td>是</td>
+									<td></td>
+									<td>application/x-www-form-urlencoded;charset=utf-8</td>
+								</tr>
+							</tbody>
+						</table>
+
+
+						<table class="table table-hover">
+							<colgroup>
+								<col class="col-xs-2">
+								<col class="col-xs-1">
+								<col class="col-xs-1">
+								<col class="col-xs-3">
+								<col class="col-xs-6">
+							</colgroup>
+							<thead>
+								<tr>
+									<th><span class="label label-success">Body参数名</span></th>
+									<th>类型</th>
+									<th>必需</th>
+									<th>描述</th>
+									<th>示例 e.g.</th>
+								</tr>
+							</thead>
+							<tbody>
+								<tr>
+									<td>appKey</td>
+									<td>string</td>
+									<td>是</td>
+									<td>由Populife 开放平台提供的应用Key</td>
+									<td>9JQJEPC0ZR9TC4</td>
+								</tr>
+								<tr>
+									<td>accessToken</td>
+									<td>string</td>
+									<td>是</td>
+									<td>由Populife 开放平台授权的Access Token</td>
+									<td>1OWZiM2JlOTI0ZjE2MQ...==</td>
+								</tr>
+								<tr>
+									<td>lockId</td>
+									<td>string</td>
+									<td>是</td>
+									<td>Populife锁类产品的数字标识</td>
+									<td>371920</td>
+								</tr>
+								<tr>
+									<td>alias</td>
+									<td>string</td>
+									<td>否</td>
+									<td>密码别名</td>
+									<td>Home</td>
+								</tr>
+							</tbody>
+						</table>
+						<p>详细说明：</p>
+						<p>
+						<div class="detail-info">
+							<div>
+								<p>基于某个锁，生成一个开锁一次即自动失效的密码。 单次密码必须在生成后6小时内在锁上使用，否则自动失效。 一个锁内可以同时存储的有效密码（所有密码类型）总数不超过150个。</p>
+							</div>
+						</div>
+						</p>
+						<p>返回示例：</p>
+						<div class="highlight">
+							<pre>
+                                <code class="json hljs">{
+    "success": true,
+    "code": 200,
+    "msg": null,
+    "data": {
+        "keyboardPwdId": 109954189,
+        "keyboardPwd": "93157137"
+    }
+}</code>
+                            </pre>
+						</div>
+						<table class="table table-hover" style="margin-top: 7px;">
+							<colgroup>
+								<col class="col-xs-4">
+								<col class="col-xs-8">
+							</colgroup>
+							<thead>
+								<tr>
+									<th style="padding-left: 0px;"><span class="label label-success">Response参数名</span></th>
+									<th>描述</th>
+									<th>类型</th>
+								</tr>
+							</thead>
+							<tbody>
+								<tr>
+									<td>data.keyboardPwdId</td>
+									<td>密码ID</td>
+									<th>number</th>
+								</tr>
+								<tr>
+									<td>data.keyboardPwd</td>
+									<td>按键密码的开锁数字</td>
+									<th>string</th>
+								</tr>
+							</tbody>
+						</table>
+					</div>
+					<h1 id="t_api_doc">附录</h1>
+					<div class="api-one">
+						<h3 id="errorcodes">状态码</h3>
+
+						<table class="table table-hover" style="margin-top: 7px;">
+							<colgroup>
+								<col class="col-xs-4">
+								<col class="col-xs-8">
+							</colgroup>
+							<thead>
+								<tr>
+									<th>状态码</th>
+									<th>描述</th>
+								</tr>
+							</thead>
+							<tbody>
+								<tr>
+									<td>200</td>
+									<td>成功</td>
+								</tr>
+								<tr>
+									<td>900</td>
+									<td>必填参数缺失</td>
+								</tr>
+								<tr>
+									<td>500</td>
+									<td>服务器内部错误</td>
+								</tr>
+								<tr>
+									<td>910</td>
+									<td>无效的参数</td>
+								</tr>
+							</tbody>
+						</table>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+
+</body>
+
+<script type="text/javascript"></script>
+
+</html>

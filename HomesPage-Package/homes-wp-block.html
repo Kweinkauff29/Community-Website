@@ -1,18 +1,22 @@
-<!DOCTYPE html>
-<html lang="en">
-
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Find Your Home - Bonita Springs & Estero</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="" />
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.5.3/MarkerCluster.css" />
-  <link rel="stylesheet"
-    href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.5.3/MarkerCluster.Default.css" />
+<!-- BSER IDX WordPress Block -->
+<!-- 
+  Paste this entire block into a "Custom HTML" block in your WordPress page.
+  This version has structural tags removed to prevent editor crashes.
+-->
+<div id="bser-idx-wp-container">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" />
+<style>
+/* Scoped adjustments for WordPress inclusion */
+#bser-idx-wp-container {
+    min-height: 800px;
+    background: #f5f6f8;
+    position: relative;
+    z-index: 1;
+}
+/* Override potential theme conflicts */
+#bser-idx-wp-container * { box-sizing: border-box; }
+</style>
   <style>
     :root {
       --primary: #1a2a3a;
@@ -1878,9 +1882,9 @@
       pointer-events: none;
     }
   </style>
-</head>
 
-<body>
+
+<div id="bser-idx-content-inner">
 
   <!-- Loading Overlay -->
   <div class="loading-overlay hidden" id="loadingOverlay">
@@ -1903,7 +1907,7 @@
   <!-- Header -->
   <div id="top-bar">
     <div id="bar-width">
-      <a href="https://bonitaspringsesterolifestyles.com/" class="brand-wrapper">
+      <a href="/" class="brand-wrapper">
         <img class="ber-logo"
           src="https://www.bonitaesterorealtors.com/wp-content/uploads/2021/08/Untitled-design-24.png" alt="BSER">
         <div class="bser-title">BSER Lifestyles</div>
@@ -1912,7 +1916,7 @@
         <li><a href="https://bonitaspringsesterolifestyles.com/communities/">Communities</a></li>
         <li><a href="http://bonitaspringsesterorealtorsfl.growthzoneapp.com/realtordirectory/Find">Find a REALTOR</a>
         </li>
-        <li><a href="https://coconutcoastopenhouses.com/home-search/">Homes For Sale</a></li>
+        <li><a href="/homes.html">Homes For Sale</a></li>
         <li><a href="https://bonitaspringsesterolifestyles.com/city-info/">City Info</a></li>
       </ul>
     </div>
@@ -3140,6 +3144,9 @@
     }
     function hideLoadingOverlay() { showLoading(false); }
   </script>
-</body>
 
-</html>
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.5.3/leaflet.markercluster.js"></script>
+</div>
