@@ -259,30 +259,37 @@
       height: 40px;
       margin: 15px 0 25px;
       padding: 0 10px;
+      box-sizing: border-box;
     }
 
     .dual-slider-track {
       position: absolute;
+      left: 10px;
       width: calc(100% - 20px);
       height: 4px;
       background: #ddd;
       top: 50%;
       transform: translateY(-50%);
       border-radius: 2px;
+      z-index: 1;
     }
 
     .dual-slider-range {
       position: absolute;
+      left: 10px;
+      width: calc(100% - 20px);
       height: 4px;
       background: var(--accent);
       top: 50%;
       transform: translateY(-50%);
       border-radius: 2px;
+      z-index: 2;
     }
 
     .dual-slider-input {
       position: absolute;
-      width: 100%;
+      left: 10px;
+      width: calc(100% - 20px);
       height: 18px;
       top: 50%;
       transform: translateY(-50%);
@@ -291,7 +298,7 @@
       -webkit-appearance: none;
       appearance: none;
       margin: 0;
-      z-index: 2;
+      z-index: 3;
     }
 
     .dual-slider-input::-webkit-slider-thumb {
@@ -324,7 +331,19 @@
       max-width: 1600px;
       margin: 0 auto;
       padding: 0 16px;
-      flex-wrap: wrap
+    }
+
+    .filter-row-top {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex: 1;
+    }
+
+    .filter-row-bottom {
+      display: flex;
+      align-items: center;
+      gap: 10px;
     }
 
     .filter-dropdown-wrap {
@@ -551,7 +570,6 @@
     }
 
     .listings-section {
-      width: 420px;
       overflow-y: auto;
       background: #f9fafb;
       border-left: 1px solid #eee
@@ -576,6 +594,11 @@
       height: auto !important;
       box-shadow: none !important;
       border: none !important
+    }
+
+    .spacer-top {
+      height: 50px;
+      display: block;
     }
 
     .listing-card {
@@ -1256,76 +1279,479 @@
     }
 
     @media(max-width:900px) {
-      #bar-width {
-        justify-content: space-between
+      body {
+        padding-top: 215px !important;
+        padding-bottom: 0 !important;
+        overflow-x: hidden !important;
+      }
+
+      #top-bar {
+        position: fixed !important;
+        top: 0;
+        left: 0;
+        right: 0;
+        z-index: 10000;
+        height: 52px;
+        background: #111 !important;
+        display: flex !important;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
       }
 
       .hamburger {
-        display: block
-      }
-
-      .main-container {
-        flex-direction: column;
-        height: auto;
-      }
-
-      .map-section {
-        height: 400px;
-        min-height: 400px;
-        order: 1;
         display: block !important;
-        flex: none
-      }
-
-      #map {
-        height: 400px !important;
-        min-height: 400px !important;
-        width: 100%
-      }
-
-      .listings-section {
-        width: 100%;
-        max-height: none;
-        order: 2
+        color: #fff !important;
       }
 
       .navbar-expand-md {
-        display: none
+        display: none !important;
       }
 
-      .event-inner {
-        flex-direction: column;
-        gap: 12px;
-        padding: 10px
+      .mobile-menu {
+        z-index: 35000 !important;
+        padding: 40px 20px 20px !important;
+      }
+
+      .menu-overlay {
+        z-index: 34000 !important;
       }
 
       .event-banner {
-        padding: 12px 16px
+        position: fixed !important;
+        top: 52px !important;
+        left: 0;
+        right: 0;
+        height: 40px !important;
+        padding: 5px 10px !important;
+        z-index: 9900 !important;
+        display: flex !important;
+        align-items: center;
+        justify-content: center;
+        background: #1e3a5f !important;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        overflow: hidden !important;
+      }
+
+      .event-text {
+        font-size: 0.65rem !important;
+        margin: 0 !important;
+        color: #fff !important;
       }
 
       .promo-logo {
-        height: 60px
+        height: 22px !important;
+        background: #fff;
+        padding: 2px 6px !important;
       }
 
-      .event-footer-inner {
-        flex-direction: column;
-        gap: 30px
-      }
-
-      .tile-grid {
-        grid-template-columns: 1fr
+      .promo-cta,
+      .event-dates {
+        display: none !important;
       }
 
       .date-tiles-container {
-        top: 52px;
-        position: sticky;
-        z-index: 800
+        position: fixed !important;
+        top: 92px !important;
+        left: 0;
+        right: 0;
+        height: 55px !important;
+        z-index: 9800 !important;
+        background: #fff;
+        border-bottom: 1px solid #ddd;
+        padding: 4px 0 !important;
+      }
+
+      .date-tiles-inner {
+        gap: 8px !important;
+        padding: 0 10px !important;
+      }
+
+      .date-tile {
+        padding: 2px 4px !important;
+        min-width: 55px !important;
+        border-radius: 6px !important;
+        height: 45px !important;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+      }
+
+      .date-tile .tile-day {
+        font-size: 0.6rem !important;
+        margin: 0 !important;
+      }
+
+      .date-tile .tile-date {
+        font-size: 0.45rem !important;
+        margin: 0 !important;
+      }
+
+      .date-tile .tile-count {
+        font-size: 0.4rem !important;
+        margin: 0 !important;
       }
 
       .filters-container {
-        top: 133px;
-        position: sticky;
-        z-index: 750
+        position: fixed !important;
+        top: 147px !important;
+        left: 0;
+        right: 0;
+        height: auto !important;
+        z-index: 9700 !important;
+        background: #fff;
+        border-bottom: 2px solid var(--accent);
+        padding: 4px 0 !important;
+      }
+
+      .filters-outer {
+        flex-direction: column !important;
+        gap: 4px !important;
+        padding: 0 10px !important;
+        align-items: stretch !important;
+      }
+
+      .filter-row-top {
+        gap: 5px !important;
+        overflow-x: auto !important;
+        padding-bottom: 2px;
+        width: 100% !important;
+        flex: none !important;
+      }
+
+      .filter-row-bottom {
+        justify-content: space-between !important;
+        background: #f0f4f8;
+        padding: 4px 8px !important;
+        border-radius: 6px;
+        width: 100% !important;
+      }
+
+      .search-input-wrap input {
+        width: 90px !important;
+        font-size: 0.65rem !important;
+        padding: 4px 8px 4px 28px !important;
+        height: 28px !important;
+      }
+
+      .search-input-wrap i {
+        left: 8px !important;
+        font-size: 0.7rem !important;
+      }
+
+      .filter-dropdown-btn {
+        padding: 4px 6px !important;
+        font-size: 0.6rem !important;
+        height: 28px !important;
+        border-radius: 6px !important;
+      }
+
+      .route-toggle-btn {
+        padding: 4px 8px !important;
+        font-size: 0.65rem !important;
+        height: 28px !important;
+        border-radius: 6px !important;
+      }
+
+      #clearBtn {
+        padding: 4px 8px !important;
+        font-size: 0.65rem !important;
+        height: 28px !important;
+        border-radius: 20px !important;
+      }
+
+      #resultsCount {
+        font-size: 0.65rem !important;
+        margin: 0 !important;
+      }
+
+      .main-container {
+        display: block !important;
+        margin-top: 0 !important;
+      }
+
+      .map-section {
+        height: 400px !important;
+        z-index: 10;
+        margin: 0 !important;
+      }
+
+      .listings-section {
+        position: sticky !important;
+        bottom: 0 !important;
+        height: 155px !important;
+        background: #fff;
+        z-index: 9000 !important;
+        border-top: 2px solid var(--accent);
+        overflow-x: auto !important;
+        box-shadow: 0 -5px 15px rgba(0, 0, 0, 0.1);
+      }
+
+      .listings-grid {
+        display: flex !important;
+        flex-wrap: nowrap !important;
+        padding: 6px !important;
+        gap: 6px !important;
+        width: max-content !important;
+      }
+
+      .listing-card {
+        width: 130px !important;
+        height: 140px !important;
+        flex-shrink: 0 !important;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1) !important;
+      }
+
+      .card-img-wrap {
+        height: 55px !important;
+      }
+
+      .card-body {
+        padding: 4px !important;
+        gap: 1px !important;
+      }
+
+      .card-price {
+        font-size: 0.8rem !important;
+      }
+
+      .card-addr {
+        font-size: 0.6rem !important;
+      }
+
+      .card-stats {
+        font-size: 0.55rem !important;
+        gap: 4px !important;
+        margin: 0 !important;
+      }
+
+      .card-agent,
+      .card-oh-badge,
+      .card-img-count {
+        display: none !important;
+      }
+
+      .add-route-btn {
+        padding: 3px !important;
+        font-size: 0.6rem !important;
+        margin-top: auto !important;
+        width: 100% !important;
+        border-radius: 4px !important;
+      }
+
+      .event-footer {
+        position: relative !important;
+        z-index: 100 !important;
+        padding-top: 20px !important;
+      }
+
+      .spacer-top {
+        height: 15px !important;
+      }
+    }
+
+    #timeBtn.has-value {
+      border-color: var(--accent);
+      color: var(--accent);
+      background: var(--accent-light);
+    }
+
+    .route-sidebar {
+      position: fixed;
+      top: 0;
+      right: -400px;
+      width: 380px;
+      max-width: 100%;
+      height: 100vh;
+      background: #fff;
+      box-shadow: -5px 0 15px rgba(0, 0, 0, 0.1);
+      z-index: 11000;
+      transition: right 0.3s ease;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .route-sidebar.open {
+      right: 0;
+    }
+
+    .route-header {
+      padding: 20px;
+      background: var(--primary);
+      color: #fff;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .route-header h3 {
+      margin: 0;
+      font-size: 1.1rem;
+    }
+
+    .route-close {
+      background: none;
+      border: none;
+      color: #fff;
+      font-size: 1.5rem;
+      cursor: pointer;
+    }
+
+    .route-body {
+      flex: 1;
+      overflow-y: auto;
+      padding: 15px;
+    }
+
+    .route-item {
+      display: flex;
+      gap: 12px;
+      padding: 12px;
+      border-bottom: 1px solid #eee;
+      align-items: center;
+    }
+
+    .route-item img {
+      width: 50px;
+      height: 50px;
+      object-fit: cover;
+      border-radius: 6px;
+    }
+
+    .route-item-info {
+      flex: 1;
+    }
+
+    .route-item-time {
+      font-size: 0.7rem;
+      color: var(--accent);
+      font-weight: 700;
+      margin-bottom: 2px;
+    }
+
+    .route-item-addr {
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: #333;
+    }
+
+    .route-item-remove {
+      background: none;
+      border: none;
+      color: #ff4444;
+      cursor: pointer;
+      padding: 5px;
+    }
+
+    .route-footer {
+      padding: 20px;
+      border-top: 1px solid #eee;
+      background: #f9f9f9;
+    }
+
+    .route-optimize-btn {
+      width: 100%;
+      padding: 14px;
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      border-radius: 10px;
+      font-weight: 700;
+      cursor: pointer;
+      font-size: 0.9rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+    }
+
+    .route-optimize-btn:hover {
+      background: #1e7fa3;
+    }
+
+    .route-toggle-btn {
+      margin-left: 10px;
+      padding: 8px 14px;
+      background: var(--primary);
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.85rem;
+      transition: transform 0.2s;
+    }
+
+    .route-toggle-btn:hover {
+      transform: scale(1.02);
+    }
+
+    .route-count-badge {
+      background: var(--accent);
+      color: #fff;
+      padding: 2px 6px;
+      border-radius: 10px;
+      font-size: 0.7rem;
+    }
+
+    .add-route-btn {
+      margin-top: 10px;
+      width: 100%;
+      padding: 8px;
+      background: #f0f2f5;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+    }
+
+    .add-route-btn i {
+      font-size: 0.8rem;
+    }
+
+    .add-route-btn:hover {
+      background: #e4e6e9;
+      border-color: #ccc;
+    }
+
+    .add-route-btn.active {
+      background: var(--success);
+      color: #fff;
+      border-color: var(--success);
+    }
+
+    @media (max-width: 768px) {
+      .route-sidebar {
+        width: 100% !important;
+        max-width: 100% !important;
+        right: -100% !important;
+      }
+
+      .route-sidebar.open {
+        right: 0 !important;
+      }
+
+      .route-toggle-btn {
+        margin-left: 0;
+        padding: 6px 10px;
+        font-size: 0.75rem;
+      }
+
+      .route-header {
+        padding: 15px;
+      }
+
+      .route-body {
+        padding: 10px;
       }
     }
   </style>
@@ -1355,11 +1781,11 @@
   </div>
   <div class="menu-overlay" id="menuOverlay"></div>
 
-  <div style="height: 52px;"></div> <!-- Spacer for fixed header -->
+  <div class="spacer-top"></div> <!-- Fixed Header Spacer -->
 
   <div class="event-banner">
     <div class="event-inner">
-      <div class="event-text">🏡 <strong>Open House Weekend</strong> — Presented by</div>
+      <div class="event-text"><strong>Open House Weekend</strong> — Presented by</div>
       <a href="https://stateinsuranceusa.com/" target="_blank" rel="noopener">
         <img class="promo-logo" src="https://stateinsuranceusa.com/wp-content/uploads/2023/01/logo-1.png"
           alt="State Insurance USA">
@@ -1380,78 +1806,98 @@
 
   <div class="filters-container">
     <div class="filters-outer">
-      <div class="search-input-wrap">
-        <i class="fas fa-search"></i>
-        <input type="text" id="searchInput" placeholder="Address, ZIP, MLS...">
-      </div>
-      <div class="filter-dropdown-wrap">
-        <button class="filter-dropdown-btn" id="priceBtn">Price</button>
-        <div class="filter-dropdown-panel" id="pricePanel" style="width:280px">
-          <div class="price-slider-wrap">
-            <label>Price Range</label>
-            <div class="dual-slider-container">
-              <div class="dual-slider-track"></div>
-              <div class="dual-slider-range" id="priceRangeFill"></div>
-              <input type="range" class="dual-slider-input" id="priceMinSlider" min="0" max="5000000" step="25000"
-                value="0">
-              <input type="range" class="dual-slider-input" id="priceMaxSlider" min="0" max="5000000" step="25000"
-                value="5000000">
+      <div class="filter-row-top">
+        <div class="search-input-wrap">
+          <i class="fas fa-search"></i>
+          <input type="text" id="searchInput" placeholder="Address, ZIP, MLS...">
+        </div>
+        <div class="filter-dropdown-wrap">
+          <button class="filter-dropdown-btn" id="priceBtn">Price</button>
+          <div class="filter-dropdown-panel" id="pricePanel" style="width:280px">
+            <div class="price-slider-wrap">
+              <label>Price Range</label>
+              <div class="dual-slider-container">
+                <div class="dual-slider-track"></div>
+                <div class="dual-slider-range" id="priceRangeFill"></div>
+                <input type="range" class="dual-slider-input" id="priceMinSlider" min="0" max="5000000" step="25000"
+                  value="0">
+                <input type="range" class="dual-slider-input" id="priceMaxSlider" min="0" max="5000000" step="25000"
+                  value="5000000">
+              </div>
+              <div class="price-display" id="priceDisplay">$0 – $5,000,000+</div>
             </div>
-            <div class="price-display" id="priceDisplay">$0 – $5,000,000+</div>
+            <button class="apply-btn" id="priceApply">Apply</button>
           </div>
-          <button class="apply-btn" id="priceApply">Apply</button>
         </div>
-      </div>
-      <div class="filter-dropdown-wrap">
-        <button class="filter-dropdown-btn" id="bedsBtn">Beds</button>
-        <div class="filter-dropdown-panel" id="bedsPanel" style="width:260px">
-          <label>Bedrooms</label>
-          <div class="filter-btn-group" id="bedsGroup">
-            <button class="filter-option-btn selected" data-val="0">Any</button>
-            <button class="filter-option-btn" data-val="1">1+</button>
-            <button class="filter-option-btn" data-val="2">2+</button>
-            <button class="filter-option-btn" data-val="3">3+</button>
-            <button class="filter-option-btn" data-val="4">4+</button>
+        <div class="filter-dropdown-wrap">
+          <button class="filter-dropdown-btn" id="bedsBtn">Beds</button>
+          <div class="filter-dropdown-panel" id="bedsPanel" style="width:260px">
+            <label>Bedrooms</label>
+            <div class="filter-btn-group" id="bedsGroup">
+              <button class="filter-option-btn selected" data-val="0">Any</button>
+              <button class="filter-option-btn" data-val="1">1+</button>
+              <button class="filter-option-btn" data-val="2">2+</button>
+              <button class="filter-option-btn" data-val="3">3+</button>
+              <button class="filter-option-btn" data-val="4">4+</button>
+            </div>
+            <button class="apply-btn" id="bedsApply">Apply</button>
           </div>
-          <button class="apply-btn" id="bedsApply">Apply</button>
         </div>
-      </div>
-      <div class="filter-dropdown-wrap">
-        <button class="filter-dropdown-btn" id="bathsBtn">Baths</button>
-        <div class="filter-dropdown-panel" id="bathsPanel" style="width:240px">
-          <label>Bathrooms</label>
-          <div class="filter-btn-group" id="bathsGroup">
-            <button class="filter-option-btn selected" data-val="0">Any</button>
-            <button class="filter-option-btn" data-val="1">1+</button>
-            <button class="filter-option-btn" data-val="2">2+</button>
-            <button class="filter-option-btn" data-val="3">3+</button>
+        <div class="filter-dropdown-wrap">
+          <button class="filter-dropdown-btn" id="bathsBtn">Baths</button>
+          <div class="filter-dropdown-panel" id="bathsPanel" style="width:240px">
+            <label>Bathrooms</label>
+            <div class="filter-btn-group" id="bathsGroup">
+              <button class="filter-option-btn selected" data-val="0">Any</button>
+              <button class="filter-option-btn" data-val="1">1+</button>
+              <button class="filter-option-btn" data-val="2">2+</button>
+              <button class="filter-option-btn" data-val="3">3+</button>
+            </div>
+            <button class="apply-btn" id="bathsApply">Apply</button>
           </div>
-          <button class="apply-btn" id="bathsApply">Apply</button>
         </div>
-      </div>
-      <div class="filter-dropdown-wrap">
-        <button class="filter-dropdown-btn" id="cityBtn">All Cities</button>
-        <div class="filter-dropdown-panel" id="cityPanel">
-          <div id="cityList" style="max-height:300px;overflow-y:auto;display:flex;flex-direction:column;gap:5px">
-            <span style="color:#888;font-size:0.75rem;padding:5px">Loading cities...</span>
+        <div class="filter-dropdown-wrap">
+          <button class="filter-dropdown-btn" id="cityBtn">All Cities</button>
+          <div class="filter-dropdown-panel" id="cityPanel">
+            <div id="cityList" style="max-height:300px;overflow-y:auto;display:flex;flex-direction:column;gap:5px">
+              <span style="color:#888;font-size:0.75rem;padding:5px">Loading cities...</span>
+            </div>
+            <button class="apply-btn" id="cityApply">Apply</button>
           </div>
-          <button class="apply-btn" id="cityApply">Apply</button>
+        </div>
+        <div class="filter-dropdown-wrap">
+          <button class="filter-dropdown-btn" id="timeBtn">Timeframe</button>
+          <div class="filter-dropdown-panel" id="timePanel" style="width:240px">
+            <label>Time of Day</label>
+            <div class="filter-btn-group" id="timeGroup">
+              <button class="filter-option-btn selected" data-val="any">Any</button>
+              <button class="filter-option-btn" data-val="morning">Morning</button>
+              <button class="filter-option-btn" data-val="afternoon">Afternoon</button>
+              <button class="filter-option-btn" data-val="evening">Evening</button>
+            </div>
+            <button class="apply-btn" id="timeApply">Apply</button>
+          </div>
+        </div>
+        <div class="filter-dropdown-wrap">
+          <button class="filter-dropdown-btn" id="sortBtn">Soonest</button>
+          <div class="filter-dropdown-panel" id="sortPanel">
+            <label><input type="radio" name="sort" value="dateAsc" checked> Soonest First</label>
+            <label><input type="radio" name="sort" value="priceDesc"> Price: High → Low</label>
+            <label><input type="radio" name="sort" value="priceAsc"> Price: Low → High</label>
+            <button class="apply-btn" id="sortApply">Apply</button>
+          </div>
         </div>
       </div>
-      <div class="filter-dropdown-wrap">
-        <button class="filter-dropdown-btn" id="sortBtn">Sort: Soonest</button>
-        <div class="filter-dropdown-panel" id="sortPanel">
-          <label><input type="radio" name="sort" value="dateAsc" checked> Soonest First</label>
-          <label><input type="radio" name="sort" value="priceDesc"> Price: High → Low</label>
-          <label><input type="radio" name="sort" value="priceAsc"> Price: Low → High</label>
-          <button class="apply-btn" id="sortApply">Apply</button>
+      <div class="filter-row-bottom">
+        <button class="search-btn secondary" id="clearBtn">Clear</button>
+        <div id="resultsCount" class="results-count">Loading...</div>
+        <button class="route-toggle-btn" id="routeToggle">
+          <i class="fas fa-route"></i> My Route (<span id="routeCount">0</span>)
+        </button>
+        <div class="view-toggle">
+          <button class="active" id="viewMap" title="Map View"><i class="fas fa-map"></i></button>
+          <button id="viewTile" title="Tile View"><i class="fas fa-th-large"></i></button>
         </div>
-      </div>
-      <button class="search-btn secondary" id="clearBtn">Clear</button>
-      <div class="results-count"><span id="resultsCount">Loading...</span></div>
-      <div class="view-toggle">
-        <button class="active" id="viewMap" title="Map View"><i class="fas fa-map"></i></button>
-        <button id="viewTile" title="Tile View"><i class="fas fa-th-large"></i></button>
       </div>
     </div>
   </div>
@@ -1475,8 +1921,7 @@
       </div>
       <div class="detail-gallery-thumbs" id="detailThumbs"></div>
       <div class="detail-body">
-        <div class="detail-oh-banner" id="detailOhBanner"><i class="fas fa-door-open"></i> <span
-            id="detailOhText"></span></div>
+        <div class="detail-oh-banner" id="detailOhBanner"><span id="detailOhText"></span></div>
         <div class="detail-price" id="detailPrice"></div>
         <div class="detail-addr" id="detailAddr"></div>
         <div class="detail-badges" id="detailBadges"></div>
@@ -1550,6 +1995,26 @@
     </div>
   </div>
 
+
+  <div class="route-sidebar" id="routeSidebar">
+    <div class="route-header">
+      <h3>My Optimized Route</h3>
+      <button class="route-close" id="routeClose">&times;</button>
+    </div>
+    <div class="route-body" id="routeBody">
+      <!-- Route items injected here -->
+      <div style="text-align:center;color:#888;padding:40px">
+        <i class="fas fa-map-marked-alt" style="font-size:2rem;margin-bottom:15px;display:block"></i>
+        Your route is empty.<br>Add some open houses to get optimized directions!
+      </div>
+    </div>
+    <div class="route-footer">
+      <button class="route-optimize-btn" id="routeOptimizeBtn">
+        <i class="fas fa-magic"></i> Get Optimized Directions
+      </button>
+    </div>
+  </div>
+
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.5.3/leaflet.markercluster.js"></script>
   <script>
@@ -1583,11 +2048,12 @@
 
     let map, markerCluster, allMerged = [], filteredList = [], mediaCache = new Map(), currentDetail = null, detailIdx = 0;
     let currentBeds = 0, currentBaths = 0, currentPriceMin = 0, currentPriceMax = 5000000, activeDay = null, viewMode = 'map';
+    let userRoute = [], currentTimeframe = 'any';
     const fmt = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 });
     const kFmt = n => { if (n >= 1e6) return '$' + (n / 1e6).toFixed(1) + 'm'; if (n >= 1e3) return '$' + (n / 1e3).toFixed(0) + 'k'; return '$' + n; };
     const dtDay = new Intl.DateTimeFormat('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
     const dtHM = new Intl.DateTimeFormat('en-US', { hour: 'numeric', minute: '2-digit' });
-    function formatOH(s, e) { if (!s) return ''; try { const sd = new Date(s); return e ? `${dtDay.format(sd)} • ${dtHM.format(sd)}–${dtHM.format(new Date(e))}` : `${dtDay.format(sd)} • ${dtHM.format(sd)}`; } catch { return ''; } }
+    function formatOH(s, e) { if (!s) return ''; try { const sd = new Date(s); let txt = e ? `${dtDay.format(sd)} • ${dtHM.format(sd)}–${dtHM.format(new Date(e))}` : `${dtDay.format(sd)} • ${dtHM.format(sd)}`; return txt.replace(/🚪|fas fa-door-open/g, ''); } catch { return ''; } }
 
     async function fetchJSON(url) { for (let i = 0; i < 3; i++) { const r = await fetch(url); if (r.status === 429) { await new Promise(r => setTimeout(r, 3000)); continue; } if (!r.ok) throw new Error(r.status); return r.json(); } }
 
@@ -1629,6 +2095,9 @@
       document.getElementById('bedsBtn').textContent = beds ? beds + '+ Beds' : 'Beds'; document.getElementById('bedsBtn').classList.toggle('has-value', beds > 0);
       const baths = +(document.querySelector('#bathsGroup .selected')?.dataset.val || 0);
       document.getElementById('bathsBtn').textContent = baths ? baths + '+ Baths' : 'Baths'; document.getElementById('bathsBtn').classList.toggle('has-value', baths > 0);
+      const timeLabels = { any: 'Timeframe', morning: 'Morning', afternoon: 'Afternoon', evening: 'Evening' };
+      document.getElementById('timeBtn').textContent = timeLabels[currentTimeframe] || 'Timeframe';
+      document.getElementById('timeBtn').classList.toggle('has-value', currentTimeframe !== 'any');
       const cities = [...document.querySelectorAll('#cityList input:checked')].map(c => c.value);
       const totalCities = document.querySelectorAll('#cityList input[type="checkbox"]').length;
       document.getElementById('cityBtn').textContent = (cities.length === totalCities || cities.length === 0) ? 'All Cities' : (cities.length < 3 ? cities.join(', ') : `${cities.length} Cities`);
@@ -1642,7 +2111,7 @@
       document.querySelectorAll('.filter-dropdown-btn').forEach(btn => { btn.onclick = e => { e.stopPropagation(); const p = btn.nextElementSibling; document.querySelectorAll('.filter-dropdown-panel').forEach(x => { if (x !== p) x.classList.remove('open'); }); p.classList.toggle('open'); }; });
       document.querySelectorAll('.filter-dropdown-panel').forEach(p => { p.onclick = e => e.stopPropagation(); });
       document.addEventListener('click', () => document.querySelectorAll('.filter-dropdown-panel').forEach(p => p.classList.remove('open')));
-      ['bedsGroup', 'bathsGroup'].forEach(g => { document.getElementById(g).querySelectorAll('.filter-option-btn').forEach(b => { b.onclick = () => { document.getElementById(g).querySelectorAll('.filter-option-btn').forEach(x => x.classList.remove('selected')); b.classList.add('selected'); }; }); });
+      ['bedsGroup', 'bathsGroup', 'timeGroup'].forEach(g => { document.getElementById(g).querySelectorAll('.filter-option-btn').forEach(b => { b.onclick = () => { document.getElementById(g).querySelectorAll('.filter-option-btn').forEach(x => x.classList.remove('selected')); b.classList.add('selected'); }; }); });
       document.getElementById('priceMinSlider').oninput = updateFilterLabels;
       document.getElementById('priceMaxSlider').oninput = updateFilterLabels;
       document.getElementById('priceApply').onclick = () => {
@@ -1653,18 +2122,25 @@
       document.getElementById('bedsApply').onclick = () => { currentBeds = +(document.querySelector('#bedsGroup .selected').dataset.val); updateFilterLabels(); applyFilters(); document.getElementById('bedsPanel').classList.remove('open'); };
       document.getElementById('bathsApply').onclick = () => { currentBaths = +(document.querySelector('#bathsGroup .selected').dataset.val); updateFilterLabels(); applyFilters(); document.getElementById('bathsPanel').classList.remove('open'); };
       document.getElementById('cityApply').onclick = () => { updateFilterLabels(); applyFilters(); document.getElementById('cityPanel').classList.remove('open'); };
+      document.getElementById('timeApply').onclick = () => { currentTimeframe = (document.querySelector('#timeGroup .selected')?.dataset?.val || 'any'); updateFilterLabels(); applyFilters(); document.getElementById('timePanel').classList.remove('open'); };
       document.getElementById('sortApply').onclick = () => { updateFilterLabels(); applyFilters(); document.getElementById('sortPanel').classList.remove('open'); };
       document.getElementById('clearBtn').onclick = () => {
         document.getElementById('priceMinSlider').value = 0; document.getElementById('priceMaxSlider').value = 5000000;
-        currentPriceMin = 0; currentPriceMax = 5000000; currentBeds = 0; currentBaths = 0; activeDay = null;
+        currentPriceMin = 0; currentPriceMax = 5000000; currentBeds = 0; currentBaths = 0; activeDay = null; currentTimeframe = 'any';
         document.getElementById('searchInput').value = '';
         document.querySelectorAll('.filter-option-btn').forEach(b => b.classList.remove('selected'));
         document.querySelectorAll('.filter-option-btn[data-val="0"]').forEach(b => b.classList.add('selected'));
+        document.querySelectorAll('.filter-option-btn[data-val="any"]').forEach(b => b.classList.add('selected'));
         document.querySelectorAll('#cityList input[type="checkbox"]').forEach(c => c.checked = true);
         document.querySelector('input[name="sort"][value="dateAsc"]').checked = true;
         document.querySelectorAll('.date-tile').forEach((t, i) => t.classList.toggle('active', i === 0));
         updateFilterLabels(); applyFilters();
       };
+
+      // Route UI handlers
+      document.getElementById('routeToggle').onclick = () => document.getElementById('routeSidebar').classList.add('open');
+      document.getElementById('routeClose').onclick = () => document.getElementById('routeSidebar').classList.remove('open');
+      document.getElementById('routeOptimizeBtn').onclick = getOptimizedDirections;
       document.getElementById('searchInput').addEventListener('input', () => applyFilters());
       // View toggle
       document.getElementById('viewMap').onclick = () => { viewMode = 'map'; document.getElementById('viewMap').classList.add('active'); document.getElementById('viewTile').classList.remove('active'); document.getElementById('mainContainer').classList.remove('tile-mode'); setTimeout(() => map.invalidateSize(), 100); applyFilters(); };
@@ -1673,6 +2149,7 @@
 
     function applyFilters() {
       let list = allMerged.slice();
+      console.log('Applying filters. Total merged:', list.length, 'Timeframe:', currentTimeframe);
       if (activeDay) list = list.filter(({ oh }) => (oh?.OpenHouseDate || oh?.OpenHouseStartTime || '').slice(0, 10) === activeDay);
       const q = document.getElementById('searchInput').value.trim().toLowerCase();
       if (q) list = list.filter(({ property: p }) => [p.UnparsedAddress, p.City, p.PostalCode, p.ListingId, p.SubdivisionName].join(' ').toLowerCase().includes(q));
@@ -1680,6 +2157,19 @@
       if (currentPriceMax < 5000000) list = list.filter(({ property: p }) => (p.ListPrice || 0) <= currentPriceMax);
       if (currentBeds) list = list.filter(({ property: p }) => (p.BedroomsTotal || 0) >= currentBeds);
       if (currentBaths) list = list.filter(({ property: p }) => (p.BathroomsTotalInteger || 0) >= currentBaths);
+      // Timeframe filter
+      if (currentTimeframe !== 'any') {
+        list = list.filter(({ oh }) => {
+          const start = oh?.OpenHouseStartTime || oh?.OpenHouseDate || '';
+          if (!start) return false;
+          const h = new Date(start).getHours();
+          console.log('OH Start:', start, 'Hour:', h, 'Filter:', currentTimeframe);
+          if (currentTimeframe === 'morning') return h < 12;
+          if (currentTimeframe === 'afternoon') return h >= 12 && h < 17;
+          if (currentTimeframe === 'evening') return h >= 17;
+          return true;
+        });
+      }
       const selCities = [...document.querySelectorAll('#cityList input:checked')].map(c => c.value.toUpperCase());
       const totalCities = document.querySelectorAll('#cityList input[type="checkbox"]').length;
       if (selCities.length > 0 && selCities.length < totalCities) {
@@ -1689,6 +2179,7 @@
       if (sort === 'priceDesc') list.sort((a, b) => (b.property.ListPrice || 0) - (a.property.ListPrice || 0));
       else if (sort === 'priceAsc') list.sort((a, b) => (a.property.ListPrice || 0) - (b.property.ListPrice || 0));
       else list.sort((a, b) => new Date(a.oh?.OpenHouseStartTime || a.oh?.OpenHouseDate || '9999') - new Date(b.oh?.OpenHouseStartTime || b.oh?.OpenHouseDate || '9999'));
+      console.log('Filtered list size:', list.length);
       filteredList = list;
       document.getElementById('resultsCount').textContent = `${list.length} open house${list.length !== 1 ? 's' : ''}`;
       renderListings(list);
@@ -1703,20 +2194,25 @@
       grid.innerHTML = '';
       if (!list.length) { grid.innerHTML = '<div style="padding:40px;text-align:center;color:#888">No open houses match your filters.</div>'; return; }
       list.forEach(({ property: p, oh }) => {
-        const card = document.createElement('div'); card.className = 'listing-card'; card.id = 'card-' + p.ListingKey;
+        const ohKey = oh?.OpenHouseKey || p.ListingKey;
+        const card = document.createElement('div'); card.className = 'listing-card'; card.id = 'card-' + ohKey;
         const photo = getPhoto(p.ListingKey);
         const ohStr = formatOH(oh?.OpenHouseStartTime || oh?.OpenHouseDate, oh?.OpenHouseEndTime);
         const photos = mediaCache.get(p.ListingKey) || [];
+        const inRoute = userRoute.some(r => r.ohKey === ohKey);
         card.innerHTML = `<div class="card-img-wrap">
           <img src="${photo}" alt="${p.UnparsedAddress || ''}" onerror="this.style.display='none'">
-          ${ohStr ? `<div class="card-oh-badge"><i class="fas fa-door-open"></i> ${ohStr}</div>` : ''}
+          ${ohStr ? `<div class="card-oh-badge">${ohStr}</div>` : ''}
           ${photos.length > 1 ? `<div class="card-img-count"><i class="fas fa-camera"></i> ${photos.length}</div>` : ''}
         </div>
         <div class="card-body">
           <div class="card-price">${fmt.format(p.ListPrice || 0)}</div>
           <div class="card-addr">${p.UnparsedAddress || ''}, ${p.City || ''}</div>
           <div class="card-stats"><span>${p.BedroomsTotal || '—'} bd</span><span>${p.BathroomsTotalInteger || '—'} ba</span><span>${p.LivingArea ? (p.LivingArea).toLocaleString() + ' sqft' : '—'}</span></div>
-          <div class="card-agent">Listed by ${p.ListAgentFullName || '—'} • ${p.ListOfficeName || ''}</div>
+          <div class="card-agent">Listed by ${p.ListAgentFullName || '—'}</div>
+          <button class="add-route-btn ${inRoute ? 'active' : ''}" onclick="event.stopPropagation(); toggleRoute('${p.ListingKey}', '${ohKey}')">
+            <i class="fas ${inRoute ? 'fa-check' : 'fa-plus'}"></i> ${inRoute ? 'In My Route' : 'Add to Route'}
+          </button>
         </div>`;
         card.onclick = () => openDetail(p, oh); grid.appendChild(card);
       });
@@ -1737,7 +2233,7 @@
           <div class="popup-info">
             <div class="popup-price">${fmt.format(price)}</div>
             <div class="popup-address">${p.UnparsedAddress || ''}</div>
-            ${ohStr ? `<div class="popup-oh"><i class="fas fa-door-open"></i> ${ohStr}</div>` : ''}
+            ${ohStr ? `<div class="popup-oh">${ohStr}</div>` : ''}
             <div class="popup-details"><span>${p.BedroomsTotal || 0} bd</span><span>${p.BathroomsTotalInteger || 0} ba</span><span>${(p.LivingArea || 0).toLocaleString()} sqft</span></div>
             <button class="popup-btn" onclick="openDetailByKey('${p.ListingKey}')">View Details</button>
           </div></div>`);
@@ -1865,20 +2361,17 @@
         const ohFilter = `OpenHouseStatus eq 'Active' and OriginatingSystemName eq 'Bonita Springs' and OpenHouseDate ge ${EVENT_START} and OpenHouseDate le ${EVENT_END}`;
         let ohRec = [], next = `${ODATA_OH}?$top=200&$select=${ohSel}&$orderby=OpenHouseStartTime asc&$filter=${encodeURIComponent(ohFilter)}`;
         while (next) { const d = await fetchJSON(next); ohRec.push(...(d.value || [])); next = d['@odata.nextLink'] || null; }
-        const byKey = new Map();
-        ohRec.forEach(r => {
-          const k = r.ListingKey; if (!k) return; const prev = byKey.get(k);
-          if (!prev || new Date(r.OpenHouseStartTime || r.OpenHouseDate || '9999') < new Date(prev.OpenHouseStartTime || prev.OpenHouseDate || '9999')) byKey.set(k, r);
-        });
-        const keys = [...byKey.keys()];
+        const distinctListingKeys = [...new Set(ohRec.map(r => r.ListingKey))];
         let properties = [];
-        for (let i = 0; i < keys.length; i += 15) {
-          const chunk = keys.slice(i, i + 15); const or = chunk.map(k => `ListingKey eq '${k}'`).join(' or ');
+        for (let i = 0; i < distinctListingKeys.length; i += 15) {
+          const chunk = distinctListingKeys.slice(i, i + 15); if (!chunk.length) continue;
+          const or = chunk.map(k => `ListingKey eq '${k}'`).join(' or ');
           const d = await fetchJSON(`${ODATA_PROP}?$top=100&$select=${PROP_SEL}&$filter=${encodeURIComponent(`(${or}) and OriginatingSystemName eq 'Bonita Springs'`)}`);
           properties.push(...(d.value || [])); await new Promise(r => setTimeout(r, 250));
         }
         extractInlineMedia(properties);
-        allMerged = properties.map(p => ({ property: p, oh: byKey.get(p.ListingKey) || null }));
+        const propMap = new Map(properties.map(p => [p.ListingKey, p]));
+        allMerged = ohRec.map(r => ({ property: propMap.get(r.ListingKey), oh: r })).filter(x => x.property);
 
         // Build dynamic city list
         const citySet = new Set();
@@ -1894,6 +2387,76 @@
         buildDateTiles(allMerged); updateFilterLabels(); applyFilters();
       } catch (e) { console.error('Load error', e); document.getElementById('listingsGrid').innerHTML = '<div style="padding:40px;text-align:center;color:#c00">Error loading. Please refresh.</div>'; }
       document.getElementById('loadingOverlay').style.display = 'none';
+    }
+
+
+    function toggleRoute(listingKey, ohKey) {
+      const idx = userRoute.findIndex(r => r.ohKey === ohKey);
+      if (idx >= 0) {
+        userRoute.splice(idx, 1);
+      } else {
+        const item = allMerged.find(m => (m.oh?.OpenHouseKey || m.property.ListingKey) === ohKey);
+        if (item) {
+          userRoute.push({
+            listingKey,
+            ohKey,
+            address: item.property.UnparsedAddress,
+            startTime: item.oh?.OpenHouseStartTime || item.oh?.OpenHouseDate,
+            photo: getPhoto(listingKey)
+          });
+        }
+      }
+      updateRouteUI();
+      applyFilters(); // To update the button state in listings
+    }
+
+    function updateRouteUI() {
+      const count = userRoute.length;
+      document.getElementById('routeCount').textContent = count;
+      const body = document.getElementById('routeBody');
+      if (count === 0) {
+        body.innerHTML = `<div style="text-align:center;color:#888;padding:40px">
+          <i class="fas fa-map-marked-alt" style="font-size:2rem;margin-bottom:15px;display:block"></i>
+          Your route is empty.<br>Add some open houses to get optimized directions!
+        </div>`;
+        return;
+      }
+      // Sort by time
+      userRoute.sort((a, b) => new Date(a.startTime || '9999') - new Date(b.startTime || '9999'));
+      body.innerHTML = userRoute.map(r => `
+        <div class="route-item">
+          <img src="${r.photo}" onerror="this.style.display='none'">
+          <div class="route-item-info">
+            <div class="route-item-time">${formatOH(r.startTime)}</div>
+            <div class="route-item-addr">${r.address}</div>
+          </div>
+          <button class="route-item-remove" onclick="toggleRoute('${r.listingKey}', '${r.ohKey}')">
+            <i class="fas fa-trash"></i>
+          </button>
+        </div>
+      `).join('');
+    }
+
+    function getOptimizedDirections() {
+      if (userRoute.length === 0) {
+        alert('Please add at least one open house to your route.');
+        return;
+      }
+      // Sort by time
+      userRoute.sort((a, b) => new Date(a.startTime || '9999') - new Date(b.startTime || '9999'));
+      const addresses = userRoute.map(r => encodeURIComponent(r.address));
+
+      // Detection for mobile vs desktop for better link behavior
+      const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+      if (isMobile) {
+        // Multi-stop Apple Maps URL
+        const url = `http://maps.apple.com/?daddr=${addresses.join('+to:')}`;
+        window.open(url, '_blank');
+      } else {
+        // Google Maps Multi-stop URL
+        const url = `https://www.google.com/maps/dir/${addresses.join('/')}`;
+        window.open(url, '_blank');
+      }
     }
 
     document.addEventListener('DOMContentLoaded', () => { initMap(); setupFilters(); loadOpenHouses(); });
