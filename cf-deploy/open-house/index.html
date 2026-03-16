@@ -1409,14 +1409,16 @@
         gap: 4px !important;
         padding: 0 10px !important;
         align-items: stretch !important;
+        overflow: visible !important;
       }
 
       .filter-row-top {
         gap: 5px !important;
-        overflow-x: auto !important;
         padding-bottom: 2px;
         width: 100% !important;
         flex: none !important;
+        display: flex !important;
+        flex-wrap: nowrap !important;
       }
 
       .filter-row-bottom {
@@ -1428,8 +1430,8 @@
       }
 
       .search-input-wrap input {
-        width: 90px !important;
-        font-size: 0.65rem !important;
+        width: 120px !important;
+        font-size: 16px !important;
         padding: 4px 8px 4px 28px !important;
         height: 28px !important;
       }
@@ -2400,7 +2402,7 @@
           userRoute.push({
             listingKey,
             ohKey,
-            address: item.property.UnparsedAddress,
+            address: `${item.property.UnparsedAddress}, ${item.property.City}, ${item.property.PostalCode}`,
             startTime: item.oh?.OpenHouseStartTime || item.oh?.OpenHouseDate,
             photo: getPhoto(listingKey)
           });
