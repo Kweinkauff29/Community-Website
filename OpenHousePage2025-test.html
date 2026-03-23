@@ -102,7 +102,7 @@
 
     .event-banner {
       background: linear-gradient(135deg, #1e3a5f 0%, #2c4a6e 50%, #1e3a5f 100%);
-      padding: 18px 24px;
+      padding: 18px 24px 0px 24px;
       text-align: center;
       border-bottom: 3px solid var(--accent);
       position: relative;
@@ -116,7 +116,8 @@
       align-items: center;
       justify-content: center;
       gap: 20px;
-      flex-wrap: wrap
+      flex-wrap: wrap;
+      height: 100%;
     }
 
     .event-text {
@@ -311,6 +312,11 @@
       pointer-events: auto;
       -webkit-appearance: none;
       box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    .leaflet-bottom,
+    .leaflet-right {
+      z-index: 699 !important;
     }
 
     .dual-slider-input::-moz-range-thumb {
@@ -763,6 +769,12 @@
 
     .marker-cluster {
       background: rgba(37, 150, 190, .3) !important
+    }
+
+
+    .flyer-link-btn:hover {
+      background: var(--primary);
+      transform: translateY(-2px);
     }
 
     .marker-cluster div {
@@ -1319,10 +1331,10 @@
 
       .event-banner {
         position: fixed !important;
-        top: 52px !important;
+        top: 50px !important;
         left: 0;
         right: 0;
-        height: 40px !important;
+        height: 50px !important;
         padding: 5px 10px !important;
         z-index: 9900 !important;
         display: flex !important;
@@ -1352,10 +1364,10 @@
 
       .date-tiles-container {
         position: fixed !important;
-        top: 92px !important;
+        top: 100px !important;
         left: 0;
         right: 0;
-        height: 55px !important;
+        height: 45px !important;
         z-index: 9800 !important;
         background: #fff;
         border-bottom: 1px solid #ddd;
@@ -1371,7 +1383,7 @@
         padding: 2px 4px !important;
         min-width: 55px !important;
         border-radius: 6px !important;
-        height: 45px !important;
+        height: 35px !important;
         display: flex;
         flex-direction: column;
         justify-content: center;
@@ -1544,7 +1556,7 @@
       .event-footer {
         position: relative !important;
         z-index: 100 !important;
-        padding-top: 20px !important;
+        padding-top: 50px !important;
       }
 
       .spacer-top {
@@ -1767,40 +1779,42 @@
         <img class="ber-logo"
           src="https://www.bonitaesterorealtors.com/wp-content/uploads/2021/08/Untitled-design-24.png" alt="BSER">
       </a>
-      <ul class="navbar-expand-md">
-        <li><a href="https://bonitaspringsesterolifestyles.com/communities/">Communities</a></li>
-        <li><a href="https://bonitaesterorealtors.com/realtor-directory/">Find a REALTOR</a></li>
-        <li><a href="https://coconutcoastopenhouses.com/home-search/">Homes For Sale</a></li>
-      </ul>
+      <div class="navbar-expand-md"
+        style="font-weight:700; color:#fff; font-size:1.1rem; flex-grow:1; text-align:center; margin: 0 0 0 5px;">
+        Open House Weekend - March 27-29
+      </div>
+      <div class="navbar-expand-md" style="display:flex; gap:8px;">
+        <a href="https://coconutcoastopenhouses.com/home-search/" class="promo-cta blue"><i class="fas fa-search"></i>
+          Search All Homes</a>
+        <a href="https://bonitaesterorealtors.com/realtor-directory/" class="promo-cta outline"
+          style="color:#fff; border-color:#fff;"><i class="fas fa-user-tie"></i> Find a REALTOR®</a>
+      </div>
       <button class="hamburger" id="menuToggle"><i class="fas fa-bars"></i></button>
     </div>
   </div>
 
   <div class="mobile-menu" id="mobileMenu">
-    <a href="https://bonitaspringsesterolifestyles.com/communities/">Communities</a>
-    <a href="https://bonitaesterorealtors.com/realtor-directory/">Find a REALTOR</a>
-    <a href="https://coconutcoastopenhouses.com/home-search/">Homes For Sale</a>
+    <div
+      style="padding: 15px; text-align: center; font-weight: bold; color: #fff; border-bottom: 1px solid rgba(255,255,255,0.1); margin-bottom: 5px;">
+      Open House Weekend - March 27-29
+    </div>
+    <a href="https://coconutcoastopenhouses.com/home-search/"><i class="fas fa-search"></i> Search All Homes</a>
+    <a href="https://bonitaesterorealtors.com/realtor-directory/"><i class="fas fa-user-tie"></i> Find a REALTOR®</a>
   </div>
   <div class="menu-overlay" id="menuOverlay"></div>
 
   <div class="spacer-top"></div> <!-- Fixed Header Spacer -->
 
   <div class="event-banner">
-    <div class="event-inner">
-      <div class="event-text"><strong>Open House Weekend</strong> — Presented by</div>
+    <div class="event-inner" style="width: 70%; max-width: 728px; margin: 0 auto;">
       <a href="https://stateinsuranceusa.com/" target="_blank" rel="noopener">
-        <img class="promo-logo" src="https://stateinsuranceusa.com/wp-content/uploads/2023/01/logo-1.png"
+        <img src="https://bonitaesterorealtors.com/wp-content/uploads/2026/03/SIUSA_Bonita728x90-scaled.jpg"
+          style="max-width:100%; height:auto; border-radius:4px; box-shadow:0 2px 8px rgba(0,0,0,0.2); margin-bottom:12px;"
           alt="State Insurance USA">
       </a>
-      <div class="event-dates"><i class="fas fa-calendar-alt"></i> March 27 – 29, 2026</div>
-      <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center">
-        <a href="https://coconutcoastopenhouses.com/home-search/" class="promo-cta blue"><i class="fas fa-search"></i>
-          Search All Homes</a>
-        <a href="https://bonitaesterorealtors.com/realtor-directory/" class="promo-cta outline"><i
-            class="fas fa-user-tie"></i> Find a REALTOR®</a>
-      </div>
     </div>
   </div>
+
 
   <div class="date-tiles-container">
     <div class="date-tiles-inner" id="dateTiles"></div>
@@ -1943,6 +1957,15 @@
           <h4 id="agentListingsTitle">Other Listings by this Agent</h4>
           <div class="agent-listings-grid" id="agentListingsGrid"></div>
         </div>
+
+        <div style="margin-top: 25px; text-align: center; border-top: 1px solid #eee; padding-top: 20px;">
+          <h4 style="margin-bottom: 15px; font-size: 1.1rem; color: #333;">March Open House Weekend - Sponsored by:</h4>
+          <a href="https://stateinsuranceusa.com" target="_blank" rel="noopener">
+            <img src="https://bonitaesterorealtors.com/wp-content/uploads/2026/03/SIUSA_Bonita970x250-scaled.jpg"
+              alt="State Insurance USA"
+              style="width: 90%; max-width: 970px; height: auto; border-radius: 6px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+          </a>
+        </div>
       </div>
     </div>
   </div>
@@ -1970,30 +1993,32 @@
         <h3>About State Insurance USA</h3>
         <p>State Insurance USA is a trusted, full-service insurance agency serving Southwest Florida. With multiple
           offices across Fort Myers, Estero, Fort Myers Beach, and Naples, their dedicated team specializes in auto,
-          home, business, and flood insurance — ensuring your most important assets are protected.</p>
+        <div style="margin: 15px 0; text-align: center;">
+          <a href="https://stateinsuranceusa.com" target="_blank" rel="noopener">
+            <img src="https://bonitaesterorealtors.com/wp-content/uploads/2026/03/SIUSA_Bonita300x250.jpg"
+              alt="State Insurance USA"
+              style="max-width:380px;  width:auto; height:auto; border-radius:6px; box-shadow:0 2px 8px rgba(0,0,0,0.1)">
+          </a>
+        </div>
         <a href="https://stateinsuranceusa.com" target="_blank" rel="noopener"><i class="fas fa-external-link-alt"></i>
           Visit StateInsuranceUSA.com</a>
-        <div class="promo-logo-footer">
-          <img src="https://stateinsuranceusa.com/wp-content/uploads/2023/01/logo-1.png" alt="State Insurance USA"
-            style="height:100%; width:auto">
-        </div>
       </div>
     </div>
   </footer>
 
-  <footer class="site-footer">
-    <p>All listings provided by SWFLAMLS via Bonita Springs-Estero REALTORS®. All information deemed reliable but not
-      guaranteed.</p>
-  </footer>
+  <div class="disclaimer" style="background: #111; color: #fff; padding: 20px; text-align: center;">
+    All listings provided by SWFLAMLS via Bonita Springs-Estero REALTORS&reg;. All information deemed reliable but not
+    guaranteed.
+  </div>
 
   <div class="loading-overlay" id="loadingOverlay">
     <div class="spinner"></div>
-    <p style="font-weight:700;color:var(--accent);margin-top:10px">Loading Open Houses…</p>
-    <small style="color:#888">Fetching listings and photos</small>
-
-    <div class="loading-promo">
-      <span>Presented by</span>
-      <img src="https://stateinsuranceusa.com/wp-content/uploads/2023/01/logo-1.png" alt="State Insurance USA">
+    <div style="margin-top:20px; font-weight:600; color:#555">Loading Open Houses...</div>
+    <div style="margin-top:15px; width:100%; display:flex; justify-content:center;">
+      <a href="https://stateinsuranceusa.com" target="_blank" rel="noopener" style="display:block; width:100%;">
+        <img src="https://bonitaesterorealtors.com/wp-content/uploads/2026/03/SIUSA_Bonita300x600.jpg"
+          alt="State Insurance USA" style="width:100%; max-height:60vh; object-fit:contain; border-radius:4px;">
+      </a>
     </div>
   </div>
 
@@ -2195,6 +2220,7 @@
       grid.className = viewMode === 'tile' ? 'tile-grid' : 'listings-grid';
       grid.innerHTML = '';
       if (!list.length) { grid.innerHTML = '<div style="padding:40px;text-align:center;color:#888">No open houses match your filters.</div>'; return; }
+
       list.forEach(({ property: p, oh }) => {
         const ohKey = oh?.OpenHouseKey || p.ListingKey;
         const card = document.createElement('div'); card.className = 'listing-card'; card.id = 'card-' + ohKey;
