@@ -13,6 +13,33 @@ export default {
             return new Response(JSON.stringify(results.results || []), { headers });
         }
 
+        if (url.pathname === '/api/cached-openhouses') {
+            const results = await env.DB.prepare("SELECT * FROM open_houses").all();
+            const headers = new Headers();
+            headers.set('Access-Control-Allow-Origin', '*');
+            headers.set('Content-Type', 'application/json');
+            headers.set('Cache-Control', 'public, max-age=300, s-maxage=300'); // 5 min cache
+            
+            // Format to match what frontend expects
+            const data = (results.results || []).map(row => {
+                let property = null;
+                try { property = JSON.parse(row.PropertyData); } catch(e) {}
+                return {
+                    oh: {
+                        OpenHouseKey: row.OpenHouseKey,
+                        ListingKey: row.ListingKey,
+                        OpenHouseStartTime: row.OpenHouseStartTime,
+                        OpenHouseEndTime: row.OpenHouseEndTime,
+                        OpenHouseDate: row.OpenHouseDate,
+                        OpenHouseRemarks: row.OpenHouseRemarks
+                    },
+                    property
+                };
+            }).filter(x => x.property);
+
+            return new Response(JSON.stringify(data), { headers });
+        }
+
         // Temporary endpoint to trigger sync manually
         if (url.pathname === '/api/manual-sync') {
             await this.scheduled(null, env, ctx);
@@ -97,25 +124,26 @@ export default {
         const SEL = "ListingKey,ListingId,ListPrice,UnparsedAddress,City,CountyOrParish,BedroomsTotal,BathroomsTotalInteger,LivingArea,StandardStatus,PropertyType,PropertySubType,Media,ListingContractDate,Coordinates,ModificationTimestamp,YearBuilt,LotSizeAcres,ListAgentFullName,ListOfficeName,ListOfficePhone,ListAgentMlsId";
         const baseF = "OriginatingSystemKey eq 'bsaor' and StateOrProvince eq 'FL' and (StandardStatus eq 'Active' or StandardStatus eq 'Active Under Contract' or StandardStatus eq 'Pending') and (CountyOrParish eq 'Lee' or CountyOrParish eq 'Collier' or CountyOrParish eq 'Hendry')";
 
-        let hasMore = true;
-        let skip = 0;
         const BATCH = 200;
         const allFetchedKeys = new Set();
+        
+        const p = new URLSearchParams({
+            '$filter': baseF,
+            '$select': SEL,
+            '$top': BATCH
+        });
+        
+        let next = `https://api.bridgedataoutput.com/api/v2/OData/bsaor/Property?${p}&access_token=${env.BRIDGE_TOKEN}`;
 
-        while (hasMore) {
-            const p = new URLSearchParams({
-                '$filter': baseF,
-                '$select': SEL,
-                '$top': BATCH,
-                '$skip': skip,
-                '$orderby': 'ListingKey'
-            });
-            const url = `https://api.bridgedataoutput.com/api/v2/OData/bsaor/Property?${p}&access_token=${env.BRIDGE_TOKEN}`;
-            const res = await fetch(url);
-            if (!res.ok) break;
+        while (next) {
+            const res = await fetch(next);
+            if (!res.ok) {
+                console.error("Bridge API error during sync:", res.status);
+                break;
+            }
             const data = await res.json();
             const items = data.value || [];
-            if (!items.length) { hasMore = false; break; }
+            if (!items.length) break;
 
             const statements = items.map(i => {
                 allFetchedKeys.add(i.ListingKey);
@@ -144,8 +172,11 @@ export default {
             });
 
             await env.DB.batch(statements);
-            skip += items.length;
-            if (items.length < BATCH) hasMore = false;
+            
+            next = data['@odata.nextLink'] || null;
+            if (next && !next.includes('access_token')) {
+                next += (next.includes('?') ? '&' : '?') + 'access_token=' + env.BRIDGE_TOKEN;
+            }
         }
 
         // Cleanup: Remove listings in D1 that are no longer in the active OData set
@@ -165,5 +196,75 @@ export default {
         }
 
         console.log(`Sync Complete. Total listings synced: ${allFetchedKeys.size}`);
+
+        // Open House Sync Logic
+        console.log("Starting Open House Sync...");
+        await this.syncOpenHouses(env);
+    },
+
+    async syncOpenHouses(env) {
+        const EVENT_START = '2026-03-27';
+        const EVENT_END = '2026-03-29';
+        const ohFilter = `OpenHouseStatus eq 'Active' and OriginatingSystemName eq 'Bonita Springs' and OpenHouseDate ge ${EVENT_START} and OpenHouseDate le ${EVENT_END}`;
+        const ohURL = `https://api.bridgedataoutput.com/api/v2/OData/bsaor/OpenHouse?$filter=${encodeURIComponent(ohFilter)}&$top=200&$orderby=OpenHouseStartTime asc&access_token=${env.BRIDGE_TOKEN}`;
+        
+        let ohRec = [];
+        let next = ohURL;
+        while (next) {
+            const res = await fetch(next);
+            if (!res.ok) break;
+            const d = await res.json();
+            ohRec.push(...(d.value || []));
+            next = d['@odata.nextLink'] || null;
+            if (next && !next.includes('access_token')) {
+                next += (next.includes('?') ? '&' : '?') + 'access_token=' + env.BRIDGE_TOKEN;
+            }
+        }
+        
+        const listingKeys = [...new Set(ohRec.map(r => r.ListingKey))];
+        let properties = [];
+        const PROP_SEL = 'ListingKey,ListingId,UnparsedAddress,City,PostalCode,ListPrice,PropertyType,PropertySubType,BedroomsTotal,BathroomsTotalInteger,LivingArea,LotSizeAcres,YearBuilt,StandardStatus,SubdivisionName,ListAgentFullName,ListAgentEmail,ListAgentDirectPhone,ListAgentKey,ListOfficeName,ListOfficePhone,PublicRemarks,Coordinates,Media';
+        
+        for (let i = 0; i < listingKeys.length; i += 25) {
+            const chunk = listingKeys.slice(i, i + 25);
+            const batchFilter = chunk.map(k => `ListingKey eq '${k}'`).join(' or ');
+            const pURL = `https://api.bridgedataoutput.com/api/v2/OData/bsaor/Property?$filter=${encodeURIComponent(`(${batchFilter}) and OriginatingSystemName eq 'Bonita Springs'`)}&$top=100&$select=${PROP_SEL}&access_token=${env.BRIDGE_TOKEN}`;
+            const pres = await fetch(pURL);
+            if (pres.ok) {
+                const pd = await pres.json();
+                properties.push(...(pd.value || []));
+            }
+        }
+
+        const propMap = new Map(properties.map(p => [p.ListingKey, p]));
+
+        const statements = ohRec.map(oh => {
+            const p = propMap.get(oh.ListingKey) || null;
+            return env.DB.prepare(`
+                INSERT OR REPLACE INTO open_houses (
+                    OpenHouseKey, ListingKey, OpenHouseStartTime, OpenHouseEndTime, OpenHouseDate, OpenHouseRemarks, PropertyData
+                ) VALUES (?, ?, ?, ?, ?, ?, ?)
+            `).bind(
+                oh.OpenHouseKey || oh.ListingKey, oh.ListingKey, oh.OpenHouseStartTime, oh.OpenHouseEndTime, oh.OpenHouseDate, oh.OpenHouseRemarks, JSON.stringify(p)
+            );
+        });
+
+        // Batch execution in chunks of 50
+        for (let i = 0; i < statements.length; i += 50) {
+            await env.DB.batch(statements.slice(i, i + 50));
+        }
+
+        // Cleanup old open houses
+        const validOhKeys = new Set(ohRec.map(oh => oh.OpenHouseKey || oh.ListingKey));
+        if (validOhKeys.size > 0) {
+            const existing = await env.DB.prepare("SELECT OpenHouseKey FROM open_houses").all();
+            const staleKeys = existing.results.filter(row => !validOhKeys.has(row.OpenHouseKey)).map(r => r.OpenHouseKey);
+            for (let i = 0; i < staleKeys.length; i += 50) {
+                const chunk = staleKeys.slice(i, i + 50);
+                const placeholders = chunk.map(() => "?").join(",");
+                await env.DB.prepare(`DELETE FROM open_houses WHERE OpenHouseKey IN (${placeholders})`).bind(...chunk).run();
+            }
+        }
+        console.log(`Synced ${ohRec.length} Open Houses`);
     }
 };

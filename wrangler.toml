@@ -12,4 +12,4 @@ database_name = "community-idx"
 database_id = "9940be0f-a4be-4835-81f7-09a52d42f7a9"
 
 [triggers]
-crons = ["0 0 * * *"]
+crons = ["0 0 * * *", "*/15 * * * *"]

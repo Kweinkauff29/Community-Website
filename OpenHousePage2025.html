@@ -1,5 +1,4 @@
 <!DOCTYPE html>
-<!-- DEPLOYMENT_VER_1145 -->
 <html lang="en">
 
 <head>
@@ -103,14 +102,11 @@
 
     .event-banner {
       background: linear-gradient(135deg, #1e3a5f 0%, #2c4a6e 50%, #1e3a5f 100%);
-      padding: 18px 24px;
+      padding: 18px 24px 0px 24px;
       text-align: center;
       border-bottom: 3px solid var(--accent);
       position: relative;
-      z-index: 900;
-      display: flex;
-      justify-content: center;
-      align-items: center;
+      z-index: 900
     }
 
     .event-inner {
@@ -1408,23 +1404,6 @@
         margin: 0 !important;
       }
 
-      #timeBtn.has-value {
-        background: var(--accent-light);
-      }
-
-      .filter-dropdown-panel {
-        position: fixed !important;
-        top: 50% !important;
-        left: 50% !important;
-        transform: translate(-50%, -50%) !important;
-        width: 90vw !important;
-        max-width: 340px !important;
-        z-index: 10001 !important;
-        box-shadow: 0 10px 40px rgba(0,0,0,0.3) !important;
-        border: 2px solid var(--accent) !important;
-        margin: 0 !important;
-      }
-
       .filters-container {
         position: fixed !important;
         top: 147px !important;
@@ -1825,10 +1804,13 @@
   <div class="menu-overlay" id="menuOverlay"></div>
 
   <div class="spacer-top"></div> <!-- Fixed Header Spacer -->
+
   <div class="event-banner">
-    <div class="event-inner" style="width: 70%; max-width: 1200px; margin: 0 auto; display: flex; justify-content: center;">
-      <a href="https://stateinsuranceusa.com/" target="_blank" rel="noopener" style="width: 100%; display: flex; justify-content: center;">
-        <img src="https://bonitaesterorealtors.com/wp-content/uploads/2026/03/SIUSA_Bonita728x90-scaled.jpg" style="width: 100%; max-width: 100%; height: auto; min-width: 320px; border-radius: 4px; box-shadow: 0 2px 8px rgba(0,0,0,0.2); margin-bottom: 12px; object-fit: contain;" alt="State Insurance USA">
+    <div class="event-inner" style="width: 70%; max-width: 728px; margin: 0 auto;">
+      <a href="https://stateinsuranceusa.com/" target="_blank" rel="noopener">
+        <img src="https://bonitaesterorealtors.com/wp-content/uploads/2026/03/SIUSA_Bonita728x90-scaled.jpg"
+          style="max-width:100%; height:auto; border-radius:4px; box-shadow:0 2px 8px rgba(0,0,0,0.2); margin-bottom:12px;"
+          alt="State Insurance USA">
       </a>
     </div>
   </div>
@@ -2029,12 +2011,13 @@
     guaranteed.
   </div>
 
-  <div class="loading-overlay" id="loadingOverlay" style="display: flex; flex-direction: column; align-items: center; justify-content: center;">
+  <div class="loading-overlay" id="loadingOverlay">
     <div class="spinner"></div>
-    <div style="margin-top:20px; font-weight:600; color:#555; text-align: center;">Loading Open Houses...</div>
-    <div style="margin-top:15px; width:100%; max-width: 400px; display:flex; justify-content:center; padding: 0 20px;">
-      <a href="https://stateinsuranceusa.com" target="_blank" rel="noopener" style="display:block; width:100%; text-align: center;">
-        <img src="https://bonitaesterorealtors.com/wp-content/uploads/2026/03/SIUSA_Bonita300x600.jpg" alt="State Insurance USA" style="width:100%; max-width:300px; max-height:60vh; object-fit:contain; border-radius:4px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); margin: 0 auto;">
+    <div style="margin-top:20px; font-weight:600; color:#555">Loading Open Houses...</div>
+    <div style="margin-top:15px; width:100%; display:flex; justify-content:center;">
+      <a href="https://stateinsuranceusa.com" target="_blank" rel="noopener" style="display:block; width:100%;">
+        <img src="https://bonitaesterorealtors.com/wp-content/uploads/2026/03/SIUSA_Bonita300x600.jpg"
+          alt="State Insurance USA" style="width:100%; max-height:60vh; object-fit:contain; border-radius:4px;">
       </a>
     </div>
   </div>
@@ -2232,39 +2215,57 @@
 
     function getPhoto(key) { const c = mediaCache.get(key); return c && c.length ? c[0] : ''; }
 
+    let renderTimeout = null;
     function renderListings(list) {
+      if (renderTimeout) clearTimeout(renderTimeout);
       const grid = document.getElementById('listingsGrid');
       grid.className = viewMode === 'tile' ? 'tile-grid' : 'listings-grid';
       grid.innerHTML = '';
       if (!list.length) { grid.innerHTML = '<div style="padding:40px;text-align:center;color:#888">No open houses match your filters.</div>'; return; }
 
-      list.forEach(({ property: p, oh }) => {
-        const ohKey = oh?.OpenHouseKey || p.ListingKey;
-        const card = document.createElement('div'); card.className = 'listing-card'; card.id = 'card-' + ohKey;
-        const photo = getPhoto(p.ListingKey);
-        const ohStr = formatOH(oh?.OpenHouseStartTime || oh?.OpenHouseDate, oh?.OpenHouseEndTime);
-        const photos = mediaCache.get(p.ListingKey) || [];
-        const inRoute = userRoute.some(r => r.ohKey === ohKey);
-        card.innerHTML = `<div class="card-img-wrap">
-          <img src="${photo}" alt="${p.UnparsedAddress || ''}" onerror="this.style.display='none'">
-          ${ohStr ? `<div class="card-oh-badge">${ohStr}</div>` : ''}
-          ${photos.length > 1 ? `<div class="card-img-count"><i class="fas fa-camera"></i> ${photos.length}</div>` : ''}
-        </div>
-        <div class="card-body">
-          <div class="card-price">${fmt.format(p.ListPrice || 0)}</div>
-          <div class="card-addr">${p.UnparsedAddress || ''}, ${p.City || ''}</div>
-          <div class="card-stats"><span>${p.BedroomsTotal || '—'} bd</span><span>${p.BathroomsTotalInteger || '—'} ba</span><span>${p.LivingArea ? (p.LivingArea).toLocaleString() + ' sqft' : '—'}</span></div>
-          <div class="card-agent">Listed by ${p.ListAgentFullName || '—'}</div>
-          <button class="add-route-btn ${inRoute ? 'active' : ''}" onclick="event.stopPropagation(); toggleRoute('${p.ListingKey}', '${ohKey}')">
-            <i class="fas ${inRoute ? 'fa-check' : 'fa-plus'}"></i> ${inRoute ? 'In My Route' : 'Add to Route'}
-          </button>
-        </div>`;
-        card.onclick = () => openDetail(p, oh); grid.appendChild(card);
-      });
+      const renderChunk = (startIndex, chunkSize) => {
+        const chunk = list.slice(startIndex, startIndex + chunkSize);
+        const fragment = document.createDocumentFragment();
+
+        chunk.forEach(({ property: p, oh }) => {
+          const ohKey = oh?.OpenHouseKey || p.ListingKey;
+          const card = document.createElement('div'); card.className = 'listing-card'; card.id = 'card-' + ohKey;
+          const photo = getPhoto(p.ListingKey);
+          const ohStr = formatOH(oh?.OpenHouseStartTime || oh?.OpenHouseDate, oh?.OpenHouseEndTime);
+          const photos = mediaCache.get(p.ListingKey) || [];
+          const inRoute = userRoute.some(r => r.ohKey === ohKey);
+          card.innerHTML = `<div class="card-img-wrap">
+            <img src="${photo}" alt="${p.UnparsedAddress || ''}" onerror="this.style.display='none'">
+            ${ohStr ? `<div class="card-oh-badge">${ohStr}</div>` : ''}
+            ${photos.length > 1 ? `<div class="card-img-count"><i class="fas fa-camera"></i> ${photos.length}</div>` : ''}
+          </div>
+          <div class="card-body">
+            <div class="card-price">${fmt.format(p.ListPrice || 0)}</div>
+            <div class="card-addr">${p.UnparsedAddress || ''}, ${p.City || ''}</div>
+            <div class="card-stats"><span>${p.BedroomsTotal || '—'} bd</span><span>${p.BathroomsTotalInteger || '—'} ba</span><span>${p.LivingArea ? (p.LivingArea).toLocaleString() + ' sqft' : '—'}</span></div>
+            <div class="card-agent">Listed by ${p.ListAgentFullName || '—'}</div>
+            <button class="add-route-btn ${inRoute ? 'active' : ''}" onclick="event.stopPropagation(); toggleRoute('${p.ListingKey}', '${ohKey}')">
+              <i class="fas ${inRoute ? 'fa-check' : 'fa-plus'}"></i> ${inRoute ? 'In My Route' : 'Add to Route'}
+            </button>
+          </div>`;
+          card.onclick = () => openDetail(p, oh);
+          fragment.appendChild(card);
+        });
+
+        grid.appendChild(fragment);
+
+        if (startIndex + chunkSize < list.length) {
+          renderTimeout = setTimeout(() => renderChunk(startIndex + chunkSize, 20), 10);
+        }
+      };
+
+      // Render first chunk immediately
+      renderChunk(0, 15);
     }
 
     function renderMap(list) {
       markerCluster.clearLayers();
+      const markers = [];
       list.forEach(({ property: p, oh }) => {
         let lat, lng; if (p.Coordinates && p.Coordinates.length === 2) { lng = p.Coordinates[0]; lat = p.Coordinates[1]; }
         if (!lat || !lng) return;
@@ -2283,10 +2284,11 @@
             <button class="popup-btn" onclick="openDetailByKey('${p.ListingKey}')">View Details</button>
           </div></div>`);
         m.on('mouseover', function () { this.openPopup(); });
-        m.on('click', () => { const c = document.getElementById('card-' + p.ListingKey); if (c) { c.scrollIntoView({ behavior: 'smooth', block: 'center' }); c.classList.add('active'); setTimeout(() => c.classList.remove('active'), 2000); } });
-        markerCluster.addLayer(m);
+        m.on('click', () => { const c = document.getElementById('card-' + (oh?.OpenHouseKey || p.ListingKey)); if (c) { c.scrollIntoView({ behavior: 'smooth', block: 'center' }); c.classList.add('active'); setTimeout(() => c.classList.remove('active'), 2000); } });
+        markers.push(m);
       });
-      if (markerCluster.getLayers().length) map.fitBounds(markerCluster.getBounds().pad(0.1));
+      markerCluster.addLayers(markers);
+      if (markers.length) map.fitBounds(markerCluster.getBounds().pad(0.1));
     }
     function openDetailByKey(key) { const x = allMerged.find(m => m.property.ListingKey === key); if (x) openDetail(x.property, x.oh); }
 
@@ -2402,35 +2404,32 @@
     async function loadOpenHouses() {
       document.getElementById('loadingOverlay').style.display = 'flex';
       try {
-        const ohSel = 'OpenHouseKey,ListingKey,OpenHouseStatus,OriginatingSystemName,OpenHouseStartTime,OpenHouseEndTime,OpenHouseDate,OpenHouseRemarks';
-        const ohFilter = `OpenHouseStatus eq 'Active' and OriginatingSystemName eq 'Bonita Springs' and OpenHouseDate ge ${EVENT_START} and OpenHouseDate le ${EVENT_END}`;
-        let ohRec = [], next = `${ODATA_OH}?$top=200&$select=${ohSel}&$orderby=OpenHouseStartTime asc&$filter=${encodeURIComponent(ohFilter)}`;
-        while (next) { const d = await fetchJSON(next); ohRec.push(...(d.value || [])); next = d['@odata.nextLink'] || null; }
-        const distinctListingKeys = [...new Set(ohRec.map(r => r.ListingKey))];
-        let properties = [];
-        for (let i = 0; i < distinctListingKeys.length; i += 15) {
-          const chunk = distinctListingKeys.slice(i, i + 15); if (!chunk.length) continue;
-          const or = chunk.map(k => `ListingKey eq '${k}'`).join(' or ');
-          const d = await fetchJSON(`${ODATA_PROP}?$top=100&$select=${PROP_SEL}&$filter=${encodeURIComponent(`(${or}) and OriginatingSystemName eq 'Bonita Springs'`)}`);
-          properties.push(...(d.value || [])); await new Promise(r => setTimeout(r, 250));
-        }
+        const res = await fetch('https://listingsworker.bonitaspringsrealtors.workers.dev/api/cached-openhouses');
+        if (!res.ok) throw new Error("Failed to fetch open houses cache");
+
+        allMerged = await res.json();
+        const properties = allMerged.map(d => d.property).filter(Boolean);
         extractInlineMedia(properties);
-        const propMap = new Map(properties.map(p => [p.ListingKey, p]));
-        allMerged = ohRec.map(r => ({ property: propMap.get(r.ListingKey), oh: r })).filter(x => x.property);
 
         // Build dynamic city list
         const citySet = new Set();
-        allMerged.forEach(({ property: p }) => { if (p.City) citySet.add(p.City); });
+        allMerged.forEach(({ property: p }) => { if (p && p.City) citySet.add(p.City); });
         const sortedCities = [...citySet].sort();
         const cityList = document.getElementById('cityList');
         cityList.innerHTML = sortedCities.map(c => `<label><input type="checkbox" name="city" value="${c}" checked> ${c}</label>`).join('');
         if (!sortedCities.length) cityList.innerHTML = '<span style="color:#888;font-size:0.75rem;padding:5px">No cities found</span>';
 
-        // Fetch media for properties missing photos
-        const needMedia = properties.filter(p => !mediaCache.has(p.ListingKey));
-        if (needMedia.length) await fetchMediaBatch(needMedia);
+        // Fetch media for properties missing photos in background
+        setTimeout(async () => {
+          const needMedia = properties.filter(p => !mediaCache.has(p.ListingKey));
+          if (needMedia.length) await fetchMediaBatch(needMedia);
+        }, 1000);
+
         buildDateTiles(allMerged); updateFilterLabels(); applyFilters();
-      } catch (e) { console.error('Load error', e); document.getElementById('listingsGrid').innerHTML = '<div style="padding:40px;text-align:center;color:#c00">Error loading. Please refresh.</div>'; }
+      } catch (e) {
+        console.error('Load error', e);
+        document.getElementById('listingsGrid').innerHTML = '<div style="padding:40px;text-align:center;color:#c00">Error loading data. Please refresh the page.</div>';
+      }
       document.getElementById('loadingOverlay').style.display = 'none';
     }
 
