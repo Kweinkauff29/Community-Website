@@ -1995,8 +1995,8 @@
             <div class="filter-dropdown-panel" id="cityPanel">
               <label><input type="checkbox" name="city" value="Bonita Springs" checked> Bonita Springs</label>
               <label><input type="checkbox" name="city" value="Estero" checked> Estero</label>
-              <label><input type="checkbox" name="city" value="Naples"> Naples</label>
-              <label><input type="checkbox" name="city" value="Fort Myers"> Fort Myers</label>
+              <label><input type="checkbox" name="city" value="Naples" checked> Naples</label>
+              <label><input type="checkbox" name="city" value="Fort Myers" checked> Fort Myers</label>
               <button class="apply-btn">Apply</button>
             </div>
           </div>
@@ -2051,6 +2051,12 @@
       <div class="map-loading-overlay center-ref" id="mapLoader">
         <div class="spinner"></div>
         <div style="margin-top:10px;font-weight:600;color:#555">Loading Map Properties...</div>
+        <div id="mapProgressWrap" style="width: 80%; max-width: 250px; margin-top: 15px;">
+           <div style="width: 100%; height: 8px; background: #e0e0e0; border-radius: 4px; overflow: hidden;">
+              <div id="mapProgressBar" style="width: 0%; height: 100%; background: #2563eb; transition: width 0.3s ease;"></div>
+           </div>
+           <div id="mapProgressCount" style="text-align: center; margin-top: 8px; font-size: 0.85rem; color: #666;">Initializing count...</div>
+        </div>
       </div>
     </div>
     <div class="listings-section">
@@ -2396,10 +2402,7 @@
       document.getElementById('priceMin').value = '';
       document.getElementById('priceMax').value = '';
       document.querySelectorAll('#subTypePanel input').forEach(i => i.checked = true);
-      document.querySelectorAll('#cityPanel input').forEach(i => {
-        if (i.value === 'Bonita Springs' || i.value === 'Estero') i.checked = true;
-        else i.checked = false;
-      });
+      document.querySelectorAll('#cityPanel input').forEach(i => i.checked = true);
       document.querySelectorAll('.filter-option-btn.selected').forEach(b => b.classList.remove('selected'));
       document.querySelectorAll('#bedsGroup .filter-option-btn[data-val="0"]').forEach(b => b.classList.add('selected'));
       document.querySelectorAll('#bathsGroup .filter-option-btn[data-val="0"]').forEach(b => b.classList.add('selected'));
@@ -2478,7 +2481,7 @@
       const loader = document.getElementById('listLoader');
       if (loader) loader.style.display = 'inline-block';
 
-      const MAX_LISTINGS = 500;
+      const MAX_LISTINGS = Infinity;
 
       try {
         // Status Logic
@@ -2488,7 +2491,8 @@
 
         // Base Filter
         let baseF = "OriginatingSystemKey eq 'bsaor' and " + statusFilter;
-        baseF += " and (City eq 'BONITA SPRINGS' or City eq 'ESTERO')";
+        baseF += " and (CountyOrParish eq 'Lee' or CountyOrParish eq 'Collier')";
+        baseF += " and (toupper(City) eq 'BONITA SPRINGS' or toupper(City) eq 'ESTERO' or toupper(City) eq 'NAPLES' or toupper(City) eq 'FORT MYERS' or toupper(City) eq 'FT MYERS' or toupper(City) eq 'FT. MYERS')";
 
         if (currentPropertyType === 'sale') {
           baseF += " and (PropertyType eq 'Residential' or PropertyType eq 'Residential Income')";
@@ -2500,15 +2504,26 @@
           baseF += " and (PropertyType eq 'Land')";
         }
 
-        // Get total count (non-blocking)
+        // Initialize Progress UI
+        const pb = document.getElementById('mapProgressBar');
+        const pc = document.getElementById('mapProgressCount');
+        let expectedTotal = MAX_LISTINGS;
+        if(pb) pb.style.width = '2%';
+        if(pc) pc.innerText = 'Calculating listings...';
+
+        // Get total count
         const countParams = new URLSearchParams();
         countParams.append('$filter', baseF);
         countParams.append('$top', 0);
         countParams.append('$count', 'true');
-        fetch(API_BASE + '/api/v2/OData/bsaor/Property?' + countParams)
-          .then(r => r.json())
-          .then(d => { totalListingCount = d['@odata.count'] || d.value?.length || 0; })
-          .catch(() => { });
+        try {
+          const cRes = await fetch(API_BASE + '/api/v2/OData/bsaor/Property?' + countParams);
+          if (cRes.ok) {
+            const d = await cRes.json();
+            totalListingCount = d['@odata.count'] || d.value?.length || 0;
+            expectedTotal = Math.min(MAX_LISTINGS, totalListingCount);
+          }
+        } catch (e) { console.error('Count fetch error', e); }
 
         let hasMore = true;
         let skip = 0;
@@ -2557,6 +2572,12 @@
 
           const lt = document.getElementById('loadingText');
           if (lt) lt.innerText = `Loading... (${allListings.length} cached)`;
+
+          if(pb) {
+             const pct = Math.min(100, Math.round((allListings.length / (expectedTotal || 1)) * 100));
+             pb.style.width = Math.max(2, pct) + '%';
+          }
+          if(pc) pc.innerText = `Loaded ${allListings.length} of ${expectedTotal} map properties...`;
 
           if (added > 0 && allListings.length >= BATCH && document.getElementById('loadingOverlay').style.display !== 'none') {
             showLoading(false);

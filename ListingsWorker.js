@@ -122,7 +122,7 @@ export default {
         // Daily Sync Logic
         console.log("Starting Daily Listing Sync...");
         const SEL = "ListingKey,ListingId,ListPrice,UnparsedAddress,City,CountyOrParish,BedroomsTotal,BathroomsTotalInteger,LivingArea,StandardStatus,PropertyType,PropertySubType,Media,ListingContractDate,Coordinates,ModificationTimestamp,YearBuilt,LotSizeAcres,ListAgentFullName,ListOfficeName,ListOfficePhone,ListAgentMlsId";
-        const baseF = "OriginatingSystemKey eq 'bsaor' and StateOrProvince eq 'FL' and (StandardStatus eq 'Active' or StandardStatus eq 'Active Under Contract' or StandardStatus eq 'Pending') and (CountyOrParish eq 'Lee' or CountyOrParish eq 'Collier' or CountyOrParish eq 'Hendry')";
+        const baseF = "OriginatingSystemKey eq 'bsaor' and StateOrProvince eq 'FL' and (StandardStatus eq 'Active' or StandardStatus eq 'Active Under Contract' or StandardStatus eq 'Pending') and (CountyOrParish eq 'Lee' or CountyOrParish eq 'Collier') and (toupper(City) eq 'BONITA SPRINGS' or toupper(City) eq 'ESTERO' or toupper(City) eq 'NAPLES' or toupper(City) eq 'FORT MYERS' or toupper(City) eq 'FT MYERS' or toupper(City) eq 'FT. MYERS')";
 
         const BATCH = 200;
         const allFetchedKeys = new Set();

@@ -1942,6 +1942,9 @@
         <div class="detail-addr" id="detailAddr"></div>
         <div class="detail-badges" id="detailBadges"></div>
         <div class="detail-stats" id="detailStats"></div>
+        <button class="add-route-btn" id="detailRouteBtn" style="margin-top:15px; margin-bottom:15px;">
+           <i class="fas fa-plus"></i> Add to Route
+        </button>
         <div class="detail-description" id="detailDesc"></div>
         <div class="detail-agent-section">
           <div class="detail-agent-name" id="detailAgentName"></div>
@@ -2135,9 +2138,38 @@
     }
 
     function setupFilters() {
-      document.querySelectorAll('.filter-dropdown-btn').forEach(btn => { btn.onclick = e => { e.stopPropagation(); const p = btn.nextElementSibling; document.querySelectorAll('.filter-dropdown-panel').forEach(x => { if (x !== p) x.classList.remove('open'); }); p.classList.toggle('open'); }; });
+      document.querySelectorAll('.filter-dropdown-btn').forEach(btn => {
+        btn.onclick = e => {
+          e.stopPropagation();
+          const p = btn.nextElementSibling;
+          document.querySelectorAll('.filter-dropdown-panel').forEach(x => {
+            if (x !== p) { x.classList.remove('open'); x.style.display = ''; }
+          });
+
+          if (p.classList.contains('open')) {
+            p.classList.remove('open'); p.style.display = '';
+          } else {
+            const rect = btn.getBoundingClientRect();
+            p.style.position = 'fixed';
+            p.style.top = (rect.bottom + 4) + 'px';
+            p.style.left = Math.max(10, rect.left) + 'px';
+            p.style.zIndex = '10001';
+            
+            if (rect.left + 280 > window.innerWidth) {
+              p.style.left = 'auto';
+              p.style.right = '10px';
+            }
+            p.style.display = 'block';
+            p.classList.add('open');
+          }
+        };
+      });
+      
+      const closeAll = () => document.querySelectorAll('.filter-dropdown-panel').forEach(p => { p.classList.remove('open'); p.style.display = ''; });
+      document.addEventListener('click', closeAll);
+      document.addEventListener('scroll', closeAll, true);
       document.querySelectorAll('.filter-dropdown-panel').forEach(p => { p.onclick = e => e.stopPropagation(); });
-      document.addEventListener('click', () => document.querySelectorAll('.filter-dropdown-panel').forEach(p => p.classList.remove('open')));
+
       ['bedsGroup', 'bathsGroup', 'timeGroup'].forEach(g => { document.getElementById(g).querySelectorAll('.filter-option-btn').forEach(b => { b.onclick = () => { document.getElementById(g).querySelectorAll('.filter-option-btn').forEach(x => x.classList.remove('selected')); b.classList.add('selected'); }; }); });
       document.getElementById('priceMinSlider').oninput = updateFilterLabels;
       document.getElementById('priceMaxSlider').oninput = updateFilterLabels;
@@ -2343,6 +2375,32 @@
       document.getElementById('detailEmailBtn').style.display = item.ListAgentEmail ? '' : 'none';
       let lat, lng; if (item.Coordinates && item.Coordinates.length === 2) { lng = item.Coordinates[0]; lat = item.Coordinates[1]; }
       if (lat && lng && viewMode === 'map') map.flyTo([lat, lng], 16);
+
+      // Update Detail Route Button
+      const detailRouteBtn = document.getElementById('detailRouteBtn');
+      const routeOHKey = oh?.OpenHouseKey || p.ListingKey;
+      const inRoute = userRoute.some(r => r.ohKey === routeOHKey);
+      
+      if(inRoute) {
+        detailRouteBtn.classList.add('active');
+        detailRouteBtn.innerHTML = '<i class="fas fa-check"></i> In My Route';
+      } else {
+        detailRouteBtn.classList.remove('active');
+        detailRouteBtn.innerHTML = '<i class="fas fa-plus"></i> Add to Route';
+      }
+      
+      detailRouteBtn.onclick = () => {
+        toggleRoute(p.ListingKey, routeOHKey);
+        const nowInRoute = userRoute.some(r => r.ohKey === routeOHKey);
+        if(nowInRoute) {
+           detailRouteBtn.classList.add('active');
+           detailRouteBtn.innerHTML = '<i class="fas fa-check"></i> In My Route';
+        } else {
+           detailRouteBtn.classList.remove('active');
+           detailRouteBtn.innerHTML = '<i class="fas fa-plus"></i> Add to Route';
+        }
+      };
+
       // Agent's other listings
       showAgentListings(item);
     }
