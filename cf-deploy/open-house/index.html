@@ -7,7 +7,7 @@
   <title>Open House Weekend – Bonita Springs & Estero REALTORS®</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+  <link href="https://fonts.googleapis.com/css2?family=Lato:ital,wght@0,100;0,300;0,400;0,700;0,900;1,100;1,300;1,400;1,700;1,900&family=STIX+Two+Text:ital,wght@0,400..700;1,400..700&display=swap"
     rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="">
@@ -16,18 +16,20 @@
     href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.5.3/MarkerCluster.Default.css">
   <style>
     :root {
-      --primary: #1a2a3a;
-      --accent: #2596be;
-      --accent-light: #e8f7fc;
-      --bg: #f5f6f8;
-      --text: #333;
+      --primary: #212121;
+      --accent: #CF2621;
+      --accent-light: rgba(207, 38, 33, 0.08);
+      --bg: #F7F7F7;
+      --text: #212121;
       --white: #fff;
-      --header-bg: rgba(20, 20, 20, .92);
-      --success: #22c55e;
+      --header-bg: rgba(33, 33, 33, 0.95);
+      --success: #1a7444;
       --warning: #f59e0b;
       --pending: #8b5cf6;
-      --event-bg: #1e3a5f;
-      --event-accent: #2596be;
+      --event-bg: #212121;
+      --event-accent: #CF2621;
+      --heading-font: 'STIX Two Text', Georgia, serif;
+      --body-font: 'Lato', sans-serif;
     }
 
     * {
@@ -37,10 +39,11 @@
     }
 
     body {
-      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      font-family: var(--body-font);
       background: var(--bg);
       color: var(--text);
-      overflow-x: hidden
+      overflow-x: hidden;
+      line-height: 1.6;
     }
 
     #top-bar {
@@ -123,13 +126,15 @@
     .event-text {
       color: var(--white);
       font-size: .95rem;
-      font-weight: 500
+      font-weight: 500;
+      font-family: var(--body-font);
     }
 
     .event-text strong {
       color: #fff;
       font-weight: 700;
-      font-size: 1.1rem
+      font-size: 1.15rem;
+      font-family: var(--heading-font);
     }
 
     .promo-logo {
@@ -151,16 +156,19 @@
     }
 
     .promo-cta {
-      padding: 10px 22px;
-      border-radius: 30px;
+      padding: 12px 24px;
+      border-radius: 10px;
       text-decoration: none;
       font-weight: 700;
-      font-size: .95rem;
+      font-size: .9rem;
       transition: all .2s;
       display: inline-flex;
       align-items: center;
       gap: 8px;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, .2)
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+      font-family: var(--body-font);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
     }
 
     .promo-cta.blue {
@@ -207,13 +215,13 @@
     .date-tile {
       flex-shrink: 0;
       padding: 10px 20px;
-      border-radius: 12px;
-      border: 2px solid #e0e0e0;
+      border-radius: 10px;
+      border: 1px solid #ddd;
       cursor: pointer;
       text-align: center;
       transition: all .2s;
       background: #fff;
-      min-width: 100px
+      min-width: 110px;
     }
 
     .date-tile:hover {
@@ -609,17 +617,18 @@
 
     .listing-card {
       background: #fff;
-      border-radius: 10px;
+      border-radius: 12px;
       overflow: hidden;
       margin-bottom: 8px;
       border: 1px solid #eee;
       cursor: pointer;
-      transition: all .2s
+      transition: all .3s ease;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
     }
 
     .listing-card:hover {
-      box-shadow: 0 4px 16px rgba(0, 0, 0, .1);
-      transform: translateY(-1px)
+      box-shadow: 0 10px 25px rgba(0, 0, 0, .1);
+      transform: translateY(-4px)
     }
 
     .listing-card.active {
@@ -667,9 +676,10 @@
     }
 
     .card-price {
-      font-size: 1.1rem;
+      font-size: 1.25rem;
       font-weight: 700;
-      color: var(--primary)
+      color: var(--primary);
+      font-family: var(--heading-font);
     }
 
     .card-addr {
@@ -711,8 +721,8 @@
     }
 
     .popup-content {
-      width: 260px;
-      font-family: 'Inter', sans-serif
+      width: 270px;
+      font-family: var(--body-font);
     }
 
     .popup-img {
@@ -729,8 +739,9 @@
 
     .popup-price {
       font-weight: 700;
-      font-size: 1rem;
-      color: var(--primary)
+      font-size: 1.1rem;
+      color: var(--primary);
+      font-family: var(--heading-font);
     }
 
     .popup-address {
@@ -756,15 +767,18 @@
 
     .popup-btn {
       width: 100%;
-      padding: 8px;
+      padding: 10px;
       background: var(--accent);
       color: #fff;
       border: none;
-      border-radius: 6px;
-      font-weight: 600;
+      border-radius: 8px;
+      font-weight: 700;
       cursor: pointer;
-      margin-top: 6px;
-      font-family: inherit
+      margin-top: 8px;
+      font-family: var(--body-font);
+      text-transform: uppercase;
+      font-size: 0.75rem;
+      letter-spacing: 0.5px;
     }
 
     .marker-cluster {
@@ -933,10 +947,11 @@
     }
 
     .detail-price {
-      font-size: 1.6rem;
+      font-size: 2rem;
       font-weight: 700;
       color: var(--primary);
-      margin-bottom: 4px
+      margin-bottom: 4px;
+      font-family: var(--heading-font);
     }
 
     .detail-addr {
@@ -1027,7 +1042,11 @@
 
     .detail-agent-btn.primary {
       background: var(--accent);
-      color: #fff
+      color: #fff;
+      border-radius: 10px;
+      font-family: var(--body-font);
+      text-transform: uppercase;
+      font-weight: 700;
     }
 
     .detail-agent-btn.outline {
@@ -1084,10 +1103,10 @@
     }
 
     .event-footer {
-      background: #1a2a3a;
-      padding: 40px 24px;
+      background: var(--accent);
+      padding: 60px 24px;
       color: #fff;
-      border-top: 4px solid var(--accent)
+      border-top: none;
     }
 
     .event-footer-inner {
@@ -1107,16 +1126,18 @@
     }
 
     .event-profile img {
-      width: 140px;
-      height: 140px;
-      border-radius: 50%;
-      border: 4px solid var(--accent);
-      object-fit: cover
+      width: 150px;
+      height: 150px;
+      border-radius: 12px;
+      border: 3px solid #fff;
+      object-fit: cover;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.2);
     }
 
     .event-profile .bio-content h2 {
-      font-size: 1.6rem;
-      margin-bottom: 5px;
+      font-family: var(--heading-font);
+      font-size: 2.2rem;
+      margin-bottom: 8px;
       color: #fff
     }
 
@@ -1193,7 +1214,7 @@
       justify-content: center;
       flex-direction: column;
       gap: 12px;
-      background: rgba(255, 255, 255, .95);
+      background: #FFFFFF;
       z-index: 20000
     }
 
@@ -1781,7 +1802,7 @@
       </a>
       <div class="navbar-expand-md"
         style="font-weight:700; color:#fff; font-size:1.1rem; flex-grow:1; text-align:center; margin: 0 0 0 5px;">
-        Open House Weekend - March 27-29
+        Open House Weekend - May 1st - 3rd
       </div>
       <div class="navbar-expand-md" style="display:flex; gap:8px;">
         <a href="https://coconutcoastopenhouses.com/home-search/" class="promo-cta blue"><i class="fas fa-search"></i>
@@ -1796,7 +1817,7 @@
   <div class="mobile-menu" id="mobileMenu">
     <div
       style="padding: 15px; text-align: center; font-weight: bold; color: #fff; border-bottom: 1px solid rgba(255,255,255,0.1); margin-bottom: 5px;">
-      Open House Weekend - March 27-29
+      Open House Weekend - May 1st - 3rd
     </div>
     <a href="https://coconutcoastopenhouses.com/home-search/"><i class="fas fa-search"></i> Search All Homes</a>
     <a href="https://bonitaesterorealtors.com/realtor-directory/"><i class="fas fa-user-tie"></i> Find a REALTOR®</a>
@@ -1807,10 +1828,10 @@
 
   <div class="event-banner">
     <div class="event-inner" style="width: 70%; max-width: 728px; margin: 0 auto;">
-      <a href="https://stateinsuranceusa.com/" target="_blank" rel="noopener">
-        <img src="https://bonitaesterorealtors.com/wp-content/uploads/2026/03/SIUSA_Bonita728x90-scaled.jpg"
+      <a href="https://www.saadlegal.com/" target="_blank" rel="noopener">
+        <img src="https://bonitaesterorealtors.com/wp-content/uploads/2026/04/BSER-Header.jpg"
           style="max-width:100%; height:auto; border-radius:4px; box-shadow:0 2px 8px rgba(0,0,0,0.2); margin-bottom:12px;"
-          alt="State Insurance USA">
+          alt="Saad Legal">
       </a>
     </div>
   </div>
@@ -1962,10 +1983,10 @@
         </div>
 
         <div style="margin-top: 25px; text-align: center; border-top: 1px solid #eee; padding-top: 20px;">
-          <h4 style="margin-bottom: 15px; font-size: 1.1rem; color: #333;">March Open House Weekend - Sponsored by:</h4>
-          <a href="https://stateinsuranceusa.com" target="_blank" rel="noopener">
-            <img src="https://bonitaesterorealtors.com/wp-content/uploads/2026/03/SIUSA_Bonita970x250-scaled.jpg"
-              alt="State Insurance USA"
+          <h4 style="margin-bottom: 15px; font-size: 1.1rem; color: #333;">May Open House Weekend - Sponsored by:</h4>
+          <a href="https://www.saadlegal.com" target="_blank" rel="noopener">
+            <img src="https://bonitaesterorealtors.com/wp-content/uploads/2026/04/BSER-Header.jpg"
+              alt="Saad Legal"
               style="width: 90%; max-width: 970px; height: auto; border-radius: 6px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
           </a>
         </div>
@@ -1977,34 +1998,28 @@
   <footer class="event-footer">
     <div class="event-footer-inner">
       <div class="event-profile">
-        <img src="https://stateinsuranceusa.com/wp-content/uploads/2023/10/Blake_Chapman_Headshot.jpg"
-          alt="Blake Chapman">
+        <img src="https://bonitaesterorealtors.com/wp-content/uploads/2026/04/SamSaad.png"
+          alt="Sam Saad">
         <div class="bio-content">
-          <h2>Blake Chapman</h2>
-          <p>Blake Chapman is the Agent and Owner of State Insurance USA, proudly serving Southwest Florida communities
-            including Bonita Springs, Estero, Fort Myers, Naples, and beyond. As the 2026 Diamond Sponsor of the Bonita
-            Springs-Estero REALTORS® Open House Weekend, Blake and his team are committed to protecting homeowners and
-            helping families find the right coverage for their most valuable investment.</p>
+          <h2>Sam Saad</h2>
+          <p>Sam Saad is the Founder and Managing Attorney of the Law Office of Sam J. Saad III and the owner of Paradise Coast Title & Escrow, serving clients throughout Southwest Florida. A recognized expert in real estate law, Sam actively serves on the committees responsible for drafting the FR/BAR and NABOR contracts, helping shape the very agreements used across the industry. He is a proud Diamond Sponsor of BER and an RPAC Major Investor, reflecting his strong commitment to the real estate community.</p>
           <div class="bio-contact">
-            <span><i class="fas fa-envelope"></i> <a
-                href="mailto:Blake@StateInsuranceUSA.com">Blake@StateInsuranceUSA.com</a></span>
-            <span><i class="fas fa-phone"></i> <a href="tel:2395679992">(239) 567-9992</a></span>
+            <span><i class="fas fa-phone"></i> <a href="tel:2397845556">(239) 784-5556</a></span>
           </div>
         </div>
       </div>
       <div class="event-about">
-        <h3>About State Insurance USA</h3>
-        <p>State Insurance USA is a trusted, full-service insurance agency serving Southwest Florida. With multiple
-          offices across Fort Myers, Estero, Fort Myers Beach, and Naples, their dedicated team specializes in auto,
+        <h3>About Saad Legal</h3>
+        <p>Known for delivering exceptional service, Sam and his team are dedicated to creating smooth, efficient closing experiences for agents, buyers, and sellers alike. Sam is available 24/7 on his cell and is always happy to serve as a resource—whether you’re working on a transaction with him or simply need guidance.</p>
         <div style="margin: 15px 0; text-align: center;">
-          <a href="https://stateinsuranceusa.com" target="_blank" rel="noopener">
-            <img src="https://bonitaesterorealtors.com/wp-content/uploads/2026/03/SIUSA_Bonita300x250.jpg"
-              alt="State Insurance USA"
+          <a href="https://www.saadlegal.com" target="_blank" rel="noopener">
+            <img src="https://bonitaesterorealtors.com/wp-content/uploads/2026/04/BSER-About.jpg"
+              alt="Saad Legal"
               style="max-width:380px;  width:auto; height:auto; border-radius:6px; box-shadow:0 2px 8px rgba(0,0,0,0.1)">
           </a>
         </div>
-        <a href="https://stateinsuranceusa.com" target="_blank" rel="noopener"><i class="fas fa-external-link-alt"></i>
-          Visit StateInsuranceUSA.com</a>
+        <a href="https://www.saadlegal.com" target="_blank" rel="noopener"><i class="fas fa-external-link-alt"></i>
+          Visit SaadLegal.com</a>
       </div>
     </div>
   </footer>
@@ -2013,14 +2028,13 @@
     All listings provided by SWFLAMLS via Bonita Springs-Estero REALTORS&reg;. All information deemed reliable but not
     guaranteed.
   </div>
-
   <div class="loading-overlay" id="loadingOverlay">
     <div class="spinner"></div>
     <div style="margin-top:20px; font-weight:600; color:#555">Loading Open Houses...</div>
     <div style="margin-top:15px; width:100%; display:flex; justify-content:center;">
-      <a href="https://stateinsuranceusa.com" target="_blank" rel="noopener" style="display:block; width:100%;">
-        <img src="https://bonitaesterorealtors.com/wp-content/uploads/2026/03/SIUSA_Bonita300x600.jpg"
-          alt="State Insurance USA" style="width:100%; max-height:60vh; object-fit:contain; border-radius:4px;">
+      <a href="https://www.saadlegal.com/" target="_blank" rel="noopener" style="display:block; width:100%;">
+        <img src="https://bonitaesterorealtors.com/wp-content/uploads/2026/04/BSER-Load.jpg"
+          alt="Saad Legal" style="width:100%; max-height:60vh; object-fit:contain; border-radius:4px;">
       </a>
     </div>
   </div>
@@ -2072,8 +2086,8 @@
     const ODATA_OH = `${API_BASE}/api/v2/OData/${MLS}/OpenHouse`;
     const ODATA_PROP = `${API_BASE}/api/v2/OData/${MLS}/Property`;
     const ODATA_MEDIA = `${API_BASE}/api/v2/OData/${MLS}/Media`;
-    const EVENT_START = '2026-03-27', EVENT_END = '2026-03-29';
-    const EVENT_DAYS = ['2026-03-27', '2026-03-28', '2026-03-29'];
+    const EVENT_START = '2026-05-01', EVENT_END = '2026-05-03';
+    const EVENT_DAYS = ['2026-05-01', '2026-05-02', '2026-05-03'];
     const PROP_SEL = 'ListingKey,ListingId,UnparsedAddress,City,PostalCode,ListPrice,PropertyType,PropertySubType,BedroomsTotal,BathroomsTotalInteger,LivingArea,LotSizeAcres,YearBuilt,StandardStatus,SubdivisionName,ListAgentFullName,ListAgentEmail,ListAgentDirectPhone,ListAgentKey,ListOfficeName,ListOfficePhone,PublicRemarks,Coordinates,Media';
 
     let map, markerCluster, allMerged = [], filteredList = [], mediaCache = new Map(), currentDetail = null, detailIdx = 0;
@@ -2460,7 +2474,9 @@
     }
 
     async function loadOpenHouses() {
-      document.getElementById('loadingOverlay').style.display = 'flex';
+      const loader = document.getElementById('loadingOverlay');
+      loader.style.display = 'flex';
+      const startTime = Date.now();
       try {
         const res = await fetch('https://listingsworker.bonitaspringsrealtors.workers.dev/api/cached-openhouses');
         if (!res.ok) throw new Error("Failed to fetch open houses cache");
@@ -2488,7 +2504,11 @@
         console.error('Load error', e);
         document.getElementById('listingsGrid').innerHTML = '<div style="padding:40px;text-align:center;color:#c00">Error loading data. Please refresh the page.</div>';
       }
-      document.getElementById('loadingOverlay').style.display = 'none';
+      const elapsed = Date.now() - startTime;
+      const remaining = Math.max(0, 3000 - elapsed);
+      setTimeout(() => {
+        loader.style.display = 'none';
+      }, remaining);
     }
 
 
