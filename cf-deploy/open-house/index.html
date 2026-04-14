@@ -1162,8 +1162,9 @@
     }
 
     .event-profile .bio-contact a {
-      color: var(--accent);
-      text-decoration: none
+      color: #fff;
+      text-decoration: underline;
+      font-weight: 700;
     }
 
     .event-about {
@@ -1192,9 +1193,9 @@
     }
 
     .event-about a {
-      color: var(--accent);
-      text-decoration: none;
-      font-weight: 600
+      color: #fff;
+      text-decoration: underline;
+      font-weight: 700;
     }
 
     .site-footer {
@@ -1370,6 +1371,20 @@
         font-size: 0.65rem !important;
         margin: 0 !important;
         color: #fff !important;
+        overflow-wrap: break-word;
+      }
+      
+      .event-profile .bio-content h2 {
+        font-size: 1.5rem !important;
+      }
+      
+      .event-profile, .event-about {
+        min-width: 100% !important;
+      }
+      
+      .event-profile .bio-content p, .event-about p {
+        overflow-wrap: break-word;
+        hyphens: auto;
       }
 
       .promo-logo {
