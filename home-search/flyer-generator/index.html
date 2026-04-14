@@ -8,21 +8,22 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link
-    href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=Great+Vibes&family=Manrope:wght@400;500;600;700;800&display=swap"
+    href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=Great+Vibes&family=Montserrat:wght@200;300;400&family=Manrope:wght@400;500;600;700;800&display=swap"
     rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
   <style>
     :root {
-      --ink: #26231f;
-      --muted: #6d675f;
-      --paper: #fbfaf7;
+      --ink: #2d2d2d;
+      --muted: #666666;
+      --paper: #ffffff;
       --panel: #ffffff;
-      --sidebar: #efe8dc;
-      --line: rgba(38, 35, 31, 0.12);
-      --strong-line: rgba(38, 35, 31, 0.22);
-      --accent: #87694d;
-      --accent-soft: rgba(135, 105, 77, 0.12);
-      --shadow: 0 28px 60px rgba(34, 29, 23, 0.14);
+      --sidebar: #f0f4f5;
+      --line: rgba(0, 0, 0, 0.08);
+      --strong-line: rgba(0, 0, 0, 0.15);
+      --accent: #000000;
+      --accent-soft: rgba(0, 0, 0, 0.05);
+      --shadow: 0 20px 50px rgba(0, 0, 0, 0.1);
       --sans: "Manrope", sans-serif;
       --serif: "Cormorant Garamond", serif;
       --script: "Great Vibes", cursive;
@@ -438,29 +439,39 @@
     }
 
     .sidebar-title {
-      padding-top: 0.8%;
-      padding-left: 2%;
-      text-align: left;
-      color: #1f1b17;
+      padding-top: 15%;
+      padding-bottom: 30px;
+      text-align: center;
       position: relative;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
     }
 
     .sidebar-title .open-label {
       display: block;
-      font-family: var(--serif);
-      font-size: clamp(2.05rem, 2.55vw, 2.52rem);
-      line-height: 0.86;
-      letter-spacing: 0.1em;
+      font-family: 'Montserrat', sans-serif;
+      font-size: clamp(2.8rem, 3.5vw, 3.5rem);
+      font-weight: 200;
+      line-height: 1;
+      letter-spacing: 0.55em;
       text-transform: uppercase;
-      padding-left: 22%;
+      color: #000;
+      opacity: 0.85;
+      padding-left: 0.55em; /* Offset for spacing */
     }
 
     .sidebar-title .house-label {
       display: block;
-      margin-top: -2.8%;
+      margin-top: -1.2rem;
       font-family: var(--script);
-      font-size: clamp(3.25rem, 4.8vw, 4.55rem);
-      line-height: 0.74;
+      font-size: clamp(6.5rem, 8.5vw, 8.5rem);
+      line-height: 0.6;
+      color: #000;
+      transform: rotate(-4deg);
+      position: relative;
+      z-index: 2;
     }
 
     .sidebar-when {
@@ -579,11 +590,11 @@
     .stat-item:not(:last-child)::after {
       content: "";
       position: absolute;
-      top: 20%;
+      top: 15%;
       right: 0;
       width: 1px;
-      height: 60%;
-      background: rgba(38, 35, 31, 0.08);
+      height: 70%;
+      background: rgba(0, 0, 0, 0.1);
     }
 
     .stat-icon {
@@ -683,92 +694,64 @@
     }
 
     .agent-card {
-      margin: auto 7.1% 5.2%;
-      padding-top: 2.4%;
-      border-top: 1px solid rgba(38, 35, 31, 0.1);
-      display: grid;
-      grid-template-columns: minmax(0, 1fr) auto;
-      gap: 16px;
+      margin: auto 8% 5%;
+      padding-top: 4%;
+      border-top: 1px solid rgba(0, 0, 0, 0.1);
+      display: flex;
+      justify-content: space-between;
       align-items: center;
+      gap: 20px;
     }
 
     .agent-copy {
       display: flex;
       flex-direction: column;
-      gap: 3px;
+      gap: 4px;
+      text-align: left;
     }
 
     .agent-name {
       font-family: var(--serif);
-      font-size: clamp(2.15rem, 2.6vw, 2.48rem);
-      line-height: 0.9;
-      font-weight: 500;
-      letter-spacing: 0.01em;
+      font-size: clamp(2rem, 2.5vw, 2.5rem);
+      line-height: 1.1;
+      font-weight: 400;
+      color: #000;
     }
 
     .agent-title {
-      font-size: 0.58rem;
-      letter-spacing: 0.14em;
+      font-size: 0.7rem;
+      letter-spacing: 0.1em;
       text-transform: uppercase;
       color: var(--muted);
-      font-weight: 800;
+      font-weight: 700;
     }
 
     .agent-phone {
-      font-family: var(--serif);
-      font-size: clamp(1.15rem, 1.28vw, 1.24rem);
-      font-weight: 500;
-      color: #352f28;
-    }
-
-    .agent-email {
-      display: none;
-      font-size: 0.76rem;
-      letter-spacing: 0.03em;
-      color: var(--muted);
+      font-family: var(--sans);
+      font-size: clamp(1.2rem, 1.5vw, 1.5rem);
+      font-weight: 400;
+      color: #333;
+      margin-top: 2px;
     }
 
     .office-brand {
       display: flex;
       align-items: center;
-      gap: 10px;
-      margin-top: 8px;
+      gap: 8px;
+      margin-top: 10px;
     }
 
     .office-brand img {
-      width: clamp(72px, 7vw, 86px);
+      width: clamp(80px, 8vw, 100px);
       height: auto;
-      object-fit: contain;
-    }
-
-    .office-copy {
-      display: flex;
-      flex-direction: column;
-      gap: 2px;
-    }
-
-    .office-name {
-      font-weight: 800;
-      letter-spacing: 0.06em;
-      text-transform: uppercase;
-      font-size: 0.78rem;
-    }
-
-    .office-meta {
-      font-size: 0.58rem;
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
-      color: var(--muted);
-      min-height: 1em;
     }
 
     .headshot-frame {
-      width: clamp(100px, 13vw, 124px);
+      width: clamp(120px, 15vw, 150px);
       aspect-ratio: 1;
       border-radius: 50%;
       overflow: hidden;
-      background: linear-gradient(135deg, #ebe2d4, #f5efe7);
-      border: 6px solid rgba(135, 105, 77, 0.05);
+      border: 1px solid rgba(0, 0, 0, 0.1);
       flex-shrink: 0;
     }
 
@@ -1511,10 +1494,10 @@
         items.push({ icon: "bath", value: formatBaths(baths), label: "Baths" });
       }
       if (garage) {
-        items.push({ icon: "car", value: garage, label: "Garage" });
+        items.push({ icon: "car", value: garage, label: "Attached & Detached Garage" });
       }
       if (sqft !== null && sqft !== undefined && sqft !== 0) {
-        items.push({ icon: "ruler-combined", value: Math.round(sqft).toLocaleString("en-US"), label: "Sq. Ft." });
+        items.push({ icon: "ruler-combined", value: Math.round(sqft).toLocaleString("en-US") + "+", label: "Sq. Ft." });
       }
 
       return items;
@@ -2052,35 +2035,81 @@
 </html>`;
     }
 
-    function printFlyerDocument() {
-      const printWindow = window.open("", "_blank", "noopener,noreferrer,width=900,height=1200");
-      if (!printWindow) {
-        window.print();
-        return;
-      }
-
-      printWindow.document.open();
-      printWindow.document.write(buildPrintDocumentHtml());
-      printWindow.document.close();
-
-      const triggerPrint = () => {
-        const readyPromise = printWindow.document.fonts && printWindow.document.fonts.ready
-          ? printWindow.document.fonts.ready
-          : Promise.resolve();
-
-        readyPromise.finally(() => {
-          setTimeout(() => {
-            printWindow.focus();
-            printWindow.print();
-            printWindow.close();
-          }, 450);
+    async function imageUrlToBase64(url) {
+      if (!url || url.startsWith("data:")) return url;
+      try {
+        const response = await fetch(url);
+        const blob = await response.blob();
+        return new Promise((resolve) => {
+          const reader = new FileReader();
+          reader.onloadend = () => resolve(reader.result);
+          reader.readAsDataURL(blob);
         });
-      };
+      } catch (err) {
+        console.warn("Failed to convert image to base64, PDF might miss image:", url, err);
+        return url;
+      }
+    }
 
-      if (printWindow.document.readyState === "complete") {
-        triggerPrint();
-      } else {
-        printWindow.addEventListener("load", triggerPrint, { once: true });
+    async function printFlyerDocument() {
+      const originalElement = document.getElementById("flyerSheet");
+      const clone = originalElement.cloneNode(true);
+      
+      // Temporary container for cloning to apply styles correctly
+      const container = document.createElement("div");
+      container.style.position = "absolute";
+      container.style.left = "-9999px";
+      container.style.top = "-9999px";
+      container.appendChild(clone);
+      document.body.appendChild(container);
+
+      const record = state.fullRecordMap.get(state.selectedListingKey) || state.listingMap.get(state.selectedListingKey);
+      const address = record ? (record.UnparsedAddress || "") : "";
+      const filename = address ? ("Flyer-" + address.replace(/[^a-z0-9]/gi, "-").replace(/-+/g, "-") + ".pdf") : "Listing-Flyer.pdf";
+
+      const originalBtn = elements.printButton.innerHTML;
+      elements.printButton.disabled = true;
+      elements.printButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i><span>Optimizing PDF...</span>';
+
+      try {
+        // Convert all images in clone to base64 to avoid CORS issues in canvas
+        const images = clone.querySelectorAll("img");
+        const conversionPromises = Array.from(images).map(async (img) => {
+          img.crossOrigin = "anonymous"; // Try to enable CORS
+          const base64 = await imageUrlToBase64(img.src);
+          img.src = base64;
+          return base64;
+        });
+        await Promise.all(conversionPromises);
+
+        const opt = {
+          margin: 0,
+          filename: filename,
+          image: { type: "jpeg", quality: 1 },
+          html2canvas: {
+            scale: 3,
+            useCORS: true,
+            letterRendering: true,
+            scrollX: 0,
+            scrollY: 0,
+            logging: false
+          },
+          jsPDF: {
+            unit: "in",
+            format: "letter",
+            orientation: "portrait"
+          }
+        };
+
+        await html2pdf().set(opt).from(clone).save();
+      } catch (error) {
+        console.error("PDF download failed", error);
+        alert("There was an issue generating the PDF. Try printing conventionaly.");
+        window.print();
+      } finally {
+        document.body.removeChild(container);
+        elements.printButton.disabled = false;
+        elements.printButton.innerHTML = originalBtn;
       }
     }
 
