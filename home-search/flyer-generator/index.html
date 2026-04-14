@@ -11,7 +11,6 @@
     href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=Great+Vibes&family=Montserrat:wght@200;300;400&family=Manrope:wght@400;500;600;700;800&display=swap"
     rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
   <style>
     :root {
       --ink: #2d2d2d;
@@ -420,58 +419,61 @@
     }
 
     .flyer-sheet {
-      width: min(100%, 8.5in);
-      aspect-ratio: 8.5 / 11;
+      width: 8.5in;
+      height: 10.6in;
       display: grid;
-      grid-template-columns: 28.4% 71.6%;
-      background: var(--paper);
+      grid-template-columns: 2.3in 5.2in;
+      background: #fff;
       color: var(--ink);
-      box-shadow: 0 26px 46px rgba(30, 27, 23, 0.16);
+      box-shadow: 0 26px 46px rgba(0, 0, 0, 0.1);
       overflow: hidden;
+      margin: 0 auto;
+      padding: 0.5in;
+      box-sizing: border-box;
     }
 
     .flyer-sidebar {
       background: var(--sidebar);
-      padding: 4.2% 9.2% 4.1% 8.8%;
+      padding: 0.3in 0.5in;
       display: flex;
       flex-direction: column;
-      gap: 2%;
+      gap: 20px;
+      height: 9.6in;
+      box-sizing: border-box;
+      margin-top: -0.5in;
+      margin-bottom: -0.5in;
+      margin-left: -0.5in;
     }
 
     .sidebar-title {
-      padding-top: 15%;
-      padding-bottom: 30px;
+      padding-top: 40px;
+      padding-bottom: 5px;
       text-align: center;
       position: relative;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
     }
 
     .sidebar-title .open-label {
       display: block;
       font-family: 'Montserrat', sans-serif;
-      font-size: clamp(2.8rem, 3.5vw, 3.5rem);
+      font-size: 28pt;
       font-weight: 200;
       line-height: 1;
-      letter-spacing: 0.55em;
+      letter-spacing: 0.5em;
       text-transform: uppercase;
       color: #000;
-      opacity: 0.85;
-      padding-left: 0.55em; /* Offset for spacing */
+      opacity: 0.9;
     }
 
     .sidebar-title .house-label {
       display: block;
-      margin-top: -1.2rem;
       font-family: var(--script);
-      font-size: clamp(6.5rem, 8.5vw, 8.5rem);
-      line-height: 0.6;
+      font-size: 64pt;
+      line-height: 0.5;
       color: #000;
-      transform: rotate(-4deg);
+      transform: rotate(-3deg);
       position: relative;
       z-index: 2;
+      margin-top: -12pt;
     }
 
     .sidebar-when {
@@ -540,10 +542,12 @@
 
     .hero-wrap {
       width: 100%;
-      height: 33.1%;
-      background: linear-gradient(135deg, #e6ddd0, #f7f4ef);
+      height: 3.0in;
+      background: #f5f5f5;
       overflow: hidden;
       position: relative;
+      margin-top: 0.1in;
+      margin-bottom: 0.15in;
     }
 
     .hero-wrap img {
@@ -818,9 +822,51 @@
     }
 
     @media print {
+      html, body {
+        height: 100% !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        overflow: hidden !important;
+        background: #fff !important;
+      }
+      .page-shell {
+        padding: 0 !important;
+        margin: 0 !important;
+        max-width: none !important;
+      }
+      .page-header, .builder-panel, .preview-topbar, .crumb-link, #resetButton, #loadStatus, #resultsBadge {
+        display: none !important;
+      }
+      .builder-layout {
+        display: block !important;
+        grid-template-columns: none !important;
+        gap: 0 !important;
+      }
+      .preview-panel, .preview-panel .panel-card {
+        padding: 0 !important;
+        margin: 0 !important;
+        border: none !important;
+        box-shadow: none !important;
+        background: none !important;
+        backdrop-filter: none !important;
+      }
+      .flyer-stage {
+        padding: 0 !important;
+        margin: 0 !important;
+        overflow: visible !important;
+        display: block !important;
+      }
+      .flyer-sheet {
+        position: absolute !important;
+        left: 0 !important;
+        top: 0 !important;
+        margin: 0 !important;
+        box-shadow: none !important;
+        page-break-after: avoid !important;
+      }
       @page {
         size: letter portrait;
-        margin: 0;
+        margin: 0 !important;
       }
     }
   </style>
@@ -2035,82 +2081,8 @@
 </html>`;
     }
 
-    async function imageUrlToBase64(url) {
-      if (!url || url.startsWith("data:")) return url;
-      try {
-        const response = await fetch(url);
-        const blob = await response.blob();
-        return new Promise((resolve) => {
-          const reader = new FileReader();
-          reader.onloadend = () => resolve(reader.result);
-          reader.readAsDataURL(blob);
-        });
-      } catch (err) {
-        console.warn("Failed to convert image to base64, PDF might miss image:", url, err);
-        return url;
-      }
-    }
-
-    async function printFlyerDocument() {
-      const originalElement = document.getElementById("flyerSheet");
-      const clone = originalElement.cloneNode(true);
-      
-      // Temporary container for cloning to apply styles correctly
-      const container = document.createElement("div");
-      container.style.position = "absolute";
-      container.style.left = "-9999px";
-      container.style.top = "-9999px";
-      container.appendChild(clone);
-      document.body.appendChild(container);
-
-      const record = state.fullRecordMap.get(state.selectedListingKey) || state.listingMap.get(state.selectedListingKey);
-      const address = record ? (record.UnparsedAddress || "") : "";
-      const filename = address ? ("Flyer-" + address.replace(/[^a-z0-9]/gi, "-").replace(/-+/g, "-") + ".pdf") : "Listing-Flyer.pdf";
-
-      const originalBtn = elements.printButton.innerHTML;
-      elements.printButton.disabled = true;
-      elements.printButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i><span>Optimizing PDF...</span>';
-
-      try {
-        // Convert all images in clone to base64 to avoid CORS issues in canvas
-        const images = clone.querySelectorAll("img");
-        const conversionPromises = Array.from(images).map(async (img) => {
-          img.crossOrigin = "anonymous"; // Try to enable CORS
-          const base64 = await imageUrlToBase64(img.src);
-          img.src = base64;
-          return base64;
-        });
-        await Promise.all(conversionPromises);
-
-        const opt = {
-          margin: 0,
-          filename: filename,
-          image: { type: "jpeg", quality: 1 },
-          html2canvas: {
-            scale: 3,
-            useCORS: true,
-            letterRendering: true,
-            scrollX: 0,
-            scrollY: 0,
-            logging: false
-          },
-          jsPDF: {
-            unit: "in",
-            format: "letter",
-            orientation: "portrait"
-          }
-        };
-
-        await html2pdf().set(opt).from(clone).save();
-      } catch (error) {
-        console.error("PDF download failed", error);
-        alert("There was an issue generating the PDF. Try printing conventionaly.");
-        window.print();
-      } finally {
-        document.body.removeChild(container);
-        elements.printButton.disabled = false;
-        elements.printButton.innerHTML = originalBtn;
-      }
+    function printFlyerDocument() {
+      window.print();
     }
 
     async function selectListing(listingKey) {
