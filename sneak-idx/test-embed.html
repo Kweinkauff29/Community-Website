@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SNEAK IDX Embed Test</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      margin: 0;
+      padding: 40px 20px;
+      background: #f1f5f9;
+      color: #334155;
+    }
+    .wrapper {
+      max-width: 1200px;
+      margin: 0 auto;
+      background: #fff;
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+    }
+    header {
+      margin-bottom: 24px;
+      border-bottom: 1px solid #e2e8f0;
+      padding-bottom: 16px;
+    }
+    h1 {
+      margin: 0 0 8px 0;
+      font-size: 1.5rem;
+      color: #0f172a;
+    }
+    p {
+      margin: 0;
+      font-size: 0.9rem;
+      color: #64748b;
+    }
+    .embed-area {
+      margin-top: 24px;
+      border: 1px dashed #cbd5e1;
+      border-radius: 8px;
+      overflow: hidden;
+    }
+  </style>
+</head>
+<body>
+  <div class="wrapper">
+    <header>
+      <h1>Agent Partner Website (Simulated 3rd-Party Host)</h1>
+      <p>This external website embeds the SNEAK IDX property search widget using <code>embed.js</code>.</p>
+    </header>
+
+    <div class="embed-area">
+      <!-- SNEAK IDX Embed Script -->
+      <script 
+        src="./embed.js" 
+        data-site="demo-ccor" 
+        data-widget="search" 
+        data-height="750px">
+      </script>
+    </div>
+  </div>
+</body>
+</html>

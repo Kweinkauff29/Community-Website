@@ -1,0 +1,2487 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title id="pageTitle">Property Search | Powered by SNEAK IDX</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.5.3/MarkerCluster.css" />
+  <link rel="stylesheet"
+    href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.5.3/MarkerCluster.Default.css" />
+  <style>
+    :root {
+      --primary: #1a2a3a;
+      --accent: #2596be;
+      --accent-light: #e8f7fc;
+      --bg: #f5f6f8;
+      --text: #333;
+      --white: #fff;
+      --header-bg: rgba(20, 20, 20, 0.92);
+      --hot: #ef4444;
+      --cold: #3b82f6;
+      --success: #22c55e;
+      --warning: #f59e0b;
+      --pending: #8b5cf6;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      overflow-x: hidden;
+    }
+
+    /* Embedded Mode Override */
+    body.is-embedded #top-bar {
+      display: none !important;
+    }
+
+    body.is-embedded .filters-container {
+      margin-top: 0 !important;
+      top: 0 !important;
+    }
+
+    /* --- Header --- */
+    #top-bar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      width: 100%;
+      background: var(--header-bg);
+      padding: 8px 24px;
+      z-index: 10000;
+      box-shadow: 0 2px 12px rgba(0, 0, 0, 0.3);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      backdrop-filter: blur(8px);
+    }
+
+    #bar-width {
+      display: flex;
+      align-items: center;
+      width: 100%;
+      max-width: 1400px;
+      justify-content: space-between;
+    }
+
+    .brand-wrapper {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      text-decoration: none;
+    }
+
+    .brand-logo-img {
+      height: 36px;
+      max-width: 160px;
+      object-fit: contain;
+      display: none;
+    }
+
+    .brand-title {
+      color: var(--white);
+      font-weight: 600;
+      font-size: 1.05rem;
+      letter-spacing: 0.5px;
+      white-space: nowrap;
+    }
+
+    .brand-badge {
+      font-size: 0.65rem;
+      text-transform: uppercase;
+      background: var(--accent);
+      color: #fff;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+    }
+
+    .navbar-expand-md {
+      display: flex;
+      gap: 18px;
+      list-style: none;
+      align-items: center;
+    }
+
+    .navbar-expand-md a {
+      color: var(--white);
+      text-decoration: none;
+      font-weight: 500;
+      font-size: 0.82rem;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      opacity: 0.85;
+      transition: opacity 0.2s;
+    }
+
+    .navbar-expand-md a:hover {
+      opacity: 1;
+    }
+
+    /* --- Compact Filter Bar (single row) --- */
+    .filters-container {
+      margin-top: 52px;
+      background: var(--white);
+      border-bottom: 1px solid #e0e0e0;
+      padding: 12px 0;
+      position: sticky;
+      top: 52px;
+      z-index: 500;
+    }
+
+    .filters-outer {
+      display: flex;
+      flex-direction: column;
+      align-items: stretch;
+      max-width: 1600px;
+      margin: 0 auto;
+      padding: 0 16px;
+      gap: 16px;
+    }
+
+    .filters-row-top,
+    .filters-row-bottom {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .filters-row-top {
+      position: relative;
+    }
+
+    .pill-group {
+      display: flex;
+      background: #eee;
+      border-radius: 20px;
+      padding: 3px;
+      flex-shrink: 0;
+    }
+
+    .pill-btn {
+      border: none;
+      background: transparent;
+      padding: 6px 14px;
+      border-radius: 18px;
+      font-size: 0.82rem;
+      font-weight: 600;
+      cursor: pointer;
+      color: #555;
+      transition: all 0.2s;
+      white-space: nowrap;
+    }
+
+    .pill-btn.active {
+      background: var(--primary);
+      color: #fff;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
+    }
+
+    .filter-divider {
+      width: 1px;
+      height: 24px;
+      background: #ddd;
+      flex-shrink: 0;
+    }
+
+    .filters-bar {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      overflow-x: auto;
+      scrollbar-width: none;
+      -ms-overflow-style: none;
+      flex-grow: 1;
+      padding: 2px 0;
+    }
+
+    .filters-bar::-webkit-scrollbar {
+      display: none;
+    }
+
+    .filter-dropdown-wrap {
+      position: relative;
+      flex-shrink: 0;
+    }
+
+    .filter-dropdown-btn {
+      border: 1px solid #ccc;
+      background: #fff;
+      padding: 7px 14px;
+      border-radius: 20px;
+      font-size: 0.8rem;
+      cursor: pointer;
+      font-weight: 500;
+      white-space: nowrap;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.2s;
+    }
+
+    .filter-dropdown-btn:hover {
+      border-color: #888;
+      background: #fafafa;
+    }
+
+    .filter-dropdown-btn.has-value {
+      border-color: var(--accent);
+      background: var(--accent-light);
+      color: var(--primary);
+      font-weight: 600;
+    }
+
+    .filter-dropdown-btn::after {
+      content: '\f078';
+      font-family: 'Font Awesome 6 Free';
+      font-weight: 900;
+      font-size: 0.65rem;
+      margin-left: 2px;
+      opacity: 0.6;
+    }
+
+    .filter-dropdown-panel {
+      position: fixed;
+      background: #fff;
+      border: 1px solid #ddd;
+      border-radius: 12px;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+      padding: 16px;
+      z-index: 10001;
+      display: none;
+      min-width: 220px;
+    }
+
+    .filter-dropdown-panel.open {
+      display: block;
+    }
+
+    .filter-dropdown-panel label {
+      display: block;
+      font-size: 0.8rem;
+      font-weight: 600;
+      margin-bottom: 8px;
+      color: #333;
+    }
+
+    .filter-dropdown-panel input[type="text"],
+    .filter-dropdown-panel input[type="number"] {
+      width: 100%;
+      padding: 8px 10px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      font-size: 0.82rem;
+      margin-bottom: 8px;
+    }
+
+    .filter-btn-group {
+      display: flex;
+      gap: 4px;
+      margin-bottom: 12px;
+    }
+
+    .filter-option-btn {
+      flex: 1;
+      border: 1px solid #ccc;
+      background: #fff;
+      padding: 6px 8px;
+      border-radius: 6px;
+      font-size: 0.75rem;
+      cursor: pointer;
+      font-weight: 500;
+      text-align: center;
+      transition: all 0.2s;
+    }
+
+    .filter-option-btn.selected {
+      background: var(--primary);
+      color: #fff;
+      border-color: var(--primary);
+    }
+
+    .apply-btn {
+      width: 100%;
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      padding: 8px 0;
+      border-radius: 6px;
+      font-size: 0.82rem;
+      font-weight: 600;
+      cursor: pointer;
+      margin-top: 8px;
+      transition: background 0.2s;
+    }
+
+    .apply-btn:hover {
+      filter: brightness(0.9);
+    }
+
+    .filter-arrow {
+      border: none;
+      background: #f0f0f0;
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      flex-shrink: 0;
+      font-size: 0.7rem;
+      color: #666;
+    }
+
+    .filter-arrow:hover {
+      background: #e0e0e0;
+    }
+
+    .search-btn {
+      border: none;
+      background: var(--accent);
+      color: #fff;
+      padding: 7px 16px;
+      border-radius: 20px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      cursor: pointer;
+      white-space: nowrap;
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: background 0.2s;
+    }
+
+    .search-btn:hover {
+      filter: brightness(0.9);
+    }
+
+    .search-btn.secondary {
+      background: #eee;
+      color: #333;
+    }
+
+    .search-btn.secondary:hover {
+      background: #e0e0e0;
+    }
+
+    .search-input-wrap {
+      position: relative;
+      flex-grow: 1;
+      max-width: 400px;
+    }
+
+    .search-input-wrap i {
+      position: absolute;
+      left: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: #888;
+      font-size: 0.85rem;
+    }
+
+    .search-input-wrap input {
+      width: 100%;
+      padding: 8px 12px 8px 34px;
+      border: 1px solid #ccc;
+      border-radius: 20px;
+      font-size: 0.82rem;
+      background: #fff;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    .search-input-wrap input:focus {
+      border-color: var(--accent);
+    }
+
+    .results-count {
+      font-size: 0.82rem;
+      font-weight: 600;
+      color: #555;
+      margin-left: auto;
+      white-space: nowrap;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .loading-indicator {
+      display: none;
+      color: var(--accent);
+    }
+
+    .desc-banner {
+      background: #fff;
+      border-bottom: 1px solid #eee;
+      padding: 8px 16px;
+      font-size: 0.78rem;
+      color: #555;
+      text-align: center;
+    }
+
+    /* --- Carousels / Featured --- */
+    .carousels-wrapper {
+      background: #fff;
+      border-bottom: 1px solid #eee;
+      padding: 12px 16px;
+    }
+
+    .carousel-container {
+      max-width: 1600px;
+      margin: 0 auto;
+    }
+
+    .carousel-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 8px;
+    }
+
+    .carousel-header h2 {
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: var(--primary);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .badge-new {
+      background: var(--hot);
+      color: #fff;
+      font-size: 0.65rem;
+      padding: 2px 6px;
+      border-radius: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+    }
+
+    .carousel-track {
+      display: flex;
+      gap: 12px;
+      overflow-x: auto;
+      padding-bottom: 6px;
+      scrollbar-width: thin;
+    }
+
+    .carousel-card {
+      width: 200px;
+      flex-shrink: 0;
+      background: #fff;
+      border-radius: 8px;
+      border: 1px solid #eee;
+      overflow: hidden;
+      cursor: pointer;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .carousel-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+
+    .carousel-img-wrapper {
+      position: relative;
+      height: 120px;
+      background: #eee;
+    }
+
+    .carousel-img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    /* --- Main Content (Map + Listings Grid) --- */
+    .main-container {
+      display: flex;
+      height: calc(100vh - 170px);
+      position: relative;
+    }
+
+    .map-section {
+      flex: 1;
+      height: 100%;
+      position: relative;
+    }
+
+    #map {
+      width: 100%;
+      height: 100%;
+    }
+
+    .listings-section {
+      width: 55%;
+      height: 100%;
+      overflow-y: auto;
+      padding: 16px;
+      background: var(--bg);
+      display: flex;
+      flex-direction: column;
+    }
+
+    .listings-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 16px;
+      flex-grow: 1;
+    }
+
+    .listing-card {
+      background: #fff;
+      border-radius: 12px;
+      border: 1px solid #e0e0e0;
+      overflow: hidden;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+    }
+
+    .listing-card:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
+      border-color: #ccc;
+    }
+
+    .listing-card.active {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 2px var(--accent);
+    }
+
+    .card-img-wrapper {
+      position: relative;
+      height: 200px;
+      background: #e2e8f0;
+      overflow: hidden;
+    }
+
+    .card-img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      transition: transform 0.3s;
+    }
+
+    .listing-card:hover .card-img {
+      transform: scale(1.03);
+    }
+
+    .price-badge {
+      position: absolute;
+      bottom: 10px;
+      left: 10px;
+      background: rgba(15, 23, 42, 0.85);
+      color: #fff;
+      padding: 4px 8px;
+      border-radius: 6px;
+      font-weight: 700;
+      font-size: 1rem;
+      backdrop-filter: blur(4px);
+    }
+
+    .status-badge-card {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      padding: 3px 8px;
+      border-radius: 6px;
+      font-size: 0.7rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      color: #fff;
+    }
+
+    .status-badge-card.active {
+      background: var(--success);
+    }
+
+    .status-badge-card.auc {
+      background: var(--warning);
+    }
+
+    .status-badge-card.pending {
+      background: var(--pending);
+    }
+
+    .card-save-btn {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      background: rgba(255, 255, 255, 0.85);
+      border: none;
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      color: #444;
+      font-size: 0.85rem;
+      transition: all 0.2s;
+    }
+
+    .card-save-btn:hover {
+      background: #fff;
+      transform: scale(1.1);
+    }
+
+    .card-save-btn.saved {
+      color: var(--hot);
+    }
+
+    .card-arrow {
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      background: rgba(0, 0, 0, 0.5);
+      color: #fff;
+      border: none;
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      opacity: 0;
+      transition: opacity 0.2s;
+    }
+
+    .listing-card:hover .card-arrow {
+      opacity: 1;
+    }
+
+    .card-arrow.left {
+      left: 8px;
+    }
+
+    .card-arrow.right {
+      right: 8px;
+    }
+
+    .photo-count {
+      position: absolute;
+      bottom: 10px;
+      right: 10px;
+      background: rgba(0, 0, 0, 0.6);
+      color: #fff;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 0.65rem;
+      font-weight: 600;
+    }
+
+    .card-content {
+      padding: 12px 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      flex-grow: 1;
+    }
+
+    .card-subtype {
+      font-size: 0.72rem;
+      text-transform: uppercase;
+      font-weight: 700;
+      color: var(--accent);
+      letter-spacing: 0.5px;
+    }
+
+    .card-address {
+      font-size: 0.92rem;
+      font-weight: 600;
+      color: var(--text);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .card-details {
+      display: flex;
+      gap: 12px;
+      font-size: 0.8rem;
+      color: #555;
+      margin-top: 2px;
+    }
+
+    .card-detail-item {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .card-meta {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 6px;
+      font-size: 0.75rem;
+      color: #777;
+      border-top: 1px solid #f0f0f0;
+      padding-top: 8px;
+    }
+
+    /* --- Pagination Controls --- */
+    .pagination-bar {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      padding: 20px 0 10px 0;
+      margin-top: auto;
+    }
+
+    .page-btn {
+      background: #fff;
+      border: 1px solid #ccc;
+      padding: 8px 16px;
+      border-radius: 8px;
+      font-size: 0.82rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .page-btn:hover:not(:disabled) {
+      background: var(--accent);
+      color: #fff;
+      border-color: var(--accent);
+    }
+
+    .page-btn:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+
+    .page-info {
+      font-size: 0.82rem;
+      font-weight: 600;
+      color: #666;
+    }
+
+    /* --- Marker Clustering & Map Pins --- */
+    .custom-pin {
+      background: transparent;
+      border: none;
+    }
+
+    .price-pin {
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
+      border: 1.5px solid #fff;
+      cursor: pointer;
+      transition: transform 0.2s;
+    }
+
+    .price-pin:hover {
+      transform: scale(1.15);
+      z-index: 10000 !important;
+    }
+
+    .leaflet-popup-content-wrapper {
+      padding: 0;
+      border-radius: 10px;
+      overflow: hidden;
+    }
+
+    .leaflet-popup-content {
+      margin: 0;
+      width: 220px !important;
+    }
+
+    .popup-content {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .popup-img {
+      width: 100%;
+      height: 120px;
+      object-fit: cover;
+      background: #eee;
+    }
+
+    .popup-info {
+      padding: 10px;
+    }
+
+    .popup-price {
+      font-weight: 700;
+      font-size: 1rem;
+      color: var(--primary);
+    }
+
+    .popup-address {
+      font-size: 0.78rem;
+      color: #444;
+      margin: 2px 0 6px 0;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .popup-details {
+      display: flex;
+      gap: 8px;
+      font-size: 0.72rem;
+      color: #666;
+      margin-bottom: 8px;
+    }
+
+    .popup-btn {
+      width: 100%;
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      padding: 6px 0;
+      border-radius: 6px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    /* Modal Overlays */
+    .detail-overlay,
+    .contact-overlay,
+    .agent-modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.75);
+      z-index: 20000;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      backdrop-filter: blur(4px);
+    }
+
+    .detail-modal {
+      background: #fff;
+      border-radius: 16px;
+      max-width: 850px;
+      width: 100%;
+      max-height: 90vh;
+      overflow-y: auto;
+      position: relative;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+    }
+
+    .detail-close,
+    .contact-close,
+    .agent-modal-close {
+      position: absolute;
+      top: 14px;
+      right: 14px;
+      background: rgba(0, 0, 0, 0.5);
+      color: #fff;
+      border: none;
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      font-size: 1.2rem;
+      cursor: pointer;
+      z-index: 10;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.2s;
+    }
+
+    .detail-close:hover,
+    .contact-close:hover,
+    .agent-modal-close:hover {
+      background: rgba(0, 0, 0, 0.8);
+    }
+
+    .detail-gallery {
+      position: relative;
+      height: 400px;
+      background: #0f172a;
+    }
+
+    .detail-gallery-img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+    }
+
+    .detail-gallery-nav {
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      background: rgba(0, 0, 0, 0.6);
+      color: #fff;
+      border: none;
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      cursor: pointer;
+      font-size: 1.1rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .detail-gallery-nav.prev {
+      left: 16px;
+    }
+
+    .detail-gallery-nav.next {
+      right: 16px;
+    }
+
+    .detail-gallery-count {
+      position: absolute;
+      bottom: 16px;
+      right: 16px;
+      background: rgba(0, 0, 0, 0.7);
+      color: #fff;
+      padding: 4px 10px;
+      border-radius: 6px;
+      font-size: 0.8rem;
+      font-weight: 600;
+    }
+
+    .detail-gallery-thumbs {
+      display: flex;
+      gap: 8px;
+      padding: 12px 16px;
+      overflow-x: auto;
+      background: #f1f5f9;
+    }
+
+    .detail-thumb {
+      width: 70px;
+      height: 50px;
+      object-fit: cover;
+      border-radius: 6px;
+      cursor: pointer;
+      opacity: 0.6;
+      border: 2px solid transparent;
+      flex-shrink: 0;
+    }
+
+    .detail-thumb.active {
+      opacity: 1;
+      border-color: var(--accent);
+    }
+
+    .detail-body {
+      padding: 24px;
+    }
+
+    .detail-actions {
+      display: flex;
+      justify-content: flex-end;
+      margin-bottom: 12px;
+    }
+
+    .detail-save-btn {
+      background: #f1f5f9;
+      border: 1px solid #cbd5e1;
+      padding: 8px 16px;
+      border-radius: 8px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      color: #333;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.2s;
+    }
+
+    .detail-save-btn.saved {
+      background: #fee2e2;
+      border-color: #fca5a5;
+      color: var(--hot);
+    }
+
+    .detail-price {
+      font-size: 1.8rem;
+      font-weight: 800;
+      color: var(--primary);
+    }
+
+    .detail-addr {
+      font-size: 1.1rem;
+      color: #475569;
+      margin: 4px 0 12px 0;
+    }
+
+    .detail-badges {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+
+    .detail-badge {
+      padding: 4px 10px;
+      border-radius: 6px;
+      font-size: 0.75rem;
+      font-weight: 700;
+    }
+
+    .detail-stats {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 16px;
+      padding: 16px 0;
+      border-top: 1px solid #e2e8f0;
+      border-bottom: 1px solid #e2e8f0;
+      margin-bottom: 20px;
+    }
+
+    .detail-stat {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: #334155;
+    }
+
+    .detail-stat i {
+      color: var(--accent);
+    }
+
+    .detail-description {
+      font-size: 0.92rem;
+      line-height: 1.7;
+      color: #334155;
+      margin-bottom: 24px;
+    }
+
+    .detail-agent-section {
+      background: #f8fafc;
+      border-radius: 12px;
+      padding: 20px;
+      border: 1px solid #e2e8f0;
+    }
+
+    .detail-agent-name {
+      font-weight: 700;
+      font-size: 1.05rem;
+      color: var(--primary);
+    }
+
+    .detail-agent-office {
+      font-size: 0.85rem;
+      color: #64748b;
+      margin-top: 2px;
+    }
+
+    .detail-agent-btns {
+      display: flex;
+      gap: 12px;
+      margin-top: 16px;
+    }
+
+    .detail-agent-btn {
+      padding: 10px 18px;
+      border-radius: 8px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      border: none;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .detail-agent-btn.primary {
+      background: var(--accent);
+      color: #fff;
+    }
+
+    .detail-agent-btn.outline {
+      background: transparent;
+      border: 1px solid #cbd5e1;
+      color: #334155;
+    }
+
+    /* Contact Form Modal */
+    .contact-modal {
+      background: #fff;
+      border-radius: 16px;
+      max-width: 480px;
+      width: 100%;
+      padding: 28px;
+      position: relative;
+    }
+
+    .contact-modal h3 {
+      font-size: 1.3rem;
+      color: var(--primary);
+      margin-bottom: 4px;
+    }
+
+    .contact-modal .sub {
+      font-size: 0.85rem;
+      color: #64748b;
+      margin-bottom: 20px;
+    }
+
+    .contact-form label {
+      display: block;
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: #334155;
+      margin-bottom: 6px;
+    }
+
+    .contact-form input,
+    .contact-form textarea {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid #cbd5e1;
+      border-radius: 8px;
+      font-size: 0.9rem;
+      margin-bottom: 14px;
+      font-family: inherit;
+    }
+
+    .contact-form textarea {
+      height: 100px;
+      resize: vertical;
+    }
+
+    .send-btn {
+      width: 100%;
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      padding: 12px 0;
+      border-radius: 8px;
+      font-size: 0.95rem;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+
+    /* Notification Toast */
+    .toast-container {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      z-index: 30000;
+    }
+
+    .toast {
+      background: #0f172a;
+      color: #fff;
+      padding: 12px 20px;
+      border-radius: 8px;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+      font-size: 0.9rem;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      animation: slideUp 0.3s ease;
+    }
+
+    .toast.success {
+      border-left: 4px solid var(--success);
+    }
+
+    .toast.error {
+      border-left: 4px solid var(--hot);
+    }
+
+    @keyframes slideUp {
+      from {
+        transform: translateY(20px);
+        opacity: 0;
+      }
+
+      to {
+        transform: translateY(0);
+        opacity: 1;
+      }
+    }
+
+    /* Cart FAB & Panel */
+    .cart-fab {
+      position: fixed;
+      bottom: 24px;
+      left: 24px;
+      width: 52px;
+      height: 52px;
+      border-radius: 50%;
+      background: var(--primary);
+      color: #fff;
+      border: none;
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.25);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.2rem;
+      z-index: 1000;
+      transition: transform 0.2s;
+    }
+
+    .cart-fab:hover {
+      transform: scale(1.08);
+    }
+
+    .cart-badge {
+      position: absolute;
+      top: -4px;
+      right: -4px;
+      background: var(--hot);
+      color: #fff;
+      font-size: 0.7rem;
+      font-weight: 700;
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 2px solid #fff;
+    }
+
+    .cart-panel {
+      position: fixed;
+      bottom: 86px;
+      left: 24px;
+      width: 320px;
+      max-height: 420px;
+      background: #fff;
+      border-radius: 16px;
+      box-shadow: 0 12px 30px rgba(0, 0, 0, 0.2);
+      border: 1px solid #e2e8f0;
+      z-index: 1000;
+      display: none;
+      overflow: hidden;
+    }
+
+    .cart-header {
+      padding: 14px 16px;
+      background: #f8fafc;
+      border-bottom: 1px solid #e2e8f0;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .cart-header h3 {
+      font-size: 0.95rem;
+      color: var(--primary);
+    }
+
+    .cart-clear {
+      background: none;
+      border: none;
+      color: #94a3b8;
+      font-size: 0.75rem;
+      cursor: pointer;
+      font-weight: 600;
+    }
+
+    .cart-clear:hover {
+      color: var(--hot);
+    }
+
+    .cart-items {
+      max-height: 340px;
+      overflow-y: auto;
+      padding: 10px;
+    }
+
+    .cart-item {
+      display: flex;
+      gap: 10px;
+      padding: 8px;
+      border-bottom: 1px solid #f1f5f9;
+      cursor: pointer;
+      align-items: center;
+    }
+
+    .cart-item:hover {
+      background: #f8fafc;
+    }
+
+    .cart-item-img {
+      width: 50px;
+      height: 40px;
+      object-fit: cover;
+      border-radius: 4px;
+      background: #cbd5e1;
+    }
+
+    .cart-item-info {
+      flex: 1;
+      overflow: hidden;
+    }
+
+    .cart-item-price {
+      font-weight: 700;
+      font-size: 0.85rem;
+      color: var(--primary);
+    }
+
+    .cart-item-addr {
+      font-size: 0.72rem;
+      color: #64748b;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .cart-item-remove {
+      background: none;
+      border: none;
+      color: #94a3b8;
+      cursor: pointer;
+      padding: 4px;
+    }
+
+    .cart-item-remove:hover {
+      color: var(--hot);
+    }
+
+    .cart-empty {
+      padding: 30px 10px;
+      text-align: center;
+      color: #94a3b8;
+      font-size: 0.85rem;
+    }
+
+    /* Footer Disclaimer */
+    .footer-disclaimer {
+      background: #f8fafc;
+      padding: 40px 20px;
+      font-size: 0.72rem;
+      color: #64748b;
+      border-top: 1px solid #e2e8f0;
+      text-align: center;
+      line-height: 1.6;
+    }
+
+    .footer-disclaimer p {
+      margin-bottom: 12px;
+      max-width: 1000px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    .footer-disclaimer strong {
+      color: #1e293b;
+    }
+
+    .sneak-powered-by {
+      margin-top: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      font-size: 0.75rem;
+      color: #94a3b8;
+    }
+
+    .sneak-powered-by a {
+      color: var(--accent);
+      text-decoration: none;
+      font-weight: 700;
+    }
+
+    /* Responsive adjustments */
+    @media (max-width: 900px) {
+      .main-container {
+        flex-direction: column;
+        height: auto;
+      }
+
+      .map-section {
+        height: 380px;
+      }
+
+      .listings-section {
+        width: 100%;
+        height: auto;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- Loading Overlay -->
+  <div class="loading-overlay" id="loadingOverlay" style="display:none">
+    <div class="spinner"></div>
+    <div style="margin-top:15px;color:#fff;font-weight:600" id="loadingText">Loading properties...</div>
+  </div>
+
+  <!-- Header -->
+  <div id="top-bar">
+    <div id="bar-width">
+      <a href="#" class="brand-wrapper" id="brandLink">
+        <img class="brand-logo-img" id="brandLogo" src="" alt="Logo">
+        <div class="brand-title" id="brandTitle">Real Estate Search</div>
+        <span class="brand-badge" id="brandBadge">IDX</span>
+      </a>
+      <ul class="navbar-expand-md" id="navLinks">
+        <li><a href="#" id="navHome">Homes For Sale</a></li>
+        <li><a href="#" id="navOpenHouses">Open Houses</a></li>
+        <li><a href="#" id="navContact">Contact</a></li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="desc-banner" id="descBanner">
+    Explore verified MLS real estate listings updated directly from the local MLS.
+  </div>
+
+  <!-- Compact Filter Bar -->
+  <div class="filters-container">
+    <div class="filters-outer">
+      <!-- Top Row: Filters -->
+      <div class="filters-row-top">
+        <div class="pill-group" id="propertyTypePills">
+          <button class="pill-btn active" data-type="sale">For Sale</button>
+          <button class="pill-btn" data-type="rental">Rental</button>
+          <button class="pill-btn" data-type="commercial">Commercial</button>
+          <button class="pill-btn" data-type="land">Lot &amp; Land</button>
+        </div>
+        <div class="filter-divider"></div>
+        <button class="filter-arrow" id="filterLeft"><i class="fas fa-chevron-left"></i></button>
+        <div class="filters-bar" id="filtersBar">
+          <div class="filter-dropdown-wrap">
+            <button class="filter-dropdown-btn" id="priceBtn">Price</button>
+            <div class="filter-dropdown-panel" id="pricePanel">
+              <label>Price Range</label>
+              <div class="filter-btn-group">
+                <input type="number" id="priceMin" placeholder="No Min">
+                <input type="number" id="priceMax" placeholder="No Max">
+              </div>
+              <button class="apply-btn" id="priceApplyBtn">Apply</button>
+            </div>
+          </div>
+
+          <div class="filter-dropdown-wrap">
+            <button class="filter-dropdown-btn" id="subTypeBtn">Home Type</button>
+            <div class="filter-dropdown-panel" id="subTypePanel" style="width:220px">
+              <label><input type="checkbox" value="Single Family Residence" checked> Single Family</label>
+              <label><input type="checkbox" value="Condominium" checked> Condo</label>
+              <label><input type="checkbox" value="Townhouse" checked> Townhouse</label>
+              <label><input type="checkbox" value="Multi Family" checked> Multi Family</label>
+              <label><input type="checkbox" value="Villa" checked> Villa</label>
+              <button class="apply-btn" id="subTypeApplyBtn">Apply</button>
+            </div>
+          </div>
+
+          <div class="filter-dropdown-wrap">
+            <button class="filter-dropdown-btn" id="bedsBtn">Beds</button>
+            <div class="filter-dropdown-panel" id="bedsPanel" style="width:280px">
+              <label>Bedrooms</label>
+              <div class="filter-btn-group" id="bedsGroup">
+                <button class="filter-option-btn selected" data-val="0">Any</button>
+                <button class="filter-option-btn" data-val="1">1+</button>
+                <button class="filter-option-btn" data-val="2">2+</button>
+                <button class="filter-option-btn" data-val="3">3+</button>
+                <button class="filter-option-btn" data-val="4">4+</button>
+                <button class="filter-option-btn" data-val="5">5+</button>
+              </div>
+              <button class="apply-btn" id="bedsApplyBtn">Apply</button>
+            </div>
+          </div>
+
+          <div class="filter-dropdown-wrap">
+            <button class="filter-dropdown-btn" id="bathsBtn">Baths</button>
+            <div class="filter-dropdown-panel" id="bathsPanel" style="width:240px">
+              <label>Bathrooms</label>
+              <div class="filter-btn-group" id="bathsGroup">
+                <button class="filter-option-btn selected" data-val="0">Any</button>
+                <button class="filter-option-btn" data-val="1">1+</button>
+                <button class="filter-option-btn" data-val="2">2+</button>
+                <button class="filter-option-btn" data-val="3">3+</button>
+                <button class="filter-option-btn" data-val="4">4+</button>
+              </div>
+              <button class="apply-btn" id="bathsApplyBtn">Apply</button>
+            </div>
+          </div>
+
+          <div class="filter-dropdown-wrap">
+            <button class="filter-dropdown-btn" id="cityBtn">City</button>
+            <div class="filter-dropdown-panel" id="cityPanel">
+              <label><input type="checkbox" name="city" value="Bonita Springs"> Bonita Springs</label>
+              <label><input type="checkbox" name="city" value="Estero"> Estero</label>
+              <label><input type="checkbox" name="city" value="Naples"> Naples</label>
+              <label><input type="checkbox" name="city" value="Fort Myers"> Fort Myers</label>
+              <button class="apply-btn" id="cityApplyBtn">Apply</button>
+            </div>
+          </div>
+
+          <div class="filter-dropdown-wrap">
+            <button class="filter-dropdown-btn" id="sortBtn">Sort</button>
+            <div class="filter-dropdown-panel" id="sortPanel">
+              <label><input type="radio" name="sort" value="dateDesc" checked> Newest Listing</label>
+              <label><input type="radio" name="sort" value="priceDesc"> Price (High to Low)</label>
+              <label><input type="radio" name="sort" value="priceAsc"> Price (Low to High)</label>
+              <button class="apply-btn" id="sortApplyBtn">Apply</button>
+            </div>
+          </div>
+        </div>
+        <button class="filter-arrow" id="filterRight"><i class="fas fa-chevron-right"></i></button>
+        <button class="search-btn secondary" id="clearFiltersBtn">Clear</button>
+      </div>
+
+      <!-- Bottom Row: Search & Info -->
+      <div class="filters-row-bottom">
+        <div class="search-input-wrap">
+          <i class="fas fa-search"></i>
+          <input type="text" id="searchInput" placeholder="Address, City, MLS #...">
+        </div>
+        <div id="capBanner"
+          style="display:none;background:linear-gradient(135deg,#1e3a5f,#2563eb);color:#fff;padding:8px 16px;border-radius:10px;font-size:0.85rem;text-align:center;box-shadow:0 2px 8px rgba(0,0,0,0.15);flex:1">
+          <i class="fas fa-info-circle" style="margin-right:6px"></i>
+          <span id="capBannerText"></span>
+        </div>
+        <div class="results-count">
+          <span class="loading-indicator" id="listLoader"><i class="fas fa-spinner fa-spin"></i></span>
+          <span id="resultsCount">Loading...</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Carousel -->
+  <div class="carousels-wrapper" id="carouselsWrapper" style="display:none">
+    <div class="carousel-container" id="featuredCarousel">
+      <div class="carousel-header">
+        <h2>Just Listed <span class="badge-new" id="newCount">New</span></h2>
+      </div>
+      <div class="carousel-track" id="carouselTrack"></div>
+    </div>
+  </div>
+
+  <!-- Main Grid + Map -->
+  <div class="main-container" id="mainContainer">
+    <div class="map-section">
+      <div id="map"></div>
+    </div>
+    <div class="listings-section">
+      <div class="listings-grid" id="listingsGrid"></div>
+      <!-- Pagination Controls -->
+      <div class="pagination-bar" id="paginationBar" style="display:none">
+        <button class="page-btn" id="prevPageBtn"><i class="fas fa-chevron-left"></i> Previous</button>
+        <span class="page-info" id="pageInfo">Page 1 of 1</span>
+        <button class="page-btn" id="nextPageBtn">Next <i class="fas fa-chevron-right"></i></button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Footer Disclaimer -->
+  <footer class="footer-disclaimer">
+    <p><strong>Real estate listings provided by <span id="disclaimerOrg">Premier Coast Realty</span></strong></p>
+    <p>Disclaimer: All information deemed reliable but not guaranteed. All properties are subject to prior sale,
+      change or withdrawal. Neither listing broker(s) or information provider(s) shall be responsible for any typographical
+      errors, misinformation, misprints and shall be held totally harmless. Listing(s) information is provided for
+      consumers personal, non-commercial use and may not be used for any purpose other than to identify prospective
+      properties consumers may be interested in purchasing.</p>
+    <p>Information on this site was last updated <span id="lastUpdatedDate">Loading...</span>. The listing information
+      on this page last changed on <span id="lastChangedDate">Loading...</span>.</p>
+    <p>The data relating to real estate for sale on this website comes in part from the Internet Data Exchange (IDX) program.
+      Real estate listings held by brokerage firms other than <span id="disclaimerBroker">the listing broker</span> may be marked with
+      the Internet Data Exchange logo and detailed information about those properties will include the name of the
+      listing broker(s) when required by the MLS. All rights reserved.</p>
+    
+    <div class="sneak-powered-by" id="poweredByContainer">
+      <span>Powered by</span>
+      <a href="https://sneakidx.com" target="_blank" rel="noopener">SNEAK IDX Platform</a>
+    </div>
+  </footer>
+
+  <!-- Detail Modal -->
+  <div class="detail-overlay" id="detailOverlay">
+    <div class="detail-modal">
+      <button class="detail-close" id="detailClose">&times;</button>
+      <div class="detail-gallery" id="detailGallery">
+        <img class="detail-gallery-img" id="detailMainImg" src="">
+        <button class="detail-gallery-nav prev" id="detailPrevBtn">&#10094;</button>
+        <button class="detail-gallery-nav next" id="detailNextBtn">&#10095;</button>
+        <div class="detail-gallery-count" id="detailImgCount"></div>
+      </div>
+      <div class="detail-gallery-thumbs" id="detailThumbs"></div>
+      <div class="detail-body">
+        <div class="detail-actions">
+          <button class="detail-save-btn" id="detailSaveBtn"><i class="fas fa-heart"></i> Save</button>
+        </div>
+        <div class="detail-price" id="detailPrice"></div>
+        <div class="detail-addr" id="detailAddr"></div>
+        <div class="detail-badges" id="detailBadges"></div>
+        <div class="detail-stats" id="detailStats"></div>
+        <div class="detail-description" id="detailDesc"></div>
+        <div class="detail-agent-section" id="detailAgentSection">
+          <div class="detail-agent-name" id="detailAgentName"></div>
+          <div class="detail-agent-office" id="detailAgentOffice"></div>
+          <div class="detail-agent-btns">
+            <button class="detail-agent-btn primary" id="detailContactBtn"><i class="fas fa-envelope"></i> Inquire About Property</button>
+            <button class="detail-agent-btn outline" id="detailViewAgentBtn"><i class="fas fa-user"></i> View Agent Listings</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Contact / Lead Modal -->
+  <div class="contact-overlay" id="contactOverlay">
+    <div class="contact-modal">
+      <button class="contact-close" id="contactClose">&times;</button>
+      <h3>Inquire About Property</h3>
+      <div class="sub" id="contactAgentLabel"></div>
+      <form class="contact-form" id="contactForm">
+        <label>Your Name *</label>
+        <input type="text" id="contactName" required placeholder="Full Name">
+        
+        <label>Your Email *</label>
+        <input type="email" id="contactEmail" required placeholder="email@example.com">
+        
+        <label>Your Phone</label>
+        <input type="tel" id="contactPhone" placeholder="(555) 000-0000">
+        
+        <label>Message</label>
+        <textarea id="contactMessage" placeholder="I am interested in this property and would like more information..."></textarea>
+        
+        <button type="submit" class="send-btn" id="contactSubmitBtn">
+          <i class="fas fa-paper-plane"></i> Submit Inquiry
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Agent Modal -->
+  <div class="agent-modal-overlay" id="agentModalOverlay">
+    <div class="agent-modal" style="background:#fff;border-radius:16px;max-width:700px;width:100%;max-height:85vh;overflow-y:auto;padding:24px;position:relative;">
+      <button class="agent-modal-close" id="agentModalClose">&times;</button>
+      <h3 id="agentModalTitle" style="color:var(--primary);margin-bottom:4px;">Agent Listings</h3>
+      <div id="agentModalSub" style="color:#64748b;font-size:0.85rem;margin-bottom:20px;"></div>
+      <div class="agent-listings-grid" id="agentListingsGrid" style="display:grid;grid-template-columns:repeat(auto-fill, minmax(200px, 1fr));gap:14px;"></div>
+    </div>
+  </div>
+
+  <!-- Saved Cart FAB -->
+  <button class="cart-fab" id="cartFab" title="Saved Listings">
+    <i class="fas fa-heart"></i>
+    <span class="cart-badge" id="cartBadge" style="display:none">0</span>
+  </button>
+  <div class="cart-panel" id="cartPanel">
+    <div class="cart-header">
+      <h3><i class="fas fa-heart" style="color:var(--hot);margin-right:6px"></i>Saved Listings</h3>
+      <button class="cart-clear" id="cartClear">Clear All</button>
+    </div>
+    <div class="cart-items" id="cartItems">
+      <div class="cart-empty">No saved listings yet</div>
+    </div>
+  </div>
+
+  <!-- Toast Container -->
+  <div class="toast-container" id="toastContainer"></div>
+
+  <!-- Leaflet Scripts -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.5.3/leaflet.markercluster.js"></script>
+
+  <!-- SNEAK Application Logic -->
+  <script>
+    // URL Configuration
+    const urlParams = new URLSearchParams(window.location.search);
+    const SITE_KEY = urlParams.get('site') || 'demo-ccor';
+    const IS_EMBEDDED = urlParams.get('embed') === 'true';
+    
+    // Auto-detect API BASE (Local vs Staging/Production)
+    let API_BASE = urlParams.get('api');
+    if (!API_BASE) {
+      if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+        API_BASE = 'http://127.0.0.1:8788';
+      } else {
+        API_BASE = window.location.origin;
+      }
+    }
+
+    // State
+    let tenantConfig = null;
+    let map, markers = [], markerCluster;
+    let allListings = [];
+    let currentPage = 1;
+    let totalPages = 1;
+    let totalCount = 0;
+    let currentPropertyType = 'sale';
+    let currentStatus = 'Active';
+    let currentDetail = null;
+    let detailIdx = 0;
+    let currentMediaUrls = [];
+    let savedListings = JSON.parse(localStorage.getItem('savedListings_' + SITE_KEY) || localStorage.getItem('savedListings') || '[]');
+
+    const fmt = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 });
+    const kFmt = (n) => { if (n >= 1e6) return '$' + (n / 1e6).toFixed(1) + 'm'; if (n >= 1e3) return '$' + (n / 1e3).toFixed(0) + 'k'; return '$' + n; };
+
+    // --- Init ---
+    document.addEventListener('DOMContentLoaded', async () => {
+      if (IS_EMBEDDED) {
+        document.body.classList.add('is-embedded');
+      }
+
+      initMap();
+      setupEventListeners();
+      updateDisclaimerDates();
+      updateCartUI();
+
+      // Load tenant branding & configuration
+      await loadTenantConfig();
+
+      // Initial Search
+      fetchListings(1);
+    });
+
+    function initMap() {
+      map = L.map('map').setView([26.34, -81.78], 12);
+      L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png', {
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
+        subdomains: 'abcd',
+        maxZoom: 20
+      }).addTo(map);
+
+      markerCluster = L.markerClusterGroup({
+        showCoverageOnHover: false,
+        maxClusterRadius: 40,
+        iconCreateFunction: function (cluster) {
+          const count = cluster.getChildCount();
+          let level = 'small';
+          if (count > 10) level = 'medium';
+          if (count > 50) level = 'large';
+          return L.divIcon({
+            html: '<div style="background:var(--primary);color:#fff;border-radius:50%;width:34px;height:34px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;border:2px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,0.3);">' + count + '</div>',
+            className: 'marker-cluster marker-cluster-' + level,
+            iconSize: L.point(40, 40)
+          });
+        }
+      });
+      map.addLayer(markerCluster);
+    }
+
+    async function loadTenantConfig() {
+      try {
+        const res = await fetch(`${API_BASE}/idx/v1/config?site=${encodeURIComponent(SITE_KEY)}`);
+        if (!res.ok) {
+          throw new Error('Failed to load tenant configuration');
+        }
+        tenantConfig = await res.json();
+        applyTenantBranding(tenantConfig);
+      } catch (err) {
+        console.warn('Could not load tenant configuration:', err);
+        showToast('Using default search configuration.', 'info');
+      }
+    }
+
+    function applyTenantBranding(cfg) {
+      if (!cfg) return;
+
+      // Apply Colors
+      if (cfg.primaryColor) {
+        document.documentElement.style.setProperty('--primary', cfg.primaryColor);
+      }
+      if (cfg.secondaryColor) {
+        document.documentElement.style.setProperty('--accent', cfg.secondaryColor);
+        document.documentElement.style.setProperty('--accent-light', cfg.secondaryColor + '18');
+      }
+
+      // Title & Header Branding
+      const displayName = cfg.displayName || cfg.siteName || 'Real Estate Search';
+      document.title = `${displayName} | SNEAK IDX Property Search`;
+      document.getElementById('brandTitle').textContent = displayName;
+
+      if (cfg.logoUrl) {
+        const logoImg = document.getElementById('brandLogo');
+        logoImg.src = cfg.logoUrl;
+        logoImg.style.display = 'block';
+      }
+
+      // Nav Links
+      if (cfg.brandingConfig && cfg.brandingConfig.headerLinks) {
+        const navEl = document.getElementById('navLinks');
+        navEl.innerHTML = '';
+        cfg.brandingConfig.headerLinks.forEach(link => {
+          const li = document.createElement('li');
+          li.innerHTML = `<a href="${link.url}">${link.title}</a>`;
+          navEl.appendChild(li);
+        });
+      }
+
+      // Disclaimers
+      const orgName = cfg.brokerage || cfg.displayName;
+      if (orgName) {
+        document.getElementById('disclaimerOrg').textContent = orgName;
+        document.getElementById('disclaimerBroker').textContent = orgName;
+      }
+
+      // Powered By Toggle
+      if (cfg.brandingConfig && cfg.brandingConfig.showPoweredBy === false) {
+        document.getElementById('poweredByContainer').style.display = 'none';
+      }
+    }
+
+    async function fetchListings(page = 1) {
+      currentPage = page;
+      showLoading(true);
+
+      try {
+        const queryParams = new URLSearchParams();
+        queryParams.set('site', SITE_KEY);
+        queryParams.set('page', page);
+        queryParams.set('limit', 24);
+
+        // Property Type
+        queryParams.set('propertyType', currentPropertyType);
+
+        // SubType
+        const subTypes = Array.from(document.querySelectorAll('#subTypePanel input:checked')).map(i => i.value);
+        if (subTypes.length && subTypes.length < 5) {
+          queryParams.set('propertySubType', subTypes.join(','));
+        }
+
+        // Cities
+        const cities = Array.from(document.querySelectorAll('#cityPanel input:checked')).map(i => i.value);
+        if (cities.length) {
+          queryParams.set('city', cities.join(','));
+        }
+
+        // Prices
+        const minP = document.getElementById('priceMin').value;
+        const maxP = document.getElementById('priceMax').value;
+        if (minP) queryParams.set('minPrice', minP);
+        if (maxP) queryParams.set('maxPrice', maxP);
+
+        // Beds & Baths
+        const beds = document.querySelector('#bedsGroup .selected')?.dataset.val;
+        const baths = document.querySelector('#bathsGroup .selected')?.dataset.val;
+        if (beds && Number(beds) > 0) queryParams.set('beds', beds);
+        if (baths && Number(baths) > 0) queryParams.set('baths', baths);
+
+        // Search text
+        const q = (document.getElementById('searchInput').value || '').trim();
+        if (q) queryParams.set('q', q);
+
+        // Sort
+        const sort = document.querySelector('input[name="sort"]:checked')?.value || 'dateDesc';
+        queryParams.set('sort', sort);
+
+        const response = await fetch(`${API_BASE}/idx/v1/search?${queryParams.toString()}`);
+        if (!response.ok) {
+          throw new Error(`Search request failed (${response.status})`);
+        }
+
+        const data = await response.json();
+        allListings = data.data || [];
+        totalCount = data.pagination?.total || allListings.length;
+        totalPages = data.pagination?.totalPages || 1;
+
+        renderListings(allListings);
+        renderMapMarkers(allListings);
+        renderCarousel(allListings);
+        updatePaginationUI(data.pagination);
+
+        document.getElementById('resultsCount').innerText = `${totalCount} Listings`;
+      } catch (err) {
+        console.error('Search error:', err);
+        document.getElementById('listingsGrid').innerHTML = `<div style="grid-column:1/-1;padding:40px;text-align:center;color:#ef4444;"><i class="fas fa-exclamation-triangle" style="font-size:2rem;margin-bottom:10px;"></i><p>Unable to load listings. Please try again.</p></div>`;
+      } finally {
+        showLoading(false);
+      }
+    }
+
+    function renderListings(listings) {
+      const grid = document.getElementById('listingsGrid');
+      grid.innerHTML = '';
+
+      if (!listings.length) {
+        grid.innerHTML = `<div style="grid-column:1/-1;padding:50px 20px;text-align:center;color:#64748b;"><i class="fas fa-home" style="font-size:2.5rem;margin-bottom:12px;opacity:0.5;"></i><h3>No matching properties found</h3><p style="font-size:0.85rem;margin-top:6px;">Try adjusting your filters or search keywords.</p></div>`;
+        return;
+      }
+
+      listings.forEach(item => {
+        const card = document.createElement('div');
+        card.className = 'listing-card';
+        card.id = 'card-' + item.ListingKey;
+        card.dataset.id = item.ListingKey;
+
+        const imgUrl = item.PrimaryPhoto || (item.Media && item.Media[0]?.MediaURL) || '';
+        const sc = item.StandardStatus === 'Pending' ? 'pending' : item.StandardStatus === 'Active Under Contract' ? 'auc' : 'active';
+        const sl = item.StandardStatus === 'Active Under Contract' ? 'Under Contract' : item.StandardStatus || 'Active';
+        const isSaved = savedListings.some(s => s.key === item.ListingKey);
+
+        card.innerHTML = `
+          <div class="card-img-wrapper">
+            <img src="${imgUrl}" id="img-${item.ListingKey}" class="card-img" loading="lazy">
+            <div class="price-badge">${fmt.format(item.ListPrice || 0)}</div>
+            <div class="status-badge-card ${sc}">${sl}</div>
+            <button class="card-save-btn ${isSaved ? 'saved' : ''}" data-key="${item.ListingKey}" onclick="event.stopPropagation();toggleSave('${item.ListingKey}')" title="Save property"><i class="fas fa-heart"></i></button>
+          </div>
+          <div class="card-content">
+            ${item.PropertySubType ? '<div class="card-subtype">' + item.PropertySubType + '</div>' : ''}
+            <div class="card-address">${item.UnparsedAddress || 'Address Available Upon Request'}</div>
+            <div class="card-details">
+              <span class="card-detail-item"><i class="fas fa-bed"></i> ${item.BedroomsTotal || 0} bd</span>
+              <span class="card-detail-item"><i class="fas fa-bath"></i> ${item.BathroomsTotalInteger || 0} ba</span>
+              <span class="card-detail-item"><i class="fas fa-ruler-combined"></i> ${(item.LivingArea || 0).toLocaleString()} sqft</span>
+            </div>
+            <div class="card-meta">
+              <div style="font-weight:600;color:var(--primary);"><i class="fas fa-map-marker-alt"></i> ${item.City || ''}</div>
+              <div style="font-size:0.75rem;color:#64748b;">${item.ListOfficeName || ''}</div>
+            </div>
+          </div>
+        `;
+
+        card.addEventListener('mouseenter', () => highlightMarker(item.ListingKey, true));
+        card.addEventListener('mouseleave', () => highlightMarker(item.ListingKey, false));
+        card.addEventListener('click', () => openDetail(item));
+
+        grid.appendChild(card);
+      });
+    }
+
+    function renderMapMarkers(listings) {
+      if (markers.length) {
+        markerCluster.clearLayers();
+      }
+      markers = [];
+
+      listings.forEach(item => {
+        let lat = item.Latitude, lng = item.Longitude;
+        if (item.Coordinates && item.Coordinates.length === 2) {
+          lng = Number(item.Coordinates[0]);
+          lat = Number(item.Coordinates[1]);
+        }
+        if (!lat || !lng || isNaN(lat) || isNaN(lng)) return;
+
+        const price = item.ListPrice || 0;
+        let color = '#22c55e', border = '#16a34a';
+        if (item.StandardStatus === 'Pending' || item.StandardStatus === 'Active Under Contract') {
+          color = '#8b5cf6'; border = '#7c3aed';
+        }
+
+        const icon = L.divIcon({
+          className: 'custom-pin',
+          html: `<div class="price-pin" style="background:${color};border-color:${border};color:#fff;min-width:44px;text-align:center;border-radius:6px;font-weight:700;padding:3px 6px;font-size:11px">${kFmt(price)}</div>`,
+          iconSize: [54, 26],
+          iconAnchor: [27, 26]
+        });
+
+        const m = L.marker([lat, lng], { icon, zIndexOffset: 1000 });
+        m.listingKey = item.ListingKey;
+
+        const imgUrl = item.PrimaryPhoto || (item.Media && item.Media[0]?.MediaURL) || '';
+
+        m.bindPopup(`
+          <div class="popup-content">
+            ${imgUrl ? `<img src="${imgUrl}" class="popup-img">` : ''}
+            <div class="popup-info">
+              <div class="popup-price">${fmt.format(price)}</div>
+              <div class="popup-address">${item.UnparsedAddress || ''}</div>
+              <div class="popup-details">
+                <span>${item.BedroomsTotal || 0} bd</span>
+                <span>${item.BathroomsTotalInteger || 0} ba</span>
+                <span>${(item.LivingArea || 0).toLocaleString()} sqft</span>
+              </div>
+              <button class="popup-btn" onclick="openDetailByKey('${item.ListingKey}')">View Details</button>
+            </div>
+          </div>
+        `);
+
+        m.on('mouseover', function () { this.openPopup(); });
+        m.on('click', () => {
+          const card = document.getElementById('card-' + item.ListingKey);
+          if (card) {
+            card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            card.classList.add('active');
+            setTimeout(() => card.classList.remove('active'), 2000);
+          }
+        });
+
+        markerCluster.addLayer(m);
+        markers.push(m);
+      });
+
+      if (markers.length) {
+        map.fitBounds(markerCluster.getBounds().pad(0.1));
+      }
+    }
+
+    function renderCarousel(items) {
+      const track = document.getElementById('carouselTrack');
+      const wrapper = document.getElementById('carouselsWrapper');
+      
+      const now = new Date(), wk = new Date();
+      wk.setDate(now.getDate() - 14);
+
+      const recentItems = items.filter(x => x.ListingContractDate && new Date(x.ListingContractDate) >= wk);
+      if (!recentItems.length) {
+        wrapper.style.display = 'none';
+        return;
+      }
+
+      wrapper.style.display = 'block';
+      document.getElementById('newCount').textContent = recentItems.length + ' New';
+      track.innerHTML = '';
+
+      recentItems.slice(0, 8).forEach(item => {
+        const el = document.createElement('div');
+        el.className = 'carousel-card';
+        const imgUrl = item.PrimaryPhoto || (item.Media && item.Media[0]?.MediaURL) || '';
+        
+        el.innerHTML = `
+          <div class="carousel-img-wrapper">
+            <img src="${imgUrl}" class="carousel-img" loading="lazy">
+            <div class="price-badge" style="font-size:0.85rem">${fmt.format(item.ListPrice || 0)}</div>
+          </div>
+          <div class="card-content" style="padding:8px">
+            <div class="card-address" style="font-size:0.78rem">${item.UnparsedAddress || ''}</div>
+            <div class="card-meta" style="margin-top:2px;font-size:0.7rem">${item.City || ''}</div>
+          </div>
+        `;
+        el.onclick = () => openDetail(item);
+        track.appendChild(el);
+      });
+    }
+
+    function updatePaginationUI(pagination) {
+      const bar = document.getElementById('paginationBar');
+      if (!pagination || pagination.totalPages <= 1) {
+        bar.style.display = 'none';
+        return;
+      }
+
+      bar.style.display = 'flex';
+      document.getElementById('pageInfo').textContent = `Page ${pagination.page} of ${pagination.totalPages}`;
+      
+      const prevBtn = document.getElementById('prevPageBtn');
+      const nextBtn = document.getElementById('nextPageBtn');
+
+      prevBtn.disabled = pagination.page <= 1;
+      nextBtn.disabled = pagination.page >= pagination.totalPages;
+
+      prevBtn.onclick = () => { if (pagination.page > 1) fetchListings(pagination.page - 1); };
+      nextBtn.onclick = () => { if (pagination.page < pagination.totalPages) fetchListings(pagination.page + 1); };
+    }
+
+    // --- Detail Modal ---
+    async function openDetail(item) {
+      currentDetail = item;
+      detailIdx = 0;
+      currentMediaUrls = item.PrimaryPhoto ? [item.PrimaryPhoto] : [];
+
+      const modal = document.getElementById('detailOverlay');
+      modal.style.display = 'flex';
+
+      // Fast Initial Render
+      document.getElementById('detailMainImg').src = currentMediaUrls[0] || '';
+      document.getElementById('detailPrice').textContent = fmt.format(item.ListPrice || 0);
+      document.getElementById('detailAddr').textContent = `${item.UnparsedAddress || ''}, ${item.City || ''}`;
+      document.getElementById('detailDesc').textContent = item.PublicRemarks || 'Loading full property description...';
+
+      // Badges
+      const badges = document.getElementById('detailBadges');
+      badges.innerHTML = '';
+      const addBadge = (txt, bg) => {
+        const b = document.createElement('span');
+        b.className = 'detail-badge';
+        b.style.background = bg;
+        b.style.color = '#fff';
+        b.textContent = txt;
+        badges.appendChild(b);
+      };
+      addBadge(item.StandardStatus || 'Active', item.StandardStatus === 'Pending' ? 'var(--pending)' : item.StandardStatus === 'Active Under Contract' ? 'var(--warning)' : 'var(--success)');
+      if (item.PropertySubType) addBadge(item.PropertySubType, 'var(--primary)');
+      if (item.PropertyType) addBadge(item.PropertyType, '#64748b');
+
+      // Stats
+      const stats = document.getElementById('detailStats');
+      stats.innerHTML = '';
+      if (item.BedroomsTotal) stats.innerHTML += `<div class="detail-stat"><i class="fas fa-bed"></i>${item.BedroomsTotal} Beds</div>`;
+      if (item.BathroomsTotalInteger) stats.innerHTML += `<div class="detail-stat"><i class="fas fa-bath"></i>${item.BathroomsTotalInteger} Baths</div>`;
+      if (item.LivingArea) stats.innerHTML += `<div class="detail-stat"><i class="fas fa-ruler-combined"></i>${(item.LivingArea).toLocaleString()} sqft</div>`;
+      if (item.YearBuilt) stats.innerHTML += `<div class="detail-stat"><i class="fas fa-calendar"></i>Built ${item.YearBuilt}</div>`;
+      if (item.LotSizeAcres) stats.innerHTML += `<div class="detail-stat"><i class="fas fa-tree"></i>${item.LotSizeAcres} acres</div>`;
+
+      // Agent Info
+      document.getElementById('detailAgentName').textContent = item.ListAgentFullName || 'Listing Agent';
+      document.getElementById('detailAgentOffice').textContent = item.ListOfficeName || '';
+
+      // Save State
+      updateDetailSaveBtn();
+
+      // Pan Map
+      if (item.Latitude && item.Longitude) {
+        map.flyTo([item.Latitude, item.Longitude], 15);
+      }
+
+      // Fetch Full Detail & Media from SNEAK API
+      try {
+        const [detailRes, mediaRes] = await Promise.all([
+          fetch(`${API_BASE}/idx/v1/listing/${encodeURIComponent(item.ListingKey)}?site=${encodeURIComponent(SITE_KEY)}`),
+          fetch(`${API_BASE}/idx/v1/listing/${encodeURIComponent(item.ListingKey)}/media?site=${encodeURIComponent(SITE_KEY)}`)
+        ]);
+
+        if (detailRes.ok) {
+          const detailData = await detailRes.json();
+          if (detailData.data) {
+            currentDetail = { ...currentDetail, ...detailData.data };
+            if (currentDetail.PublicRemarks) {
+              document.getElementById('detailDesc').innerHTML = currentDetail.PublicRemarks;
+            }
+          }
+        }
+
+        if (mediaRes.ok) {
+          const mediaData = await mediaRes.json();
+          if (mediaData.media && mediaData.media.length) {
+            currentMediaUrls = mediaData.media;
+            updateGalleryUI();
+          }
+        }
+      } catch (e) {
+        console.warn('Full detail lookup failed:', e);
+      }
+    }
+
+    function updateGalleryUI() {
+      const mainImg = document.getElementById('detailMainImg');
+      const thumbs = document.getElementById('detailThumbs');
+      const countEl = document.getElementById('detailImgCount');
+
+      mainImg.src = currentMediaUrls[detailIdx] || '';
+      countEl.textContent = currentMediaUrls.length ? `${detailIdx + 1} / ${currentMediaUrls.length}` : '';
+
+      thumbs.innerHTML = '';
+      currentMediaUrls.slice(0, 30).forEach((url, i) => {
+        const thumb = document.createElement('img');
+        thumb.className = 'detail-thumb' + (i === detailIdx ? ' active' : '');
+        thumb.src = url;
+        thumb.onclick = () => {
+          detailIdx = i;
+          mainImg.src = url;
+          countEl.textContent = `${detailIdx + 1} / ${currentMediaUrls.length}`;
+          thumbs.querySelectorAll('.detail-thumb').forEach(t => t.classList.remove('active'));
+          thumb.classList.add('active');
+        };
+        thumbs.appendChild(thumb);
+      });
+    }
+
+    function detailNav(dir) {
+      if (!currentMediaUrls.length) return;
+      detailIdx = (detailIdx + dir + currentMediaUrls.length) % currentMediaUrls.length;
+      updateGalleryUI();
+    }
+
+    function openDetailByKey(key) {
+      const item = allListings.find(i => i.ListingKey === key);
+      if (item) openDetail(item);
+    }
+
+    // --- Saved Listings ---
+    function toggleSave(key) {
+      const idx = savedListings.findIndex(s => s.key === key);
+      if (idx >= 0) {
+        savedListings.splice(idx, 1);
+        showToast('Property removed from saved listings.', 'info');
+      } else {
+        const item = allListings.find(i => i.ListingKey === key);
+        if (item) {
+          savedListings.push({
+            key: item.ListingKey,
+            addr: item.UnparsedAddress || '',
+            price: item.ListPrice || 0,
+            img: item.PrimaryPhoto || (item.Media && item.Media[0]?.MediaURL) || ''
+          });
+          showToast('Property added to saved listings!', 'success');
+        }
+      }
+      localStorage.setItem('savedListings_' + SITE_KEY, JSON.stringify(savedListings));
+      updateCartUI();
+
+      const btn = document.querySelector(`.card-save-btn[data-key="${key}"]`);
+      if (btn) btn.classList.toggle('saved');
+      updateDetailSaveBtn();
+    }
+
+    function toggleSaveFromDetail() {
+      if (!currentDetail) return;
+      toggleSave(currentDetail.ListingKey);
+    }
+
+    function updateDetailSaveBtn() {
+      if (!currentDetail) return;
+      const sb = document.getElementById('detailSaveBtn');
+      const isSaved = savedListings.some(s => s.key === currentDetail.ListingKey);
+      sb.className = 'detail-save-btn' + (isSaved ? ' saved' : '');
+      sb.innerHTML = `<i class="fas fa-heart"></i> ${isSaved ? 'Saved' : 'Save'}`;
+    }
+
+    function updateCartUI() {
+      const badge = document.getElementById('cartBadge');
+      badge.style.display = savedListings.length ? 'flex' : 'none';
+      badge.textContent = savedListings.length;
+
+      const items = document.getElementById('cartItems');
+      if (!savedListings.length) {
+        items.innerHTML = '<div class="cart-empty">No saved listings yet.<br>Click <i class="fas fa-heart" style="color:var(--hot)"></i> to save properties.</div>';
+        return;
+      }
+
+      items.innerHTML = '';
+      savedListings.forEach(s => {
+        const el = document.createElement('div');
+        el.className = 'cart-item';
+        el.innerHTML = `
+          ${s.img ? `<img src="${s.img}" class="cart-item-img">` : '<div class="cart-item-img"></div>'}
+          <div class="cart-item-info">
+            <div class="cart-item-price">${fmt.format(s.price)}</div>
+            <div class="cart-item-addr">${s.addr}</div>
+          </div>
+          <button class="cart-item-remove" onclick="event.stopPropagation();toggleSave('${s.key}')"><i class="fas fa-times"></i></button>
+        `;
+        el.onclick = () => {
+          openDetailByKey(s.key);
+          document.getElementById('cartPanel').style.display = 'none';
+        };
+        items.appendChild(el);
+      });
+    }
+
+    // --- Lead Capture / Contact Modal ---
+    function openContact(item) {
+      currentDetail = item;
+      document.getElementById('contactOverlay').style.display = 'flex';
+      document.getElementById('contactAgentLabel').textContent = `${item.UnparsedAddress || 'Property'} • Listed at ${fmt.format(item.ListPrice || 0)}`;
+      document.getElementById('contactMessage').value = `Hi, I am interested in the property at ${item.UnparsedAddress || ''} (MLS #${item.ListingId || item.ListingKey}) listed at ${fmt.format(item.ListPrice || 0)}. Please contact me with more information.`;
+    }
+
+    async function handleLeadSubmit(e) {
+      e.preventDefault();
+      const submitBtn = document.getElementById('contactSubmitBtn');
+      submitBtn.disabled = true;
+      submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sending...';
+
+      const name = document.getElementById('contactName').value;
+      const email = document.getElementById('contactEmail').value;
+      const phone = document.getElementById('contactPhone').value;
+      const message = document.getElementById('contactMessage').value;
+
+      try {
+        const res = await fetch(`${API_BASE}/idx/v1/lead`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            siteKey: SITE_KEY,
+            listingKey: currentDetail?.ListingKey || null,
+            name,
+            email,
+            phone,
+            message,
+            leadType: 'property_inquiry',
+            sourceUrl: window.location.href
+          })
+        });
+
+        const data = await res.json();
+        if (res.ok && data.success) {
+          showToast('Inquiry submitted successfully! We will contact you soon.', 'success');
+          document.getElementById('contactOverlay').style.display = 'none';
+          document.getElementById('contactForm').reset();
+        } else {
+          showToast(data.message || 'Failed to submit inquiry.', 'error');
+        }
+      } catch (err) {
+        showToast('Network error while sending inquiry.', 'error');
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = '<i class="fas fa-paper-plane"></i> Submit Inquiry';
+      }
+    }
+
+    // --- Toast Notifications ---
+    function showToast(msg, type = 'info') {
+      const container = document.getElementById('toastContainer');
+      const toast = document.createElement('div');
+      toast.className = `toast ${type}`;
+      toast.innerHTML = `<i class="fas fa-${type === 'success' ? 'check-circle' : type === 'error' ? 'exclamation-circle' : 'info-circle'}"></i> <span>${msg}</span>`;
+      container.appendChild(toast);
+      setTimeout(() => {
+        toast.style.opacity = '0';
+        setTimeout(() => toast.remove(), 300);
+      }, 4000);
+    }
+
+    // --- Filter UI & Events ---
+    function setupEventListeners() {
+      // Pills
+      document.querySelectorAll('#propertyTypePills .pill-btn').forEach(btn => {
+        btn.onclick = () => {
+          document.querySelectorAll('#propertyTypePills .pill-btn').forEach(b => b.classList.remove('active'));
+          btn.classList.add('active');
+          currentPropertyType = btn.dataset.type;
+          fetchListings(1);
+        };
+      });
+
+      // Dropdowns
+      document.querySelectorAll('.filter-dropdown-btn').forEach(btn => {
+        btn.addEventListener('click', e => {
+          e.stopPropagation();
+          const panel = btn.nextElementSibling;
+          document.querySelectorAll('.filter-dropdown-panel').forEach(p => {
+            if (p !== panel) p.classList.remove('open');
+          });
+          panel.classList.toggle('open');
+          if (panel.classList.contains('open')) {
+            const rect = btn.getBoundingClientRect();
+            panel.style.top = (rect.bottom + 6) + 'px';
+            panel.style.left = Math.max(10, rect.left) + 'px';
+          }
+        });
+      });
+
+      document.addEventListener('click', () => {
+        document.querySelectorAll('.filter-dropdown-panel').forEach(p => p.classList.remove('open'));
+      });
+
+      document.querySelectorAll('.filter-dropdown-panel').forEach(p => {
+        p.addEventListener('click', e => e.stopPropagation());
+      });
+
+      // Beds / Baths buttons
+      document.querySelectorAll('#bedsGroup .filter-option-btn, #bathsGroup .filter-option-btn').forEach(btn => {
+        btn.onclick = () => {
+          btn.parentElement.querySelectorAll('.filter-option-btn').forEach(b => b.classList.remove('selected'));
+          btn.classList.add('selected');
+        };
+      });
+
+      // Apply Buttons
+      document.querySelectorAll('.apply-btn').forEach(btn => {
+        btn.onclick = () => {
+          document.querySelectorAll('.filter-dropdown-panel').forEach(p => p.classList.remove('open'));
+          updateFilterLabels();
+          fetchListings(1);
+        };
+      });
+
+      // Clear Filters
+      document.getElementById('clearFiltersBtn').onclick = () => {
+        document.getElementById('priceMin').value = '';
+        document.getElementById('priceMax').value = '';
+        document.getElementById('searchInput').value = '';
+        document.querySelectorAll('#subTypePanel input').forEach(i => i.checked = true);
+        document.querySelectorAll('#cityPanel input').forEach(i => i.checked = false);
+        document.querySelectorAll('#bedsGroup .filter-option-btn').forEach((b, i) => b.classList.toggle('selected', i === 0));
+        document.querySelectorAll('#bathsGroup .filter-option-btn').forEach((b, i) => b.classList.toggle('selected', i === 0));
+        document.querySelector('input[name="sort"][value="dateDesc"]').checked = true;
+        updateFilterLabels();
+        fetchListings(1);
+      };
+
+      // Search Enter Key
+      document.getElementById('searchInput').addEventListener('keyup', e => {
+        if (e.key === 'Enter') fetchListings(1);
+      });
+
+      // Modals
+      document.getElementById('detailClose').onclick = () => document.getElementById('detailOverlay').style.display = 'none';
+      document.getElementById('detailOverlay').onclick = e => { if (e.target === e.currentTarget) e.currentTarget.style.display = 'none'; };
+      document.getElementById('contactClose').onclick = () => document.getElementById('contactOverlay').style.display = 'none';
+      document.getElementById('contactOverlay').onclick = e => { if (e.target === e.currentTarget) e.currentTarget.style.display = 'none'; };
+      document.getElementById('detailContactBtn').onclick = () => openContact(currentDetail);
+      document.getElementById('contactForm').onsubmit = handleLeadSubmit;
+      document.getElementById('detailSaveBtn').onclick = toggleSaveFromDetail;
+      document.getElementById('detailPrevBtn').onclick = () => detailNav(-1);
+      document.getElementById('detailNextBtn').onclick = () => detailNav(1);
+
+      // Cart
+      document.getElementById('cartFab').onclick = () => {
+        const p = document.getElementById('cartPanel');
+        p.style.display = p.style.display === 'block' ? 'none' : 'block';
+      };
+      document.getElementById('cartClear').onclick = () => {
+        savedListings = [];
+        localStorage.setItem('savedListings_' + SITE_KEY, '[]');
+        updateCartUI();
+      };
+    }
+
+    function updateFilterLabels() {
+      const min = document.getElementById('priceMin').value, max = document.getElementById('priceMax').value;
+      const pb = document.getElementById('priceBtn');
+      if (min || max) {
+        pb.classList.add('has-value');
+        pb.innerText = (min ? '$' + kFmt(min) + '+' : '') + (min && max ? '-' : '') + (max ? '<$' + kFmt(max) : '');
+      } else {
+        pb.classList.remove('has-value');
+        pb.innerText = 'Price';
+      }
+    }
+
+    function highlightMarker(k, active) {
+      const mk = markers.find(m => m.listingKey === k);
+      if (!mk) return;
+      const el = mk.getElement();
+      if (!el) return;
+      const pin = el.querySelector('.price-pin');
+      if (!pin) return;
+      if (active) {
+        pin.style.transform = 'scale(1.25)';
+        pin.style.zIndex = '1000';
+        mk.openPopup();
+      } else {
+        pin.style.transform = '';
+        pin.style.zIndex = '';
+        mk.closePopup();
+      }
+    }
+
+    function updateDisclaimerDates() {
+      const now = new Date();
+      const dateStr = now.toLocaleDateString('en-US', { month: '2-digit', day: '2-digit', year: 'numeric' });
+      const setTxt = (id, txt) => { const el = document.getElementById(id); if (el) el.textContent = txt; };
+      setTxt('lastUpdatedDate', dateStr);
+      setTxt('lastChangedDate', dateStr);
+    }
+
+    function showLoading(show) {
+      const loader = document.getElementById('listLoader');
+      if (loader) loader.style.display = show ? 'inline-block' : 'none';
+    }
+  </script>
+</body>
+
+</html>
