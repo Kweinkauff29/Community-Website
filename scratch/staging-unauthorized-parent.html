@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SNEAK Unauthorized Embed Test — Port 8090</title>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; margin: 0; padding: 24px; background: #fef2f2; color: #991b1b; }
+    .top-bar { max-width: 1200px; margin: 0 auto 24px; padding: 20px 24px; background: #ffffff; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); }
+    h1 { margin: 0 0 8px 0; font-size: 24px; color: #991b1b; }
+    p { margin: 0; color: #7f1d1d; font-size: 14px; line-height: 1.5; }
+    .embed-wrapper { max-width: 1200px; margin: 0 auto; background: #ffffff; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); min-height: 200px; padding: 20px; }
+  </style>
+</head>
+<body>
+
+  <div class="top-bar">
+    <h1>Unauthorized Embed Test (Invalid Site Key)</h1>
+    <p>
+      Testing unauthorized domain/site rejection: <code>embed.js</code> should fail bootstrap (HTTP 403/404) and display a user-friendly unauthorized message without creating an iframe.
+    </p>
+  </div>
+
+  <div class="embed-wrapper">
+    <script
+      src="https://sneak-idx-worker-staging.bonitaspringsrealtors.workers.dev/embed.js"
+      data-site="invalid-nonexistent-site"
+      data-widget="search"
+      data-height="400px">
+    </script>
+  </div>
+
+</body>
+</html>

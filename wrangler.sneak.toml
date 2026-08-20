@@ -9,8 +9,6 @@ head_sampling_rate = 1
 [vars]
 SNEAK_ENV = "staging"
 
-[secrets]
-required = ["SNEAK_SIGNING_SECRET"]
 
 [assets]
 directory = "./sneak-idx"

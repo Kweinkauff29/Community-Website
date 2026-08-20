@@ -167,31 +167,53 @@ For real MLS ingestion, the production sync strategy consists of:
 | `/idx/v1/agent/:mlsId/listings` | GET | Session Token | Active listings for an agent within authorized tenant scope. |
 | `/idx/v1/open-houses` | GET | Session Token | Upcoming open houses with filters (`city`, `dateFrom`, `dateTo`). |
 | `/idx/v1/lead` | POST | Session Token | Submits lead inquiry. Validates listing existence within scope. |
-
 ---
 
-## 9. Local & Staging Development Guide
+## 9. Local Development Guide
 
 ### 1. Apply D1 Migrations Locally
 ```bash
 npx wrangler d1 migrations apply sneak-idx-staging --local -c wrangler.sneak.toml
 ```
 
-### 2. Seed Staging Demo Tenant & Local Test Listings
+### 2. Seed Demo Tenant & Listings Locally
 ```bash
-# Provision demo-ccor tenant
+# Provision demo-ccor tenant locally
 npx wrangler d1 execute sneak-idx-staging --local --file=seeds/staging-demo-tenant.sql -c wrangler.sneak.toml
 
-# Seed sample demo listings
-npx wrangler d1 execute sneak-idx-staging --local --file=seeds/staging-demo-listings.sql -c wrangler.sneak.toml
+# Seed sample demo listings locally
+npx wrangler d1 execute sneak-idx-staging --local --file=seeds/local-demo-listings.sql -c wrangler.sneak.toml
 ```
 
-### 3. Run the SNEAK Worker Locally
+### 3. Run SNEAK Worker Locally
 ```bash
 npx wrangler dev -c wrangler.sneak.toml --port 8788
 ```
 
-### 4. Run Automated Unit Tests
+### 4. Run Unit Test Suite
 ```bash
 node --test test/sneak-idx-staging.test.mjs
 ```
+
+---
+
+## 10. Remote Staging Deployment Reference
+
+- **Worker Name:** `sneak-idx-worker-staging`
+- **Worker Host:** `https://sneak-idx-worker-staging.bonitaspringsrealtors.workers.dev`
+- **D1 Database:** `sneak-idx-staging` (`6b91eeca-d65f-434c-a49f-419dff98285f`)
+- **Environment:** `SNEAK_ENV = "staging"`
+- **Health Check URL:** `https://sneak-idx-worker-staging.bonitaspringsrealtors.workers.dev/idx/v1/health`
+- **Search UI URL:** `https://sneak-idx-worker-staging.bonitaspringsrealtors.workers.dev/search/?site=demo-ccor`
+- **Embed Loader URL:** `https://sneak-idx-worker-staging.bonitaspringsrealtors.workers.dev/embed.js`
+- **Demo Tenant Site Key:** `demo-ccor`
+
+### Remote Staging Validation Commands
+```bash
+# Run end-to-end API & security validation against remote staging
+node scripts/test-remote-staging.mjs
+
+# Run embed lifecycle validation against remote staging
+node scripts/test-embed-flow.mjs
+```
+

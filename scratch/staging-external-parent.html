@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SNEAK External Parent Test — Port 8090</title>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; margin: 0; padding: 24px; background: #f1f5f9; color: #0f172a; }
+    .top-bar { max-width: 1200px; margin: 0 auto 24px; padding: 20px 24px; background: #ffffff; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); }
+    h1 { margin: 0 0 8px 0; font-size: 24px; color: #1e293b; }
+    p { margin: 0; color: #64748b; font-size: 14px; line-height: 1.5; }
+    .badge { display: inline-block; padding: 4px 10px; background: #e0f2fe; color: #0369a1; border-radius: 9999px; font-weight: 600; font-size: 12px; margin-bottom: 8px; }
+    .embed-wrapper { max-width: 1200px; margin: 0 auto; background: #ffffff; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); overflow: hidden; }
+  </style>
+</head>
+<body>
+
+  <div class="top-bar">
+    <div class="badge">Independent Parent Origin (http://localhost:8090)</div>
+    <h1>External Member Website Integration Test</h1>
+    <p>
+      Testing remote SNEAK IDX staging embedding: <code>embed.js</code> initiates domain bootstrap with origin <code>http://localhost:8090</code>, verifies against <code>sneak_domains</code>, exchanges cryptographic HMAC session token, and renders the sandboxed iframe search widget.
+    </p>
+  </div>
+
+  <div class="embed-wrapper">
+    <script
+      src="https://sneak-idx-worker-staging.bonitaspringsrealtors.workers.dev/embed.js"
+      data-site="demo-ccor"
+      data-widget="search"
+      data-height="850px">
+    </script>
+  </div>
+
+</body>
+</html>
