@@ -1733,6 +1733,7 @@
     let tenantConfig = null;
     let map, markers = [], markerCluster;
     let allListings = [];
+    let allMapMarkers = [];
     let currentPage = 1;
     let totalPages = 1;
     let totalCount = 0;
@@ -1760,8 +1761,8 @@
       // Load tenant branding & configuration
       await loadTenantConfig();
 
-      // Initial Search
-      fetchListings(1);
+      // Initial Search & Map Load
+      triggerSearch();
     });
 
     function initMap() {
@@ -1800,7 +1801,12 @@
         applyTenantBranding(tenantConfig);
       } catch (err) {
         console.warn('Could not load tenant configuration:', err);
-        showToast('Using default search configuration.', 'info');
+        applyTenantBranding({
+          displayName: 'Real Estate Search',
+          brokerage: '',
+          primaryColor: '#1a2a3a',
+          secondaryColor: '#2596be'
+        });
       }
     }
 
@@ -1839,7 +1845,7 @@
       }
 
       // Disclaimers
-      const orgName = cfg.brokerage || cfg.displayName;
+      const orgName = cfg.brokerage || cfg.displayName || '';
       if (orgName) {
         document.getElementById('disclaimerOrg').textContent = orgName;
         document.getElementById('disclaimerBroker').textContent = orgName;
@@ -1851,46 +1857,57 @@
       }
     }
 
+    function buildFilterParams() {
+      const queryParams = new URLSearchParams();
+      queryParams.set('site', SITE_KEY);
+
+      // Property Type
+      queryParams.set('propertyType', currentPropertyType);
+
+      // SubType
+      const subTypes = Array.from(document.querySelectorAll('#subTypePanel input:checked')).map(i => i.value);
+      if (subTypes.length && subTypes.length < 5) {
+        queryParams.set('propertySubType', subTypes.join(','));
+      }
+
+      // Cities
+      const cities = Array.from(document.querySelectorAll('#cityPanel input:checked')).map(i => i.value);
+      if (cities.length) {
+        queryParams.set('city', cities.join(','));
+      }
+
+      // Prices
+      const minP = document.getElementById('priceMin').value;
+      const maxP = document.getElementById('priceMax').value;
+      if (minP) queryParams.set('minPrice', minP);
+      if (maxP) queryParams.set('maxPrice', maxP);
+
+      // Beds & Baths
+      const beds = document.querySelector('#bedsGroup .selected')?.dataset.val;
+      const baths = document.querySelector('#bathsGroup .selected')?.dataset.val;
+      if (beds && Number(beds) > 0) queryParams.set('beds', beds);
+      if (baths && Number(baths) > 0) queryParams.set('baths', baths);
+
+      // Search text
+      const q = (document.getElementById('searchInput').value || '').trim();
+      if (q) queryParams.set('q', q);
+
+      return queryParams;
+    }
+
+    function triggerSearch() {
+      fetchListings(1);
+      fetchMapMarkers();
+    }
+
     async function fetchListings(page = 1) {
       currentPage = page;
       showLoading(true);
 
       try {
-        const queryParams = new URLSearchParams();
-        queryParams.set('site', SITE_KEY);
+        const queryParams = buildFilterParams();
         queryParams.set('page', page);
         queryParams.set('limit', 24);
-
-        // Property Type
-        queryParams.set('propertyType', currentPropertyType);
-
-        // SubType
-        const subTypes = Array.from(document.querySelectorAll('#subTypePanel input:checked')).map(i => i.value);
-        if (subTypes.length && subTypes.length < 5) {
-          queryParams.set('propertySubType', subTypes.join(','));
-        }
-
-        // Cities
-        const cities = Array.from(document.querySelectorAll('#cityPanel input:checked')).map(i => i.value);
-        if (cities.length) {
-          queryParams.set('city', cities.join(','));
-        }
-
-        // Prices
-        const minP = document.getElementById('priceMin').value;
-        const maxP = document.getElementById('priceMax').value;
-        if (minP) queryParams.set('minPrice', minP);
-        if (maxP) queryParams.set('maxPrice', maxP);
-
-        // Beds & Baths
-        const beds = document.querySelector('#bedsGroup .selected')?.dataset.val;
-        const baths = document.querySelector('#bathsGroup .selected')?.dataset.val;
-        if (beds && Number(beds) > 0) queryParams.set('beds', beds);
-        if (baths && Number(baths) > 0) queryParams.set('baths', baths);
-
-        // Search text
-        const q = (document.getElementById('searchInput').value || '').trim();
-        if (q) queryParams.set('q', q);
 
         // Sort
         const sort = document.querySelector('input[name="sort"]:checked')?.value || 'dateDesc';
@@ -1907,7 +1924,6 @@
         totalPages = data.pagination?.totalPages || 1;
 
         renderListings(allListings);
-        renderMapMarkers(allListings);
         renderCarousel(allListings);
         updatePaginationUI(data.pagination);
 
@@ -1917,6 +1933,20 @@
         document.getElementById('listingsGrid').innerHTML = `<div style="grid-column:1/-1;padding:40px;text-align:center;color:#ef4444;"><i class="fas fa-exclamation-triangle" style="font-size:2rem;margin-bottom:10px;"></i><p>Unable to load listings. Please try again.</p></div>`;
       } finally {
         showLoading(false);
+      }
+    }
+
+    async function fetchMapMarkers() {
+      try {
+        const queryParams = buildFilterParams();
+        const response = await fetch(`${API_BASE}/idx/v1/map?${queryParams.toString()}`);
+        if (!response.ok) return;
+
+        const data = await response.json();
+        allMapMarkers = data.data || [];
+        renderMapMarkers(allMapMarkers);
+      } catch (err) {
+        console.warn('Map marker fetch error:', err);
       }
     }
 
@@ -2106,7 +2136,7 @@
       // Fast Initial Render
       document.getElementById('detailMainImg').src = currentMediaUrls[0] || '';
       document.getElementById('detailPrice').textContent = fmt.format(item.ListPrice || 0);
-      document.getElementById('detailAddr').textContent = `${item.UnparsedAddress || ''}, ${item.City || ''}`;
+      document.getElementById('detailAddr').textContent = `${item.UnparsedAddress || ''}${item.City ? ', ' + item.City : ''}`;
       document.getElementById('detailDesc').textContent = item.PublicRemarks || 'Loading full property description...';
 
       // Badges
@@ -2159,6 +2189,12 @@
             if (currentDetail.PublicRemarks) {
               document.getElementById('detailDesc').innerHTML = currentDetail.PublicRemarks;
             }
+            if (currentDetail.ListAgentFullName) {
+              document.getElementById('detailAgentName').textContent = currentDetail.ListAgentFullName;
+            }
+            if (currentDetail.ListOfficeName) {
+              document.getElementById('detailAgentOffice').textContent = currentDetail.ListOfficeName;
+            }
           }
         }
 
@@ -2205,8 +2241,12 @@
     }
 
     function openDetailByKey(key) {
-      const item = allListings.find(i => i.ListingKey === key);
-      if (item) openDetail(item);
+      const item = allListings.find(i => i.ListingKey === key) || allMapMarkers.find(i => i.ListingKey === key);
+      if (item) {
+        openDetail(item);
+      } else {
+        openDetail({ ListingKey: key, UnparsedAddress: 'Property Details', ListPrice: 0 });
+      }
     }
 
     // --- Saved Listings ---
@@ -2216,7 +2256,7 @@
         savedListings.splice(idx, 1);
         showToast('Property removed from saved listings.', 'info');
       } else {
-        const item = allListings.find(i => i.ListingKey === key);
+        const item = allListings.find(i => i.ListingKey === key) || allMapMarkers.find(i => i.ListingKey === key);
         if (item) {
           savedListings.push({
             key: item.ListingKey,
@@ -2351,7 +2391,7 @@
           document.querySelectorAll('#propertyTypePills .pill-btn').forEach(b => b.classList.remove('active'));
           btn.classList.add('active');
           currentPropertyType = btn.dataset.type;
-          fetchListings(1);
+          triggerSearch();
         };
       });
 
@@ -2393,7 +2433,7 @@
         btn.onclick = () => {
           document.querySelectorAll('.filter-dropdown-panel').forEach(p => p.classList.remove('open'));
           updateFilterLabels();
-          fetchListings(1);
+          triggerSearch();
         };
       });
 
@@ -2408,12 +2448,12 @@
         document.querySelectorAll('#bathsGroup .filter-option-btn').forEach((b, i) => b.classList.toggle('selected', i === 0));
         document.querySelector('input[name="sort"][value="dateDesc"]').checked = true;
         updateFilterLabels();
-        fetchListings(1);
+        triggerSearch();
       };
 
       // Search Enter Key
       document.getElementById('searchInput').addEventListener('keyup', e => {
-        if (e.key === 'Enter') fetchListings(1);
+        if (e.key === 'Enter') triggerSearch();
       });
 
       // Modals

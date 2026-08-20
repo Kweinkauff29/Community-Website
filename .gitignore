@@ -1,0 +1,23 @@
+# Cloudflare Wrangler runtime and state
+.wrangler/
+.mf/
+
+# Environment and secrets
+.dev.vars
+.env
+.env.*
+!.env.example
+
+# Dependencies
+node_modules/
+
+# OS metadata
+.DS_Store
+Thumbs.db
+
+# Local SQLite databases and logs
+*.sqlite
+*.sqlite-journal
+*.sqlite-wal
+*.sqlite-shm
+*.log

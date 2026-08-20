@@ -6,7 +6,7 @@
  * 
  * Usage:
  * <script 
- *   src="https://your-domain.com/sneak-idx/embed.js" 
+ *   src="https://your-sneak-host.com/embed.js" 
  *   data-site="demo-ccor" 
  *   data-widget="search" 
  *   data-height="850px">
@@ -27,7 +27,7 @@
         return;
     }
 
-    // Read attributes
+    // Read configuration attributes
     const siteKey = currentScript.getAttribute('data-site') || currentScript.getAttribute('data-site-key');
     const widgetType = currentScript.getAttribute('data-widget') || 'search';
     const customHeight = currentScript.getAttribute('data-height') || '850px';
@@ -39,14 +39,19 @@
         return;
     }
 
-    // Resolve Base Host URL
+    // Resolve Base Host URL & Widget Root
     let baseUrl = currentScript.getAttribute('data-base-url');
+    let isSubdirectory = false;
+
     if (!baseUrl) {
         try {
             const scriptSrc = currentScript.src;
             if (scriptSrc && scriptSrc.startsWith('http')) {
                 const parsed = new URL(scriptSrc);
                 baseUrl = parsed.origin;
+                if (parsed.pathname.includes('/sneak-idx/')) {
+                    isSubdirectory = true;
+                }
             } else {
                 baseUrl = window.location.origin;
             }
@@ -56,9 +61,10 @@
     }
 
     // Determine target widget path
-    let widgetPath = '/sneak-idx/search/';
+    let widgetRoot = isSubdirectory ? '/sneak-idx/search/' : '/search/';
+    let widgetPath = widgetRoot;
     if (widgetType === 'open_houses' || widgetType === 'open-houses') {
-        widgetPath = '/sneak-idx/search/?type=open-houses&';
+        widgetPath = `${widgetRoot}?type=open-houses&`;
     }
 
     // Construct safe iframe URL

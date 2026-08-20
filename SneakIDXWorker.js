@@ -1,13 +1,14 @@
 /**
  * SNEAK IDX Worker (sneak-idx-worker)
- * Multi-tenant IDX API & Service
+ * Multi-tenant IDX API & Service — Production Hardened Foundation
  * 
  * Provides versioned /idx/v1/... endpoints for multi-tenant real estate search,
- * tenant configuration, dynamic branding, parameterized D1 SQL search,
- * listing detail & media retrieval, lead capture, and generalized open house sync.
+ * lightweight map viewport queries, tenant configuration, dynamic branding,
+ * parameterized D1 SQL search, listing detail & media retrieval, lead capture,
+ * and generalized open house & listing synchronization.
  * 
- * Production-Safe: Connects to existing community-idx D1 database without modifying
- * legacy ListingsWorker or existing production routes.
+ * Isolated & Production-Safe: Connects to sneak_listings and sneak_* tables in
+ * community-idx D1 without modifying legacy ListingsWorker or existing production routes.
  */
 
 export default {
@@ -16,29 +17,41 @@ export default {
         const origin = req.headers.get('Origin') || '';
         const referer = req.headers.get('Referer') || '';
 
-        // Handle CORS Preflight
+        // 1. Handle CORS Preflight Requests
         if (req.method === 'OPTIONS') {
-            return handleCorsPreflight(req, env);
+            return await handleCorsPreflight(req, url, env);
         }
 
-        // Public Health Check
+        // 2. Public Health Check (Does not require tenant auth)
         if (url.pathname === '/idx/v1/health') {
             return jsonResponse({
                 status: 'ok',
                 service: 'sneak-idx-worker',
-                version: '1.0.0',
+                version: '2.0.0',
+                dataset: 'sneak_listings',
                 timestamp: new Date().toISOString()
             }, 200, '*');
         }
 
-        // Validate API Route Namespace
+        // 3. Static Assets & Frontend Routing (Non-API requests)
         if (!url.pathname.startsWith('/idx/v1/')) {
-            return jsonResponse({ error: 'Not Found', message: 'SNEAK IDX API endpoints are under /idx/v1/' }, 404, '*');
+            if (env.ASSETS) {
+                // If requesting search UI or HTML page, dynamically apply frame-ancestors CSP if site is known
+                const siteKey = url.searchParams.get('site');
+                if (siteKey && (url.pathname === '/' || url.pathname.startsWith('/search') || url.pathname.endsWith('.html'))) {
+                    return await handleStaticWithCSP(req, siteKey, env);
+                }
+                return await env.ASSETS.fetch(req);
+            }
+            return jsonResponse({ error: 'NotFound', message: 'SNEAK IDX API endpoints are under /idx/v1/' }, 404, '*');
         }
 
-        const siteKey = url.searchParams.get('site') || (req.method === 'POST' ? await peekSiteKeyFromPost(req.clone()) : null);
+        // 4. Extract Site Key
+        let siteKey = url.searchParams.get('site');
+        if (!siteKey && req.method === 'POST') {
+            siteKey = await peekSiteKeyFromPost(req.clone());
+        }
 
-        // Site Key is required for all tenant endpoints
         if (!siteKey) {
             return jsonResponse({
                 error: 'MissingSiteKey',
@@ -46,7 +59,7 @@ export default {
             }, 400, '*');
         }
 
-        // Resolve Tenant and Authorize Domain/Origin
+        // 5. Tenant Resolution & Domain/Origin Authorization
         const authResult = await resolveAndAuthorizeSite(siteKey, origin, referer, env);
         if (!authResult.authorized) {
             return jsonResponse({
@@ -68,11 +81,16 @@ export default {
                 return await handleSearch(url, site, env, ctx, allowedOrigin);
             }
 
+            // --- ROUTE: GET /idx/v1/map ---
+            if (url.pathname === '/idx/v1/map' && req.method === 'GET') {
+                return await handleMap(url, site, env, ctx, allowedOrigin);
+            }
+
             // --- ROUTE: GET /idx/v1/listing/:listingKey/media ---
             const mediaMatch = url.pathname.match(/^\/idx\/v1\/listing\/([^/]+)\/media$/);
             if (mediaMatch && req.method === 'GET') {
                 const listingKey = decodeURIComponent(mediaMatch[1]);
-                return await handleListingMedia(listingKey, req, env, ctx, allowedOrigin);
+                return await handleListingMedia(listingKey, site, req, env, ctx, allowedOrigin);
             }
 
             // --- ROUTE: GET /idx/v1/listing/:listingKey ---
@@ -99,27 +117,37 @@ export default {
                 return await handleLeadSubmission(req, site, env, ctx, allowedOrigin);
             }
 
-            return jsonResponse({ error: 'NotFound', message: 'Route not found' }, 404, allowedOrigin);
+            return jsonResponse({ error: 'NotFound', message: 'Endpoint not found.' }, 404, allowedOrigin);
         } catch (err) {
             console.error('Unhandled SNEAK Worker Error:', err);
             return jsonResponse({
                 error: 'InternalServerError',
-                message: 'An error occurred while processing your request.'
+                message: 'An unexpected error occurred while processing your request.'
             }, 500, allowedOrigin);
         }
     },
 
     /**
-     * Scheduled cron handler for generalized SNEAK Open House synchronization
-     * Synchronizes today - 1 day through today + 30 days without modifying legacy tables
+     * Scheduled cron handler for SNEAK Listing & Open House synchronization
      */
     async scheduled(event, env, ctx) {
-        console.log("Starting SNEAK Generalized Open House Sync...");
+        console.log("Starting SNEAK Scheduled Synchronization...");
         if (!env.BRIDGE_TOKEN || !env.DB) {
-            console.warn("BRIDGE_TOKEN or DB missing, skipping scheduled sync.");
+            console.warn("BRIDGE_TOKEN or DB binding missing, skipping scheduled sync.");
             return;
         }
-        await syncSneakOpenHouses(env);
+
+        try {
+            await syncSneakListings(env);
+        } catch (err) {
+            console.error("SNEAK Listings Sync Error:", err);
+        }
+
+        try {
+            await syncSneakOpenHouses(env);
+        } catch (err) {
+            console.error("SNEAK Open House Sync Error:", err);
+        }
     }
 };
 
@@ -127,12 +155,12 @@ export default {
    TENANT RESOLUTION & DOMAIN AUTHORIZATION
    ========================================================================== */
 
-async function resolveAndAuthorizeSite(siteKey, origin, referer, env) {
+async function resolveAndAuthorizeSite(siteKey, origin, referer, env, isPreflight = false) {
     if (!env.DB) {
         return { authorized: false, error: 'DatabaseError', message: 'Database binding unavailable.', status: 500 };
     }
 
-    // Lookup site and account
+    // Lookup site, account, and branding
     const query = `
         SELECT 
             s.id AS site_id, s.account_id, s.site_key, s.site_name, s.status AS site_status,
@@ -155,13 +183,13 @@ async function resolveAndAuthorizeSite(siteKey, origin, referer, env) {
         return { authorized: false, error: 'SiteInactive', message: 'This SNEAK site is currently inactive or suspended.', status: 403 };
     }
 
-    // Lookup authorized domains
+    // Lookup verified authorized domains (status = 'active' AND verified = 1)
     const domainsResult = await env.DB.prepare(
-        "SELECT domain FROM sneak_domains WHERE site_id = ? AND status = 'active'"
+        "SELECT domain FROM sneak_domains WHERE site_id = ? AND status = 'active' AND verified = 1"
     ).bind(siteRecord.site_id).all();
     const allowedDomains = (domainsResult.results || []).map(r => r.domain.toLowerCase().trim());
 
-    // Determine request hostname
+    // Determine request host and effective origin
     let requestHost = '';
     let effectiveOrigin = origin;
 
@@ -178,13 +206,16 @@ async function resolveAndAuthorizeSite(siteKey, origin, referer, env) {
     // Development & Localhost exceptions
     const isDevHost = requestHost === 'localhost' || requestHost === '127.0.0.1' || requestHost === '::1' || requestHost.endsWith('.local') || requestHost.endsWith('.internal');
 
-    // Check authorization
     let isDomainAuthorized = false;
 
-    // If no origin/referer (e.g. direct server-to-server or initial direct curl / dev query)
+    // Security Policy: Reject member API requests with no Origin/Referer in production
     if (!requestHost) {
-        isDomainAuthorized = true;
-        effectiveOrigin = '*';
+        return {
+            authorized: false,
+            error: 'OriginRequired',
+            message: 'Requests to the SNEAK widget API must include a valid Origin or Referer header.',
+            status: 403
+        };
     } else if (isDevHost) {
         isDomainAuthorized = true;
     } else {
@@ -202,7 +233,7 @@ async function resolveAndAuthorizeSite(siteKey, origin, referer, env) {
         return {
             authorized: false,
             error: 'DomainNotAuthorized',
-            message: `Domain '${requestHost}' is not authorized to use this SNEAK site key.`,
+            message: `Domain '${requestHost}' is not authorized or verified for this SNEAK site key.`,
             status: 403
         };
     }
@@ -224,15 +255,103 @@ async function peekSiteKeyFromPost(req) {
     }
 }
 
-function handleCorsPreflight(req, env) {
-    const origin = req.headers.get('Origin') || '*';
+async function handleCorsPreflight(req, url, env) {
+    const origin = req.headers.get('Origin') || '';
+    const siteKey = url.searchParams.get('site');
+
+    let allowedOrigin = '';
+
+    if (siteKey && origin && env.DB) {
+        try {
+            const authResult = await resolveAndAuthorizeSite(siteKey, origin, '', env, true);
+            if (authResult.authorized) {
+                allowedOrigin = origin;
+            }
+        } catch {}
+    } else if (origin) {
+        try {
+            const h = new URL(origin).hostname;
+            if (h === 'localhost' || h === '127.0.0.1' || h.endsWith('.local')) {
+                allowedOrigin = origin;
+            }
+        } catch {}
+    }
+
+    if (!allowedOrigin) {
+        return new Response(null, { status: 403 });
+    }
+
     const headers = new Headers();
-    headers.set('Access-Control-Allow-Origin', origin);
+    headers.set('Access-Control-Allow-Origin', allowedOrigin);
     headers.set('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
     headers.set('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, X-Site-Key');
     headers.set('Access-Control-Max-Age', '86400');
     headers.set('Vary', 'Origin');
     return new Response(null, { status: 204, headers });
+}
+
+async function handleStaticWithCSP(req, siteKey, env) {
+    const res = await env.ASSETS.fetch(req);
+    if (!res.ok) {
+        return res;
+    }
+
+    // Retrieve verified domains to construct frame-ancestors
+    let frameAncestors = "'self'";
+    try {
+        const site = await env.DB.prepare("SELECT id FROM sneak_sites WHERE site_key = ?").bind(siteKey).first();
+        if (site) {
+            const doms = await env.DB.prepare(
+                "SELECT domain FROM sneak_domains WHERE site_id = ? AND status = 'active' AND verified = 1"
+            ).bind(site.id).all();
+            const allowed = (doms.results || []).map(r => {
+                const d = r.domain.trim();
+                if (d === 'localhost' || d === '127.0.0.1') return `http://${d}:* http://${d}`;
+                if (d.startsWith('*.')) return `https://${d} http://${d}`;
+                return `https://${d} https://www.${d}`;
+            });
+            if (allowed.length > 0) {
+                frameAncestors += ' ' + allowed.join(' ');
+            }
+        }
+    } catch (err) {
+        console.warn('CSP resolution error:', err);
+    }
+
+    const newHeaders = new Headers(res.headers);
+    newHeaders.set('Content-Security-Policy', `frame-ancestors ${frameAncestors};`);
+    return new Response(res.body, { status: res.status, headers: newHeaders });
+}
+
+/* ==========================================================================
+   UNIFIED TENANT SCOPE ENGINE
+   ========================================================================== */
+
+/**
+ * Builds parameterized SQL WHERE clause and bindings for tenant listing scope.
+ * Guarantees that agent-scoped or office-scoped sites can NEVER access or display
+ * listings outside their assigned authorization.
+ */
+function buildTenantListingScope(site, tableAlias = '') {
+    const prefix = tableAlias ? `${tableAlias}.` : '';
+    const clauses = [];
+    const binds = [];
+
+    if (site.scope_type === 'agent' && site.scope_value) {
+        clauses.push(`${prefix}ListAgentMlsId = ?`);
+        binds.push(site.scope_value);
+    } else if (site.scope_type === 'office' && site.scope_value) {
+        clauses.push(`(${prefix}ListOfficeMlsId = ? OR ${prefix}ListOfficeKey = ?)`);
+        binds.push(site.scope_value, site.scope_value);
+    } else {
+        // Market scope — no restrictions enforced by default
+        clauses.push('1=1');
+    }
+
+    return {
+        clause: clauses.join(' AND '),
+        binds
+    };
 }
 
 /* ==========================================================================
@@ -243,7 +362,6 @@ function handleCorsPreflight(req, env) {
  * GET /idx/v1/config?site=abc123
  */
 async function handleGetConfig(site, branding, env, allowedOrigin) {
-    // Fetch widget configs
     const widgetRows = await env.DB.prepare(
         "SELECT widget_type, enabled, config_json FROM sneak_widget_configs WHERE site_id = ?"
     ).bind(site.site_id).all();
@@ -266,7 +384,7 @@ async function handleGetConfig(site, branding, env, allowedOrigin) {
     const configPayload = {
         siteKey: site.site_key,
         siteName: site.site_name,
-        displayName: branding.display_name || site.account_name,
+        displayName: branding.display_name || site.site_name || 'Real Estate Search',
         brokerage: branding.brokerage || '',
         logoUrl: branding.logo_url || '',
         agentPhotoUrl: branding.agent_photo_url || '',
@@ -299,16 +417,16 @@ async function handleGetConfig(site, branding, env, allowedOrigin) {
 async function handleSearch(url, site, env, ctx, allowedOrigin) {
     const params = url.searchParams;
 
-    // Parse parameters
-    const city = params.get('city');
+    // Parse and sanitize query parameters
+    const city = (params.get('city') || '').substring(0, 200);
     const minPrice = parseFloat(params.get('minPrice')) || null;
     const maxPrice = parseFloat(params.get('maxPrice')) || null;
     const beds = parseInt(params.get('beds'), 10) || null;
     const baths = parseInt(params.get('baths'), 10) || null;
-    const propertyType = params.get('propertyType') || 'sale';
+    const propertyType = (params.get('propertyType') || 'sale').toLowerCase();
     const propertySubType = params.get('propertySubType');
     const status = params.get('status') || 'Active';
-    const q = (params.get('q') || params.get('search') || '').trim();
+    const q = (params.get('q') || params.get('search') || '').substring(0, 200).trim();
     const sort = params.get('sort') || 'dateDesc';
     const page = Math.max(1, parseInt(params.get('page'), 10) || 1);
     const limit = Math.min(100, Math.max(1, parseInt(params.get('limit') || params.get('pageSize'), 10) || 24));
@@ -317,23 +435,26 @@ async function handleSearch(url, site, env, ctx, allowedOrigin) {
     const whereClauses = [];
     const bindValues = [];
 
-    // 1. Enforce Site Scoping (Server-side security)
-    if (site.scope_type === 'agent' && site.scope_value) {
-        whereClauses.push("ListAgentMlsId = ?");
-        bindValues.push(site.scope_value);
-    } else if (site.scope_type === 'office' && site.scope_value) {
-        whereClauses.push("(ListOfficeName = ? OR ListOfficePhone = ?)");
-        bindValues.push(site.scope_value, site.scope_value);
-    } else {
-        // Optional agent filter from query if in market scope
+    // 1. Enforce Unified Tenant Scoping
+    const scope = buildTenantListingScope(site);
+    whereClauses.push(scope.clause);
+    bindValues.push(...scope.binds);
+
+    // If market scope, allow optional agent or office narrowing
+    if (site.scope_type === 'market') {
         const agentMlsId = params.get('agentMlsId');
         if (agentMlsId) {
             whereClauses.push("ListAgentMlsId = ?");
             bindValues.push(agentMlsId);
         }
+        const officeMlsId = params.get('officeMlsId');
+        if (officeMlsId) {
+            whereClauses.push("(ListOfficeMlsId = ? OR ListOfficeKey = ?)");
+            bindValues.push(officeMlsId, officeMlsId);
+        }
     }
 
-    // 2. Status Filter
+    // 2. Standard Status Filtering
     if (status === 'Pending') {
         whereClauses.push("(StandardStatus = 'Pending' OR StandardStatus = 'Active Under Contract')");
     } else if (status === 'Active Under Contract') {
@@ -341,13 +462,12 @@ async function handleSearch(url, site, env, ctx, allowedOrigin) {
     } else if (status === 'Closed') {
         whereClauses.push("StandardStatus = 'Closed'");
     } else if (status === 'All') {
-        // Allow all active/pending statuses
         whereClauses.push("(StandardStatus = 'Active' OR StandardStatus = 'Active Under Contract' OR StandardStatus = 'Pending')");
     } else {
         whereClauses.push("StandardStatus = 'Active'");
     }
 
-    // 3. Property Type Filter
+    // 3. Property Type Filtering
     if (propertyType === 'sale') {
         whereClauses.push("(PropertyType = 'Residential' OR PropertyType = 'Residential Income')");
     } else if (propertyType === 'rental') {
@@ -361,11 +481,10 @@ async function handleSearch(url, site, env, ctx, allowedOrigin) {
         bindValues.push(propertyType);
     }
 
-    // 4. Property SubType Filter
+    // 4. Property SubType Filtering
     if (propertySubType) {
         const subTypes = propertySubType.split(',').map(s => s.trim()).filter(Boolean);
         if (subTypes.length > 0) {
-            // Map common groups
             const expanded = [];
             subTypes.forEach(st => {
                 if (st === 'Single Family Residence') { expanded.push('Single Family Residence', 'Manufactured Home'); }
@@ -381,7 +500,7 @@ async function handleSearch(url, site, env, ctx, allowedOrigin) {
         }
     }
 
-    // 5. City Filter
+    // 5. City Filtering
     if (city) {
         const cities = city.split(',').map(c => c.trim()).filter(Boolean);
         if (cities.length === 1) {
@@ -414,14 +533,14 @@ async function handleSearch(url, site, env, ctx, allowedOrigin) {
         bindValues.push(baths);
     }
 
-    // 8. Text Search (Address, MLS ID, Agent, City)
+    // 8. Text Search (Address, MLS ID, Agent, City, Subdivision)
     if (q) {
-        whereClauses.push("(ListingKey = ? OR ListingId = ? OR LOWER(UnparsedAddress) LIKE ? OR LOWER(City) LIKE ? OR LOWER(ListAgentFullName) LIKE ? OR LOWER(ListAgentMlsId) = ?)");
+        whereClauses.push("(ListingKey = ? OR ListingId = ? OR LOWER(UnparsedAddress) LIKE ? OR LOWER(City) LIKE ? OR LOWER(SubdivisionName) LIKE ? OR LOWER(ListAgentFullName) LIKE ? OR LOWER(ListAgentMlsId) = ?)");
         const likeQ = `%${q.toLowerCase()}%`;
-        bindValues.push(q, q, likeQ, likeQ, likeQ, q.toLowerCase());
+        bindValues.push(q, q, likeQ, likeQ, likeQ, likeQ, q.toLowerCase());
     }
 
-    const whereSQL = whereClauses.length > 0 ? `WHERE ${whereClauses.join(' AND ')}` : '';
+    const whereSQL = `WHERE ${whereClauses.join(' AND ')}`;
 
     // Sort order
     let orderSQL = "ORDER BY ListingContractDate DESC, ModificationTimestamp DESC";
@@ -433,21 +552,21 @@ async function handleSearch(url, site, env, ctx, allowedOrigin) {
         orderSQL = "ORDER BY ListingContractDate ASC";
     }
 
-    // Execute Count Query
-    const countSQL = `SELECT COUNT(*) AS total FROM listings ${whereSQL}`;
+    // Execute Count Query on sneak_listings
+    const countSQL = `SELECT COUNT(*) AS total FROM sneak_listings ${whereSQL}`;
     const countStmt = env.DB.prepare(countSQL).bind(...bindValues);
     const countRes = await countStmt.first();
     const total = countRes ? countRes.total : 0;
 
-    // Execute Results Query
+    // Execute Results Query on sneak_listings
     const selectCols = `
-        ListingKey, ListingId, ListPrice, UnparsedAddress, City, CountyOrParish,
+        ListingKey, ListingId, ListPrice, OriginalListPrice, UnparsedAddress, City, StateOrProvince, PostalCode, CountyOrParish,
         BedroomsTotal, BathroomsTotalInteger, LivingArea, StandardStatus,
         PropertyType, PropertySubType, PrimaryPhoto, ListingContractDate,
         Latitude, Longitude, ModificationTimestamp, YearBuilt, LotSizeAcres,
-        ListAgentFullName, ListOfficeName, ListOfficePhone, ListAgentMlsId
+        ListAgentFullName, ListOfficeName, ListOfficePhone, ListAgentMlsId, ListOfficeMlsId, SubdivisionName
     `;
-    const searchSQL = `SELECT ${selectCols} FROM listings ${whereSQL} ${orderSQL} LIMIT ? OFFSET ?`;
+    const searchSQL = `SELECT ${selectCols} FROM sneak_listings ${whereSQL} ${orderSQL} LIMIT ? OFFSET ?`;
     const searchStmt = env.DB.prepare(searchSQL).bind(...bindValues, limit, offset);
     const results = await searchStmt.all();
 
@@ -457,7 +576,6 @@ async function handleSearch(url, site, env, ctx, allowedOrigin) {
         Media: row.PrimaryPhoto ? [{ MediaURL: row.PrimaryPhoto, Order: 0 }] : []
     }));
 
-    // Record Usage Metric asynchronously
     if (ctx && ctx.waitUntil) {
         ctx.waitUntil(recordUsage(site.site_id, 'searches', env));
     }
@@ -477,25 +595,192 @@ async function handleSearch(url, site, env, ctx, allowedOrigin) {
 }
 
 /**
+ * GET /idx/v1/map?site=abc123&city=...&minPrice=...&north=...&south=...&east=...&west=...
+ * Lightweight marker endpoint for large area representation
+ */
+async function handleMap(url, site, env, ctx, allowedOrigin) {
+    const params = url.searchParams;
+
+    // Parse filters
+    const city = (params.get('city') || '').substring(0, 200);
+    const minPrice = parseFloat(params.get('minPrice')) || null;
+    const maxPrice = parseFloat(params.get('maxPrice')) || null;
+    const beds = parseInt(params.get('beds'), 10) || null;
+    const baths = parseInt(params.get('baths'), 10) || null;
+    const propertyType = (params.get('propertyType') || 'sale').toLowerCase();
+    const propertySubType = params.get('propertySubType');
+    const status = params.get('status') || 'Active';
+    const q = (params.get('q') || params.get('search') || '').substring(0, 200).trim();
+
+    // Viewport bounding box parameters
+    const north = parseFloat(params.get('north'));
+    const south = parseFloat(params.get('south'));
+    const east = parseFloat(params.get('east'));
+    const west = parseFloat(params.get('west'));
+
+    const whereClauses = [];
+    const bindValues = [];
+
+    // 1. Enforce Unified Tenant Scope
+    const scope = buildTenantListingScope(site);
+    whereClauses.push(scope.clause);
+    bindValues.push(...scope.binds);
+
+    // Require valid coordinates
+    whereClauses.push("Latitude IS NOT NULL AND Longitude IS NOT NULL");
+
+    // 2. Viewport Bounding Box Filter
+    if (!isNaN(north) && !isNaN(south) && !isNaN(east) && !isNaN(west)) {
+        whereClauses.push("Latitude BETWEEN ? AND ?");
+        bindValues.push(Math.min(south, north), Math.max(south, north));
+
+        if (west <= east) {
+            whereClauses.push("Longitude BETWEEN ? AND ?");
+            bindValues.push(west, east);
+        } else {
+            // Viewport crossing 180th meridian
+            whereClauses.push("(Longitude >= ? OR Longitude <= ?)");
+            bindValues.push(west, east);
+        }
+    }
+
+    // 3. Status Filter
+    if (status === 'Pending') {
+        whereClauses.push("(StandardStatus = 'Pending' OR StandardStatus = 'Active Under Contract')");
+    } else if (status === 'Active Under Contract') {
+        whereClauses.push("StandardStatus = 'Active Under Contract'");
+    } else if (status === 'Closed') {
+        whereClauses.push("StandardStatus = 'Closed'");
+    } else if (status === 'All') {
+        whereClauses.push("(StandardStatus = 'Active' OR StandardStatus = 'Active Under Contract' OR StandardStatus = 'Pending')");
+    } else {
+        whereClauses.push("StandardStatus = 'Active'");
+    }
+
+    // 4. Property Type Filter
+    if (propertyType === 'sale') {
+        whereClauses.push("(PropertyType = 'Residential' OR PropertyType = 'Residential Income')");
+    } else if (propertyType === 'rental') {
+        whereClauses.push("PropertyType = 'Residential Lease'");
+    } else if (propertyType === 'commercial') {
+        whereClauses.push("(PropertyType = 'Commercial Sale' OR PropertyType = 'Commercial' OR PropertyType = 'Commercial Lease' OR PropertyType = 'Business Opportunity')");
+    } else if (propertyType === 'land') {
+        whereClauses.push("PropertyType = 'Land'");
+    } else if (propertyType && propertyType !== 'all') {
+        whereClauses.push("PropertyType = ?");
+        bindValues.push(propertyType);
+    }
+
+    // 5. Property SubType Filter
+    if (propertySubType) {
+        const subTypes = propertySubType.split(',').map(s => s.trim()).filter(Boolean);
+        if (subTypes.length > 0) {
+            const placeholders = subTypes.map(() => '?').join(',');
+            whereClauses.push(`PropertySubType IN (${placeholders})`);
+            bindValues.push(...subTypes);
+        }
+    }
+
+    // 6. City Filter
+    if (city) {
+        const cities = city.split(',').map(c => c.trim()).filter(Boolean);
+        if (cities.length === 1) {
+            whereClauses.push("LOWER(City) = LOWER(?)");
+            bindValues.push(cities[0]);
+        } else if (cities.length > 1) {
+            const placeholders = cities.map(() => 'LOWER(?)').join(',');
+            whereClauses.push(`LOWER(City) IN (${placeholders})`);
+            bindValues.push(...cities);
+        }
+    }
+
+    // 7. Price Range
+    if (minPrice !== null && minPrice > 0) {
+        whereClauses.push("ListPrice >= ?");
+        bindValues.push(minPrice);
+    }
+    if (maxPrice !== null && maxPrice > 0) {
+        whereClauses.push("ListPrice <= ?");
+        bindValues.push(maxPrice);
+    }
+
+    // 8. Beds / Baths
+    if (beds !== null && beds > 0) {
+        whereClauses.push("BedroomsTotal >= ?");
+        bindValues.push(beds);
+    }
+    if (baths !== null && baths > 0) {
+        whereClauses.push("BathroomsTotalInteger >= ?");
+        bindValues.push(baths);
+    }
+
+    // 9. Text Search
+    if (q) {
+        whereClauses.push("(ListingKey = ? OR ListingId = ? OR LOWER(UnparsedAddress) LIKE ? OR LOWER(City) LIKE ? OR LOWER(SubdivisionName) LIKE ?)");
+        const likeQ = `%${q.toLowerCase()}%`;
+        bindValues.push(q, q, likeQ, likeQ, likeQ);
+    }
+
+    const whereSQL = `WHERE ${whereClauses.join(' AND ')}`;
+    const markerLimit = 1000;
+
+    const selectCols = `
+        ListingKey, ListingId, ListPrice, UnparsedAddress, City,
+        BedroomsTotal, BathroomsTotalInteger, LivingArea, StandardStatus,
+        PropertyType, PropertySubType, PrimaryPhoto, Latitude, Longitude
+    `;
+    const mapSQL = `SELECT ${selectCols} FROM sneak_listings ${whereSQL} ORDER BY ListingContractDate DESC LIMIT ?`;
+    const mapStmt = env.DB.prepare(mapSQL).bind(...bindValues, markerLimit);
+    const results = await mapStmt.all();
+
+    const markers = (results.results || []).map(row => ({
+        ListingKey: row.ListingKey,
+        ListingId: row.ListingId,
+        ListPrice: row.ListPrice,
+        UnparsedAddress: row.UnparsedAddress,
+        City: row.City,
+        BedroomsTotal: row.BedroomsTotal,
+        BathroomsTotalInteger: row.BathroomsTotalInteger,
+        LivingArea: row.LivingArea,
+        StandardStatus: row.StandardStatus,
+        PropertyType: row.PropertyType,
+        PropertySubType: row.PropertySubType,
+        PrimaryPhoto: row.PrimaryPhoto,
+        Latitude: row.Latitude,
+        Longitude: row.Longitude
+    }));
+
+    return jsonResponse({
+        data: markers,
+        count: markers.length,
+        limit: markerLimit
+    }, 200, allowedOrigin, 'public, max-age=60, s-maxage=120');
+}
+
+/**
  * GET /idx/v1/listing/:listingKey?site=abc123
  */
 async function handleListingDetail(listingKey, site, req, env, ctx, allowedOrigin) {
-    // 1. Fetch listing from D1
-    const d1Listing = await env.DB.prepare(
-        "SELECT * FROM listings WHERE ListingKey = ? OR ListingId = ?"
-    ).bind(listingKey, listingKey).first();
+    // 1. Verify listing is within the site's authorized scope
+    const scope = buildTenantListingScope(site);
+    const query = `
+        SELECT * FROM sneak_listings 
+        WHERE (ListingKey = ? OR ListingId = ?) AND ${scope.clause}
+    `;
+    const d1Listing = await env.DB.prepare(query).bind(listingKey, listingKey, ...scope.binds).first();
 
-    if (!d1Listing && !env.BRIDGE_TOKEN) {
-        return jsonResponse({ error: 'ListingNotFound', message: 'Property not found.' }, 404, allowedOrigin);
+    if (!d1Listing) {
+        // Return 404 to avoid leaking listing existence across tenant boundaries
+        return jsonResponse({ error: 'ListingNotFound', message: 'Property not found or not accessible within this scope.' }, 404, allowedOrigin);
     }
 
-    // 2. Fetch full details / remarks / media from edge cache or upstream Bridge API server-side
     let fullDetails = { ...d1Listing };
 
+    // 2. Fetch extended details / remarks from Bridge API server-side with edge caching
     if (env.BRIDGE_TOKEN) {
         const cache = caches.default;
         const cacheUrl = new URL(req.url);
-        cacheUrl.searchParams.delete('site'); // cache based on listingKey
+        cacheUrl.searchParams.delete('site');
         const cacheKey = new Request(cacheUrl.toString(), { method: 'GET' });
         
         let cached = await cache.match(cacheKey);
@@ -506,8 +791,9 @@ async function handleListingDetail(listingKey, site, req, env, ctx, allowedOrigi
             } catch {}
         } else {
             try {
-                const sel = 'ListingKey,ListingId,UnparsedAddress,City,PostalCode,CountyOrParish,ListPrice,PropertyType,PropertySubType,BedroomsTotal,BathroomsTotalInteger,LivingArea,LotSizeAcres,YearBuilt,StandardStatus,SubdivisionName,ListAgentFullName,ListAgentEmail,ListAgentDirectPhone,ListAgentKey,ListOfficeName,ListOfficePhone,PublicRemarks,Coordinates,Media,ModificationTimestamp';
-                const bridgeUrl = `https://api.bridgedataoutput.com/api/v2/OData/bsaor/Property?$filter=ListingKey eq '${encodeURIComponent(listingKey)}'&$select=${sel}&access_token=${env.BRIDGE_TOKEN}`;
+                const sel = 'ListingKey,ListingId,UnparsedAddress,City,PostalCode,CountyOrParish,ListPrice,PropertyType,PropertySubType,BedroomsTotal,BathroomsTotalInteger,LivingArea,LotSizeAcres,YearBuilt,StandardStatus,SubdivisionName,ListAgentFullName,ListAgentEmail,ListAgentDirectPhone,ListAgentKey,ListOfficeName,ListOfficePhone,ListOfficeMlsId,PublicRemarks,Coordinates,Media,ModificationTimestamp';
+                const safeKey = escapeODataString(d1Listing.ListingKey);
+                const bridgeUrl = `https://api.bridgedataoutput.com/api/v2/OData/bsaor/Property?$filter=ListingKey eq '${encodeURIComponent(safeKey)}'&$select=${sel}&access_token=${env.BRIDGE_TOKEN}`;
                 const bridgeRes = await fetch(bridgeUrl, { headers: { Accept: 'application/json' } });
                 
                 if (bridgeRes.ok) {
@@ -515,7 +801,6 @@ async function handleListingDetail(listingKey, site, req, env, ctx, allowedOrigi
                     const p = bridgeJson.value && bridgeJson.value[0];
                     if (p) {
                         fullDetails = { ...fullDetails, ...p };
-                        // Cache upstream detail response for 10 minutes at edge
                         const cacheHeaders = new Headers({
                             'Content-Type': 'application/json',
                             'Cache-Control': 'public, s-maxage=600'
@@ -532,7 +817,6 @@ async function handleListingDetail(listingKey, site, req, env, ctx, allowedOrigi
         }
     }
 
-    // Format coordinates and media
     if (fullDetails.Longitude && fullDetails.Latitude && !fullDetails.Coordinates) {
         fullDetails.Coordinates = [fullDetails.Longitude, fullDetails.Latitude];
     }
@@ -543,7 +827,6 @@ async function handleListingDetail(listingKey, site, req, env, ctx, allowedOrigi
         fullDetails.Media = [{ MediaURL: fullDetails.PrimaryPhoto, Order: 0 }];
     }
 
-    // Record listing view metric
     if (ctx && ctx.waitUntil) {
         ctx.waitUntil(recordUsage(site.site_id, 'listing_views', env));
     }
@@ -554,7 +837,18 @@ async function handleListingDetail(listingKey, site, req, env, ctx, allowedOrigi
 /**
  * GET /idx/v1/listing/:listingKey/media?site=abc123
  */
-async function handleListingMedia(listingKey, req, env, ctx, allowedOrigin) {
+async function handleListingMedia(listingKey, site, req, env, ctx, allowedOrigin) {
+    // 1. Verify listing is within site scope
+    const scope = buildTenantListingScope(site);
+    const row = await env.DB.prepare(
+        `SELECT ListingKey, PrimaryPhoto FROM sneak_listings WHERE (ListingKey = ? OR ListingId = ?) AND ${scope.clause}`
+    ).bind(listingKey, listingKey, ...scope.binds).first();
+
+    if (!row) {
+        return jsonResponse({ error: 'ListingNotFound', message: 'Property media not accessible.' }, 404, allowedOrigin);
+    }
+
+    const realKey = row.ListingKey;
     const cache = caches.default;
     const cacheUrl = new URL(req.url);
     cacheUrl.searchParams.delete('site');
@@ -570,10 +864,11 @@ async function handleListingMedia(listingKey, req, env, ctx, allowedOrigin) {
 
     let mediaUrls = [];
 
-    // Try Bridge API server-side
+    // Fetch upstream photos via Bridge API
     if (env.BRIDGE_TOKEN) {
         try {
-            const bridgeUrl = `https://api.bridgedataoutput.com/api/v2/OData/bsaor/Property?$filter=ListingKey eq '${encodeURIComponent(listingKey)}'&$select=ListingKey,Media&access_token=${env.BRIDGE_TOKEN}`;
+            const safeKey = escapeODataString(realKey);
+            const bridgeUrl = `https://api.bridgedataoutput.com/api/v2/OData/bsaor/Property?$filter=ListingKey eq '${encodeURIComponent(safeKey)}'&$select=ListingKey,Media&access_token=${env.BRIDGE_TOKEN}`;
             const res = await fetch(bridgeUrl, { headers: { Accept: 'application/json' } });
             if (res.ok) {
                 const data = await res.json();
@@ -590,16 +885,12 @@ async function handleListingMedia(listingKey, req, env, ctx, allowedOrigin) {
         }
     }
 
-    // Fallback to D1 PrimaryPhoto if Bridge failed or returned empty
-    if (!mediaUrls.length) {
-        const row = await env.DB.prepare("SELECT PrimaryPhoto FROM listings WHERE ListingKey = ?").bind(listingKey).first();
-        if (row && row.PrimaryPhoto) {
-            mediaUrls = [row.PrimaryPhoto];
-        }
+    if (!mediaUrls.length && row.PrimaryPhoto) {
+        mediaUrls = [row.PrimaryPhoto];
     }
 
     const payload = {
-        listingKey,
+        listingKey: realKey,
         media: mediaUrls
     };
 
@@ -614,37 +905,97 @@ async function handleListingMedia(listingKey, req, env, ctx, allowedOrigin) {
  * GET /idx/v1/agent/:mlsId/listings?site=abc123
  */
 async function handleAgentListings(agentMlsId, url, site, env, allowedOrigin) {
-    const limit = Math.min(50, parseInt(url.searchParams.get('limit'), 10) || 20);
+    // 1. Enforce agent scope security
+    if (site.scope_type === 'agent' && site.scope_value && site.scope_value !== agentMlsId) {
+        return jsonResponse({
+            error: 'Forbidden',
+            message: 'Agent-scoped sites cannot query listings for other MLS agents.'
+        }, 403, allowedOrigin);
+    }
+
+    const limit = Math.min(50, Math.max(1, parseInt(url.searchParams.get('limit'), 10) || 20));
+    const scope = buildTenantListingScope(site);
+
     const results = await env.DB.prepare(`
         SELECT ListingKey, ListingId, ListPrice, UnparsedAddress, City, BedroomsTotal, BathroomsTotalInteger, LivingArea, PrimaryPhoto, StandardStatus, PropertyType, PropertySubType
-        FROM listings
-        WHERE ListAgentMlsId = ? AND StandardStatus = 'Active'
+        FROM sneak_listings
+        WHERE ListAgentMlsId = ? AND StandardStatus = 'Active' AND ${scope.clause}
         ORDER BY ListingContractDate DESC LIMIT ?
-    `).bind(agentMlsId, limit).all();
+    `).bind(agentMlsId, ...scope.binds, limit).all();
 
     return jsonResponse({ data: results.results || [] }, 200, allowedOrigin, 'public, max-age=300, s-maxage=600');
 }
 
 /**
- * GET /idx/v1/open-houses?site=abc123
+ * GET /idx/v1/open-houses?site=abc123&city=...&dateFrom=...&dateTo=...
  */
 async function handleOpenHouses(url, site, env, allowedOrigin) {
     const todayStr = new Date().toISOString().split('T')[0];
-    const city = url.searchParams.get('city');
+    const dateFrom = url.searchParams.get('dateFrom') || todayStr;
+    const dateTo = url.searchParams.get('dateTo');
+    const city = (url.searchParams.get('city') || '').trim();
+    const agentMlsId = url.searchParams.get('agent');
+    const officeMlsId = url.searchParams.get('office');
 
-    let query = `
-        SELECT OpenHouseKey, ListingKey, OpenHouseStartTime, OpenHouseEndTime, OpenHouseDate, OpenHouseRemarks, PropertyData
-        FROM sneak_open_houses
-        WHERE OpenHouseDate >= ?
-        ORDER BY OpenHouseDate ASC, OpenHouseStartTime ASC
+    const whereClauses = ["oh.OpenHouseDate >= ?"];
+    const bindValues = [dateFrom];
+
+    if (dateTo) {
+        whereClauses.push("oh.OpenHouseDate <= ?");
+        bindValues.push(dateTo);
+    }
+
+    // Apply tenant listing scope through sneak_listings join
+    const scope = buildTenantListingScope(site, 'l');
+    whereClauses.push(scope.clause);
+    bindValues.push(...scope.binds);
+
+    if (city) {
+        whereClauses.push("LOWER(l.City) = LOWER(?)");
+        bindValues.push(city);
+    }
+
+    if (site.scope_type === 'market') {
+        if (agentMlsId) {
+            whereClauses.push("l.ListAgentMlsId = ?");
+            bindValues.push(agentMlsId);
+        }
+        if (officeMlsId) {
+            whereClauses.push("(l.ListOfficeMlsId = ? OR l.ListOfficeKey = ?)");
+            bindValues.push(officeMlsId, officeMlsId);
+        }
+    }
+
+    const query = `
+        SELECT 
+            oh.OpenHouseKey, oh.ListingKey, oh.OpenHouseStartTime, oh.OpenHouseEndTime, oh.OpenHouseDate, oh.OpenHouseRemarks, oh.PropertyData,
+            l.UnparsedAddress, l.City, l.ListPrice, l.BedroomsTotal, l.BathroomsTotalInteger, l.LivingArea, l.PrimaryPhoto, l.ListAgentFullName, l.ListOfficeName
+        FROM sneak_open_houses oh
+        JOIN sneak_listings l ON oh.ListingKey = l.ListingKey
+        WHERE ${whereClauses.join(' AND ')}
+        ORDER BY oh.OpenHouseDate ASC, oh.OpenHouseStartTime ASC
         LIMIT 100
     `;
 
-    const results = await env.DB.prepare(query).bind(todayStr).all();
+    const results = await env.DB.prepare(query).bind(...bindValues).all();
 
     const data = (results.results || []).map(row => {
         let property = null;
         try { property = JSON.parse(row.PropertyData); } catch {}
+        if (!property) {
+            property = {
+                ListingKey: row.ListingKey,
+                UnparsedAddress: row.UnparsedAddress,
+                City: row.City,
+                ListPrice: row.ListPrice,
+                BedroomsTotal: row.BedroomsTotal,
+                BathroomsTotalInteger: row.BathroomsTotalInteger,
+                LivingArea: row.LivingArea,
+                PrimaryPhoto: row.PrimaryPhoto,
+                ListAgentFullName: row.ListAgentFullName,
+                ListOfficeName: row.ListOfficeName
+            };
+        }
         return {
             openHouse: {
                 openHouseKey: row.OpenHouseKey,
@@ -656,7 +1007,7 @@ async function handleOpenHouses(url, site, env, allowedOrigin) {
             },
             property
         };
-    }).filter(x => x.property);
+    });
 
     return jsonResponse({ data }, 200, allowedOrigin, 'public, max-age=300, s-maxage=300');
 }
@@ -672,13 +1023,13 @@ async function handleLeadSubmission(req, site, env, ctx, allowedOrigin) {
         return jsonResponse({ error: 'InvalidJSON', message: 'Malformed JSON payload.' }, 400, allowedOrigin);
     }
 
-    const name = (body.name || '').trim();
-    const email = (body.email || '').trim();
-    const phone = (body.phone || '').trim();
-    const message = (body.message || '').trim();
-    const listingKey = body.listingKey || null;
-    const leadType = body.leadType || 'property_inquiry';
-    const sourceUrl = body.sourceUrl || req.headers.get('Referer') || '';
+    const name = (body.name || '').trim().substring(0, 100);
+    const email = (body.email || '').trim().substring(0, 150);
+    const phone = (body.phone || '').trim().substring(0, 30);
+    const message = (body.message || '').trim().substring(0, 2000);
+    const listingKey = (body.listingKey || '').trim().substring(0, 50) || null;
+    const leadType = (body.leadType || 'property_inquiry').substring(0, 50);
+    const sourceUrl = (body.sourceUrl || req.headers.get('Referer') || '').substring(0, 500);
 
     // Validation
     if (!name || !email) {
@@ -690,9 +1041,20 @@ async function handleLeadSubmission(req, site, env, ctx, allowedOrigin) {
         return jsonResponse({ error: 'ValidationError', message: 'Please provide a valid email address.' }, 400, allowedOrigin);
     }
 
+    // Verify listing falls within site scope if a listingKey is provided
+    if (listingKey) {
+        const scope = buildTenantListingScope(site);
+        const exists = await env.DB.prepare(
+            `SELECT ListingKey FROM sneak_listings WHERE (ListingKey = ? OR ListingId = ?) AND ${scope.clause}`
+        ).bind(listingKey, listingKey, ...scope.binds).first();
+        if (!exists) {
+            console.warn(`Lead submitted for listing ${listingKey} which is outside scope for site ${site.site_key}`);
+        }
+    }
+
     const leadId = 'lead_' + Date.now().toString(36) + '_' + Math.random().toString(36).substring(2, 7);
 
-    // Save lead to D1
+    // Save lead into sneak_leads
     await env.DB.prepare(`
         INSERT INTO sneak_leads (
             id, site_id, listing_key, lead_type, name, email, phone, message, source_url, created_at
@@ -701,7 +1063,6 @@ async function handleLeadSubmission(req, site, env, ctx, allowedOrigin) {
         leadId, site.site_id, listingKey, leadType, name, email, phone, message, sourceUrl
     ).run();
 
-    // Increment usage metrics
     if (ctx && ctx.waitUntil) {
         ctx.waitUntil(recordUsage(site.site_id, 'leads', env));
     }
@@ -714,7 +1075,7 @@ async function handleLeadSubmission(req, site, env, ctx, allowedOrigin) {
 }
 
 /* ==========================================================================
-   METRICS & CRON SYNCHRONIZATION
+   METRICS & SYNCHRONIZATION ENGINE
    ========================================================================== */
 
 async function recordUsage(siteId, column, env) {
@@ -732,7 +1093,166 @@ async function recordUsage(siteId, column, env) {
     }
 }
 
+/**
+ * Synchronizes full statewide / regional IDX listings from Bridge into sneak_listings.
+ * Follows OData pagination, safely upserts records, and performs stale cleanup ONLY
+ * after an entire successful sync to avoid data loss.
+ */
+async function syncSneakListings(env) {
+    console.log("Starting SNEAK Listing Dataset Sync...");
+
+    const SEL = [
+        'ListingKey', 'ListingId', 'ListPrice', 'OriginalListPrice',
+        'UnparsedAddress', 'StreetNumber', 'StreetName', 'UnitNumber',
+        'City', 'StateOrProvince', 'PostalCode', 'CountyOrParish',
+        'BedroomsTotal', 'BathroomsTotalInteger', 'BathroomsFull', 'BathroomsHalf',
+        'LivingArea', 'StandardStatus', 'PropertyType', 'PropertySubType',
+        'ListingContractDate', 'ModificationTimestamp', 'StatusChangeTimestamp',
+        'YearBuilt', 'LotSizeAcres', 'Latitude', 'Longitude', 'Coordinates',
+        'Media', 'PublicRemarks', 'SubdivisionName',
+        'ListAgentKey', 'ListAgentMlsId', 'ListAgentFullName', 'ListAgentEmail', 'ListAgentDirectPhone',
+        'ListOfficeKey', 'ListOfficeMlsId', 'ListOfficeName', 'ListOfficePhone',
+        'OriginatingSystemKey', 'OriginatingSystemName'
+    ].join(',');
+
+    const baseFilter = "OriginatingSystemKey eq 'bsaor' and StateOrProvince eq 'FL' and (StandardStatus eq 'Active' or StandardStatus eq 'Active Under Contract' or StandardStatus eq 'Pending')";
+    const batchSize = 200;
+    const allFetchedKeys = new Set();
+
+    const searchParams = new URLSearchParams({
+        '$filter': baseFilter,
+        '$select': SEL,
+        '$top': batchSize.toString()
+    });
+
+    let next = `https://api.bridgedataoutput.com/api/v2/OData/bsaor/Property?${searchParams.toString()}&access_token=${env.BRIDGE_TOKEN}`;
+    let syncSuccess = true;
+    let totalProcessed = 0;
+
+    while (next) {
+        let res;
+        try {
+            res = await fetch(next, { headers: { Accept: 'application/json' } });
+        } catch (fetchErr) {
+            console.error("Bridge network error during listing sync:", fetchErr);
+            syncSuccess = false;
+            break;
+        }
+
+        if (!res.ok) {
+            console.error(`Bridge API returned HTTP ${res.status} during listing sync.`);
+            syncSuccess = false;
+            break;
+        }
+
+        let data;
+        try {
+            data = await res.json();
+        } catch (jsonErr) {
+            console.error("Bridge response JSON parse error:", jsonErr);
+            syncSuccess = false;
+            break;
+        }
+
+        const items = data.value || [];
+        if (!items.length) break;
+
+        const statements = items.map(i => {
+            allFetchedKeys.add(i.ListingKey);
+
+            let photo = '';
+            if (i.Media && Array.isArray(i.Media) && i.Media.length > 0) {
+                const sorted = i.Media.sort((a, b) => (a.Order || 0) - (b.Order || 0));
+                photo = sorted[0].MediaURL || sorted[0].MediaUrl || sorted[0].MediaURLLarge || '';
+            }
+
+            const lat = i.Latitude || i.Coordinates?.[1] || null;
+            const lng = i.Longitude || i.Coordinates?.[0] || null;
+
+            return env.DB.prepare(`
+                INSERT OR REPLACE INTO sneak_listings (
+                    ListingKey, ListingId, ListPrice, OriginalListPrice,
+                    UnparsedAddress, StreetNumber, StreetName, UnitNumber,
+                    City, StateOrProvince, PostalCode, CountyOrParish,
+                    BedroomsTotal, BathroomsTotalInteger, BathroomsFull, BathroomsHalf,
+                    LivingArea, StandardStatus, PropertyType, PropertySubType,
+                    ListingContractDate, ModificationTimestamp, StatusChangeTimestamp,
+                    YearBuilt, LotSizeAcres, Latitude, Longitude,
+                    PrimaryPhoto, PublicRemarks, SubdivisionName,
+                    ListAgentKey, ListAgentMlsId, ListAgentFullName, ListAgentEmail, ListAgentDirectPhone,
+                    ListOfficeKey, ListOfficeMlsId, ListOfficeName, ListOfficePhone,
+                    OriginatingSystemKey, OriginatingSystemName, updated_at
+                ) VALUES (
+                    ?, ?, ?, ?,
+                    ?, ?, ?, ?,
+                    ?, ?, ?, ?,
+                    ?, ?, ?, ?,
+                    ?, ?, ?, ?,
+                    ?, ?, ?,
+                    ?, ?, ?, ?,
+                    ?, ?, ?,
+                    ?, ?, ?, ?, ?,
+                    ?, ?, ?, ?,
+                    ?, ?, CURRENT_TIMESTAMP
+                )
+            `).bind(
+                i.ListingKey, i.ListingId || null, i.ListPrice || null, i.OriginalListPrice || null,
+                i.UnparsedAddress || null, i.StreetNumber || null, i.StreetName || null, i.UnitNumber || null,
+                i.City || null, i.StateOrProvince || null, i.PostalCode || null, i.CountyOrParish || null,
+                i.BedroomsTotal || null, i.BathroomsTotalInteger || null, i.BathroomsFull || null, i.BathroomsHalf || null,
+                i.LivingArea || null, i.StandardStatus || null, i.PropertyType || null, i.PropertySubType || null,
+                i.ListingContractDate || null, i.ModificationTimestamp || null, i.StatusChangeTimestamp || null,
+                i.YearBuilt || null, i.LotSizeAcres || null, lat, lng,
+                photo, i.PublicRemarks || null, i.SubdivisionName || null,
+                i.ListAgentKey || null, i.ListAgentMlsId || null, i.ListAgentFullName || null, i.ListAgentEmail || null, i.ListAgentDirectPhone || null,
+                i.ListOfficeKey || null, i.ListOfficeMlsId || null, i.ListOfficeName || null, i.ListOfficePhone || null,
+                i.OriginatingSystemKey || null, i.OriginatingSystemName || null
+            );
+        });
+
+        // Batch execution in chunks of 50
+        for (let i = 0; i < statements.length; i += 50) {
+            await env.DB.batch(statements.slice(i, i + 50));
+        }
+
+        totalProcessed += items.length;
+
+        next = data['@odata.nextLink'] || null;
+        if (next && !next.includes('access_token')) {
+            next += (next.includes('?') ? '&' : '?') + 'access_token=' + env.BRIDGE_TOKEN;
+        }
+    }
+
+    // Safe Stale Cleanup: Only prune listings if the entire sync succeeded without errors
+    if (syncSuccess && allFetchedKeys.size > 0) {
+        try {
+            const existing = await env.DB.prepare("SELECT ListingKey FROM sneak_listings").all();
+            const staleKeys = (existing.results || []).filter(r => !allFetchedKeys.has(r.ListingKey)).map(r => r.ListingKey);
+
+            if (staleKeys.length > 0) {
+                console.log(`Pruning ${staleKeys.length} stale listings from sneak_listings...`);
+                for (let i = 0; i < staleKeys.length; i += 50) {
+                    const chunk = staleKeys.slice(i, i + 50);
+                    const placeholders = chunk.map(() => '?').join(',');
+                    await env.DB.prepare(`DELETE FROM sneak_listings WHERE ListingKey IN (${placeholders})`).bind(...chunk).run();
+                }
+            }
+        } catch (cleanupErr) {
+            console.error("Stale listing cleanup error:", cleanupErr);
+        }
+    } else if (!syncSuccess) {
+        console.warn("Listing sync encountered errors. Stale cleanup skipped to preserve existing data.");
+    }
+
+    console.log(`SNEAK Listing Sync Complete. Processed: ${totalProcessed}, Active Keys: ${allFetchedKeys.size}`);
+}
+
+/**
+ * Generalized Open House Sync (today - 1 day through today + 30 days)
+ */
 async function syncSneakOpenHouses(env) {
+    console.log("Starting SNEAK Open House Sync...");
+
     const today = new Date();
     const startDate = new Date(today);
     startDate.setDate(today.getDate() - 1);
@@ -747,9 +1267,24 @@ async function syncSneakOpenHouses(env) {
 
     let ohRec = [];
     let next = ohURL;
+    let syncSuccess = true;
+
     while (next) {
-        const res = await fetch(next);
-        if (!res.ok) break;
+        let res;
+        try {
+            res = await fetch(next);
+        } catch (err) {
+            console.error("Open house sync fetch error:", err);
+            syncSuccess = false;
+            break;
+        }
+
+        if (!res.ok) {
+            console.error("Open house sync Bridge error:", res.status);
+            syncSuccess = false;
+            break;
+        }
+
         const d = await res.json();
         ohRec.push(...(d.value || []));
         next = d['@odata.nextLink'] || null;
@@ -758,23 +1293,27 @@ async function syncSneakOpenHouses(env) {
         }
     }
 
-    if (!ohRec.length) {
-        console.log("No upcoming open houses found.");
+    if (!syncSuccess || !ohRec.length) {
+        console.log(`Open house sync finished. Found: ${ohRec.length} records. (Success: ${syncSuccess})`);
         return;
     }
 
     const listingKeys = [...new Set(ohRec.map(r => r.ListingKey))];
     let properties = [];
-    const PROP_SEL = 'ListingKey,ListingId,UnparsedAddress,City,PostalCode,ListPrice,PropertyType,PropertySubType,BedroomsTotal,BathroomsTotalInteger,LivingArea,LotSizeAcres,YearBuilt,StandardStatus,SubdivisionName,ListAgentFullName,ListAgentEmail,ListAgentDirectPhone,ListAgentKey,ListOfficeName,ListOfficePhone,PublicRemarks,Coordinates,Media';
+    const PROP_SEL = 'ListingKey,ListingId,UnparsedAddress,City,PostalCode,ListPrice,PropertyType,PropertySubType,BedroomsTotal,BathroomsTotalInteger,LivingArea,LotSizeAcres,YearBuilt,StandardStatus,SubdivisionName,ListAgentFullName,ListAgentEmail,ListAgentDirectPhone,ListAgentKey,ListOfficeName,ListOfficePhone,ListOfficeMlsId,PublicRemarks,Coordinates,Media';
 
     for (let i = 0; i < listingKeys.length; i += 25) {
         const chunk = listingKeys.slice(i, i + 25);
-        const batchFilter = chunk.map(k => `ListingKey eq '${k}'`).join(' or ');
+        const batchFilter = chunk.map(k => `ListingKey eq '${escapeODataString(k)}'`).join(' or ');
         const pURL = `https://api.bridgedataoutput.com/api/v2/OData/bsaor/Property?$filter=${encodeURIComponent(`(${batchFilter})`)}&$top=100&$select=${PROP_SEL}&access_token=${env.BRIDGE_TOKEN}`;
-        const pres = await fetch(pURL);
-        if (pres.ok) {
-            const pd = await pres.json();
-            properties.push(...(pd.value || []));
+        try {
+            const pres = await fetch(pURL);
+            if (pres.ok) {
+                const pd = await pres.json();
+                properties.push(...(pd.value || []));
+            }
+        } catch (propErr) {
+            console.warn("Error fetching property batch for open houses:", propErr);
         }
     }
 
@@ -796,12 +1335,33 @@ async function syncSneakOpenHouses(env) {
         await env.DB.batch(statements.slice(i, i + 50));
     }
 
+    // Safe Stale Cleanup for sneak_open_houses
+    const validOhKeys = new Set(ohRec.map(oh => oh.OpenHouseKey || oh.ListingKey));
+    if (syncSuccess && validOhKeys.size > 0) {
+        try {
+            const existing = await env.DB.prepare("SELECT OpenHouseKey FROM sneak_open_houses").all();
+            const staleKeys = (existing.results || []).filter(row => !validOhKeys.has(row.OpenHouseKey)).map(r => r.OpenHouseKey);
+            for (let i = 0; i < staleKeys.length; i += 50) {
+                const chunk = staleKeys.slice(i, i + 50);
+                const placeholders = chunk.map(() => "?").join(",");
+                await env.DB.prepare(`DELETE FROM sneak_open_houses WHERE OpenHouseKey IN (${placeholders})`).bind(...chunk).run();
+            }
+        } catch (cleanupErr) {
+            console.error("Open house stale cleanup error:", cleanupErr);
+        }
+    }
+
     console.log(`Successfully synced ${ohRec.length} SNEAK open houses.`);
 }
 
 /* ==========================================================================
    UTILITY HELPERS
    ========================================================================== */
+
+function escapeODataString(str) {
+    if (typeof str !== 'string') return '';
+    return str.replace(/'/g, "''");
+}
 
 function jsonResponse(data, status = 200, allowedOrigin = '*', cacheControl = null) {
     const headers = new Headers();
