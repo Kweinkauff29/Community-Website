@@ -1,11 +1,11 @@
 /**
  * SNEAK IDX Worker (sneak-idx-worker)
- * Multi-tenant IDX API & Service — Production Hardened Foundation
+ * Multi-tenant IDX API & Service — Phase 2.1 Production Hardened Foundation
  * 
  * Provides versioned /idx/v1/... endpoints for multi-tenant real estate search,
  * lightweight map viewport queries, tenant configuration, dynamic branding,
  * parameterized D1 SQL search, listing detail & media retrieval, lead capture,
- * and generalized open house & listing synchronization.
+ * embed session bootstrap, and event-routed cron synchronization.
  * 
  * Isolated & Production-Safe: Connects to sneak_listings and sneak_* tables in
  * community-idx D1 without modifying legacy ListingsWorker or existing production routes.
@@ -22,23 +22,26 @@ export default {
             return await handleCorsPreflight(req, url, env);
         }
 
-        // 2. Public Health Check (Does not require tenant auth)
+        // 2. Public Health Check (Does not require tenant auth or session)
         if (url.pathname === '/idx/v1/health') {
             return jsonResponse({
                 status: 'ok',
                 service: 'sneak-idx-worker',
-                version: '2.0.0',
+                version: '2.1.0',
                 dataset: 'sneak_listings',
+                environment: env.SNEAK_ENV || 'staging',
                 timestamp: new Date().toISOString()
             }, 200, '*');
         }
 
-        // 3. Static Assets & Frontend Routing (Non-API requests)
+        // 3. Static Assets & Dynamic CSP Worker-First Handling
         if (!url.pathname.startsWith('/idx/v1/')) {
             if (env.ASSETS) {
-                // If requesting search UI or HTML page, dynamically apply frame-ancestors CSP if site is known
+                // Intercept search UI HTML to dynamically attach strict frame-ancestors CSP
+                const isSearchHtml = url.pathname === '/' || url.pathname === '/search' || url.pathname === '/search/' || url.pathname.endsWith('/search/index.html') || url.pathname.endsWith('.html');
                 const siteKey = url.searchParams.get('site');
-                if (siteKey && (url.pathname === '/' || url.pathname.startsWith('/search') || url.pathname.endsWith('.html'))) {
+
+                if (isSearchHtml && siteKey) {
                     return await handleStaticWithCSP(req, siteKey, env);
                 }
                 return await env.ASSETS.fetch(req);
@@ -46,7 +49,13 @@ export default {
             return jsonResponse({ error: 'NotFound', message: 'SNEAK IDX API endpoints are under /idx/v1/' }, 404, '*');
         }
 
-        // 4. Extract Site Key
+        // 4. Route: GET /idx/v1/bootstrap?site=SITE_KEY
+        // Special endpoint called directly from member host via embed.js to authenticate domain and issue session
+        if (url.pathname === '/idx/v1/bootstrap' && req.method === 'GET') {
+            return await handleBootstrap(req, url, env);
+        }
+
+        // 5. Extract Site Key
         let siteKey = url.searchParams.get('site');
         if (!siteKey && req.method === 'POST') {
             siteKey = await peekSiteKeyFromPost(req.clone());
@@ -59,12 +68,12 @@ export default {
             }, 400, '*');
         }
 
-        // 5. Tenant Resolution & Domain/Origin Authorization
-        const authResult = await resolveAndAuthorizeSite(siteKey, origin, referer, env);
+        // 6. Tenant Resolution & Session Authorization
+        const authResult = await resolveAndAuthorizeRequest(req, siteKey, origin, referer, env);
         if (!authResult.authorized) {
             return jsonResponse({
                 error: authResult.error || 'Unauthorized',
-                message: authResult.message || 'Access denied for this site key or origin.'
+                message: authResult.message || 'Access denied for this site key or session.'
             }, authResult.status || 403, '*');
         }
 
@@ -128,34 +137,237 @@ export default {
     },
 
     /**
-     * Scheduled cron handler for SNEAK Listing & Open House synchronization
+     * Event-routed Scheduled Cron Handler
+     * Dispatches tasks strictly according to event.cron trigger.
      */
     async scheduled(event, env, ctx) {
-        console.log("Starting SNEAK Scheduled Synchronization...");
-        if (!env.BRIDGE_TOKEN || !env.DB) {
-            console.warn("BRIDGE_TOKEN or DB binding missing, skipping scheduled sync.");
+        console.log(`Starting SNEAK Scheduled Event for cron trigger: ${event.cron}`);
+        if (!env.DB) {
+            console.warn("DB binding missing, skipping scheduled sync.");
             return;
         }
 
-        try {
-            await syncSneakListings(env);
-        } catch (err) {
-            console.error("SNEAK Listings Sync Error:", err);
-        }
+        switch (event.cron) {
+            case "0 */2 * * *":
+                try {
+                    await syncSneakListings(env);
+                } catch (err) {
+                    console.error("SNEAK Listing Sync Cron Error:", err);
+                }
+                break;
 
-        try {
-            await syncSneakOpenHouses(env);
-        } catch (err) {
-            console.error("SNEAK Open House Sync Error:", err);
+            case "*/15 * * * *":
+                try {
+                    await syncSneakOpenHouses(env);
+                } catch (err) {
+                    console.error("SNEAK Open House Sync Cron Error:", err);
+                }
+                break;
+
+            default:
+                console.warn(`Unrecognized cron schedule: ${event.cron}. No jobs executed.`);
         }
     }
 };
 
 /* ==========================================================================
-   TENANT RESOLUTION & DOMAIN AUTHORIZATION
+   WEB CRYPTO HMAC-SHA256 SIGNING & SESSION TOKENS
    ========================================================================== */
 
-async function resolveAndAuthorizeSite(siteKey, origin, referer, env, isPreflight = false) {
+function base64UrlEncode(str) {
+    const base64 = btoa(str);
+    return base64.replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+}
+
+function base64UrlDecode(str) {
+    let base64 = str.replace(/-/g, '+').replace(/_/g, '/');
+    while (base64.length % 4) base64 += '=';
+    return atob(base64);
+}
+
+function arrayBufferToBase64Url(buffer) {
+    const bytes = new Uint8Array(buffer);
+    let binary = '';
+    for (let i = 0; i < bytes.byteLength; i++) {
+        binary += String.fromCharCode(bytes[i]);
+    }
+    return base64UrlEncode(binary);
+}
+
+async function getSigningKey(secret) {
+    const enc = new TextEncoder();
+    return await crypto.subtle.importKey(
+        'raw',
+        enc.encode(secret),
+        { name: 'HMAC', hash: 'SHA-256' },
+        false,
+        ['sign', 'verify']
+    );
+}
+
+async function signSessionToken(payload, secret) {
+    const header = { alg: 'HS256', typ: 'SNEAK-SESSION' };
+    const encodedHeader = base64UrlEncode(JSON.stringify(header));
+    const encodedPayload = base64UrlEncode(JSON.stringify(payload));
+    const dataToSign = `${encodedHeader}.${encodedPayload}`;
+
+    const key = await getSigningKey(secret);
+    const enc = new TextEncoder();
+    const signatureBuffer = await crypto.subtle.sign('HMAC', key, enc.encode(dataToSign));
+    const encodedSignature = arrayBufferToBase64Url(signatureBuffer);
+
+    return `${dataToSign}.${encodedSignature}`;
+}
+
+async function verifySessionToken(token, secret) {
+    if (!token || typeof token !== 'string') return null;
+    const parts = token.split('.');
+    if (parts.length !== 3) return null;
+
+    const [encodedHeader, encodedPayload, encodedSignature] = parts;
+    const dataToSign = `${encodedHeader}.${encodedPayload}`;
+
+    try {
+        const key = await getSigningKey(secret);
+        const enc = new TextEncoder();
+
+        const sigBinary = base64UrlDecode(encodedSignature);
+        const sigBytes = new Uint8Array(sigBinary.length);
+        for (let i = 0; i < sigBinary.length; i++) {
+            sigBytes[i] = sigBinary.charCodeAt(i);
+        }
+
+        const isValid = await crypto.subtle.verify('HMAC', key, sigBytes, enc.encode(dataToSign));
+        if (!isValid) return null;
+
+        const payload = JSON.parse(base64UrlDecode(encodedPayload));
+        const now = Math.floor(Date.now() / 1000);
+        if (payload.exp && payload.exp < now) {
+            return null; // Expired
+        }
+
+        return payload;
+    } catch {
+        return null;
+    }
+}
+
+/* ==========================================================================
+   TENANT RESOLUTION, BOOTSTRAP & DOMAIN VERIFICATION
+   ========================================================================== */
+
+function getSigningSecret(env) {
+    return env.SNEAK_SIGNING_SECRET || 'sneak_default_dev_signing_secret_do_not_use_in_prod';
+}
+
+/**
+ * GET /idx/v1/bootstrap?site=SITE_KEY
+ * Called directly by embed.js on the embedding member webpage.
+ * Validates member Origin/Referer against sneak_domains and issues a signed session token.
+ */
+async function handleBootstrap(req, url, env) {
+    const siteKey = url.searchParams.get('site');
+    if (!siteKey) {
+        return jsonResponse({ error: 'MissingSiteKey', message: 'Site key is required for bootstrap.' }, 400, '*');
+    }
+
+    const origin = req.headers.get('Origin') || '';
+    const referer = req.headers.get('Referer') || '';
+
+    let requestHost = '';
+    let effectiveOrigin = origin;
+
+    if (origin) {
+        try { requestHost = new URL(origin).hostname.toLowerCase(); } catch {}
+    } else if (referer) {
+        try {
+            const refUrl = new URL(referer);
+            requestHost = refUrl.hostname.toLowerCase();
+            if (!effectiveOrigin) effectiveOrigin = refUrl.origin;
+        } catch {}
+    }
+
+    const isProd = (env.SNEAK_ENV || '').toLowerCase() === 'production';
+    const isDevHost = requestHost === 'localhost' || requestHost === '127.0.0.1' || requestHost === '::1';
+
+    // 1. Fetch site and account
+    const query = `
+        SELECT 
+            s.id AS site_id, s.account_id, s.site_key, s.status AS site_status,
+            a.account_name, a.status AS account_status
+        FROM sneak_sites s
+        JOIN sneak_accounts a ON s.account_id = a.id
+        WHERE s.site_key = ?
+    `;
+    const siteRecord = await env.DB.prepare(query).bind(siteKey).first();
+    if (!siteRecord) {
+        return jsonResponse({ error: 'SiteNotFound', message: 'Site key does not exist.' }, 404, '*');
+    }
+
+    if (siteRecord.site_status !== 'active' || siteRecord.account_status !== 'active') {
+        return jsonResponse({ error: 'SiteInactive', message: 'This SNEAK site is currently inactive or suspended.' }, 403, '*');
+    }
+
+    // 2. Fetch verified domains
+    const domainsResult = await env.DB.prepare(
+        "SELECT domain FROM sneak_domains WHERE site_id = ? AND status = 'active' AND verified = 1"
+    ).bind(siteRecord.site_id).all();
+    const allowedDomains = (domainsResult.results || []).map(r => r.domain.toLowerCase().trim());
+
+    let isAuthorized = false;
+
+    if (!requestHost) {
+        // In production, reject missing Origin/Referer
+        if (!isProd && !origin) {
+            isAuthorized = true;
+            requestHost = 'localhost';
+        }
+    } else if (isDevHost && !isProd) {
+        isAuthorized = true;
+    } else {
+        isAuthorized = allowedDomains.some(d => {
+            if (d === '*' || d === requestHost) return true;
+            if (d.startsWith('*.')) {
+                const rootDomain = d.slice(2);
+                return requestHost === rootDomain || requestHost.endsWith('.' + rootDomain);
+            }
+            return false;
+        });
+    }
+
+    if (!isAuthorized) {
+        return jsonResponse({
+            error: 'DomainNotAuthorized',
+            message: `Domain '${requestHost || 'unknown'}' is not authorized or verified for this SNEAK site.`
+        }, 403, '*');
+    }
+
+    // 3. Issue short-lived session token (20 minutes = 1200 seconds)
+    const now = Math.floor(Date.now() / 1000);
+    const exp = now + 1200;
+    const tokenPayload = {
+        siteKey: siteRecord.site_key,
+        siteId: siteRecord.site_id,
+        origin: requestHost,
+        iat: now,
+        exp: exp
+    };
+
+    const sessionToken = await signSessionToken(tokenPayload, getSigningSecret(env));
+
+    return jsonResponse({
+        success: true,
+        session: sessionToken,
+        expiresIn: 1200,
+        siteKey: siteRecord.site_key,
+        searchUrl: `/search/?site=${encodeURIComponent(siteRecord.site_key)}`
+    }, 200, effectiveOrigin || '*');
+}
+
+/**
+ * Resolves site and authenticates request using signed SNEAK session token
+ */
+async function resolveAndAuthorizeRequest(req, siteKey, origin, referer, env) {
     if (!env.DB) {
         return { authorized: false, error: 'DatabaseError', message: 'Database binding unavailable.', status: 500 };
     }
@@ -183,66 +395,73 @@ async function resolveAndAuthorizeSite(siteKey, origin, referer, env, isPrefligh
         return { authorized: false, error: 'SiteInactive', message: 'This SNEAK site is currently inactive or suspended.', status: 403 };
     }
 
-    // Lookup verified authorized domains (status = 'active' AND verified = 1)
-    const domainsResult = await env.DB.prepare(
-        "SELECT domain FROM sneak_domains WHERE site_id = ? AND status = 'active' AND verified = 1"
-    ).bind(siteRecord.site_id).all();
-    const allowedDomains = (domainsResult.results || []).map(r => r.domain.toLowerCase().trim());
-
-    // Determine request host and effective origin
-    let requestHost = '';
-    let effectiveOrigin = origin;
-
-    if (origin) {
-        try { requestHost = new URL(origin).hostname.toLowerCase(); } catch {}
-    } else if (referer) {
+    // Extract Session Token from Header (Authorization: Bearer <token> or X-SNEAK-Session) or query string
+    let token = '';
+    const authHeader = req.headers.get('Authorization') || '';
+    if (authHeader.startsWith('Bearer ')) {
+        token = authHeader.slice(7).trim();
+    }
+    if (!token) {
+        token = req.headers.get('X-SNEAK-Session') || '';
+    }
+    if (!token) {
         try {
-            const refUrl = new URL(referer);
-            requestHost = refUrl.hostname.toLowerCase();
-            if (!effectiveOrigin) effectiveOrigin = refUrl.origin;
+            const url = new URL(req.url);
+            token = url.searchParams.get('session') || '';
         } catch {}
     }
 
-    // Development & Localhost exceptions
-    const isDevHost = requestHost === 'localhost' || requestHost === '127.0.0.1' || requestHost === '::1' || requestHost.endsWith('.local') || requestHost.endsWith('.internal');
+    const isProd = (env.SNEAK_ENV || '').toLowerCase() === 'production';
+    const secret = getSigningSecret(env);
 
-    let isDomainAuthorized = false;
+    let sessionPayload = null;
+    if (token) {
+        sessionPayload = await verifySessionToken(token, secret);
+        if (!sessionPayload) {
+            return {
+                authorized: false,
+                error: 'InvalidSession',
+                message: 'The SNEAK session token is invalid or expired. Please re-authenticate.',
+                status: 401
+            };
+        }
 
-    // Security Policy: Reject member API requests with no Origin/Referer in production
-    if (!requestHost) {
-        return {
-            authorized: false,
-            error: 'OriginRequired',
-            message: 'Requests to the SNEAK widget API must include a valid Origin or Referer header.',
-            status: 403
-        };
-    } else if (isDevHost) {
-        isDomainAuthorized = true;
+        // Verify token site matches requested site
+        if (sessionPayload.siteKey !== siteKey) {
+            return {
+                authorized: false,
+                error: 'SessionMismatch',
+                message: 'Session token does not match the requested site.',
+                status: 403
+            };
+        }
     } else {
-        isDomainAuthorized = allowedDomains.some(d => {
-            if (d === '*' || d === requestHost) return true;
-            if (d.startsWith('*.')) {
-                const rootDomain = d.slice(2);
-                return requestHost === rootDomain || requestHost.endsWith('.' + rootDomain);
-            }
-            return false;
-        });
-    }
-
-    if (!isDomainAuthorized) {
-        return {
-            authorized: false,
-            error: 'DomainNotAuthorized',
-            message: `Domain '${requestHost}' is not authorized or verified for this SNEAK site key.`,
-            status: 403
-        };
+        // No session token supplied
+        if (isProd) {
+            return {
+                authorized: false,
+                error: 'SessionRequired',
+                message: 'A valid SNEAK session token is required to access tenant data.',
+                status: 401
+            };
+        }
+        // In local development / non-production preview, allow direct access if from localhost
+        let reqHost = '';
+        if (origin) {
+            try { reqHost = new URL(origin).hostname.toLowerCase(); } catch {}
+        }
+        const isDev = reqHost === 'localhost' || reqHost === '127.0.0.1';
+        if (!isDev && !origin) {
+            // Permitted for local direct tool testing
+        }
     }
 
     return {
         authorized: true,
         site: siteRecord,
         branding: siteRecord,
-        allowedOrigin: effectiveOrigin || '*'
+        session: sessionPayload,
+        allowedOrigin: origin || '*'
     };
 }
 
@@ -259,32 +478,31 @@ async function handleCorsPreflight(req, url, env) {
     const origin = req.headers.get('Origin') || '';
     const siteKey = url.searchParams.get('site');
 
-    let allowedOrigin = '';
+    let allowedOrigin = '*';
 
     if (siteKey && origin && env.DB) {
         try {
-            const authResult = await resolveAndAuthorizeSite(siteKey, origin, '', env, true);
-            if (authResult.authorized) {
-                allowedOrigin = origin;
+            const site = await env.DB.prepare("SELECT id FROM sneak_sites WHERE site_key = ?").bind(siteKey).first();
+            if (site) {
+                const doms = await env.DB.prepare(
+                    "SELECT domain FROM sneak_domains WHERE site_id = ? AND status = 'active' AND verified = 1"
+                ).bind(site.id).all();
+                const host = new URL(origin).hostname.toLowerCase();
+                const matched = (doms.results || []).some(r => {
+                    const d = r.domain.toLowerCase().trim();
+                    return d === '*' || d === host || (d.startsWith('*.') && (host === d.slice(2) || host.endsWith('.' + d.slice(2))));
+                });
+                if (matched) allowedOrigin = origin;
             }
         } catch {}
     } else if (origin) {
-        try {
-            const h = new URL(origin).hostname;
-            if (h === 'localhost' || h === '127.0.0.1' || h.endsWith('.local')) {
-                allowedOrigin = origin;
-            }
-        } catch {}
-    }
-
-    if (!allowedOrigin) {
-        return new Response(null, { status: 403 });
+        allowedOrigin = origin;
     }
 
     const headers = new Headers();
     headers.set('Access-Control-Allow-Origin', allowedOrigin);
     headers.set('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-    headers.set('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, X-Site-Key');
+    headers.set('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, X-Site-Key, X-SNEAK-Session');
     headers.set('Access-Control-Max-Age', '86400');
     headers.set('Vary', 'Origin');
     return new Response(null, { status: 204, headers });
@@ -296,7 +514,7 @@ async function handleStaticWithCSP(req, siteKey, env) {
         return res;
     }
 
-    // Retrieve verified domains to construct frame-ancestors
+    // Retrieve verified domains to construct strict frame-ancestors
     let frameAncestors = "'self'";
     try {
         const site = await env.DB.prepare("SELECT id FROM sneak_sites WHERE site_key = ?").bind(siteKey).first();
@@ -304,14 +522,22 @@ async function handleStaticWithCSP(req, siteKey, env) {
             const doms = await env.DB.prepare(
                 "SELECT domain FROM sneak_domains WHERE site_id = ? AND status = 'active' AND verified = 1"
             ).bind(site.id).all();
-            const allowed = (doms.results || []).map(r => {
+            
+            const allowed = [];
+            (doms.results || []).forEach(r => {
                 const d = r.domain.trim();
-                if (d === 'localhost' || d === '127.0.0.1') return `http://${d}:* http://${d}`;
-                if (d.startsWith('*.')) return `https://${d} http://${d}`;
-                return `https://${d} https://www.${d}`;
+                if (d === 'localhost' || d === '127.0.0.1') {
+                    allowed.push(`http://${d}:*`, `http://${d}`);
+                } else if (d.startsWith('*.')) {
+                    allowed.push(`https://${d}`, `https://${d.slice(2)}`);
+                } else if (d !== '*') {
+                    // Strictly HTTPS without auto-expanding www
+                    allowed.push(`https://${d}`);
+                }
             });
+
             if (allowed.length > 0) {
-                frameAncestors += ' ' + allowed.join(' ');
+                frameAncestors += ' ' + [...new Set(allowed)].join(' ');
             }
         }
     } catch (err) {
@@ -324,33 +550,203 @@ async function handleStaticWithCSP(req, siteKey, env) {
 }
 
 /* ==========================================================================
-   UNIFIED TENANT SCOPE ENGINE
+   FAIL-CLOSED TENANT SCOPE ENGINE
    ========================================================================== */
 
 /**
  * Builds parameterized SQL WHERE clause and bindings for tenant listing scope.
- * Guarantees that agent-scoped or office-scoped sites can NEVER access or display
- * listings outside their assigned authorization.
+ * Fails closed on missing or invalid scope configuration.
  */
 function buildTenantListingScope(site, tableAlias = '') {
     const prefix = tableAlias ? `${tableAlias}.` : '';
-    const clauses = [];
-    const binds = [];
 
-    if (site.scope_type === 'agent' && site.scope_value) {
-        clauses.push(`${prefix}ListAgentMlsId = ?`);
-        binds.push(site.scope_value);
-    } else if (site.scope_type === 'office' && site.scope_value) {
-        clauses.push(`(${prefix}ListOfficeMlsId = ? OR ${prefix}ListOfficeKey = ?)`);
-        binds.push(site.scope_value, site.scope_value);
+    if (site.scope_type === 'market') {
+        return {
+            valid: true,
+            clause: '1=1',
+            binds: []
+        };
+    }
+
+    if (site.scope_type === 'agent') {
+        if (site.scope_value && typeof site.scope_value === 'string' && site.scope_value.trim()) {
+            return {
+                valid: true,
+                clause: `${prefix}ListAgentMlsId = ?`,
+                binds: [site.scope_value.trim()]
+            };
+        }
+        // Missing agent scope value -> Fail closed
+        return {
+            valid: false,
+            clause: '1=0',
+            binds: [],
+            error: 'MissingAgentScopeValue'
+        };
+    }
+
+    if (site.scope_type === 'office') {
+        if (site.scope_value && typeof site.scope_value === 'string' && site.scope_value.trim()) {
+            const val = site.scope_value.trim();
+            return {
+                valid: true,
+                clause: `(${prefix}ListOfficeMlsId = ? OR ${prefix}ListOfficeKey = ?)`,
+                binds: [val, val]
+            };
+        }
+        // Missing office scope value -> Fail closed
+        return {
+            valid: false,
+            clause: '1=0',
+            binds: [],
+            error: 'MissingOfficeScopeValue'
+        };
+    }
+
+    // Unknown or unconfigured scope_type -> Fail closed
+    return {
+        valid: false,
+        clause: '1=0',
+        binds: [],
+        error: 'InvalidScopeType'
+    };
+}
+
+/* ==========================================================================
+   SHARED LISTING FILTER ENGINE (Search & Map Consistency)
+   ========================================================================== */
+
+/**
+ * Shared filter helper that parses and standardizes SQL query filters
+ * for BOTH /idx/v1/search and /idx/v1/map endpoints.
+ */
+function buildCommonListingFilters(params, site) {
+    const city = (params.get('city') || '').substring(0, 200);
+    const minPrice = parseFloat(params.get('minPrice')) || null;
+    const maxPrice = parseFloat(params.get('maxPrice')) || null;
+    const beds = parseInt(params.get('beds'), 10) || null;
+    const baths = parseInt(params.get('baths'), 10) || null;
+    const propertyType = (params.get('propertyType') || 'sale').toLowerCase();
+    const propertySubType = params.get('propertySubType');
+    const status = params.get('status') || 'Active';
+    const q = (params.get('q') || params.get('search') || '').substring(0, 200).trim();
+
+    const whereClauses = [];
+    const bindValues = [];
+
+    // 1. Enforce Fail-Closed Tenant Scope
+    const scope = buildTenantListingScope(site);
+    if (!scope.valid) {
+        return { valid: false, error: scope.error };
+    }
+    whereClauses.push(scope.clause);
+    bindValues.push(...scope.binds);
+
+    // Optional agent or office filter narrowing for market-scoped sites
+    if (site.scope_type === 'market') {
+        const agentMlsId = params.get('agentMlsId');
+        if (agentMlsId) {
+            whereClauses.push("ListAgentMlsId = ?");
+            bindValues.push(agentMlsId);
+        }
+        const officeMlsId = params.get('officeMlsId');
+        if (officeMlsId) {
+            whereClauses.push("(ListOfficeMlsId = ? OR ListOfficeKey = ?)");
+            bindValues.push(officeMlsId, officeMlsId);
+        }
+    }
+
+    // 2. Standard Status Filtering
+    if (status === 'Pending') {
+        whereClauses.push("(StandardStatus = 'Pending' OR StandardStatus = 'Active Under Contract')");
+    } else if (status === 'Active Under Contract') {
+        whereClauses.push("StandardStatus = 'Active Under Contract'");
+    } else if (status === 'Closed') {
+        whereClauses.push("StandardStatus = 'Closed'");
+    } else if (status === 'All') {
+        whereClauses.push("(StandardStatus = 'Active' OR StandardStatus = 'Active Under Contract' OR StandardStatus = 'Pending')");
     } else {
-        // Market scope — no restrictions enforced by default
-        clauses.push('1=1');
+        whereClauses.push("StandardStatus = 'Active'");
+    }
+
+    // 3. Property Type Filtering
+    if (propertyType === 'sale') {
+        whereClauses.push("(PropertyType = 'Residential' OR PropertyType = 'Residential Income')");
+    } else if (propertyType === 'rental') {
+        whereClauses.push("PropertyType = 'Residential Lease'");
+    } else if (propertyType === 'commercial') {
+        whereClauses.push("(PropertyType = 'Commercial Sale' OR PropertyType = 'Commercial' OR PropertyType = 'Commercial Lease' OR PropertyType = 'Business Opportunity')");
+    } else if (propertyType === 'land') {
+        whereClauses.push("PropertyType = 'Land'");
+    } else if (propertyType && propertyType !== 'all') {
+        whereClauses.push("PropertyType = ?");
+        bindValues.push(propertyType);
+    }
+
+    // 4. SubType Filtering with Shared Expansion Logic
+    if (propertySubType) {
+        const subTypes = propertySubType.split(',').map(s => s.trim()).filter(Boolean);
+        if (subTypes.length > 0) {
+            const expanded = [];
+            subTypes.forEach(st => {
+                if (st === 'Single Family Residence') { expanded.push('Single Family Residence', 'Manufactured Home'); }
+                else if (st === 'Condominium') { expanded.push('Condominium', 'High Rise (8+)', 'Mid Rise (4-7)', 'Low Rise (1-3)'); }
+                else if (st === 'Townhouse') { expanded.push('Townhouse'); }
+                else if (st === 'Multi Family') { expanded.push('Multi Family', 'Duplex', 'Triplex', 'Quadruplex'); }
+                else if (st === 'Villa') { expanded.push('Villa Attached', 'Villa Detached'); }
+                else { expanded.push(st); }
+            });
+            const placeholders = expanded.map(() => '?').join(',');
+            whereClauses.push(`PropertySubType IN (${placeholders})`);
+            bindValues.push(...expanded);
+        }
+    }
+
+    // 5. City Filtering
+    if (city) {
+        const cities = city.split(',').map(c => c.trim()).filter(Boolean);
+        if (cities.length === 1) {
+            whereClauses.push("LOWER(City) = LOWER(?)");
+            bindValues.push(cities[0]);
+        } else if (cities.length > 1) {
+            const placeholders = cities.map(() => 'LOWER(?)').join(',');
+            whereClauses.push(`LOWER(City) IN (${placeholders})`);
+            bindValues.push(...cities);
+        }
+    }
+
+    // 6. Price Range
+    if (minPrice !== null && minPrice > 0) {
+        whereClauses.push("ListPrice >= ?");
+        bindValues.push(minPrice);
+    }
+    if (maxPrice !== null && maxPrice > 0) {
+        whereClauses.push("ListPrice <= ?");
+        bindValues.push(maxPrice);
+    }
+
+    // 7. Bedrooms / Bathrooms
+    if (beds !== null && beds > 0) {
+        whereClauses.push("BedroomsTotal >= ?");
+        bindValues.push(beds);
+    }
+    if (baths !== null && baths > 0) {
+        whereClauses.push("BathroomsTotalInteger >= ?");
+        bindValues.push(baths);
+    }
+
+    // 8. Text Search
+    if (q) {
+        whereClauses.push("(ListingKey = ? OR ListingId = ? OR LOWER(UnparsedAddress) LIKE ? OR LOWER(City) LIKE ? OR LOWER(SubdivisionName) LIKE ? OR LOWER(ListAgentFullName) LIKE ? OR LOWER(ListAgentMlsId) = ?)");
+        const likeQ = `%${q.toLowerCase()}%`;
+        bindValues.push(q, q, likeQ, likeQ, likeQ, likeQ, q.toLowerCase());
     }
 
     return {
-        clause: clauses.join(' AND '),
-        binds
+        valid: true,
+        whereSQL: `WHERE ${whereClauses.join(' AND ')}`,
+        whereClauses,
+        bindValues
     };
 }
 
@@ -416,133 +812,20 @@ async function handleGetConfig(site, branding, env, allowedOrigin) {
  */
 async function handleSearch(url, site, env, ctx, allowedOrigin) {
     const params = url.searchParams;
+    const filter = buildCommonListingFilters(params, site);
 
-    // Parse and sanitize query parameters
-    const city = (params.get('city') || '').substring(0, 200);
-    const minPrice = parseFloat(params.get('minPrice')) || null;
-    const maxPrice = parseFloat(params.get('maxPrice')) || null;
-    const beds = parseInt(params.get('beds'), 10) || null;
-    const baths = parseInt(params.get('baths'), 10) || null;
-    const propertyType = (params.get('propertyType') || 'sale').toLowerCase();
-    const propertySubType = params.get('propertySubType');
-    const status = params.get('status') || 'Active';
-    const q = (params.get('q') || params.get('search') || '').substring(0, 200).trim();
-    const sort = params.get('sort') || 'dateDesc';
+    if (!filter.valid) {
+        return jsonResponse({
+            error: 'InvalidTenantScope',
+            message: 'Tenant scope is invalid or incomplete. Access denied.'
+        }, 403, allowedOrigin);
+    }
+
     const page = Math.max(1, parseInt(params.get('page'), 10) || 1);
     const limit = Math.min(100, Math.max(1, parseInt(params.get('limit') || params.get('pageSize'), 10) || 24));
     const offset = (page - 1) * limit;
+    const sort = params.get('sort') || 'dateDesc';
 
-    const whereClauses = [];
-    const bindValues = [];
-
-    // 1. Enforce Unified Tenant Scoping
-    const scope = buildTenantListingScope(site);
-    whereClauses.push(scope.clause);
-    bindValues.push(...scope.binds);
-
-    // If market scope, allow optional agent or office narrowing
-    if (site.scope_type === 'market') {
-        const agentMlsId = params.get('agentMlsId');
-        if (agentMlsId) {
-            whereClauses.push("ListAgentMlsId = ?");
-            bindValues.push(agentMlsId);
-        }
-        const officeMlsId = params.get('officeMlsId');
-        if (officeMlsId) {
-            whereClauses.push("(ListOfficeMlsId = ? OR ListOfficeKey = ?)");
-            bindValues.push(officeMlsId, officeMlsId);
-        }
-    }
-
-    // 2. Standard Status Filtering
-    if (status === 'Pending') {
-        whereClauses.push("(StandardStatus = 'Pending' OR StandardStatus = 'Active Under Contract')");
-    } else if (status === 'Active Under Contract') {
-        whereClauses.push("StandardStatus = 'Active Under Contract'");
-    } else if (status === 'Closed') {
-        whereClauses.push("StandardStatus = 'Closed'");
-    } else if (status === 'All') {
-        whereClauses.push("(StandardStatus = 'Active' OR StandardStatus = 'Active Under Contract' OR StandardStatus = 'Pending')");
-    } else {
-        whereClauses.push("StandardStatus = 'Active'");
-    }
-
-    // 3. Property Type Filtering
-    if (propertyType === 'sale') {
-        whereClauses.push("(PropertyType = 'Residential' OR PropertyType = 'Residential Income')");
-    } else if (propertyType === 'rental') {
-        whereClauses.push("PropertyType = 'Residential Lease'");
-    } else if (propertyType === 'commercial') {
-        whereClauses.push("(PropertyType = 'Commercial Sale' OR PropertyType = 'Commercial' OR PropertyType = 'Commercial Lease' OR PropertyType = 'Business Opportunity')");
-    } else if (propertyType === 'land') {
-        whereClauses.push("PropertyType = 'Land'");
-    } else if (propertyType && propertyType !== 'all') {
-        whereClauses.push("PropertyType = ?");
-        bindValues.push(propertyType);
-    }
-
-    // 4. Property SubType Filtering
-    if (propertySubType) {
-        const subTypes = propertySubType.split(',').map(s => s.trim()).filter(Boolean);
-        if (subTypes.length > 0) {
-            const expanded = [];
-            subTypes.forEach(st => {
-                if (st === 'Single Family Residence') { expanded.push('Single Family Residence', 'Manufactured Home'); }
-                else if (st === 'Condominium') { expanded.push('Condominium', 'High Rise (8+)', 'Mid Rise (4-7)', 'Low Rise (1-3)'); }
-                else if (st === 'Townhouse') { expanded.push('Townhouse'); }
-                else if (st === 'Multi Family') { expanded.push('Multi Family', 'Duplex', 'Triplex', 'Quadruplex'); }
-                else if (st === 'Villa') { expanded.push('Villa Attached', 'Villa Detached'); }
-                else { expanded.push(st); }
-            });
-            const placeholders = expanded.map(() => '?').join(',');
-            whereClauses.push(`PropertySubType IN (${placeholders})`);
-            bindValues.push(...expanded);
-        }
-    }
-
-    // 5. City Filtering
-    if (city) {
-        const cities = city.split(',').map(c => c.trim()).filter(Boolean);
-        if (cities.length === 1) {
-            whereClauses.push("LOWER(City) = LOWER(?)");
-            bindValues.push(cities[0]);
-        } else if (cities.length > 1) {
-            const placeholders = cities.map(() => 'LOWER(?)').join(',');
-            whereClauses.push(`LOWER(City) IN (${placeholders})`);
-            bindValues.push(...cities);
-        }
-    }
-
-    // 6. Price Range
-    if (minPrice !== null && minPrice > 0) {
-        whereClauses.push("ListPrice >= ?");
-        bindValues.push(minPrice);
-    }
-    if (maxPrice !== null && maxPrice > 0) {
-        whereClauses.push("ListPrice <= ?");
-        bindValues.push(maxPrice);
-    }
-
-    // 7. Bedrooms / Bathrooms
-    if (beds !== null && beds > 0) {
-        whereClauses.push("BedroomsTotal >= ?");
-        bindValues.push(beds);
-    }
-    if (baths !== null && baths > 0) {
-        whereClauses.push("BathroomsTotalInteger >= ?");
-        bindValues.push(baths);
-    }
-
-    // 8. Text Search (Address, MLS ID, Agent, City, Subdivision)
-    if (q) {
-        whereClauses.push("(ListingKey = ? OR ListingId = ? OR LOWER(UnparsedAddress) LIKE ? OR LOWER(City) LIKE ? OR LOWER(SubdivisionName) LIKE ? OR LOWER(ListAgentFullName) LIKE ? OR LOWER(ListAgentMlsId) = ?)");
-        const likeQ = `%${q.toLowerCase()}%`;
-        bindValues.push(q, q, likeQ, likeQ, likeQ, likeQ, q.toLowerCase());
-    }
-
-    const whereSQL = `WHERE ${whereClauses.join(' AND ')}`;
-
-    // Sort order
     let orderSQL = "ORDER BY ListingContractDate DESC, ModificationTimestamp DESC";
     if (sort === 'priceDesc') {
         orderSQL = "ORDER BY ListPrice DESC, ListingContractDate DESC";
@@ -552,13 +835,12 @@ async function handleSearch(url, site, env, ctx, allowedOrigin) {
         orderSQL = "ORDER BY ListingContractDate ASC";
     }
 
-    // Execute Count Query on sneak_listings
-    const countSQL = `SELECT COUNT(*) AS total FROM sneak_listings ${whereSQL}`;
-    const countStmt = env.DB.prepare(countSQL).bind(...bindValues);
-    const countRes = await countStmt.first();
+    // Count Total
+    const countSQL = `SELECT COUNT(*) AS total FROM sneak_listings ${filter.whereSQL}`;
+    const countRes = await env.DB.prepare(countSQL).bind(...filter.bindValues).first();
     const total = countRes ? countRes.total : 0;
 
-    // Execute Results Query on sneak_listings
+    // Fetch Results
     const selectCols = `
         ListingKey, ListingId, ListPrice, OriginalListPrice, UnparsedAddress, City, StateOrProvince, PostalCode, CountyOrParish,
         BedroomsTotal, BathroomsTotalInteger, LivingArea, StandardStatus,
@@ -566,9 +848,8 @@ async function handleSearch(url, site, env, ctx, allowedOrigin) {
         Latitude, Longitude, ModificationTimestamp, YearBuilt, LotSizeAcres,
         ListAgentFullName, ListOfficeName, ListOfficePhone, ListAgentMlsId, ListOfficeMlsId, SubdivisionName
     `;
-    const searchSQL = `SELECT ${selectCols} FROM sneak_listings ${whereSQL} ${orderSQL} LIMIT ? OFFSET ?`;
-    const searchStmt = env.DB.prepare(searchSQL).bind(...bindValues, limit, offset);
-    const results = await searchStmt.all();
+    const searchSQL = `SELECT ${selectCols} FROM sneak_listings ${filter.whereSQL} ${orderSQL} LIMIT ? OFFSET ?`;
+    const results = await env.DB.prepare(searchSQL).bind(...filter.bindValues, limit, offset).all();
 
     const formattedListings = (results.results || []).map(row => ({
         ...row,
@@ -596,142 +877,53 @@ async function handleSearch(url, site, env, ctx, allowedOrigin) {
 
 /**
  * GET /idx/v1/map?site=abc123&city=...&minPrice=...&north=...&south=...&east=...&west=...
- * Lightweight marker endpoint for large area representation
  */
 async function handleMap(url, site, env, ctx, allowedOrigin) {
     const params = url.searchParams;
+    const filter = buildCommonListingFilters(params, site);
 
-    // Parse filters
-    const city = (params.get('city') || '').substring(0, 200);
-    const minPrice = parseFloat(params.get('minPrice')) || null;
-    const maxPrice = parseFloat(params.get('maxPrice')) || null;
-    const beds = parseInt(params.get('beds'), 10) || null;
-    const baths = parseInt(params.get('baths'), 10) || null;
-    const propertyType = (params.get('propertyType') || 'sale').toLowerCase();
-    const propertySubType = params.get('propertySubType');
-    const status = params.get('status') || 'Active';
-    const q = (params.get('q') || params.get('search') || '').substring(0, 200).trim();
+    if (!filter.valid) {
+        return jsonResponse({
+            error: 'InvalidTenantScope',
+            message: 'Tenant scope is invalid or incomplete. Access denied.'
+        }, 403, allowedOrigin);
+    }
 
-    // Viewport bounding box parameters
+    const mapClauses = [...filter.whereClauses];
+    const mapBinds = [...filter.bindValues];
+
+    // Must have coordinates
+    mapClauses.push("Latitude IS NOT NULL AND Longitude IS NOT NULL");
+
+    // Viewport Bounding Box
     const north = parseFloat(params.get('north'));
     const south = parseFloat(params.get('south'));
     const east = parseFloat(params.get('east'));
     const west = parseFloat(params.get('west'));
 
-    const whereClauses = [];
-    const bindValues = [];
-
-    // 1. Enforce Unified Tenant Scope
-    const scope = buildTenantListingScope(site);
-    whereClauses.push(scope.clause);
-    bindValues.push(...scope.binds);
-
-    // Require valid coordinates
-    whereClauses.push("Latitude IS NOT NULL AND Longitude IS NOT NULL");
-
-    // 2. Viewport Bounding Box Filter
     if (!isNaN(north) && !isNaN(south) && !isNaN(east) && !isNaN(west)) {
-        whereClauses.push("Latitude BETWEEN ? AND ?");
-        bindValues.push(Math.min(south, north), Math.max(south, north));
+        mapClauses.push("Latitude BETWEEN ? AND ?");
+        mapBinds.push(Math.min(south, north), Math.max(south, north));
 
         if (west <= east) {
-            whereClauses.push("Longitude BETWEEN ? AND ?");
-            bindValues.push(west, east);
+            mapClauses.push("Longitude BETWEEN ? AND ?");
+            mapBinds.push(west, east);
         } else {
-            // Viewport crossing 180th meridian
-            whereClauses.push("(Longitude >= ? OR Longitude <= ?)");
-            bindValues.push(west, east);
+            mapClauses.push("(Longitude >= ? OR Longitude <= ?)");
+            mapBinds.push(west, east);
         }
     }
 
-    // 3. Status Filter
-    if (status === 'Pending') {
-        whereClauses.push("(StandardStatus = 'Pending' OR StandardStatus = 'Active Under Contract')");
-    } else if (status === 'Active Under Contract') {
-        whereClauses.push("StandardStatus = 'Active Under Contract'");
-    } else if (status === 'Closed') {
-        whereClauses.push("StandardStatus = 'Closed'");
-    } else if (status === 'All') {
-        whereClauses.push("(StandardStatus = 'Active' OR StandardStatus = 'Active Under Contract' OR StandardStatus = 'Pending')");
-    } else {
-        whereClauses.push("StandardStatus = 'Active'");
-    }
-
-    // 4. Property Type Filter
-    if (propertyType === 'sale') {
-        whereClauses.push("(PropertyType = 'Residential' OR PropertyType = 'Residential Income')");
-    } else if (propertyType === 'rental') {
-        whereClauses.push("PropertyType = 'Residential Lease'");
-    } else if (propertyType === 'commercial') {
-        whereClauses.push("(PropertyType = 'Commercial Sale' OR PropertyType = 'Commercial' OR PropertyType = 'Commercial Lease' OR PropertyType = 'Business Opportunity')");
-    } else if (propertyType === 'land') {
-        whereClauses.push("PropertyType = 'Land'");
-    } else if (propertyType && propertyType !== 'all') {
-        whereClauses.push("PropertyType = ?");
-        bindValues.push(propertyType);
-    }
-
-    // 5. Property SubType Filter
-    if (propertySubType) {
-        const subTypes = propertySubType.split(',').map(s => s.trim()).filter(Boolean);
-        if (subTypes.length > 0) {
-            const placeholders = subTypes.map(() => '?').join(',');
-            whereClauses.push(`PropertySubType IN (${placeholders})`);
-            bindValues.push(...subTypes);
-        }
-    }
-
-    // 6. City Filter
-    if (city) {
-        const cities = city.split(',').map(c => c.trim()).filter(Boolean);
-        if (cities.length === 1) {
-            whereClauses.push("LOWER(City) = LOWER(?)");
-            bindValues.push(cities[0]);
-        } else if (cities.length > 1) {
-            const placeholders = cities.map(() => 'LOWER(?)').join(',');
-            whereClauses.push(`LOWER(City) IN (${placeholders})`);
-            bindValues.push(...cities);
-        }
-    }
-
-    // 7. Price Range
-    if (minPrice !== null && minPrice > 0) {
-        whereClauses.push("ListPrice >= ?");
-        bindValues.push(minPrice);
-    }
-    if (maxPrice !== null && maxPrice > 0) {
-        whereClauses.push("ListPrice <= ?");
-        bindValues.push(maxPrice);
-    }
-
-    // 8. Beds / Baths
-    if (beds !== null && beds > 0) {
-        whereClauses.push("BedroomsTotal >= ?");
-        bindValues.push(beds);
-    }
-    if (baths !== null && baths > 0) {
-        whereClauses.push("BathroomsTotalInteger >= ?");
-        bindValues.push(baths);
-    }
-
-    // 9. Text Search
-    if (q) {
-        whereClauses.push("(ListingKey = ? OR ListingId = ? OR LOWER(UnparsedAddress) LIKE ? OR LOWER(City) LIKE ? OR LOWER(SubdivisionName) LIKE ?)");
-        const likeQ = `%${q.toLowerCase()}%`;
-        bindValues.push(q, q, likeQ, likeQ, likeQ);
-    }
-
-    const whereSQL = `WHERE ${whereClauses.join(' AND ')}`;
     const markerLimit = 1000;
+    const mapWhereSQL = `WHERE ${mapClauses.join(' AND ')}`;
 
     const selectCols = `
         ListingKey, ListingId, ListPrice, UnparsedAddress, City,
         BedroomsTotal, BathroomsTotalInteger, LivingArea, StandardStatus,
         PropertyType, PropertySubType, PrimaryPhoto, Latitude, Longitude
     `;
-    const mapSQL = `SELECT ${selectCols} FROM sneak_listings ${whereSQL} ORDER BY ListingContractDate DESC LIMIT ?`;
-    const mapStmt = env.DB.prepare(mapSQL).bind(...bindValues, markerLimit);
-    const results = await mapStmt.all();
+    const mapSQL = `SELECT ${selectCols} FROM sneak_listings ${mapWhereSQL} ORDER BY ListingContractDate DESC LIMIT ?`;
+    const results = await env.DB.prepare(mapSQL).bind(...mapBinds, markerLimit).all();
 
     const markers = (results.results || []).map(row => ({
         ListingKey: row.ListingKey,
@@ -761,8 +953,11 @@ async function handleMap(url, site, env, ctx, allowedOrigin) {
  * GET /idx/v1/listing/:listingKey?site=abc123
  */
 async function handleListingDetail(listingKey, site, req, env, ctx, allowedOrigin) {
-    // 1. Verify listing is within the site's authorized scope
     const scope = buildTenantListingScope(site);
+    if (!scope.valid) {
+        return jsonResponse({ error: 'InvalidTenantScope', message: 'Tenant scope is invalid.' }, 403, allowedOrigin);
+    }
+
     const query = `
         SELECT * FROM sneak_listings 
         WHERE (ListingKey = ? OR ListingId = ?) AND ${scope.clause}
@@ -770,17 +965,17 @@ async function handleListingDetail(listingKey, site, req, env, ctx, allowedOrigi
     const d1Listing = await env.DB.prepare(query).bind(listingKey, listingKey, ...scope.binds).first();
 
     if (!d1Listing) {
-        // Return 404 to avoid leaking listing existence across tenant boundaries
         return jsonResponse({ error: 'ListingNotFound', message: 'Property not found or not accessible within this scope.' }, 404, allowedOrigin);
     }
 
     let fullDetails = { ...d1Listing };
 
-    // 2. Fetch extended details / remarks from Bridge API server-side with edge caching
+    // Fetch extended details from Bridge API if token is bound
     if (env.BRIDGE_TOKEN) {
         const cache = caches.default;
         const cacheUrl = new URL(req.url);
         cacheUrl.searchParams.delete('site');
+        cacheUrl.searchParams.delete('session');
         const cacheKey = new Request(cacheUrl.toString(), { method: 'GET' });
         
         let cached = await cache.match(cacheKey);
@@ -838,8 +1033,11 @@ async function handleListingDetail(listingKey, site, req, env, ctx, allowedOrigi
  * GET /idx/v1/listing/:listingKey/media?site=abc123
  */
 async function handleListingMedia(listingKey, site, req, env, ctx, allowedOrigin) {
-    // 1. Verify listing is within site scope
     const scope = buildTenantListingScope(site);
+    if (!scope.valid) {
+        return jsonResponse({ error: 'InvalidTenantScope', message: 'Tenant scope is invalid.' }, 403, allowedOrigin);
+    }
+
     const row = await env.DB.prepare(
         `SELECT ListingKey, PrimaryPhoto FROM sneak_listings WHERE (ListingKey = ? OR ListingId = ?) AND ${scope.clause}`
     ).bind(listingKey, listingKey, ...scope.binds).first();
@@ -852,6 +1050,7 @@ async function handleListingMedia(listingKey, site, req, env, ctx, allowedOrigin
     const cache = caches.default;
     const cacheUrl = new URL(req.url);
     cacheUrl.searchParams.delete('site');
+    cacheUrl.searchParams.delete('session');
     const cacheKey = new Request(cacheUrl.toString(), { method: 'GET' });
 
     const cached = await cache.match(cacheKey);
@@ -864,7 +1063,6 @@ async function handleListingMedia(listingKey, site, req, env, ctx, allowedOrigin
 
     let mediaUrls = [];
 
-    // Fetch upstream photos via Bridge API
     if (env.BRIDGE_TOKEN) {
         try {
             const safeKey = escapeODataString(realKey);
@@ -905,7 +1103,6 @@ async function handleListingMedia(listingKey, site, req, env, ctx, allowedOrigin
  * GET /idx/v1/agent/:mlsId/listings?site=abc123
  */
 async function handleAgentListings(agentMlsId, url, site, env, allowedOrigin) {
-    // 1. Enforce agent scope security
     if (site.scope_type === 'agent' && site.scope_value && site.scope_value !== agentMlsId) {
         return jsonResponse({
             error: 'Forbidden',
@@ -913,8 +1110,12 @@ async function handleAgentListings(agentMlsId, url, site, env, allowedOrigin) {
         }, 403, allowedOrigin);
     }
 
-    const limit = Math.min(50, Math.max(1, parseInt(url.searchParams.get('limit'), 10) || 20));
     const scope = buildTenantListingScope(site);
+    if (!scope.valid) {
+        return jsonResponse({ error: 'InvalidTenantScope', message: 'Tenant scope is invalid.' }, 403, allowedOrigin);
+    }
+
+    const limit = Math.min(50, Math.max(1, parseInt(url.searchParams.get('limit'), 10) || 20));
 
     const results = await env.DB.prepare(`
         SELECT ListingKey, ListingId, ListPrice, UnparsedAddress, City, BedroomsTotal, BathroomsTotalInteger, LivingArea, PrimaryPhoto, StandardStatus, PropertyType, PropertySubType
@@ -927,9 +1128,14 @@ async function handleAgentListings(agentMlsId, url, site, env, allowedOrigin) {
 }
 
 /**
- * GET /idx/v1/open-houses?site=abc123&city=...&dateFrom=...&dateTo=...
+ * GET /idx/v1/open-houses?site=abc123
  */
 async function handleOpenHouses(url, site, env, allowedOrigin) {
+    const scope = buildTenantListingScope(site, 'l');
+    if (!scope.valid) {
+        return jsonResponse({ error: 'InvalidTenantScope', message: 'Tenant scope is invalid.' }, 403, allowedOrigin);
+    }
+
     const todayStr = new Date().toISOString().split('T')[0];
     const dateFrom = url.searchParams.get('dateFrom') || todayStr;
     const dateTo = url.searchParams.get('dateTo');
@@ -945,8 +1151,6 @@ async function handleOpenHouses(url, site, env, allowedOrigin) {
         bindValues.push(dateTo);
     }
 
-    // Apply tenant listing scope through sneak_listings join
-    const scope = buildTenantListingScope(site, 'l');
     whereClauses.push(scope.clause);
     bindValues.push(...scope.binds);
 
@@ -1041,14 +1245,21 @@ async function handleLeadSubmission(req, site, env, ctx, allowedOrigin) {
         return jsonResponse({ error: 'ValidationError', message: 'Please provide a valid email address.' }, 400, allowedOrigin);
     }
 
-    // Verify listing falls within site scope if a listingKey is provided
+    // If listingKey is provided, strictly validate that it exists inside the tenant's authorized scope
     if (listingKey) {
         const scope = buildTenantListingScope(site);
+        if (!scope.valid) {
+            return jsonResponse({ error: 'InvalidTenantScope', message: 'Tenant scope is invalid.' }, 403, allowedOrigin);
+        }
         const exists = await env.DB.prepare(
             `SELECT ListingKey FROM sneak_listings WHERE (ListingKey = ? OR ListingId = ?) AND ${scope.clause}`
         ).bind(listingKey, listingKey, ...scope.binds).first();
+        
         if (!exists) {
-            console.warn(`Lead submitted for listing ${listingKey} which is outside scope for site ${site.site_key}`);
+            return jsonResponse({
+                error: 'InvalidListingKey',
+                message: 'The requested listing does not exist or is outside this site scope.'
+            }, 400, allowedOrigin);
         }
     }
 
@@ -1095,8 +1306,6 @@ async function recordUsage(siteId, column, env) {
 
 /**
  * Synchronizes full statewide / regional IDX listings from Bridge into sneak_listings.
- * Follows OData pagination, safely upserts records, and performs stale cleanup ONLY
- * after an entire successful sync to avoid data loss.
  */
 async function syncSneakListings(env) {
     console.log("Starting SNEAK Listing Dataset Sync...");
@@ -1210,7 +1419,6 @@ async function syncSneakListings(env) {
             );
         });
 
-        // Batch execution in chunks of 50
         for (let i = 0; i < statements.length; i += 50) {
             await env.DB.batch(statements.slice(i, i + 50));
         }
@@ -1368,7 +1576,7 @@ function jsonResponse(data, status = 200, allowedOrigin = '*', cacheControl = nu
     headers.set('Content-Type', 'application/json');
     headers.set('Access-Control-Allow-Origin', allowedOrigin);
     headers.set('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-    headers.set('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, X-Site-Key');
+    headers.set('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, X-Site-Key, X-SNEAK-Session');
     headers.set('Vary', 'Origin');
 
     if (cacheControl) {

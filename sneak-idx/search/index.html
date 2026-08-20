@@ -1603,7 +1603,7 @@
 
   <!-- Footer Disclaimer -->
   <footer class="footer-disclaimer">
-    <p><strong>Real estate listings provided by <span id="disclaimerOrg">Premier Coast Realty</span></strong></p>
+    <p><strong>Real estate listings provided by <span id="disclaimerOrg">Listing Brokerage</span></strong></p>
     <p>Disclaimer: All information deemed reliable but not guaranteed. All properties are subject to prior sale,
       change or withdrawal. Neither listing broker(s) or information provider(s) shall be responsible for any typographical
       errors, misinformation, misprints and shall be held totally harmless. Listing(s) information is provided for
@@ -1714,10 +1714,21 @@
 
   <!-- SNEAK Application Logic -->
   <script>
-    // URL Configuration
+    // URL Configuration & Session Handling
     const urlParams = new URLSearchParams(window.location.search);
     const SITE_KEY = urlParams.get('site') || 'demo-ccor';
     const IS_EMBEDDED = urlParams.get('embed') === 'true';
+    
+    // Read session token from initial URL parameter
+    let SNEAK_SESSION = urlParams.get('session') || '';
+    
+    // Immediately remove session token from the browser address bar for security
+    if (urlParams.has('session')) {
+      urlParams.delete('session');
+      const cleanSearch = urlParams.toString() ? '?' + urlParams.toString() : '';
+      const cleanUrl = window.location.pathname + cleanSearch + window.location.hash;
+      window.history.replaceState({}, document.title, cleanUrl);
+    }
     
     // Auto-detect API BASE (Local vs Staging/Production)
     let API_BASE = urlParams.get('api');
@@ -1727,6 +1738,16 @@
       } else {
         API_BASE = window.location.origin;
       }
+    }
+
+    // Helper to construct authorization headers
+    function getAuthHeaders(extraHeaders = {}) {
+      const headers = { ...extraHeaders };
+      if (SNEAK_SESSION) {
+        headers['Authorization'] = 'Bearer ' + SNEAK_SESSION;
+        headers['X-SNEAK-Session'] = SNEAK_SESSION;
+      }
+      return headers;
     }
 
     // State
@@ -1793,7 +1814,9 @@
 
     async function loadTenantConfig() {
       try {
-        const res = await fetch(`${API_BASE}/idx/v1/config?site=${encodeURIComponent(SITE_KEY)}`);
+        const res = await fetch(`${API_BASE}/idx/v1/config?site=${encodeURIComponent(SITE_KEY)}`, {
+          headers: getAuthHeaders()
+        });
         if (!res.ok) {
           throw new Error('Failed to load tenant configuration');
         }
@@ -1803,7 +1826,7 @@
         console.warn('Could not load tenant configuration:', err);
         applyTenantBranding({
           displayName: 'Real Estate Search',
-          brokerage: '',
+          brokerage: 'Listing Brokerage',
           primaryColor: '#1a2a3a',
           secondaryColor: '#2596be'
         });
@@ -1845,7 +1868,7 @@
       }
 
       // Disclaimers
-      const orgName = cfg.brokerage || cfg.displayName || '';
+      const orgName = cfg.brokerage || cfg.displayName || 'Listing Brokerage';
       if (orgName) {
         document.getElementById('disclaimerOrg').textContent = orgName;
         document.getElementById('disclaimerBroker').textContent = orgName;
@@ -1913,7 +1936,9 @@
         const sort = document.querySelector('input[name="sort"]:checked')?.value || 'dateDesc';
         queryParams.set('sort', sort);
 
-        const response = await fetch(`${API_BASE}/idx/v1/search?${queryParams.toString()}`);
+        const response = await fetch(`${API_BASE}/idx/v1/search?${queryParams.toString()}`, {
+          headers: getAuthHeaders()
+        });
         if (!response.ok) {
           throw new Error(`Search request failed (${response.status})`);
         }
@@ -1939,7 +1964,9 @@
     async function fetchMapMarkers() {
       try {
         const queryParams = buildFilterParams();
-        const response = await fetch(`${API_BASE}/idx/v1/map?${queryParams.toString()}`);
+        const response = await fetch(`${API_BASE}/idx/v1/map?${queryParams.toString()}`, {
+          headers: getAuthHeaders()
+        });
         if (!response.ok) return;
 
         const data = await response.json();
@@ -2178,8 +2205,12 @@
       // Fetch Full Detail & Media from SNEAK API
       try {
         const [detailRes, mediaRes] = await Promise.all([
-          fetch(`${API_BASE}/idx/v1/listing/${encodeURIComponent(item.ListingKey)}?site=${encodeURIComponent(SITE_KEY)}`),
-          fetch(`${API_BASE}/idx/v1/listing/${encodeURIComponent(item.ListingKey)}/media?site=${encodeURIComponent(SITE_KEY)}`)
+          fetch(`${API_BASE}/idx/v1/listing/${encodeURIComponent(item.ListingKey)}?site=${encodeURIComponent(SITE_KEY)}`, {
+            headers: getAuthHeaders()
+          }),
+          fetch(`${API_BASE}/idx/v1/listing/${encodeURIComponent(item.ListingKey)}/media?site=${encodeURIComponent(SITE_KEY)}`, {
+            headers: getAuthHeaders()
+          })
         ]);
 
         if (detailRes.ok) {
@@ -2341,7 +2372,7 @@
       try {
         const res = await fetch(`${API_BASE}/idx/v1/lead`, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
           body: JSON.stringify({
             siteKey: SITE_KEY,
             listingKey: currentDetail?.ListingKey || null,

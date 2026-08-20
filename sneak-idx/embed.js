@@ -2,7 +2,7 @@
  * SNEAK IDX Embed Loader (embed.js)
  * 
  * Lightweight, zero-dependency widget embed loader for the SNEAK IDX Platform.
- * Embeds configurable, isolated IDX widgets (search, listing grid, open houses) into any 3rd-party website.
+ * Bootstraps authorization directly from member webpage and embeds isolated IDX widgets.
  * 
  * Usage:
  * <script 
@@ -60,61 +60,102 @@
         }
     }
 
-    // Determine target widget path
-    let widgetRoot = isSubdirectory ? '/sneak-idx/search/' : '/search/';
-    let widgetPath = widgetRoot;
-    if (widgetType === 'open_houses' || widgetType === 'open-houses') {
-        widgetPath = `${widgetRoot}?type=open-houses&`;
-    }
-
-    // Construct safe iframe URL
-    const separator = widgetPath.includes('?') ? '&' : '?';
-    let iframeUrl = `${baseUrl}${widgetPath}${separator}site=${encodeURIComponent(siteKey)}&embed=true`;
-    if (customParams) {
-        iframeUrl += `&${customParams}`;
-    }
-
-    // Create wrapper container
-    const container = document.createElement('div');
-    container.className = 'sneak-idx-widget-container';
-    container.style.width = '100%';
-    container.style.maxWidth = '100%';
-    container.style.position = 'relative';
-    container.style.overflow = 'hidden';
-    container.style.boxSizing = 'border-box';
-
-    // Create responsive iframe
-    const iframe = document.createElement('iframe');
-    iframe.src = iframeUrl;
-    iframe.title = `SNEAK IDX Real Estate Search (${siteKey})`;
-    iframe.style.width = '100%';
-    iframe.style.height = customHeight;
-    iframe.style.minHeight = '500px';
-    iframe.style.border = 'none';
-    iframe.style.display = 'block';
-    iframe.style.overflow = 'hidden';
-    iframe.setAttribute('loading', 'lazy');
-    iframe.setAttribute('allow', 'geolocation');
-
-    container.appendChild(iframe);
-
-    // Insert into DOM
-    if (targetSelector) {
-        const targetEl = document.querySelector(targetSelector);
-        if (targetEl) {
-            targetEl.appendChild(container);
-        } else {
-            currentScript.parentNode.insertBefore(container, currentScript.nextSibling);
+    // Helper to insert container into DOM
+    function mountContainer(element) {
+        if (targetSelector) {
+            const targetEl = document.querySelector(targetSelector);
+            if (targetEl) {
+                targetEl.appendChild(element);
+                return;
+            }
         }
-    } else {
-        currentScript.parentNode.insertBefore(container, currentScript.nextSibling);
+        currentScript.parentNode.insertBefore(element, currentScript.nextSibling);
     }
 
-    // Optional postMessage listener for future auto-resizing
+    // Helper to display neutral authorization error
+    function renderAuthError(msg) {
+        const errContainer = document.createElement('div');
+        errContainer.className = 'sneak-idx-error';
+        errContainer.style.cssText = 'padding:24px 16px;text-align:center;color:#64748b;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;font-size:14px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;margin:12px 0;';
+        errContainer.textContent = msg || 'SNEAK IDX is not authorized for this website.';
+        mountContainer(errContainer);
+    }
+
+    // Bootstrap authorization from member host
+    const bootstrapUrl = `${baseUrl}/idx/v1/bootstrap?site=${encodeURIComponent(siteKey)}`;
+
+    fetch(bootstrapUrl, {
+        method: 'GET',
+        headers: { 'Accept': 'application/json' }
+    })
+    .then(function (res) {
+        if (res.status === 403 || res.status === 401) {
+            renderAuthError('SNEAK IDX is not authorized for this website.');
+            return null;
+        }
+        if (!res.ok) {
+            renderAuthError('Unable to load property search at this time.');
+            return null;
+        }
+        return res.json();
+    })
+    .then(function (data) {
+        if (!data || !data.success || !data.session) {
+            return;
+        }
+
+        // Determine target widget path
+        let widgetRoot = isSubdirectory ? '/sneak-idx/search/' : '/search/';
+        let widgetPath = widgetRoot;
+        if (widgetType === 'open_houses' || widgetType === 'open-houses') {
+            widgetPath = `${widgetRoot}?type=open-houses&`;
+        }
+
+        // Construct iframe URL with signed session token
+        const separator = widgetPath.includes('?') ? '&' : '?';
+        let iframeUrl = `${baseUrl}${widgetPath}${separator}site=${encodeURIComponent(siteKey)}&session=${encodeURIComponent(data.session)}&embed=true`;
+        if (customParams) {
+            iframeUrl += `&${customParams}`;
+        }
+
+        // Create wrapper container
+        const container = document.createElement('div');
+        container.className = 'sneak-idx-widget-container';
+        container.style.width = '100%';
+        container.style.maxWidth = '100%';
+        container.style.position = 'relative';
+        container.style.overflow = 'hidden';
+        container.style.boxSizing = 'border-box';
+
+        // Create responsive iframe
+        const iframe = document.createElement('iframe');
+        iframe.src = iframeUrl;
+        iframe.title = `SNEAK IDX Real Estate Search (${siteKey})`;
+        iframe.style.width = '100%';
+        iframe.style.height = customHeight;
+        iframe.style.minHeight = '500px';
+        iframe.style.border = 'none';
+        iframe.style.display = 'block';
+        iframe.style.overflow = 'hidden';
+        iframe.setAttribute('loading', 'lazy');
+        iframe.setAttribute('allow', 'geolocation');
+
+        container.appendChild(iframe);
+        mountContainer(container);
+    })
+    .catch(function (err) {
+        console.warn('[SNEAK IDX] Bootstrap failed:', err);
+        renderAuthError('Unable to load property search at this time.');
+    });
+
+    // Optional postMessage listener for auto-resizing
     window.addEventListener('message', function (e) {
         if (!e.data || e.data.type !== 'SNEAK_RESIZE') return;
         if (e.data.siteKey === siteKey && e.data.height) {
-            iframe.style.height = `${e.data.height}px`;
+            const iframes = document.querySelectorAll(`iframe[src*="site=${siteKey}"]`);
+            iframes.forEach(function (f) {
+                f.style.height = `${e.data.height}px`;
+            });
         }
     });
 
