@@ -7,12 +7,13 @@
 
 import { renderMemberUI } from './ui.js';
 import {
-    createMagicLink,
+    requestPublicMagicLink,
     verifyAndConsumeMagicLink,
     verifyMemberSession,
     revokeMemberSession,
     getSessionTokenFromRequest,
-    validateMemberCsrf
+    validateMemberCsrf,
+    sha256Hex
 } from './auth.js';
 import {
     handleMemberOverview,
@@ -88,7 +89,7 @@ export default {
 
             try {
                 const event = JSON.parse(rawBody);
-                const result = await handleStripeWebhookEvent(env.DB, event);
+                const result = await handleStripeWebhookEvent(env.DB, event, env);
                 return json({ received: true, ...result });
             } catch (err) {
                 console.error('[STRIPE WEBHOOK ERROR]', err);
@@ -104,7 +105,9 @@ export default {
 
             try {
                 const body = await request.json();
-                const result = await createMagicLink(env.DB, body?.email, 'login', 900);
+                const clientIp = request.headers.get('CF-Connecting-IP') || '127.0.0.1';
+                const ipHash = await sha256Hex(clientIp);
+                const result = await requestPublicMagicLink(env.DB, body?.email, ipHash);
                 return json(result);
             } catch (err) {
                 return error('Malformed request', 400);
@@ -132,6 +135,10 @@ export default {
 
         // 5. Member Logout (POST /api/member/auth/logout)
         if (path === '/api/member/auth/logout' && method === 'POST') {
+            if (!validateMemberCsrf(request)) {
+                return error('CSRF verification failed', 403, 'Forbidden');
+            }
+
             const rawToken = getSessionTokenFromRequest(request);
             if (rawToken && env.DB) {
                 await revokeMemberSession(env.DB, rawToken);

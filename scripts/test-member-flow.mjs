@@ -2,7 +2,7 @@
  * scripts/test-member-flow.mjs
  * 
  * End-to-End Live Validation of Member Self-Service Portal, Passwordless Auth,
- * Scoped Serving, and Stripe Billing Lifecycle on Staging Workers.
+ * Security Protections, and Billing Lifecycle on Staging Workers.
  */
 
 import fs from 'node:fs';
@@ -109,8 +109,24 @@ async function runMemberFlowTests() {
     const rawInviteToken = inviteData.rawToken;
     assert(Boolean(rawInviteToken), "Received single-use magic invitation token");
 
-    // 4. Member Consumes Magic Link & Receives 7-Day Session
-    console.log("\n[4] Member Verifying & Consuming Magic Link...");
+    // 4. Test Public Magic Link Zero-Token Security & Attack Simulation
+    console.log("\n[4] Testing Public Magic Link Security & Attack Simulation...");
+    const publicReqRes = await fetch(`${MEMBER_URL}/api/member/auth/magic-link`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "Origin": MEMBER_URL },
+        body: JSON.stringify({ email: memberEmail })
+    });
+    assert(publicReqRes.status === 200, "Public magic link request returned HTTP 200 OK");
+    const publicData = await publicReqRes.json();
+    assert(publicData.success === true, "Public response reports success");
+    assert(publicData.message === "If an account exists, a sign-in link will be sent.", "Generic message returned");
+    assert(!publicData.rawToken, "Public response contains ZERO rawToken");
+    assert(!publicData.token, "Public response contains ZERO token");
+    assert(!publicData.userId, "Public response contains ZERO userId");
+    assert(!publicData.accountId, "Public response contains ZERO accountId");
+
+    // 5. Member Consumes Magic Link & Receives 7-Day Session
+    console.log("\n[5] Member Verifying & Consuming Magic Link...");
     const verifyRes = await fetch(`${MEMBER_URL}/api/member/auth/verify?token=${encodeURIComponent(rawInviteToken)}`);
     assert(verifyRes.status === 200, "Magic link verified with HTTP 200 OK");
     const memberCookieHeader = verifyRes.headers.get("Set-Cookie") || "";
@@ -118,13 +134,13 @@ async function runMemberFlowTests() {
     assert(memberCookieHeader.includes("SameSite=Lax"), "Cookie contains SameSite=Lax");
     const memberCookie = memberCookieHeader.split(";")[0];
 
-    // 5. Replay Magic Token -> Must Fail
-    console.log("\n[5] Verifying Single-Use Consumption (Replay Prevention)...");
+    // 6. Replay Magic Token -> Must Fail (Atomic Single-Use)
+    console.log("\n[6] Verifying Single-Use Consumption (Replay Prevention)...");
     const replayRes = await fetch(`${MEMBER_URL}/api/member/auth/verify?token=${encodeURIComponent(rawInviteToken)}`);
     assert(replayRes.status === 401, "Replaying already consumed magic link rejected with HTTP 401");
 
-    // 6. Member Portal Overview
-    console.log("\n[6] Testing Member Overview API (/api/member/overview)...");
+    // 7. Member Portal Overview
+    console.log("\n[7] Testing Member Overview API (/api/member/overview)...");
     const overviewRes = await fetch(`${MEMBER_URL}/api/member/overview`, {
         headers: { "Cookie": memberCookie }
     });
@@ -133,8 +149,8 @@ async function runMemberFlowTests() {
     assert(overviewData.account?.id === accountId, "Overview returned authenticated member's account");
     assert(overviewData.inventory?.activeListings > 30000, "Overview reports active MLS inventory");
 
-    // 7. Member Self-Service Domain Addition & Admin Verification
-    console.log("\n[7] Testing Member Domain Addition & Verification Lifecycle...");
+    // 8. Member Self-Service Domain Addition & Admin Verification
+    console.log("\n[8] Testing Member Domain Addition & Verification Lifecycle...");
     const addDomRes = await fetch(`${MEMBER_URL}/api/member/domains`, {
         method: "POST",
         headers: { "Cookie": memberCookie, "Content-Type": "application/json", "Origin": MEMBER_URL },
@@ -165,8 +181,8 @@ async function runMemberFlowTests() {
     });
     assert(verifiedBoot.status === 200, "Serving Worker allows bootstrap on verified domain");
 
-    // 8. Member Self-Service Branding Customization
-    console.log("\n[8] Testing Member Branding Customization...");
+    // 9. Member Self-Service Branding Customization
+    console.log("\n[9] Testing Member Branding Customization...");
     const brandRes = await fetch(`${MEMBER_URL}/api/member/branding`, {
         method: "PUT",
         headers: { "Cookie": memberCookie, "Content-Type": "application/json", "Origin": MEMBER_URL },
@@ -188,8 +204,8 @@ async function runMemberFlowTests() {
     assert(cfgData.displayName === "Luxury Gulf Coast Homes", "Serving worker reflects member's custom branding");
     assert(cfgData.primaryColor === "#0f172a", "Serving worker reflects member's primary color");
 
-    // 9. Member Embed Code Retrieval
-    console.log("\n[9] Testing Member Embed Code Snippets...");
+    // 10. Member Embed Code Retrieval
+    console.log("\n[10] Testing Member Embed Code Snippets...");
     const embedRes = await fetch(`${MEMBER_URL}/api/member/embed`, {
         headers: { "Cookie": memberCookie }
     });
@@ -198,8 +214,8 @@ async function runMemberFlowTests() {
     assert(embedData.snippets?.search?.htmlSnippet.includes(siteKey), "Embed snippet contains tenant site key");
     assert(!embedData.snippets?.search?.htmlSnippet.includes(memberCookie), "Embed snippet contains zero secrets/tokens");
 
-    // 10. Member Logout & Session Revocation
-    console.log("\n[10] Testing Member Logout & Session Revocation...");
+    // 11. Member Logout & Session Revocation
+    console.log("\n[11] Testing Member Logout & Session Revocation...");
     const logoutRes = await fetch(`${MEMBER_URL}/api/member/auth/logout`, {
         method: "POST",
         headers: { "Cookie": memberCookie, "Origin": MEMBER_URL }

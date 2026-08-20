@@ -1,8 +1,8 @@
 /**
  * sneak-member/auth.js
  * 
- * Passwordless Authentication, Single-Use Magic Links, 7-Day Revocable Sessions,
- * and Same-Origin CSRF Protection for SNEAK Member Portal.
+ * Secure Passwordless Authentication, Atomic Single-Use Magic Links, 
+ * Rate Limiting, 7-Day Revocable Sessions, and Same-Origin CSRF Protection.
  */
 
 export function bufferToHex(buffer) {
@@ -32,17 +32,11 @@ export function generateRawToken() {
 }
 
 /**
- * Creates a single-use magic link in D1.
+ * Creates an internal single-use magic link in D1.
+ * Intended strictly for trusted callers (e.g. Admin invitation creation).
  */
-export async function createMagicLink(db, email, purpose = 'login', ttlSeconds = 900) {
-    const cleanEmail = (email || '').toLowerCase().trim();
-    if (!cleanEmail) return { success: false, error: 'Email is required' };
-
-    const user = await db.prepare("SELECT * FROM sneak_member_users WHERE email = ?").bind(cleanEmail).first();
-    if (!user) {
-        // Generic message: Do not reveal whether email exists
-        return { success: true, message: 'If an account exists, a sign-in link has been created/sent.' };
-    }
+export async function createMagicLinkRecord(db, userId, purpose = 'login', ttlSeconds = 900) {
+    if (!userId) return null;
 
     const rawToken = generateRawToken();
     const tokenHash = await sha256Hex(rawToken);
@@ -50,45 +44,132 @@ export async function createMagicLink(db, email, purpose = 'login', ttlSeconds =
     const now = new Date().toISOString();
     const expiresAt = new Date(Date.now() + (ttlSeconds * 1000)).toISOString();
 
+    // Rotate: Invalidate previous unconsumed magic links for this user & purpose
+    await db.prepare(`
+        UPDATE sneak_member_magic_links
+        SET used_at = ?
+        WHERE user_id = ? AND purpose = ? AND used_at IS NULL
+    `).bind(now, userId, purpose).run();
+
+    // Insert new magic link
     await db.prepare(`
         INSERT INTO sneak_member_magic_links (id, user_id, token_hash, purpose, created_at, expires_at, used_at)
         VALUES (?, ?, ?, ?, ?, ?, NULL)
-    `).bind(linkId, user.id, tokenHash, purpose, now, expiresAt).run();
+    `).bind(linkId, userId, tokenHash, purpose, now, expiresAt).run();
 
-    return {
-        success: true,
-        message: 'If an account exists, a sign-in link has been created/sent.',
-        rawToken, // Staging immediate retrieval
-        userId: user.id,
-        accountId: user.account_id
-    };
+    return rawToken;
 }
 
 /**
- * Verifies and atomically consumes a single-use magic link.
+ * Public magic link request handler with pseudonymized rate limiting & enumeration protection.
+ * NEVER returns rawToken, token_hash, userId, accountId, or user existence signals.
+ */
+export async function requestPublicMagicLink(db, email, ipHash) {
+    const cleanEmail = (email || '').toLowerCase().trim();
+    const GENERIC_RESPONSE = {
+        success: true,
+        message: 'If an account exists, a sign-in link will be sent.'
+    };
+
+    if (!cleanEmail || !cleanEmail.includes('@') || cleanEmail.length < 5) {
+        return GENERIC_RESPONSE;
+    }
+
+    const emailHash = await sha256Hex(cleanEmail);
+    const now = new Date().toISOString();
+
+    // 1. Rate Limit Checks (5 requests / 15 minutes per IP hash and Email hash)
+    if (db) {
+        try {
+            const ipAttempts = await db.prepare(`
+                SELECT count(*) as count FROM sneak_member_login_attempts
+                WHERE ip_hash = ? AND attempted_at > datetime('now', '-15 minutes')
+            `).bind(ipHash).first();
+
+            const emailAttempts = await db.prepare(`
+                SELECT count(*) as count FROM sneak_member_login_attempts
+                WHERE email_hash = ? AND attempted_at > datetime('now', '-15 minutes')
+            `).bind(emailHash).first();
+
+            // Record this attempt
+            const attemptId = `mla_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
+            await db.prepare(`
+                INSERT INTO sneak_member_login_attempts (id, ip_hash, email_hash, attempted_at)
+                VALUES (?, ?, ?, ?)
+            `).bind(attemptId, ipHash, emailHash, now).run();
+
+            if ((ipAttempts?.count || 0) >= 5 || (emailAttempts?.count || 0) >= 5) {
+                // Rate limited: Return generic response without revealing existence
+                return GENERIC_RESPONSE;
+            }
+        } catch (err) {
+            console.error('[MEMBER RATE LIMIT ERROR]', err.message);
+        }
+    }
+
+    // 2. Lookup member user
+    const user = await db.prepare(`
+        SELECT u.id, u.account_id, u.status AS user_status, a.status AS account_status
+        FROM sneak_member_users u
+        JOIN sneak_accounts a ON u.account_id = a.id
+        WHERE u.email = ?
+    `).bind(cleanEmail).first();
+
+    if (!user || !['invited', 'active'].includes(user.user_status) || user.account_status !== 'active') {
+        return GENERIC_RESPONSE;
+    }
+
+    // 3. (When transactional email is configured in Phase 5.1, delivery adapter will send email here)
+    // Option A: For Phase 5.0.1 staging, create internal record if needed but never expose to public response.
+
+    return GENERIC_RESPONSE;
+}
+
+/**
+ * Atomically verifies and consumes a single-use magic link.
+ * Prevents race conditions and replay attacks via conditional UPDATE inspection.
  */
 export async function verifyAndConsumeMagicLink(db, rawToken) {
-    if (!rawToken || typeof rawToken !== 'string') return null;
+    if (!rawToken || typeof rawToken !== 'string' || rawToken.length < 32) return null;
 
     const tokenHash = await sha256Hex(rawToken);
     const now = new Date().toISOString();
 
-    const link = await db.prepare(`
-        SELECT id, user_id, purpose, expires_at, used_at
-        FROM sneak_member_magic_links
-        WHERE token_hash = ? AND used_at IS NULL AND expires_at > datetime('now')
-    `).bind(tokenHash).first();
-
-    if (!link) return null;
-
-    // Atomically consume magic link
-    await db.prepare(`
+    // 1. Atomic conditional mutation: mutate exactly one active, unconsumed, unexpired row
+    const updateRes = await db.prepare(`
         UPDATE sneak_member_magic_links
         SET used_at = ?
-        WHERE id = ? AND used_at IS NULL
-    `).bind(now, link.id).run();
+        WHERE token_hash = ?
+          AND used_at IS NULL
+          AND expires_at > ?
+    `).bind(now, tokenHash, now).run();
 
-    // Activate/update user
+    const changes = updateRes?.meta?.changes ?? updateRes?.changes ?? 0;
+    if (changes !== 1) {
+        // Token was already consumed, expired, or does not exist
+        return null;
+    }
+
+    // 2. Load associated user & account status
+    const linkUser = await db.prepare(`
+        SELECT 
+            l.user_id, u.account_id, u.email, u.role, u.status AS user_status,
+            a.account_name, a.status AS account_status
+        FROM sneak_member_magic_links l
+        JOIN sneak_member_users u ON l.user_id = u.id
+        JOIN sneak_accounts a ON u.account_id = a.id
+        WHERE l.token_hash = ?
+    `).bind(tokenHash).first();
+
+    if (!linkUser) return null;
+
+    // 3. User and Account Status Verification
+    if (!['invited', 'active'].includes(linkUser.user_status) || linkUser.account_status !== 'active') {
+        // Disabled member or suspended account
+        return null;
+    }
+
+    // 4. Update user activation & login timestamps
     await db.prepare(`
         UPDATE sneak_member_users
         SET status = 'active',
@@ -96,16 +177,19 @@ export async function verifyAndConsumeMagicLink(db, rawToken) {
             last_login_at = ?,
             updated_at = ?
         WHERE id = ?
-    `).bind(now, now, now, link.user_id).run();
+    `).bind(now, now, now, linkUser.user_id).run();
 
-    const user = await db.prepare("SELECT * FROM sneak_member_users WHERE id = ?").bind(link.user_id).first();
-    if (!user) return null;
-
-    // Create 7-day member session
-    const sessionToken = await createMemberSession(db, user.id, user.account_id, 604800);
+    // 5. Create 7-day revocable member session
+    const sessionToken = await createMemberSession(db, linkUser.user_id, linkUser.account_id, 604800);
 
     return {
-        user,
+        user: {
+            id: linkUser.user_id,
+            account_id: linkUser.account_id,
+            email: linkUser.email,
+            role: linkUser.role,
+            status: 'active'
+        },
         sessionToken
     };
 }
