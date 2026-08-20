@@ -211,6 +211,23 @@ export default {
                 return (await import('./api.js')).handleCreateMemberWebsitePreviewToken(env.DB, memberContext, env);
             }
 
+            if (path === '/api/member/domain-status' && method === 'GET') {
+                return (await import('./api.js')).handleGetMemberDomainStatus(env.DB, memberContext, env);
+            }
+
+            if (path === '/api/member/domains/request' && method === 'POST') {
+                const body = await request.json();
+                return (await import('./api.js')).handleRequestMemberDomain(env.DB, memberContext, body, env);
+            }
+
+            if (path === '/api/member/domains/check-connection' && method === 'POST') {
+                return (await import('./api.js')).handleRefreshMemberDomainStatus(env.DB, memberContext, env);
+            }
+
+            if (path === '/api/member/domain-binding' && method === 'DELETE') {
+                return (await import('./api.js')).handleRemoveMemberDomain(env.DB, memberContext, env);
+            }
+
             return error('Member API endpoint not found', 404);
         }
 

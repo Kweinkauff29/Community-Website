@@ -320,6 +320,35 @@ export default {
                 return await api.handleCreateWebsitePreviewToken(db, siteId, env);
             }
 
+            // /api/admin/sites/:id/domains/bindings
+            const domBindMatch = path.match(/^\/api\/admin\/sites\/([^\/]+)\/domains\/bindings$/);
+            if (domBindMatch && method === 'GET') {
+                const siteId = domBindMatch[1];
+                return await api.handleListDomainBindings(db, siteId);
+            }
+
+            // /api/admin/sites/:id/domains/prepare
+            const prepMatch = path.match(/^\/api\/admin\/sites\/([^\/]+)\/domains\/prepare$/);
+            if (prepMatch && method === 'POST') {
+                const siteId = prepMatch[1];
+                const body = await request.json();
+                return await api.handlePrepareDomainBinding(db, siteId, body, actor, env);
+            }
+
+            // /api/admin/domain-bindings/:id/refresh
+            const refMatch = path.match(/^\/api\/admin\/domain-bindings\/([^\/]+)\/refresh$/);
+            if (refMatch && method === 'POST') {
+                const bindingId = refMatch[1];
+                return await api.handleRefreshDomainBinding(db, bindingId, actor, env);
+            }
+
+            // /api/admin/domain-bindings/:id
+            const delMatch = path.match(/^\/api\/admin\/domain-bindings\/([^\/]+)$/);
+            if (delMatch && method === 'DELETE') {
+                const bindingId = delMatch[1];
+                return await api.handleRemoveDomainBinding(db, bindingId, actor, env);
+            }
+
             return error('API endpoint not found', 404);
         }
 

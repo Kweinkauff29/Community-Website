@@ -93,6 +93,14 @@ export function renderBaseLayout({
         ? '<meta name="robots" content="noindex, nofollow" />'
         : '<meta name="robots" content="index, follow" />';
 
+    const canonicalTag = !isPreview && siteBundle.resolvedDomain
+        ? `<link rel="canonical" href="https://${escapeHtml(siteBundle.resolvedDomain)}${pagePath === '/' ? '' : escapeHtml(pagePath)}" />`
+        : '';
+
+    const ogUrlTag = !isPreview && siteBundle.resolvedDomain
+        ? `<meta property="og:url" content="https://${escapeHtml(siteBundle.resolvedDomain)}${pagePath === '/' ? '' : escapeHtml(pagePath)}" />`
+        : '';
+
     const previewBanner = isPreview ? `
         <div class="sneak-preview-banner">
             <span><strong>PREVIEW MODE</strong> — Template: <em>${escapeHtml(websiteConfig.template_key.toUpperCase())}</em> | Site: <code>${escapeHtml(site.site_key)}</code></span>
@@ -107,11 +115,13 @@ export function renderBaseLayout({
     <title>${escapeHtml(siteTitle)}</title>
     <meta name="description" content="${escapeHtml(seoDesc)}" />
     ${robotsMeta}
+    ${canonicalTag}
     
     <!-- Open Graph -->
     <meta property="og:title" content="${escapeHtml(siteTitle)}" />
     <meta property="og:description" content="${escapeHtml(seoDesc)}" />
     <meta property="og:type" content="website" />
+    ${ogUrlTag}
     ${branding.agent_photo_url || websiteConfig.hero_image_url ? `<meta property="og:image" content="${escapeHtml(branding.agent_photo_url || websiteConfig.hero_image_url)}" />` : ''}
 
     <!-- Fonts -->

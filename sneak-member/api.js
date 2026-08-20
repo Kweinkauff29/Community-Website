@@ -476,3 +476,135 @@ export async function handleCreateMemberWebsitePreviewToken(db, memberContext, e
     return json({ success: true, siteKey: site.site_key, previewToken, previewUrl, expiresIn: 1800 });
 }
 
+import {
+    prepareCustomHostname,
+    refreshCustomHostnameStatus,
+    removeCustomHostname
+} from '../sneak-admin/cloudflare-saas.js';
+
+/**
+ * GET /api/member/domain-status
+ */
+export async function handleGetMemberDomainStatus(db, memberContext, env) {
+    const { account_id } = memberContext;
+    const site = await db.prepare("SELECT * FROM sneak_sites WHERE account_id = ?").bind(account_id).first();
+    if (!site) return error('Site not found', 404);
+
+    const binding = await db.prepare(`
+        SELECT b.*, d.verified AS sneak_verified, d.status AS domain_status
+        FROM sneak_domain_bindings b
+        JOIN sneak_domains d ON b.domain_id = d.id
+        WHERE b.site_id = ? AND b.status != 'removed'
+        ORDER BY b.created_at DESC
+        LIMIT 1
+    `).bind(site.id).first();
+
+    if (!binding) {
+        return json({
+            connected: false,
+            status: 'setup_needed',
+            statusLabel: 'Setup Needed',
+            domain: null,
+            dnsInstructions: null
+        });
+    }
+
+    let statusLabel = 'Setup Needed';
+    if (binding.status === 'active' && binding.ssl_status === 'active') {
+        statusLabel = 'Connected';
+    } else if (binding.status === 'pending_dns') {
+        statusLabel = 'Waiting for DNS';
+    } else if (binding.status === 'pending_ssl' || binding.ssl_status === 'pending_validation') {
+        statusLabel = 'Securing Website';
+    } else if (binding.status === 'error') {
+        statusLabel = 'Problem';
+    }
+
+    return json({
+        connected: binding.status === 'active' && binding.ssl_status === 'active',
+        bindingId: binding.id,
+        domain: binding.hostname,
+        status: binding.status,
+        sslStatus: binding.ssl_status,
+        statusLabel,
+        dnsInstructions: {
+            type: 'CNAME',
+            name: binding.hostname.startsWith('www.') ? 'www' : binding.hostname,
+            target: binding.cname_target || 'customers.sneakidx.com',
+            txtVerification: binding.ownership_txt_name ? {
+                name: binding.ownership_txt_name,
+                value: binding.ownership_txt_value
+            } : null
+        },
+        lastCheckedAt: binding.last_checked_at
+    });
+}
+
+/**
+ * POST /api/member/domains/request
+ */
+export async function handleRequestMemberDomain(db, memberContext, body, env) {
+    const { account_id, user_id } = memberContext;
+    const site = await db.prepare("SELECT * FROM sneak_sites WHERE account_id = ?").bind(account_id).first();
+    if (!site) return error('Site not found', 404);
+
+    const { hostname } = body;
+    if (!hostname) return error('Hostname is required', 400);
+
+    const result = await prepareCustomHostname(db, site.id, hostname, env, `member:${user_id}`);
+    if (!result.success) return error(result.error, 400);
+
+    await logMemberAudit(db, user_id, account_id, 'REQUEST_CUSTOM_DOMAIN', 'domain_binding', result.binding.id, `Requested custom domain ${result.hostname}`);
+
+    return json(result, 201);
+}
+
+/**
+ * POST /api/member/domains/check-connection
+ */
+export async function handleRefreshMemberDomainStatus(db, memberContext, env) {
+    const { account_id, user_id } = memberContext;
+    const site = await db.prepare("SELECT * FROM sneak_sites WHERE account_id = ?").bind(account_id).first();
+    if (!site) return error('Site not found', 404);
+
+    const binding = await db.prepare(`
+        SELECT * FROM sneak_domain_bindings
+        WHERE site_id = ? AND status != 'removed'
+        ORDER BY created_at DESC
+        LIMIT 1
+    `).bind(site.id).first();
+
+    if (!binding) return error('No active domain binding found to refresh', 404);
+
+    const result = await refreshCustomHostnameStatus(db, binding.id, env, `member:${user_id}`);
+    if (!result.success) return error(result.error, 400);
+
+    return json(result);
+}
+
+/**
+ * DELETE /api/member/domain-binding
+ */
+export async function handleRemoveMemberDomain(db, memberContext, env) {
+    const { account_id, user_id } = memberContext;
+    const site = await db.prepare("SELECT * FROM sneak_sites WHERE account_id = ?").bind(account_id).first();
+    if (!site) return error('Site not found', 404);
+
+    const binding = await db.prepare(`
+        SELECT * FROM sneak_domain_bindings
+        WHERE site_id = ? AND status != 'removed'
+        ORDER BY created_at DESC
+        LIMIT 1
+    `).bind(site.id).first();
+
+    if (!binding) return error('No active domain binding found', 404);
+
+    const result = await removeCustomHostname(db, binding.id, env, `member:${user_id}`);
+    if (!result.success) return error(result.error, 400);
+
+    await logMemberAudit(db, user_id, account_id, 'REMOVE_CUSTOM_DOMAIN', 'domain_binding', binding.id, `Removed custom domain ${binding.hostname}`);
+
+    return json(result);
+}
+
+

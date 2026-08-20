@@ -47,6 +47,11 @@ export async function resolveTenantSite(db, { siteKey, domain }) {
 
     if (!row) return null;
 
+    // For custom domain requests (not preview by siteKey), website must be enabled
+    if (domain && row.website_enabled !== 1) {
+        return null;
+    }
+
     // Check Administrative Status
     const isAccountActive = row.account_status === 'active';
     const isSiteActive = row.site_status === 'active';
@@ -65,6 +70,7 @@ export async function resolveTenantSite(db, { siteKey, domain }) {
     } catch {}
 
     return {
+        resolvedDomain: domain || null,
         site: {
             id: row.site_id,
             account_id: row.account_id,

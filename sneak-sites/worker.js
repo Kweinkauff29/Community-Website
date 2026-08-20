@@ -120,12 +120,16 @@ export default {
             });
         }
 
+        const rawHost = request.headers.get('X-Forwarded-Host') || request.headers.get('Host') || url.hostname;
+        const host = rawHost.split(',')[0].split(':')[0].trim().toLowerCase();
+
         // 2. Robots.txt
         if (path === '/robots.txt') {
+            const isStagingWorkerHost = host.includes('workers.dev') || host.includes('localhost') || host === '127.0.0.1';
             const isPreviewRoute = path.startsWith('/preview/');
-            const body = isPreviewRoute || (env.SNEAK_ENV || 'staging') === 'staging'
+            const body = isPreviewRoute || isStagingWorkerHost
                 ? "User-agent: *\nDisallow: /\n"
-                : "User-agent: *\nAllow: /\nSitemap: " + url.origin + "/sitemap.xml\n";
+                : "User-agent: *\nAllow: /\nSitemap: https://" + host + "/sitemap.xml\n";
             return new Response(body, {
                 status: 200,
                 headers: { 'Content-Type': 'text/plain', 'Cache-Control': 'public, max-age=86400' }
@@ -161,7 +165,6 @@ export default {
             }
         } else {
             // Custom Domain Resolution
-            const host = url.hostname.toLowerCase();
             const isStagingWorkerHost = host.includes('workers.dev') || host.includes('localhost') || host === '127.0.0.1';
             
             if (isStagingWorkerHost && path === '/') {
@@ -177,7 +180,7 @@ export default {
         // 4. Resolve Tenant Site
         const siteBundle = await resolveTenantSite(env.DB, {
             siteKey: siteKey || undefined,
-            domain: !siteKey ? url.hostname : undefined
+            domain: !siteKey ? host : undefined
         });
 
         if (!siteBundle) {
@@ -196,7 +199,7 @@ export default {
 
         // 7. Sitemap.xml
         if (subPath === '/sitemap.xml') {
-            const rootUrl = isPreview ? `${url.origin}${basePath}` : url.origin;
+            const rootUrl = isPreview ? `${url.origin}${basePath}` : `https://${host}`;
             const xml = `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
     <url><loc>${rootUrl}/</loc><priority>1.0</priority></url>

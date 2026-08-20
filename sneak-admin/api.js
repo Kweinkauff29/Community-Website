@@ -1011,3 +1011,61 @@ export async function handleCreateWebsitePreviewToken(db, siteId, env) {
     return json({ success: true, siteKey: site.site_key, previewToken, previewUrl, expiresIn: 1800 });
 }
 
+import {
+    prepareCustomHostname,
+    refreshCustomHostnameStatus,
+    removeCustomHostname
+} from './cloudflare-saas.js';
+
+/**
+ * GET /api/admin/sites/:id/domains/bindings
+ */
+export async function handleListDomainBindings(db, siteId) {
+    const site = await db.prepare("SELECT * FROM sneak_sites WHERE id = ?").bind(siteId).first();
+    if (!site) return error('Site not found', 404);
+
+    const res = await db.prepare(`
+        SELECT b.*, d.verified AS sneak_verified, d.status AS domain_status
+        FROM sneak_domain_bindings b
+        JOIN sneak_domains d ON b.domain_id = d.id
+        WHERE b.site_id = ? AND b.status != 'removed'
+        ORDER BY b.created_at DESC
+    `).bind(siteId).all();
+
+    return json({ bindings: res.results || [] });
+}
+
+/**
+ * POST /api/admin/sites/:id/domains/prepare
+ */
+export async function handlePrepareDomainBinding(db, siteId, body, actor, env) {
+    const { hostname } = body;
+    if (!hostname) return error('Hostname is required');
+
+    const result = await prepareCustomHostname(db, siteId, hostname, env, actor);
+    if (!result.success) return error(result.error, 400);
+
+    return json(result, 201);
+}
+
+/**
+ * POST /api/admin/domain-bindings/:id/refresh
+ */
+export async function handleRefreshDomainBinding(db, bindingId, actor, env) {
+    const result = await refreshCustomHostnameStatus(db, bindingId, env, actor);
+    if (!result.success) return error(result.error, 400);
+
+    return json(result);
+}
+
+/**
+ * DELETE /api/admin/domain-bindings/:id
+ */
+export async function handleRemoveDomainBinding(db, bindingId, actor, env) {
+    const result = await removeCustomHostname(db, bindingId, env, actor);
+    if (!result.success) return error(result.error, 400);
+
+    return json(result);
+}
+
+
