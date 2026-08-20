@@ -198,6 +198,19 @@ export default {
                 return handleGetMemberBilling(env.DB, memberContext);
             }
 
+            if (path === '/api/member/website' && method === 'GET') {
+                return (await import('./api.js')).handleGetMemberWebsiteConfig(env.DB, memberContext, env);
+            }
+
+            if (path === '/api/member/website' && method === 'PUT') {
+                const body = await request.json();
+                return (await import('./api.js')).handleUpdateMemberWebsiteConfig(env.DB, memberContext, body, env);
+            }
+
+            if (path === '/api/member/website/preview-token' && method === 'POST') {
+                return (await import('./api.js')).handleCreateMemberWebsitePreviewToken(env.DB, memberContext, env);
+            }
+
             return error('Member API endpoint not found', 404);
         }
 

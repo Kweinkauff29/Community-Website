@@ -851,3 +851,163 @@ export async function handleUpdateAccountEntitlement(db, accountId, body, actor)
     const updated = await db.prepare("SELECT * FROM sneak_account_entitlements WHERE account_id = ?").bind(accountId).first();
     return json({ success: true, entitlement: updated });
 }
+
+import { createPreviewToken } from '../sneak-sites/preview.js';
+
+/**
+ * GET /api/admin/sites/:id/website
+ */
+export async function handleGetWebsiteConfig(db, siteId, env) {
+    const site = await db.prepare("SELECT * FROM sneak_sites WHERE id = ?").bind(siteId).first();
+    if (!site) return error('Site not found', 404);
+
+    const config = await db.prepare("SELECT * FROM sneak_website_configs WHERE site_id = ?").bind(siteId).first();
+    const branding = await db.prepare("SELECT * FROM sneak_branding WHERE site_id = ?").bind(siteId).first();
+
+    const secret = env?.SNEAK_WEBSITE_PREVIEW_SECRET || 'dev_preview_secret_ccor_2026';
+    let previewToken = null;
+    let previewUrl = null;
+
+    try {
+        previewToken = await createPreviewToken(site.site_key, site.id, secret, 1800);
+        previewUrl = `https://sneak-idx-sites-staging.bonitaspringsrealtors.workers.dev/preview/${site.site_key}?token=${encodeURIComponent(previewToken)}`;
+    } catch {}
+
+    return json({
+        site_id: site.id,
+        site_key: site.site_key,
+        website: config || {
+            site_id: site.id,
+            enabled: 0,
+            template_key: 'essential',
+            site_title: `${branding?.display_name || site.site_name} | Southwest Florida Real Estate`,
+            tagline: 'Your trusted guide to Southwest Florida living',
+            hero_heading: 'Find Your Place in Southwest Florida',
+            hero_subheading: 'Explore luxury waterfront estates, golf communities, and coastal properties.',
+            hero_image_url: 'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&w=1600&q=80',
+            about_heading: `About ${branding?.display_name || site.site_name}`,
+            about_body: 'Dedicated to providing exceptional real estate advisory and MLS representation across Southwest Florida.',
+            about_image_url: branding?.agent_photo_url || null,
+            featured_areas_json: JSON.stringify([
+                { name: 'Bonita Springs', description: 'Gulf beaches, boating, and golf clubs', filter: 'Bonita Springs', image_url: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=600&q=80' },
+                { name: 'Estero', description: 'Vibrant master-planned communities and Estero Bay', filter: 'Estero', image_url: 'https://images.unsplash.com/photo-1544644181-1484b3fdfc62?auto=format&fit=crop&w=600&q=80' },
+                { name: 'Naples', description: 'World-class dining, luxury estates, and white sand beaches', filter: 'Naples', image_url: 'https://images.unsplash.com/photo-1580587771525-78b9dba3b914?auto=format&fit=crop&w=600&q=80' }
+            ]),
+            seo_title: `${branding?.display_name || site.site_name} - Southwest Florida Real Estate`,
+            seo_description: 'Search all active MLS listings, open houses, and luxury properties in Southwest Florida.',
+            footer_text: `© ${new Date().getFullYear()} ${branding?.display_name || site.site_name}. All rights reserved.`,
+            contact_cta_text: 'Ready to start your property search or schedule a private showing? Get in touch today.'
+        },
+        previewUrl,
+        previewToken
+    });
+}
+
+/**
+ * PUT /api/admin/sites/:id/website
+ */
+export async function handleUpdateWebsiteConfig(db, siteId, body, actor, env) {
+    const site = await db.prepare("SELECT * FROM sneak_sites WHERE id = ?").bind(siteId).first();
+    if (!site) return error('Site not found', 404);
+
+    const {
+        enabled = 0,
+        template_key = 'essential',
+        site_title,
+        tagline,
+        hero_heading,
+        hero_subheading,
+        hero_image_url,
+        about_heading,
+        about_body,
+        about_image_url,
+        featured_areas_json,
+        navigation_json,
+        social_links_json,
+        seo_title,
+        seo_description,
+        footer_text,
+        contact_cta_text
+    } = body;
+
+    const validTemplates = ['essential', 'coastal', 'brokerage'];
+    if (!validTemplates.includes(template_key)) {
+        return error(`Invalid template_key. Must be one of: ${validTemplates.join(', ')}`);
+    }
+
+    const now = new Date().toISOString();
+
+    await db.prepare(`
+        INSERT INTO sneak_website_configs (
+            site_id, enabled, template_key, site_title, tagline,
+            hero_heading, hero_subheading, hero_image_url,
+            about_heading, about_body, about_image_url,
+            featured_areas_json, navigation_json, social_links_json,
+            seo_title, seo_description, footer_text, contact_cta_text,
+            created_at, updated_at
+        ) VALUES (
+            ?, ?, ?, ?, ?,
+            ?, ?, ?,
+            ?, ?, ?,
+            ?, ?, ?,
+            ?, ?, ?, ?,
+            ?, ?
+        )
+        ON CONFLICT(site_id) DO UPDATE SET
+            enabled = COALESCE(excluded.enabled, sneak_website_configs.enabled),
+            template_key = COALESCE(excluded.template_key, sneak_website_configs.template_key),
+            site_title = COALESCE(excluded.site_title, sneak_website_configs.site_title),
+            tagline = COALESCE(excluded.tagline, sneak_website_configs.tagline),
+            hero_heading = COALESCE(excluded.hero_heading, sneak_website_configs.hero_heading),
+            hero_subheading = COALESCE(excluded.hero_subheading, sneak_website_configs.hero_subheading),
+            hero_image_url = COALESCE(excluded.hero_image_url, sneak_website_configs.hero_image_url),
+            about_heading = COALESCE(excluded.about_heading, sneak_website_configs.about_heading),
+            about_body = COALESCE(excluded.about_body, sneak_website_configs.about_body),
+            about_image_url = COALESCE(excluded.about_image_url, sneak_website_configs.about_image_url),
+            featured_areas_json = COALESCE(excluded.featured_areas_json, sneak_website_configs.featured_areas_json),
+            navigation_json = COALESCE(excluded.navigation_json, sneak_website_configs.navigation_json),
+            social_links_json = COALESCE(excluded.social_links_json, sneak_website_configs.social_links_json),
+            seo_title = COALESCE(excluded.seo_title, sneak_website_configs.seo_title),
+            seo_description = COALESCE(excluded.seo_description, sneak_website_configs.seo_description),
+            footer_text = COALESCE(excluded.footer_text, sneak_website_configs.footer_text),
+            contact_cta_text = COALESCE(excluded.contact_cta_text, sneak_website_configs.contact_cta_text),
+            updated_at = excluded.updated_at
+    `).bind(
+        siteId, enabled !== undefined ? (enabled ? 1 : 0) : null, template_key || null, site_title || null, tagline || null,
+        hero_heading || null, hero_subheading || null, hero_image_url || null,
+        about_heading || null, about_body || null, about_image_url || null,
+        typeof featured_areas_json === 'object' ? JSON.stringify(featured_areas_json) : (featured_areas_json || null),
+        typeof navigation_json === 'object' ? JSON.stringify(navigation_json) : (navigation_json || null),
+        typeof social_links_json === 'object' ? JSON.stringify(social_links_json) : (social_links_json || null),
+        seo_title || null, seo_description || null, footer_text || null, contact_cta_text || null,
+        now, now
+    ).run();
+
+    await logAudit(db, actor, 'UPDATE_WEBSITE_CONFIG', 'website_config', siteId, `Updated website config (template: ${template_key}, enabled: ${enabled})`);
+
+    const updated = await db.prepare("SELECT * FROM sneak_website_configs WHERE site_id = ?").bind(siteId).first();
+    
+    const secret = env?.SNEAK_WEBSITE_PREVIEW_SECRET || 'dev_preview_secret_ccor_2026';
+    let previewUrl = null;
+    try {
+        const previewToken = await createPreviewToken(site.site_key, site.id, secret, 1800);
+        previewUrl = `https://sneak-idx-sites-staging.bonitaspringsrealtors.workers.dev/preview/${site.site_key}?token=${encodeURIComponent(previewToken)}`;
+    } catch {}
+
+    return json({ success: true, website: updated, previewUrl });
+}
+
+/**
+ * POST /api/admin/sites/:id/website/preview-token
+ */
+export async function handleCreateWebsitePreviewToken(db, siteId, env) {
+    const site = await db.prepare("SELECT * FROM sneak_sites WHERE id = ?").bind(siteId).first();
+    if (!site) return error('Site not found', 404);
+
+    const secret = env?.SNEAK_WEBSITE_PREVIEW_SECRET || 'dev_preview_secret_ccor_2026';
+    const previewToken = await createPreviewToken(site.site_key, site.id, secret, 1800);
+    const previewUrl = `https://sneak-idx-sites-staging.bonitaspringsrealtors.workers.dev/preview/${site.site_key}?token=${encodeURIComponent(previewToken)}`;
+
+    return json({ success: true, siteKey: site.site_key, previewToken, previewUrl, expiresIn: 1800 });
+}
+

@@ -302,6 +302,24 @@ export default {
                 }
             }
 
+            // /api/admin/sites/:id/website
+            const webMatch = path.match(/^\/api\/admin\/sites\/([^\/]+)\/website$/);
+            if (webMatch) {
+                const siteId = webMatch[1];
+                if (method === 'GET') return await api.handleGetWebsiteConfig(db, siteId, env);
+                if (method === 'PUT') {
+                    const body = await request.json();
+                    return await api.handleUpdateWebsiteConfig(db, siteId, body, actor, env);
+                }
+            }
+
+            // /api/admin/sites/:id/website/preview-token
+            const prevMatch = path.match(/^\/api\/admin\/sites\/([^\/]+)\/website\/preview-token$/);
+            if (prevMatch && method === 'POST') {
+                const siteId = prevMatch[1];
+                return await api.handleCreateWebsitePreviewToken(db, siteId, env);
+            }
+
             return error('API endpoint not found', 404);
         }
 
