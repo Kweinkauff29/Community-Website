@@ -60,11 +60,14 @@ export async function createMagicLinkRecord(db, userId, purpose = 'login', ttlSe
     return rawToken;
 }
 
+import { sendMagicLinkEmail } from './email.js';
+
 /**
  * Public magic link request handler with pseudonymized rate limiting & enumeration protection.
  * NEVER returns rawToken, token_hash, userId, accountId, or user existence signals.
+ * Dispatches rawToken strictly via secure transactional email.
  */
-export async function requestPublicMagicLink(db, email, ipHash) {
+export async function requestPublicMagicLink(db, email, ipHash, env = {}) {
     const cleanEmail = (email || '').toLowerCase().trim();
     const GENERIC_RESPONSE = {
         success: true,
@@ -99,7 +102,6 @@ export async function requestPublicMagicLink(db, email, ipHash) {
             `).bind(attemptId, ipHash, emailHash, now).run();
 
             if ((ipAttempts?.count || 0) >= 5 || (emailAttempts?.count || 0) >= 5) {
-                // Rate limited: Return generic response without revealing existence
                 return GENERIC_RESPONSE;
             }
         } catch (err) {
@@ -119,8 +121,17 @@ export async function requestPublicMagicLink(db, email, ipHash) {
         return GENERIC_RESPONSE;
     }
 
-    // 3. (When transactional email is configured in Phase 5.1, delivery adapter will send email here)
-    // Option A: For Phase 5.0.1 staging, create internal record if needed but never expose to public response.
+    // 3. Create single-use token internally and dispatch exclusively via transactional email
+    try {
+        const rawToken = await createMagicLinkRecord(db, user.id, 'login', 900);
+        if (rawToken) {
+            const baseUrl = env?.MEMBER_PORTAL_URL || 'https://sneak-idx-member-staging.bonitaspringsrealtors.workers.dev';
+            const verifyUrl = `${baseUrl}/api/member/auth/verify?token=${encodeURIComponent(rawToken)}`;
+            await sendMagicLinkEmail(env, { email: cleanEmail, verifyUrl, expiresMinutes: 15 });
+        }
+    } catch (err) {
+        console.error('[MAGIC LINK DISPATCH ERROR]', err.message);
+    }
 
     return GENERIC_RESPONSE;
 }

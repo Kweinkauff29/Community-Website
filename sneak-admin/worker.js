@@ -291,6 +291,17 @@ export default {
                 return await api.handleGetEmbed(db, siteId);
             }
 
+            // /api/admin/accounts/:id/entitlement
+            const entMatch = path.match(/^\/api\/admin\/accounts\/([^\/]+)\/entitlement$/);
+            if (entMatch) {
+                const accountId = entMatch[1];
+                if (method === 'GET') return await api.handleGetAccountEntitlement(db, accountId);
+                if (method === 'PUT') {
+                    const body = await request.json();
+                    return await api.handleUpdateAccountEntitlement(db, accountId, body, actor);
+                }
+            }
+
             return error('API endpoint not found', 404);
         }
 

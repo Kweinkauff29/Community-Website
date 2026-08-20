@@ -12,6 +12,7 @@ import {
     VALID_WIDGET_TYPES
 } from '../sneak-admin/validation.js';
 import { generateEmbedSnippets } from '../sneak-admin/embed-generator.js';
+import { getAccountEntitlement } from './billing.js';
 
 function json(data, status = 200) {
     return new Response(JSON.stringify(data), {
@@ -301,14 +302,17 @@ export async function handleGetMemberLeads(db, memberContext) {
  * GET /api/member/billing
  */
 export async function handleGetMemberBilling(db, memberContext) {
-    const { account_id, account_plan } = memberContext;
-    const billing = await db.prepare("SELECT * FROM sneak_account_billing WHERE account_id = ?").bind(account_id).first();
+    const { account_id } = memberContext;
+    const entitlement = await getAccountEntitlement(db, account_id);
 
     return json({
-        plan: account_plan,
-        billing: billing || {
-            billing_status: 'none',
-            entitlement_status: 'inactive'
-        }
+        plan: entitlement?.plan || memberContext.account_plan || 'pro',
+        provider: 'GrowthZone',
+        billingCycle: 'Monthly (1st of each month)',
+        status: entitlement?.status || 'active',
+        isEntitled: entitlement ? entitlement.isEntitled : true,
+        graceUntil: entitlement?.graceUntil || null,
+        growthzoneUrl: 'https://bonitaspringsesterorealtorsfl.growthzoneapp.com/',
+        instructions: 'Your SNEAK IDX subscription is managed by Bonita Springs-Estero REALTORS® through GrowthZone. Billing occurs automatically on the first of each month.'
     });
 }

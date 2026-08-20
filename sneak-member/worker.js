@@ -2,7 +2,7 @@
  * sneak-member/worker.js
  * 
  * Dedicated Cloudflare Worker for SNEAK Member Self-Service Portal,
- * Passwordless Magic Link Auth, and Stripe Test-Mode Billing.
+ * Passwordless Magic Link Auth, and GrowthZone Billing Alignment.
  */
 
 import { renderMemberUI } from './ui.js';
@@ -28,10 +28,6 @@ import {
     handleGetMemberLeads,
     handleGetMemberBilling
 } from './api.js';
-import {
-    verifyStripeWebhookSignature,
-    handleStripeWebhookEvent
-} from './billing.js';
 
 const SECURITY_HEADERS = {
     'Content-Security-Policy': "default-src 'self'; script-src 'self' 'unsafe-inline' https://fonts.googleapis.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; connect-src 'self'; frame-ancestors 'none';",
@@ -72,32 +68,7 @@ export default {
             });
         }
 
-        // 2. Stripe Webhook Endpoint (No CSRF / No Member Cookie)
-        if (path === '/api/stripe/webhook' && method === 'POST') {
-            const signatureHeader = request.headers.get('Stripe-Signature');
-            const webhookSecret = env.STRIPE_WEBHOOK_SECRET;
-
-            if (!webhookSecret) {
-                return error('STRIPE_WEBHOOK_SECRET is not configured on Member Worker.', 500, 'ConfigurationError');
-            }
-
-            const rawBody = await request.text();
-            const valid = await verifyStripeWebhookSignature(rawBody, signatureHeader, webhookSecret);
-            if (!valid) {
-                return error('Invalid Stripe signature or timestamp expired', 400, 'InvalidSignature');
-            }
-
-            try {
-                const event = JSON.parse(rawBody);
-                const result = await handleStripeWebhookEvent(env.DB, event, env);
-                return json({ received: true, ...result });
-            } catch (err) {
-                console.error('[STRIPE WEBHOOK ERROR]', err);
-                return error('Webhook processing error: ' + err.message, 500);
-            }
-        }
-
-        // 3. Passwordless Magic Link Request (POST /api/member/auth/magic-link)
+        // 2. Passwordless Magic Link Request (POST /api/member/auth/magic-link)
         if (path === '/api/member/auth/magic-link' && method === 'POST') {
             if (!validateMemberCsrf(request)) {
                 return error('CSRF verification failed', 403, 'Forbidden');
@@ -107,14 +78,14 @@ export default {
                 const body = await request.json();
                 const clientIp = request.headers.get('CF-Connecting-IP') || '127.0.0.1';
                 const ipHash = await sha256Hex(clientIp);
-                const result = await requestPublicMagicLink(env.DB, body?.email, ipHash);
+                const result = await requestPublicMagicLink(env.DB, body?.email, ipHash, env);
                 return json(result);
             } catch (err) {
                 return error('Malformed request', 400);
             }
         }
 
-        // 4. Magic Link Consumption & Verification (GET /api/member/auth/verify)
+        // 3. Magic Link Consumption & Verification (GET /api/member/auth/verify)
         if (path === '/api/member/auth/verify' && method === 'GET') {
             const token = url.searchParams.get('token');
             if (!token) return error('Missing verification token', 400);
@@ -133,7 +104,7 @@ export default {
             }, 200, { 'Set-Cookie': cookie });
         }
 
-        // 5. Member Logout (POST /api/member/auth/logout)
+        // 4. Member Logout (POST /api/member/auth/logout)
         if (path === '/api/member/auth/logout' && method === 'POST') {
             if (!validateMemberCsrf(request)) {
                 return error('CSRF verification failed', 403, 'Forbidden');
@@ -148,7 +119,7 @@ export default {
             return json({ success: true, message: 'Logged out' }, 200, { 'Set-Cookie': cookie });
         }
 
-        // 6. Member Portal UI (GET /)
+        // 5. Member Portal UI (GET /)
         if (path === '/' || path === '/index.html' || path === '/domains' || path === '/branding' || path === '/billing') {
             return new Response(renderMemberUI(), {
                 headers: {
@@ -159,7 +130,7 @@ export default {
             });
         }
 
-        // 7. Protected Member API Routes (/api/member/*)
+        // 6. Protected Member API Routes (/api/member/*)
         if (path.startsWith('/api/member/')) {
             // Member Session Verification
             const rawToken = getSessionTokenFromRequest(request);
@@ -225,20 +196,6 @@ export default {
 
             if (path === '/api/member/billing' && method === 'GET') {
                 return handleGetMemberBilling(env.DB, memberContext);
-            }
-
-            if (path === '/api/member/billing/checkout' && method === 'POST') {
-                if (!env.STRIPE_SECRET_KEY) {
-                    return error('STRIPE TEST CONFIGURATION REQUIRED (STRIPE_SECRET_KEY missing)', 503, 'StripeNotConfigured');
-                }
-                return error('Stripe test checkout not initialized', 501);
-            }
-
-            if (path === '/api/member/billing/portal' && method === 'POST') {
-                if (!env.STRIPE_SECRET_KEY) {
-                    return error('STRIPE TEST CONFIGURATION REQUIRED (STRIPE_SECRET_KEY missing)', 503, 'StripeNotConfigured');
-                }
-                return error('Stripe customer portal not initialized', 501);
             }
 
             return error('Member API endpoint not found', 404);

@@ -769,3 +769,85 @@ export async function handleValidateMls(db, url) {
     const result = await checkMlsInventory(db, type, mlsId);
     return json(result);
 }
+
+/**
+ * GET /api/admin/accounts/:id/entitlement
+ */
+export async function handleGetAccountEntitlement(db, accountId) {
+    const account = await db.prepare("SELECT * FROM sneak_accounts WHERE id = ?").bind(accountId).first();
+    if (!account) return error('Account not found', 404);
+
+    const entitlement = await db.prepare("SELECT * FROM sneak_account_entitlements WHERE account_id = ?").bind(accountId).first();
+
+    return json({
+        account_id: account.id,
+        account_name: account.account_name,
+        account_status: account.status,
+        plan: entitlement?.plan || account.plan,
+        provider: 'GrowthZone',
+        billing_cycle: 'Monthly (1st of each month)',
+        entitlement: entitlement || {
+            source: 'manual',
+            status: 'active',
+            plan: account.plan,
+            effective_at: account.created_at,
+            grace_until: null,
+            external_reference: null,
+            notes: null
+        }
+    });
+}
+
+/**
+ * PUT /api/admin/accounts/:id/entitlement
+ */
+export async function handleUpdateAccountEntitlement(db, accountId, body, actor) {
+    const account = await db.prepare("SELECT * FROM sneak_accounts WHERE id = ?").bind(accountId).first();
+    if (!account) return error('Account not found', 404);
+
+    const {
+        source = 'manual',
+        status = 'active',
+        plan,
+        effective_at,
+        expires_at,
+        grace_until,
+        external_reference,
+        notes
+    } = body;
+
+    const validStatuses = ['active', 'grace', 'delinquent', 'suspended', 'canceled'];
+    if (!validStatuses.includes(status)) {
+        return error(`Invalid status. Must be one of: ${validStatuses.join(', ')}`);
+    }
+
+    const now = new Date().toISOString();
+
+    await db.prepare(`
+        INSERT INTO sneak_account_entitlements (
+            account_id, source, status, plan, effective_at, expires_at, grace_until,
+            external_reference, notes, last_verified_at, created_at, updated_at
+        ) VALUES (
+            ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
+        )
+        ON CONFLICT(account_id) DO UPDATE SET
+            source = excluded.source,
+            status = excluded.status,
+            plan = COALESCE(excluded.plan, sneak_account_entitlements.plan),
+            effective_at = COALESCE(excluded.effective_at, sneak_account_entitlements.effective_at),
+            expires_at = excluded.expires_at,
+            grace_until = excluded.grace_until,
+            external_reference = COALESCE(excluded.external_reference, sneak_account_entitlements.external_reference),
+            notes = COALESCE(excluded.notes, sneak_account_entitlements.notes),
+            last_verified_at = excluded.last_verified_at,
+            updated_at = excluded.updated_at
+    `).bind(
+        accountId, source, status, plan || account.plan, effective_at || now, expires_at || null,
+        grace_until || null, external_reference || null, notes || null, now, now, now
+    ).run();
+
+    await logAudit(db, actor, 'UPDATE_ENTITLEMENT', 'account_entitlement', accountId, `Updated entitlement status to '${status}' (source: ${source})`);
+
+    const updated = await db.prepare("SELECT * FROM sneak_account_entitlements WHERE account_id = ?").bind(accountId).first();
+    return json({ success: true, entitlement: updated });
+}

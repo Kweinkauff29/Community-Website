@@ -378,8 +378,9 @@ export function renderMemberUI() {
                         </div>
                         <div id="billingDetails" style="margin-bottom: 24px;"></div>
                         <div style="display: flex; gap: 12px;">
-                            <button id="checkoutBtn" class="btn btn-primary" onclick="launchCheckout()">Start Subscription</button>
-                            <button id="portalBtn" class="btn btn-secondary" onclick="launchPortal()" style="display: none;">Manage in Stripe Portal</button>
+                            <a id="growthzoneLink" href="https://bonitaspringsesterorealtorsfl.growthzoneapp.com/" target="_blank" rel="noopener noreferrer" class="btn btn-primary">
+                                Manage Billing in GrowthZone
+                            </a>
                         </div>
                     </div>
                 </div>
@@ -534,19 +535,18 @@ export function renderMemberUI() {
 
         function renderBilling(billing) {
             const div = document.getElementById('billingDetails');
-            const status = billing?.billing_status || 'none';
-            const entitlement = billing?.entitlement_status || 'inactive';
+            const status = (billing?.status || 'active').toUpperCase();
+            const plan = (billing?.plan || currentAccount?.account?.plan || 'pro').toUpperCase();
             
             div.innerHTML = \`
-                <p style="margin-bottom: 8px;"><strong>Billing Status:</strong> <span class="badge \${entitlement === 'active' ? 'badge-success' : 'badge-warning'}">\${status.toUpperCase()}</span></p>
-                <p style="margin-bottom: 8px;"><strong>Entitlement:</strong> \${entitlement.toUpperCase()}</p>
-                \${billing?.current_period_end ? '<p><strong>Current Period End:</strong> ' + billing.current_period_end + '</p>' : ''}
+                <p style="margin-bottom: 8px;"><strong>Billing Provider:</strong> GrowthZone</p>
+                <p style="margin-bottom: 8px;"><strong>Current Plan:</strong> \${plan}</p>
+                <p style="margin-bottom: 8px;"><strong>Service Status:</strong> <span class="badge \${status === 'ACTIVE' ? 'badge-success' : 'badge-warning'}">\${status}</span></p>
+                <p style="margin-bottom: 16px;"><strong>Billing Schedule:</strong> Recurring on the 1st of each month.</p>
+                <p style="color: var(--text-muted); font-size: 0.875rem; line-height: 1.5;">
+                    Your SNEAK IDX subscription is administered directly by Bonita Springs-Estero REALTORS® through GrowthZone. To view past statements or update your payment method, click below to open GrowthZone.
+                </p>
             \`;
-
-            if (billing?.stripe_customer_id) {
-                document.getElementById('checkoutBtn').style.display = 'none';
-                document.getElementById('portalBtn').style.display = 'inline-flex';
-            }
         }
 
         function switchTab(tabId) {

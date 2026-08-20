@@ -264,6 +264,22 @@ function getSigningSecret(env) {
 }
 
 /**
+ * Generic entitlement helper: Evaluates SNEAK service entitlement status.
+ * Backward compatible: allows service if no entitlement row exists (staging/demo accounts).
+ */
+function isAccountEntitled(accountStatus, entitlementStatus, graceUntil, now = new Date()) {
+    if (accountStatus !== 'active') return false;
+    if (!entitlementStatus) return true; // Backward compatibility
+
+    const status = (entitlementStatus || '').toLowerCase().trim();
+    if (status === 'active') return true;
+    if (status === 'grace' || status === 'delinquent') {
+        return Boolean(graceUntil && new Date(graceUntil) > now);
+    }
+    return false; // suspended, canceled
+}
+
+/**
  * GET /idx/v1/bootstrap?site=SITE_KEY
  * Called directly by embed.js on the embedding member webpage.
  * Validates member Origin against sneak_domains and issues a signed session token.
@@ -275,6 +291,7 @@ async function handleBootstrap(req, url, env) {
     }
 
     const origin = req.headers.get('Origin') || '';
+    const referer = req.headers.get('Referer') || '';
     const envName = (env.SNEAK_ENV || 'staging').toLowerCase();
     const isDev = envName === 'development';
 
@@ -282,15 +299,23 @@ async function handleBootstrap(req, url, env) {
     let effectiveOrigin = origin;
 
     if (origin) {
-        try { requestHost = new URL(origin).hostname.toLowerCase(); } catch {}
+        try {
+            requestHost = new URL(origin).hostname.toLowerCase();
+        } catch {
+            return jsonResponse({ error: 'InvalidOrigin', message: 'Origin header could not be parsed.' }, 400);
+        }
+    } else if (referer) {
+        try {
+            const parsedReferer = new URL(referer);
+            requestHost = parsedReferer.hostname.toLowerCase();
+            effectiveOrigin = `${parsedReferer.protocol}//${parsedReferer.host}`;
+        } catch {
+            requestHost = '';
+        }
     }
 
-    // In staging & production, Origin header is strictly required from cross-origin embed
-    if (!origin) {
-        if (isDev) {
-            requestHost = 'localhost';
-            effectiveOrigin = 'http://localhost';
-        } else {
+    if (!requestHost) {
+        if (!isDev) {
             return jsonResponse({
                 error: 'DomainNotAuthorized',
                 message: 'Origin header is required for SNEAK bootstrap in staging and production.'
@@ -300,7 +325,7 @@ async function handleBootstrap(req, url, env) {
 
     const isDevHost = requestHost === 'localhost' || requestHost === '127.0.0.1' || requestHost === '::1';
 
-    // 1. Fetch site and account
+    // 1. Fetch site, account, and entitlement
     if (!env.DB) {
         return jsonResponse({ error: 'DatabaseError', message: 'Database binding unavailable.' }, 500);
     }
@@ -309,10 +334,10 @@ async function handleBootstrap(req, url, env) {
         SELECT 
             s.id AS site_id, s.account_id, s.site_key, s.status AS site_status,
             a.account_name, a.status AS account_status,
-            b.entitlement_status, b.billing_status, b.grace_until
+            ent.status AS entitlement_status, ent.grace_until
         FROM sneak_sites s
         JOIN sneak_accounts a ON s.account_id = a.id
-        LEFT JOIN sneak_account_billing b ON a.id = b.account_id
+        LEFT JOIN sneak_account_entitlements ent ON a.id = ent.account_id
         WHERE s.site_key = ?
     `;
     const siteRecord = await env.DB.prepare(query).bind(siteKey).first();
@@ -324,13 +349,9 @@ async function handleBootstrap(req, url, env) {
         return jsonResponse({ error: 'SiteInactive', message: 'This SNEAK site is currently inactive or suspended.' }, 403);
     }
 
-    // Billing entitlement check (only enforced if billing record exists)
-    if (siteRecord.billing_status && siteRecord.billing_status !== 'none') {
-        const isEntitled = siteRecord.entitlement_status === 'active' || 
-            (siteRecord.entitlement_status === 'grace' && siteRecord.grace_until && new Date(siteRecord.grace_until) > new Date());
-        if (!isEntitled) {
-            return jsonResponse({ error: 'BillingInactive', message: 'This SNEAK site subscription is currently inactive.' }, 403);
-        }
+    // Generic entitlement check (backward compatible if no entitlement row exists)
+    if (!isAccountEntitled(siteRecord.account_status, siteRecord.entitlement_status, siteRecord.grace_until)) {
+        return jsonResponse({ error: 'EntitlementInactive', message: 'This SNEAK site service entitlement is currently inactive or expired.' }, 403);
     }
 
     // 2. Fetch verified domains (status = 'active' AND verified = 1)
@@ -403,7 +424,7 @@ async function resolveAndAuthorizeRequest(req, siteKey, origin, referer, env) {
         return { authorized: false, error: 'DatabaseError', message: 'Database binding unavailable.', status: 500 };
     }
 
-    // Lookup site, account, and branding
+    // Lookup site, account, branding, and generic entitlement
     const query = `
         SELECT 
             s.id AS site_id, s.account_id, s.site_key, s.site_name, s.status AS site_status,
@@ -411,11 +432,11 @@ async function resolveAndAuthorizeRequest(req, siteKey, origin, referer, env) {
             a.account_name, a.status AS account_status, a.plan, a.agent_mls_id AS default_agent_mls_id, a.office_mls_id AS default_office_mls_id,
             b.display_name, b.brokerage, b.logo_url, b.agent_photo_url, b.primary_color, b.secondary_color,
             b.phone, b.email, b.website_url, b.config_json AS branding_config,
-            bill.entitlement_status, bill.billing_status, bill.grace_until
+            ent.status AS entitlement_status, ent.grace_until
         FROM sneak_sites s
         JOIN sneak_accounts a ON s.account_id = a.id
         LEFT JOIN sneak_branding b ON s.id = b.site_id
-        LEFT JOIN sneak_account_billing bill ON a.id = bill.account_id
+        LEFT JOIN sneak_account_entitlements ent ON a.id = ent.account_id
         WHERE s.site_key = ?
     `;
 
@@ -428,13 +449,9 @@ async function resolveAndAuthorizeRequest(req, siteKey, origin, referer, env) {
         return { authorized: false, error: 'SiteInactive', message: 'This SNEAK site is currently inactive or suspended.', status: 403 };
     }
 
-    // Billing entitlement check (only enforced if billing record exists)
-    if (siteRecord.billing_status && siteRecord.billing_status !== 'none') {
-        const isEntitled = siteRecord.entitlement_status === 'active' || 
-            (siteRecord.entitlement_status === 'grace' && siteRecord.grace_until && new Date(siteRecord.grace_until) > new Date());
-        if (!isEntitled) {
-            return { authorized: false, error: 'BillingInactive', message: 'This SNEAK site subscription is currently inactive.', status: 403 };
-        }
+    // Generic entitlement check (backward compatible if no entitlement row exists)
+    if (!isAccountEntitled(siteRecord.account_status, siteRecord.entitlement_status, siteRecord.grace_until)) {
+        return { authorized: false, error: 'EntitlementInactive', message: 'This SNEAK site service entitlement is currently inactive or expired.', status: 403 };
     }
 
     // Extract Session Token from Header (Authorization: Bearer <token> or X-SNEAK-Session) or query string
