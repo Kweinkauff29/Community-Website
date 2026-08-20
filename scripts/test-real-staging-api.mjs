@@ -123,8 +123,8 @@ async function runTests() {
     const mediaList = mediaRes.body?.media || mediaRes.body?.data || [];
     assert(mediaList.length > 0, `Media list returns ${mediaList.length} items (D1 primary photo fallback)`);
 
-    // 7. AGENT SCOPE VERIFICATION (scope-test-agent -> ListAgentMlsId = 'P3278290')
-    console.log('\n[7] Testing Agent Scope (scope-test-agent -> P3278290)...');
+    // 7. AGENT SCOPE VERIFICATION (scope-test-agent -> ListAgentMlsId = 'B3650316')
+    console.log('\n[7] Testing Agent Scope (scope-test-agent -> B3650316)...');
     const bootAgent = await request('/idx/v1/bootstrap?site=scope-test-agent');
     assert(bootAgent.status === 200, 'Agent site bootstrap returns 200 OK');
     const agentSession = typeof bootAgent.body?.session === 'string' ? bootAgent.body.session : bootAgent.body?.session?.token;
@@ -134,7 +134,7 @@ async function runTests() {
     });
     assert(agentSearch.status === 200, 'Agent scoped search returns 200 OK');
     const agentListings = agentSearch.body?.data || [];
-    const allAgentMatch = agentListings.length > 0 && agentListings.every(l => l.ListAgentMlsId === 'P3278290');
+    const allAgentMatch = agentListings.length > 0 && agentListings.every(l => l.ListAgentMlsId === 'B3650316');
     assert(allAgentMatch, `Agent search returns ONLY agent's listings (count: ${agentListings.length}/${agentSearch.body?.pagination?.total})`);
 
     const agentListingKey = agentListings[0]?.ListingKey;
@@ -161,8 +161,8 @@ async function runTests() {
     });
     assert(agentEndpointEscape.status === 403, `Agent endpoint requesting outside MLS ID blocked (HTTP ${agentEndpointEscape.status})`);
 
-    // 8. OFFICE SCOPE VERIFICATION (scope-test-office -> ListOfficeMlsId = 'NPPR')
-    console.log('\n[8] Testing Office Scope (scope-test-office -> NPPR)...');
+    // 8. OFFICE SCOPE VERIFICATION (scope-test-office -> ListOfficeMlsId = 'BPRI')
+    console.log('\n[8] Testing Office Scope (scope-test-office -> BPRI)...');
     const bootOffice = await request('/idx/v1/bootstrap?site=scope-test-office');
     assert(bootOffice.status === 200, 'Office site bootstrap returns 200 OK');
     const officeSession = typeof bootOffice.body?.session === 'string' ? bootOffice.body.session : bootOffice.body?.session?.token;
@@ -172,7 +172,7 @@ async function runTests() {
     });
     assert(officeSearch.status === 200, 'Office scoped search returns 200 OK');
     const officeListings = officeSearch.body?.data || [];
-    const allOfficeMatch = officeListings.length > 0 && officeListings.every(l => l.ListOfficeMlsId === 'NPPR');
+    const allOfficeMatch = officeListings.length > 0 && officeListings.every(l => l.ListOfficeMlsId === 'BPRI');
     assert(allOfficeMatch, `Office search returns ONLY office's listings (count: ${officeListings.length}/${officeSearch.body?.pagination?.total})`);
 
     const officeListingKey = officeListings[0]?.ListingKey;
@@ -182,7 +182,7 @@ async function runTests() {
     assert(officeDetail.status === 200, 'Detail for in-scope office listing returns 200 OK');
 
     // Office Scope Escape Test (requesting listing from another office)
-    const nonOfficeListing = marketListings.find(l => l.ListOfficeMlsId !== 'NPPR');
+    const nonOfficeListing = marketListings.find(l => l.ListOfficeMlsId !== 'BPRI');
     if (nonOfficeListing) {
         const officeEscapeDetail = await request(`/idx/v1/listing/${nonOfficeListing.ListingKey}?site=scope-test-office`, {
             headers: { 'X-Sneak-Session': officeSession }
@@ -194,6 +194,36 @@ async function runTests() {
         });
         assert(officeEscapeMedia.status === 404 || officeEscapeMedia.status === 403, `Office scope escape blocked on media (HTTP ${officeEscapeMedia.status})`);
     }
+
+    // 9. OPEN HOUSE API & SCOPE VERIFICATION
+    console.log('\n[9] Testing Open Houses API & Tenant Scoping (/idx/v1/open-houses)...');
+    // Market Scope Open Houses
+    const marketOH = await request('/idx/v1/open-houses?site=demo-ccor', {
+        headers: { 'X-Sneak-Session': marketSession }
+    });
+    assert(marketOH.status === 200, 'Market open houses returns 200 OK');
+    const marketOHList = marketOH.body?.data || [];
+    assert(marketOHList.length > 0, `Market open houses returned real events (count: ${marketOHList.length})`);
+    if (marketOHList.length > 0) {
+        assert(Boolean(marketOHList[0].openHouse?.openHouseKey), 'Open house payload contains openHouseKey');
+        assert(Boolean(marketOHList[0].property?.City), 'Open house payload contains joined property details');
+    }
+
+    // Agent Scope Open Houses
+    const agentOH = await request('/idx/v1/open-houses?site=scope-test-agent', {
+        headers: { 'X-Sneak-Session': agentSession }
+    });
+    assert(agentOH.status === 200, 'Agent open houses returns 200 OK');
+    const agentOHList = agentOH.body?.data || [];
+    assert(agentOHList.length > 0, `Agent open houses returned in-scope events (count: ${agentOHList.length})`);
+
+    // Office Scope Open Houses
+    const officeOH = await request('/idx/v1/open-houses?site=scope-test-office', {
+        headers: { 'X-Sneak-Session': officeSession }
+    });
+    assert(officeOH.status === 200, 'Office open houses returns 200 OK');
+    const officeOHList = officeOH.body?.data || [];
+    assert(officeOHList.length > 0, `Office open houses returned in-scope events (count: ${officeOHList.length})`);
 
     console.log('\n====================================================');
     console.log(`REAL MLS STAGING ACCEPTANCE RESULTS: ${passed} PASSED, ${failed} FAILED`);
