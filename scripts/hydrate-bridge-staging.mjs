@@ -40,8 +40,8 @@ function verifyDatabaseTarget() {
 }
 
 // 2. Resolve BRIDGE_TOKEN
-let bridgeToken = process.env.BRIDGE_TOKEN || '';
-if (!bridgeToken) {
+let bridgeToken = process.env.BRIDGE_TOKEN;
+if (bridgeToken === undefined) {
     const devVarsPath = path.join(rootDir, '.dev.vars');
     if (fs.existsSync(devVarsPath)) {
         try {
@@ -97,6 +97,13 @@ function escapeSql(val) {
 function recordToSql(r) {
     const primaryPhoto = extractPrimaryPhoto(r.Media);
     
+    let lat = r.Latitude ?? null;
+    let lon = r.Longitude ?? null;
+    if (lat == null && lon == null && Array.isArray(r.Coordinates) && r.Coordinates.length >= 2) {
+        lon = r.Coordinates[0];
+        lat = r.Coordinates[1];
+    }
+
     // Use value ?? null to protect legitimate numeric zeros (e.g. BathroomsHalf = 0, LotSizeAcres = 0)
     const values = [
         escapeSql(r.ListingKey),
@@ -123,8 +130,8 @@ function recordToSql(r) {
         escapeSql(r.ListingContractDate ?? null),
         escapeSql(r.ModificationTimestamp ?? null),
         escapeSql(r.StatusChangeTimestamp ?? null),
-        escapeSql(r.Latitude ?? null),
-        escapeSql(r.Longitude ?? null),
+        escapeSql(lat),
+        escapeSql(lon),
         escapeSql(r.YearBuilt ?? null),
         escapeSql(r.LotSizeAcres ?? null),
         escapeSql(r.SubdivisionName ?? null),
@@ -173,7 +180,7 @@ async function runHydration() {
         process.exit(0);
     }
 
-    const selectFields = INTENDED_FIELDS.join(',');
+    const selectFields = INTENDED_FIELDS.filter(f => f !== 'Latitude' && f !== 'Longitude').join(',');
     const filter = "StateOrProvince eq 'FL' and (StandardStatus eq 'Active' or StandardStatus eq 'Active Under Contract' or StandardStatus eq 'Pending')";
     
     let skip = 0;
@@ -185,9 +192,14 @@ async function runHydration() {
     let totalWithPhotos = 0;
     const sqlStatements = [];
 
+    let pageCount = 0;
+    const maxPagesArg = process.argv.find(a => a.startsWith('--pages='));
+    const maxPages = maxPagesArg ? (maxPagesArg.includes('all') ? Infinity : parseInt(maxPagesArg.split('=')[1], 10)) : (isDryRun ? 5 : Infinity);
+
     const startTime = Date.now();
 
-    while (hasMore) {
+    while (hasMore && pageCount < maxPages) {
+        pageCount++;
         const url = new URL('https://api.bridgedataoutput.com/api/v2/OData/bsaor/Property');
         url.searchParams.set('$top', String(top));
         url.searchParams.set('$skip', String(skip));
@@ -207,12 +219,14 @@ async function runHydration() {
         for (const r of records) {
             if (!r.ListingKey) continue;
             totalTransformed++;
-            if (r.Latitude != null && r.Longitude != null) totalWithCoords++;
+            const lat = r.Latitude ?? (Array.isArray(r.Coordinates) ? r.Coordinates[1] : null);
+            const lon = r.Longitude ?? (Array.isArray(r.Coordinates) ? r.Coordinates[0] : null);
+            if (lat != null && lon != null) totalWithCoords++;
             if (extractPrimaryPhoto(r.Media)) totalWithPhotos++;
             sqlStatements.push(recordToSql(r));
         }
 
-        console.log(`  Fetched page: ${records.length} records (Total so far: ${totalFetched})`);
+        console.log(`  Fetched page ${pageCount}: ${records.length} records (Total so far: ${totalFetched})`);
 
         if (records.length < top) {
             hasMore = false;

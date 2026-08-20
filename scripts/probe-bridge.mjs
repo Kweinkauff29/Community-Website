@@ -21,9 +21,9 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const rootDir = path.resolve(__dirname, '..');
 
 // 1. Resolve BRIDGE_TOKEN from process env or .dev.vars
-let bridgeToken = process.env.BRIDGE_TOKEN || '';
+let bridgeToken = process.env.BRIDGE_TOKEN;
 
-if (!bridgeToken) {
+if (bridgeToken === undefined) {
     const devVarsPath = path.join(rootDir, '.dev.vars');
     if (fs.existsSync(devVarsPath)) {
         try {
@@ -80,7 +80,14 @@ async function bridgeFetch(endpointPath, queryParams = {}) {
     });
 
     if (!response.ok) {
-        throw new Error(`Bridge API HTTP ${response.status} ${response.statusText} on ${endpointPath}`);
+        let errText = '';
+        try {
+            const errJson = await response.json();
+            errText = JSON.stringify(errJson, null, 2);
+        } catch {
+            errText = await response.text();
+        }
+        throw new Error(`Bridge API HTTP ${response.status} ${response.statusText} on ${endpointPath}:\n${errText}`);
     }
 
     return await response.json();
@@ -93,27 +100,34 @@ async function runProbe() {
     console.log('Target Base: https://api.bridgedataoutput.com/api/v2/OData/bsaor');
 
     try {
-        // --- 1. FIELD VALIDATION ($top=1) ---
-        console.log('\n[1/5] Validating 42 Target Schema Fields on Property Feed...');
-        const fieldSelect = INTENDED_FIELDS.join(',');
-        const sampleData = await bridgeFetch('Property', {
-            '$top': '1',
-            '$select': fieldSelect
-        });
-
-        const records = sampleData.value || [];
-        if (records.length === 0) {
+        // --- 1. FIELD VALIDATION ($top=1 without select to inspect native fields) ---
+        console.log('\n[1/5] Probing Property Feed Schema with native record inspect ($top=1)...');
+        const rawSampleData = await bridgeFetch('Property', { '$top': '1' });
+        const rawRecords = rawSampleData.value || [];
+        if (rawRecords.length === 0) {
             console.log('  Notice: 0 records returned for $top=1 probe.');
-        } else {
-            const sample = records[0];
-            const returnedKeys = new Set(Object.keys(sample));
-            const missing = INTENDED_FIELDS.filter(f => !returnedKeys.has(f));
-            console.log(`  HTTP 200 OK — Successfully retrieved sample record (ListingKey: ${sample.ListingKey})`);
-            console.log(`  Intended fields returned: ${INTENDED_FIELDS.length - missing.length}/${INTENDED_FIELDS.length}`);
-            if (missing.length > 0) {
-                console.log(`  Fields omitted/null in sample: ${missing.join(', ')}`);
-            }
+            return;
         }
+
+        const sample = rawRecords[0];
+        const nativeKeys = new Set(Object.keys(sample));
+        console.log(`  HTTP 200 OK — Successfully retrieved native record (ListingKey: ${sample.ListingKey})`);
+        console.log(`  Total native fields present on record: ${nativeKeys.size}`);
+        console.log('  Sample Coordinates value:', JSON.stringify(sample.Coordinates));
+        console.log('  Sample Latitude/Longitude fields present?:', 'Latitude' in sample, 'Longitude' in sample);
+
+        // Check which intended fields are present natively
+        const missing = INTENDED_FIELDS.filter(f => !nativeKeys.has(f));
+        const present = INTENDED_FIELDS.filter(f => nativeKeys.has(f));
+        console.log(`  Intended fields natively present: ${present.length}/${INTENDED_FIELDS.length}`);
+        if (missing.length > 0) {
+            console.log(`  Intended fields NOT in native keys: ${missing.join(', ')}`);
+        }
+
+        // Adjust SELECT_FIELDS for OData queries (excluding Latitude/Longitude if rejected by Bridge)
+        const validSelectFields = INTENDED_FIELDS.filter(f => f !== 'Latitude' && f !== 'Longitude' && nativeKeys.has(f));
+        const fieldSelect = validSelectFields.join(',');
+        console.log(`  Valid OData $select list (${validSelectFields.length} fields)`);
 
         // --- 2. ACTIVE/PENDING COUNTS & ORIGIN SYSTEMS ($top=200 sample audit) ---
         console.log('\n[2/5] Auditing Dataset Counts & Identifier Coverage ($top=200 audit sample)...');
@@ -160,7 +174,7 @@ async function runProbe() {
             if (r.ListOfficeMlsId) withListOfficeMlsId++;
             if (r.ListOfficeKey) withListOfficeKey++;
             if (r.ListAgentMlsId) withListAgentMlsId++;
-            if ((r.Latitude != null && r.Longitude != null) || r.Coordinates) withCoords++;
+            if ((r.Latitude != null && r.Longitude != null) || (Array.isArray(r.Coordinates) && r.Coordinates.length >= 2)) withCoords++;
             if (Array.isArray(r.Media) && r.Media.length > 0) withMedia++;
         }
 
