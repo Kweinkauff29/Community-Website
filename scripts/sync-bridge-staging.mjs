@@ -191,9 +191,16 @@ async function runSync() {
     }
 
     // 1. Determine Fixed Sync Window
-    const syncUpperBound = new Date().toISOString();
-    let syncLowerBound = null;
+    let syncUpperBound = null;
+    const untilArg = process.argv.find(a => a.startsWith('--until='));
+    if (untilArg) {
+        syncUpperBound = untilArg.split('=')[1];
+        if (!syncUpperBound.endsWith('Z')) syncUpperBound += 'Z';
+    } else {
+        syncUpperBound = new Date().toISOString();
+    }
 
+    let syncLowerBound = null;
     const sinceArg = process.argv.find(a => a.startsWith('--since='));
     if (sinceArg) {
         syncLowerBound = sinceArg.split('=')[1];
@@ -211,6 +218,16 @@ async function runSync() {
             // Default to 24 hours prior if no cursor recorded
             syncLowerBound = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
         }
+    }
+
+    // Strict window validation
+    const lowerMs = new Date(syncLowerBound).getTime();
+    const upperMs = new Date(syncUpperBound).getTime();
+    if (isNaN(lowerMs) || isNaN(upperMs)) {
+        throw new Error(`Invalid sync window timestamp(s): lower=${syncLowerBound}, upper=${syncUpperBound}`);
+    }
+    if (lowerMs >= upperMs) {
+        throw new Error(`FATAL WINDOW ERROR: syncLowerBound (${syncLowerBound}) must be strictly less than syncUpperBound (${syncUpperBound}).`);
     }
 
     console.log(`\n[Fixed Sync Window]`);
@@ -353,7 +370,7 @@ async function runSync() {
     }
 
     // 5. Commit Updated Cursor
-    console.log('\n[Committing Sync Checkpoint]');
+    const isHistoricalBounded = Boolean(untilArg);
     const countQuery = `SELECT count(*) as count FROM sneak_listings;`;
     const countOut = execSync(`npx wrangler d1 execute ${TARGET_DB_NAME} --remote --command="${countQuery}" --json -c ${WRANGLER_CONFIG}`, {
         cwd: rootDir,
@@ -365,21 +382,26 @@ async function runSync() {
         finalListingCount = JSON.parse(countOut)[0]?.results[0]?.count || 0;
     } catch {}
 
-    const updateStateSql = `INSERT OR REPLACE INTO sneak_sync_state (
-        sync_name, last_successful_sync, last_cursor, last_record_count, status, updated_at
-    ) VALUES (
-        'listings', datetime('now'), '${syncUpperBound}', ${finalListingCount}, 'success', datetime('now')
-    );`;
-    const stateFile = path.join(scratchDir, 'sync-state.sql');
-    fs.writeFileSync(stateFile, updateStateSql, 'utf8');
-    execSync(`npx wrangler d1 execute ${TARGET_DB_NAME} --remote --file=${stateFile} -c ${WRANGLER_CONFIG}`, { cwd: rootDir, stdio: 'pipe' });
-    if (fs.existsSync(stateFile)) { try { fs.unlinkSync(stateFile); } catch {} }
+    if (isHistoricalBounded) {
+        console.log(`\n[Historical Test Run]: Cursor in sneak_sync_state was NOT updated for bounded test interval (${syncLowerBound} -> ${syncUpperBound}).`);
+    } else {
+        console.log('\n[Committing Sync Checkpoint]');
+        const updateStateSql = `INSERT OR REPLACE INTO sneak_sync_state (
+            sync_name, last_successful_sync, last_cursor, last_record_count, status, updated_at
+        ) VALUES (
+            'listings', datetime('now'), '${syncUpperBound}', ${finalListingCount}, 'success', datetime('now')
+        );`;
+        const stateFile = path.join(scratchDir, 'sync-state.sql');
+        fs.writeFileSync(stateFile, updateStateSql, 'utf8');
+        execSync(`npx wrangler d1 execute ${TARGET_DB_NAME} --remote --file=${stateFile} -c ${WRANGLER_CONFIG}`, { cwd: rootDir, stdio: 'pipe' });
+        if (fs.existsSync(stateFile)) { try { fs.unlinkSync(stateFile); } catch {} }
+        console.log(`New Committed Cursor: ${syncUpperBound}`);
+    }
 
     console.log('====================================================');
     console.log(`DELTA SYNC COMPLETED SUCCESSFULLY (${duration}s)`);
     console.log(`Operations Written: ${written.toLocaleString()}`);
     console.log(`New Staging Listing Count: ${finalListingCount.toLocaleString()}`);
-    console.log(`New Committed Cursor: ${syncUpperBound}`);
     console.log('====================================================');
 }
 

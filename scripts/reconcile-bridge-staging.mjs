@@ -121,6 +121,8 @@ async function getBridgeEligibleKeys() {
 
     let nextUrlStr = currentUrl.toString();
     let pageCount = 0;
+    let totalFetched = 0;
+    let duplicateCount = 0;
     const bridgeKeys = new Set();
     const startTime = Date.now();
 
@@ -130,9 +132,15 @@ async function getBridgeEligibleKeys() {
         if (!res.ok) throw new Error(`Bridge Reconciliation Fetch HTTP ${res.status} on page ${pageCount}`);
         const data = await res.json();
         const records = data.value || [];
+        totalFetched += records.length;
 
         for (const r of records) {
-            if (r.ListingKey) bridgeKeys.add(r.ListingKey);
+            if (!r.ListingKey) continue;
+            if (bridgeKeys.has(r.ListingKey)) {
+                duplicateCount++;
+            } else {
+                bridgeKeys.add(r.ListingKey);
+            }
         }
 
         if (pageCount % 20 === 0 || !data['@odata.nextLink']) {
@@ -149,10 +157,27 @@ async function getBridgeEligibleKeys() {
         }
     }
 
-    if (bridgeKeys.size !== expectedCount) {
-        console.warn(`Notice: Bridge keys collected (${bridgeKeys.size}) vs expected count (${expectedCount}) — variance of ${Math.abs(bridgeKeys.size - expectedCount)}`);
+    // STRICT FAIL-CLOSED COMPLETENESS GUARDS
+    console.log('\n[Completeness Guard Verification]');
+    console.log(`  - Expected @odata.count: ${expectedCount.toLocaleString()}`);
+    console.log(`  - Total Records Fetched: ${totalFetched.toLocaleString()}`);
+    console.log(`  - Unique Keys:           ${bridgeKeys.size.toLocaleString()}`);
+    console.log(`  - Duplicates:            ${duplicateCount}`);
+    console.log(`  - Total Pages:           ${pageCount}`);
+
+    if (totalFetched !== expectedCount) {
+        throw new Error(`FATAL RECONCILIATION SHORTFALL: Fetched records (${totalFetched}) !== expected count (${expectedCount}). Reconciliation aborted with ZERO deletions.`);
     }
 
+    if (bridgeKeys.size !== expectedCount) {
+        throw new Error(`FATAL RECONCILIATION KEY MISMATCH: Unique keys (${bridgeKeys.size}) !== expected count (${expectedCount}). Reconciliation aborted with ZERO deletions.`);
+    }
+
+    if (duplicateCount > 0) {
+        throw new Error(`FATAL RECONCILIATION DUPLICATE ANOMALY: ${duplicateCount} duplicate ListingKeys encountered. Reconciliation aborted with ZERO deletions.`);
+    }
+
+    console.log('  PASS: 100% complete Bridge eligible inventory verified.');
     return bridgeKeys;
 }
 

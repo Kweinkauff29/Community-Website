@@ -147,12 +147,16 @@ async function runOpenHouseSync() {
     let nextUrlStr = currentUrl.toString();
     let pageCount = 0;
     let totalFetched = 0;
+    let duplicateCount = 0;
+    let missingOpenHouseKey = 0;
+    let missingListingKey = 0;
     let validListingMatches = 0;
     let missingListingMatches = 0;
     let cancelledCount = 0;
 
     const validOpenHouses = [];
     const validOHKeys = new Set();
+    const seenAllOHKeys = new Set();
     const statusCounts = {};
     const typeCounts = {};
 
@@ -165,7 +169,14 @@ async function runOpenHouseSync() {
         totalFetched += records.length;
 
         for (const r of records) {
-            if (!r.OpenHouseKey || !r.ListingKey) continue;
+            if (!r.OpenHouseKey) { missingOpenHouseKey++; continue; }
+            if (!r.ListingKey) { missingListingKey++; continue; }
+
+            if (seenAllOHKeys.has(r.OpenHouseKey)) {
+                duplicateCount++;
+            } else {
+                seenAllOHKeys.add(r.OpenHouseKey);
+            }
 
             const st = r.OpenHouseStatus || 'Active';
             statusCounts[st] = (statusCounts[st] || 0) + 1;
@@ -199,12 +210,31 @@ async function runOpenHouseSync() {
     console.log('\n====================================================');
     console.log('OPEN HOUSE INGESTION AUDIT');
     console.log('====================================================');
+    console.log(`- Expected Future Open Houses:     ${expectedCount.toLocaleString()}`);
     console.log(`- Total Open Houses Fetched:       ${totalFetched.toLocaleString()}`);
+    console.log(`- Unique OpenHouseKeys:            ${seenAllOHKeys.size.toLocaleString()}`);
+    console.log(`- Duplicates:                      ${duplicateCount}`);
+    console.log(`- Missing OpenHouseKey:            ${missingOpenHouseKey}`);
+    console.log(`- Missing ListingKey:              ${missingListingKey}`);
     console.log(`- Status Distribution:             ${JSON.stringify(statusCounts)}`);
     console.log(`- Type Distribution:               ${JSON.stringify(typeCounts)}`);
     console.log(`- Matched Active sneak_listings:   ${validListingMatches.toLocaleString()}`);
     console.log(`- Unmatched / Off-Market Listings: ${missingListingMatches.toLocaleString()}`);
     console.log(`- Cancelled Events Skipped:        ${cancelledCount.toLocaleString()}`);
+
+    // STRICT FAIL-CLOSED COMPLETENESS GUARDS
+    if (totalFetched !== expectedCount) {
+        throw new Error(`FATAL OPEN HOUSE SHORTFALL: Fetched (${totalFetched}) !== expected count (${expectedCount}). Aborted with ZERO D1 modifications.`);
+    }
+    if (seenAllOHKeys.size !== expectedCount) {
+        throw new Error(`FATAL OPEN HOUSE KEY MISMATCH: Unique keys (${seenAllOHKeys.size}) !== expected count (${expectedCount}). Aborted with ZERO D1 modifications.`);
+    }
+    if (duplicateCount > 0) {
+        throw new Error(`FATAL OPEN HOUSE DUPLICATES: Encountered ${duplicateCount} duplicate OpenHouseKeys. Aborted with ZERO D1 modifications.`);
+    }
+    if (missingOpenHouseKey > 0 || missingListingKey > 0) {
+        throw new Error(`FATAL OPEN HOUSE MISSING IDENTIFIERS: OHKeys=${missingOpenHouseKey}, ListingKeys=${missingListingKey}. Aborted.`);
+    }
 
     if (isDryRun) {
         console.log('\nDRY RUN COMPLETE: Zero database writes performed.');
@@ -247,9 +277,40 @@ async function runOpenHouseSync() {
         if (fs.existsSync(file)) { try { fs.unlinkSync(file); } catch {} }
     }
 
-    // 4. Stale / Past / Cancelled Cleanup
-    console.log('\n[Reconciling Stale & Past Open Houses]');
-    // Delete any past OH or OH not in validOHKeys
+    // 4. Stale / Past / Cancelled / Off-Market Open House Reconciliation
+    console.log('\n[Reconciling Stale, Cancelled, and Past Open Houses in D1...]');
+    // Fetch all currently existing OH keys in D1
+    const existingRaw = execSync(`npx wrangler d1 execute ${TARGET_DB_NAME} --remote --command="SELECT OpenHouseKey FROM sneak_open_houses;" --json -c ${WRANGLER_CONFIG}`, {
+        cwd: rootDir,
+        encoding: 'utf8',
+        stdio: ['pipe', 'pipe', 'ignore']
+    });
+    const existingRows = JSON.parse(existingRaw)[0]?.results || [];
+    const staleOHKeys = [];
+    for (const row of existingRows) {
+        if (row.OpenHouseKey && !validOHKeys.has(row.OpenHouseKey)) {
+            staleOHKeys.push(row.OpenHouseKey);
+        }
+    }
+
+    let stalePruned = 0;
+    if (staleOHKeys.length > 0) {
+        console.log(`  Found ${staleOHKeys.length} stale/cancelled/off-market open houses in D1 to prune...`);
+        for (let i = 0; i < staleOHKeys.length; i += chunkSize) {
+            const chunk = staleOHKeys.slice(i, i + chunkSize);
+            const pruneSql = `DELETE FROM sneak_open_houses WHERE OpenHouseKey IN (${chunk.map(k => `'${k}'`).join(', ')});`;
+            const pruneFile = path.join(scratchDir, `oh-prune-${i}.sql`);
+            fs.writeFileSync(pruneFile, pruneSql, 'utf8');
+            try {
+                execSync(`npx wrangler d1 execute ${TARGET_DB_NAME} --remote --file=${pruneFile} -c ${WRANGLER_CONFIG}`, { cwd: rootDir, stdio: 'pipe' });
+                stalePruned += chunk.length;
+            } finally {
+                if (fs.existsSync(pruneFile)) { try { fs.unlinkSync(pruneFile); } catch {} }
+            }
+        }
+    }
+
+    // Also remove any past date records
     const cleanupPastSql = `DELETE FROM sneak_open_houses WHERE OpenHouseDate < date('now');`;
     execSync(`npx wrangler d1 execute ${TARGET_DB_NAME} --remote --command="${cleanupPastSql}" -c ${WRANGLER_CONFIG}`, { cwd: rootDir, stdio: 'pipe' });
 
@@ -274,6 +335,8 @@ async function runOpenHouseSync() {
 
     console.log('====================================================');
     console.log('OPEN HOUSE SYNCHRONIZATION COMPLETED');
+    console.log(`- Valid Open Houses Ingested:    ${validOpenHouses.length.toLocaleString()}`);
+    console.log(`- Stale/Off-Market Rows Pruned:  ${stalePruned.toLocaleString()}`);
     console.log(`- Final sneak_open_houses Count: ${finalOHCount.toLocaleString()}`);
     console.log('====================================================');
 }
