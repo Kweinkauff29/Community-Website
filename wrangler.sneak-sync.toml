@@ -1,0 +1,25 @@
+# wrangler.sneak-sync.toml
+# Dedicated Configuration for SNEAK IDX Staging Synchronization Worker
+
+name = "sneak-idx-sync-staging"
+main = "sneak-sync/worker.js"
+compatibility_date = "2024-01-01"
+
+[observability]
+enabled = true
+head_sampling_rate = 1
+
+[vars]
+SNEAK_ENV = "staging"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "sneak-idx-staging"
+database_id = "6b91eeca-d65f-434c-a49f-419dff98285f"
+migrations_dir = "migrations"
+
+[triggers]
+crons = [
+  "*/15 * * * *",
+  "7 * * * *"
+]
