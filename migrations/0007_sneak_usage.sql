@@ -1,4 +1,4 @@
--- Migration: 0008_sneak_usage.sql
+-- Migration: 0007_sneak_usage.sql
 -- Description: Creates the sneak_usage table for tracking daily usage metrics per site.
 
 CREATE TABLE IF NOT EXISTS sneak_usage (

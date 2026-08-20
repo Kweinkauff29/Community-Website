@@ -1,7 +1,7 @@
 -- Seed: staging-demo-tenant.sql
 -- Description: Staging & local development demo tenant provisioning (demo-ccor).
 -- DO NOT RUN AS PART OF AUTOMATIC PRODUCTION MIGRATIONS.
--- Run explicitly via: wrangler d1 execute community-idx --local/--remote --file=seeds/staging-demo-tenant.sql
+-- Run explicitly via: wrangler d1 execute sneak-idx-staging --local/--remote --file=seeds/staging-demo-tenant.sql
 
 INSERT OR IGNORE INTO sneak_accounts (
     id, member_id, account_name, agent_mls_id, office_mls_id, status, plan
@@ -32,8 +32,7 @@ INSERT OR IGNORE INTO sneak_domains (id, site_id, domain, verified, status)
 VALUES 
     ('dom_demo_local1', 'site_demo_ccor', 'localhost', 1, 'active'),
     ('dom_demo_local2', 'site_demo_ccor', '127.0.0.1', 1, 'active'),
-    ('dom_demo_preview', 'site_demo_ccor', 'preview.sneakidx.com', 1, 'active'),
-    ('dom_demo_workers', 'site_demo_ccor', '*.workers.dev', 1, 'active');
+    ('dom_demo_preview', 'site_demo_ccor', 'preview.sneakidx.com', 1, 'active');
 
 -- Branding Configuration for Demo Site
 INSERT OR REPLACE INTO sneak_branding (

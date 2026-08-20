@@ -1,4 +1,4 @@
-name = "sneak-idx-worker"
+name = "sneak-idx-worker-staging"
 main = "SneakIDXWorker.js"
 compatibility_date = "2024-01-01"
 
@@ -9,6 +9,9 @@ head_sampling_rate = 1
 [vars]
 SNEAK_ENV = "staging"
 
+[secrets]
+required = ["SNEAK_SIGNING_SECRET"]
+
 [assets]
 directory = "./sneak-idx"
 binding = "ASSETS"
@@ -16,9 +19,11 @@ run_worker_first = true
 
 [[d1_databases]]
 binding = "DB"
-database_name = "community-idx"
-database_id = "9940be0f-a4be-4835-81f7-09a52d42f7a9"
+database_name = "sneak-idx-staging"
+# IMPORTANT: Insert database_id returned by 'wrangler d1 create sneak-idx-staging' prior to remote deployment
+database_id = "00000000-0000-0000-0000-000000000000"
 migrations_dir = "migrations"
 
-[triggers]
-crons = ["0 */2 * * *", "*/15 * * * *"]
+# Scheduled cron jobs for Bridge MLS sync (Disabled for initial staging deployment)
+# [triggers]
+# crons = ["0 */2 * * *", "*/15 * * * *"]

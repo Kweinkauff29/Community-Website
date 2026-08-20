@@ -1,4 +1,4 @@
--- Migration: 0004_sneak_domains.sql
+-- Migration: 0003_sneak_domains.sql
 -- Description: Creates the sneak_domains table for domain whitelist / CORS authorization per site.
 
 CREATE TABLE IF NOT EXISTS sneak_domains (

@@ -1,4 +1,4 @@
--- Migration: 0011_sneak_listings.sql
+-- Migration: 0009_sneak_listings.sql
 -- Description: Creates dedicated sneak_listings table and indexes for SNEAK multi-tenant IDX platform.
 -- Completely isolated from legacy listings table used by public Home Search.
 

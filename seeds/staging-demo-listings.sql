@@ -1,7 +1,7 @@
--- Seed: local-demo-listings.sql
--- Description: Seeds sample listings into sneak_listings for local offline development and UI testing.
--- WARNING: DO NOT RUN THIS IN PRODUCTION.
--- Run locally via: wrangler d1 execute sneak-idx-staging --local --file=seeds/local-demo-listings.sql
+-- Seed: staging-demo-listings.sql
+-- Description: Seeds sample demo listings into sneak_listings for STAGING verification and UI testing.
+-- WARNING: FOR STAGING VERIFICATION ONLY. DO NOT RUN IN PRODUCTION.
+-- Run on staging via: wrangler d1 execute sneak-idx-staging --local/--remote --file=seeds/staging-demo-listings.sql
 
 INSERT OR IGNORE INTO sneak_listings (
     ListingKey, ListingId, ListPrice, OriginalListPrice, UnparsedAddress, StreetNumber, StreetName, UnitNumber, City, StateOrProvince, PostalCode, CountyOrParish,
@@ -58,38 +58,26 @@ INSERT OR IGNORE INTO sneak_listings (
     'bsaor', 'Bonita Springs'
 ),
 (
-    '22400106', '22400106', 525000, 540000, '2105 W First St #504', '2105', 'W First St', '504', 'Fort Myers', 'FL', '33901', 'Lee',
-    2, 2, 2, 0, 1320, 'Pending',
-    'Residential', 'Condominium', 'https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=800&auto=format&fit=crop&q=80', '2026-04-20', '2026-05-05T10:00:00Z', '2026-05-05T10:00:00Z',
-    26.6430, -81.8740, 2020, 0.0, 'River District Oasis', 'Downtown Fort Myers riverfront condo with resort-style amenities, infinity pool, and marina access.',
-    'AGT_KEY_01', 'Sarah Jenkins', 'sarah@premiercoastrealty.demo', '(239) 555-0199', 'DEMO_AGENT_01',
-    'OFF_KEY_01', 'Premier Coast Realty LLC', '(239) 555-0199', 'DEMO_OFFICE_01',
-    'bsaor', 'Bonita Springs'
-),
-(
-    '22400107', '22400107', 315000, 315000, '12040 Metro Pkwy', '12040', 'Metro Pkwy', NULL, 'Fort Myers', 'FL', '33966', 'Lee',
-    0, 0, 0, 0, 4500, 'Active',
-    'Commercial', 'Commercial', 'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=800&auto=format&fit=crop&q=80', '2026-05-01', '2026-05-10T08:00:00Z', '2026-05-01T08:00:00Z',
-    26.5720, -81.8550, 2012, 0.85, 'Metro Industrial Park', 'Prime flex office/warehouse building with easy access to I-75 and Page Field Airport.',
-    'AGT_KEY_05', 'Robert Vance', 'robert@commfl.demo', '(239) 555-0122', 'AGT_VANCE_05',
-    'OFF_KEY_05', 'Commercial Florida Group', '(239) 555-0122', 'OFF_COMM_05',
-    'bsaor', 'Bonita Springs'
-),
-(
-    '22400108', '22400108', 275000, 290000, 'Lot 14 Estero River Heights', 'Lot 14', 'Estero River Heights', NULL, 'Estero', 'FL', '33928', 'Lee',
-    0, 0, 0, 0, 0, 'Active',
-    'Land', 'Residential Lot', 'https://images.unsplash.com/photo-1500382017468-9049fed747ef?w=800&auto=format&fit=crop&q=80', '2026-05-02', '2026-05-11T09:00:00Z', '2026-05-02T09:00:00Z',
-    26.4350, -81.8250, NULL, 0.52, 'Estero River Heights', 'Oversized half-acre residential building lot with direct gulf access canal frontage and mature oak trees.',
+    '22400106', '22400106', 525000, 525000, '23101 Fashion Dr #304', '23101', 'Fashion Dr', '304', 'Estero', 'FL', '33928', 'Lee',
+    2, 2, 2, 0, 1320, 'Active',
+    'Residential', 'Condominium', 'https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=800&auto=format&fit=crop&q=80', '2026-05-05', '2026-05-12T13:00:00Z', '2026-05-05T14:00:00Z',
+    26.4380, -81.7980, 2017, 0.0, 'Villagio', 'Modern condo with upgraded quartz counters, stainless appliances, and attached garage in gated community.',
     'AGT_KEY_01', 'Sarah Jenkins', 'sarah@premiercoastrealty.demo', '(239) 555-0199', 'DEMO_AGENT_01',
     'OFF_KEY_01', 'Premier Coast Realty LLC', '(239) 555-0199', 'DEMO_OFFICE_01',
     'bsaor', 'Bonita Springs'
 );
 
--- Seed sample open house
+-- Seed Open Houses into sneak_open_houses for Demo
 INSERT OR IGNORE INTO sneak_open_houses (
     id, OpenHouseKey, ListingKey, OpenHouseStartTime, OpenHouseEndTime, OpenHouseDate, OpenHouseRemarks, PropertyData
-) VALUES (
-    'oh_sample_01', 'OH_22400101', '22400101', '2026-05-23T13:00:00Z', '2026-05-23T16:00:00Z', '2026-05-23',
-    'Join us for refreshments and tour this luxury coastal home!',
-    '{"ListingKey":"22400101","UnparsedAddress":"26744 Hickory Blvd","City":"Bonita Springs","ListPrice":1250000,"BedroomsTotal":4,"BathroomsTotalInteger":3,"LivingArea":2850,"PrimaryPhoto":"https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=800&auto=format&fit=crop&q=80"}'
+) VALUES 
+(
+    'oh_demo_101', 'OH_KEY_101', '22400101', '2026-05-20T13:00:00Z', '2026-05-20T16:00:00Z', '2026-05-20',
+    'Public Open House this Saturday! Refreshments served.',
+    '{"ListingKey":"22400101","UnparsedAddress":"26744 Hickory Blvd","City":"Bonita Springs","ListPrice":1250000,"BedroomsTotal":4,"BathroomsTotalInteger":3,"LivingArea":2850,"PrimaryPhoto":"https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=800&auto=format&fit=crop&q=80","ListAgentFullName":"Sarah Jenkins","ListOfficeName":"Premier Coast Realty LLC"}'
+),
+(
+    'oh_demo_103', 'OH_KEY_103', '22400103', '2026-05-21T12:00:00Z', '2026-05-21T15:00:00Z', '2026-05-21',
+    'Exclusive Penthouse Tour. RSVP recommended.',
+    '{"ListingKey":"22400103","UnparsedAddress":"4820 Pelican Colony Blvd #1401","City":"Bonita Springs","ListPrice":2495000,"BedroomsTotal":3,"BathroomsTotalInteger":4,"LivingArea":3400,"PrimaryPhoto":"https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=800&auto=format&fit=crop&q=80","ListAgentFullName":"Sarah Jenkins","ListOfficeName":"Premier Coast Realty LLC"}'
 );

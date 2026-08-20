@@ -1,4 +1,4 @@
--- Migration: 0002_sneak_accounts.sql
+-- Migration: 0001_sneak_accounts.sql
 -- Description: Creates the sneak_accounts table for managing tenant accounts.
 
 CREATE TABLE IF NOT EXISTS sneak_accounts (

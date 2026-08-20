@@ -1,4 +1,4 @@
--- Migration: 0009_sneak_open_houses.sql
+-- Migration: 0008_sneak_open_houses.sql
 -- Description: Creates the generalized sneak_open_houses table (today - 1 to today + 30) without impacting legacy open_houses.
 
 CREATE TABLE IF NOT EXISTS sneak_open_houses (

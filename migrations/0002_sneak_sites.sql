@@ -1,4 +1,4 @@
--- Migration: 0003_sneak_sites.sql
+-- Migration: 0002_sneak_sites.sql
 -- Description: Creates the sneak_sites table for managing individual tenant site instances and scopes.
 
 CREATE TABLE IF NOT EXISTS sneak_sites (

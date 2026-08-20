@@ -46,7 +46,7 @@ export default {
                 }
                 return await env.ASSETS.fetch(req);
             }
-            return jsonResponse({ error: 'NotFound', message: 'SNEAK IDX API endpoints are under /idx/v1/' }, 404, '*');
+            return jsonResponse({ error: 'NotFound', message: 'SNEAK IDX API endpoints are under /idx/v1/' }, 404);
         }
 
         // 4. Route: GET /idx/v1/bootstrap?site=SITE_KEY
@@ -65,7 +65,7 @@ export default {
             return jsonResponse({
                 error: 'MissingSiteKey',
                 message: 'A valid SNEAK site key (?site=...) is required.'
-            }, 400, '*');
+            }, 400);
         }
 
         // 6. Tenant Resolution & Session Authorization
@@ -74,7 +74,7 @@ export default {
             return jsonResponse({
                 error: authResult.error || 'Unauthorized',
                 message: authResult.message || 'Access denied for this site key or session.'
-            }, authResult.status || 403, '*');
+            }, authResult.status || 403);
         }
 
         const { site, branding, allowedOrigin } = authResult;
@@ -257,40 +257,54 @@ async function verifySessionToken(token, secret) {
    ========================================================================== */
 
 function getSigningSecret(env) {
-    return env.SNEAK_SIGNING_SECRET || 'sneak_default_dev_signing_secret_do_not_use_in_prod';
+    if (!env || !env.SNEAK_SIGNING_SECRET || typeof env.SNEAK_SIGNING_SECRET !== 'string' || !env.SNEAK_SIGNING_SECRET.trim()) {
+        throw new Error('SNEAK_SIGNING_SECRET is not configured.');
+    }
+    return env.SNEAK_SIGNING_SECRET.trim();
 }
 
 /**
  * GET /idx/v1/bootstrap?site=SITE_KEY
  * Called directly by embed.js on the embedding member webpage.
- * Validates member Origin/Referer against sneak_domains and issues a signed session token.
+ * Validates member Origin against sneak_domains and issues a signed session token.
  */
 async function handleBootstrap(req, url, env) {
     const siteKey = url.searchParams.get('site');
     if (!siteKey) {
-        return jsonResponse({ error: 'MissingSiteKey', message: 'Site key is required for bootstrap.' }, 400, '*');
+        return jsonResponse({ error: 'MissingSiteKey', message: 'Site key is required for bootstrap.' }, 400);
     }
 
     const origin = req.headers.get('Origin') || '';
-    const referer = req.headers.get('Referer') || '';
+    const envName = (env.SNEAK_ENV || 'staging').toLowerCase();
+    const isDev = envName === 'development';
 
     let requestHost = '';
     let effectiveOrigin = origin;
 
     if (origin) {
         try { requestHost = new URL(origin).hostname.toLowerCase(); } catch {}
-    } else if (referer) {
-        try {
-            const refUrl = new URL(referer);
-            requestHost = refUrl.hostname.toLowerCase();
-            if (!effectiveOrigin) effectiveOrigin = refUrl.origin;
-        } catch {}
     }
 
-    const isProd = (env.SNEAK_ENV || '').toLowerCase() === 'production';
+    // In staging & production, Origin header is strictly required from cross-origin embed
+    if (!origin) {
+        if (isDev) {
+            requestHost = 'localhost';
+            effectiveOrigin = 'http://localhost';
+        } else {
+            return jsonResponse({
+                error: 'DomainNotAuthorized',
+                message: 'Origin header is required for SNEAK bootstrap in staging and production.'
+            }, 403);
+        }
+    }
+
     const isDevHost = requestHost === 'localhost' || requestHost === '127.0.0.1' || requestHost === '::1';
 
     // 1. Fetch site and account
+    if (!env.DB) {
+        return jsonResponse({ error: 'DatabaseError', message: 'Database binding unavailable.' }, 500);
+    }
+
     const query = `
         SELECT 
             s.id AS site_id, s.account_id, s.site_key, s.status AS site_status,
@@ -301,14 +315,14 @@ async function handleBootstrap(req, url, env) {
     `;
     const siteRecord = await env.DB.prepare(query).bind(siteKey).first();
     if (!siteRecord) {
-        return jsonResponse({ error: 'SiteNotFound', message: 'Site key does not exist.' }, 404, '*');
+        return jsonResponse({ error: 'SiteNotFound', message: 'Site key does not exist.' }, 404);
     }
 
     if (siteRecord.site_status !== 'active' || siteRecord.account_status !== 'active') {
-        return jsonResponse({ error: 'SiteInactive', message: 'This SNEAK site is currently inactive or suspended.' }, 403, '*');
+        return jsonResponse({ error: 'SiteInactive', message: 'This SNEAK site is currently inactive or suspended.' }, 403);
     }
 
-    // 2. Fetch verified domains
+    // 2. Fetch verified domains (status = 'active' AND verified = 1)
     const domainsResult = await env.DB.prepare(
         "SELECT domain FROM sneak_domains WHERE site_id = ? AND status = 'active' AND verified = 1"
     ).bind(siteRecord.site_id).all();
@@ -316,17 +330,12 @@ async function handleBootstrap(req, url, env) {
 
     let isAuthorized = false;
 
-    if (!requestHost) {
-        // In production, reject missing Origin/Referer
-        if (!isProd && !origin) {
-            isAuthorized = true;
-            requestHost = 'localhost';
-        }
-    } else if (isDevHost && !isProd) {
+    if (isDevHost && isDev) {
         isAuthorized = true;
     } else {
         isAuthorized = allowedDomains.some(d => {
-            if (d === '*' || d === requestHost) return true;
+            if (d === '*') return false; // Global wildcard disallowed for tenants
+            if (d === requestHost) return true;
             if (d.startsWith('*.')) {
                 const rootDomain = d.slice(2);
                 return requestHost === rootDomain || requestHost.endsWith('.' + rootDomain);
@@ -339,10 +348,21 @@ async function handleBootstrap(req, url, env) {
         return jsonResponse({
             error: 'DomainNotAuthorized',
             message: `Domain '${requestHost || 'unknown'}' is not authorized or verified for this SNEAK site.`
-        }, 403, '*');
+        }, 403);
     }
 
     // 3. Issue short-lived session token (20 minutes = 1200 seconds)
+    let secret;
+    try {
+        secret = getSigningSecret(env);
+    } catch (err) {
+        console.error('Session signing secret error:', err.message);
+        return jsonResponse({
+            error: 'ConfigurationError',
+            message: 'SNEAK session signing secret is not configured.'
+        }, 500);
+    }
+
     const now = Math.floor(Date.now() / 1000);
     const exp = now + 1200;
     const tokenPayload = {
@@ -353,7 +373,7 @@ async function handleBootstrap(req, url, env) {
         exp: exp
     };
 
-    const sessionToken = await signSessionToken(tokenPayload, getSigningSecret(env));
+    const sessionToken = await signSessionToken(tokenPayload, secret);
 
     return jsonResponse({
         success: true,
@@ -361,7 +381,7 @@ async function handleBootstrap(req, url, env) {
         expiresIn: 1200,
         siteKey: siteRecord.site_key,
         searchUrl: `/search/?site=${encodeURIComponent(siteRecord.site_key)}`
-    }, 200, effectiveOrigin || '*');
+    }, 200, effectiveOrigin);
 }
 
 /**
@@ -411,49 +431,46 @@ async function resolveAndAuthorizeRequest(req, siteKey, origin, referer, env) {
         } catch {}
     }
 
-    const isProd = (env.SNEAK_ENV || '').toLowerCase() === 'production';
-    const secret = getSigningSecret(env);
+    // Tenant data endpoints strictly require a session across all environments
+    if (!token) {
+        return {
+            authorized: false,
+            error: 'SessionRequired',
+            message: 'A valid SNEAK session token is required to access tenant data.',
+            status: 401
+        };
+    }
 
-    let sessionPayload = null;
-    if (token) {
-        sessionPayload = await verifySessionToken(token, secret);
-        if (!sessionPayload) {
-            return {
-                authorized: false,
-                error: 'InvalidSession',
-                message: 'The SNEAK session token is invalid or expired. Please re-authenticate.',
-                status: 401
-            };
-        }
+    let secret;
+    try {
+        secret = getSigningSecret(env);
+    } catch (err) {
+        return {
+            authorized: false,
+            error: 'ConfigurationError',
+            message: 'Signing secret is not configured.',
+            status: 500
+        };
+    }
 
-        // Verify token site matches requested site
-        if (sessionPayload.siteKey !== siteKey) {
-            return {
-                authorized: false,
-                error: 'SessionMismatch',
-                message: 'Session token does not match the requested site.',
-                status: 403
-            };
-        }
-    } else {
-        // No session token supplied
-        if (isProd) {
-            return {
-                authorized: false,
-                error: 'SessionRequired',
-                message: 'A valid SNEAK session token is required to access tenant data.',
-                status: 401
-            };
-        }
-        // In local development / non-production preview, allow direct access if from localhost
-        let reqHost = '';
-        if (origin) {
-            try { reqHost = new URL(origin).hostname.toLowerCase(); } catch {}
-        }
-        const isDev = reqHost === 'localhost' || reqHost === '127.0.0.1';
-        if (!isDev && !origin) {
-            // Permitted for local direct tool testing
-        }
+    const sessionPayload = await verifySessionToken(token, secret);
+    if (!sessionPayload) {
+        return {
+            authorized: false,
+            error: 'InvalidSession',
+            message: 'The SNEAK session token is invalid or expired. Please re-authenticate.',
+            status: 401
+        };
+    }
+
+    // Verify token site matches requested site
+    if (sessionPayload.siteKey !== siteKey) {
+        return {
+            authorized: false,
+            error: 'SessionMismatch',
+            message: 'Session token does not match the requested site.',
+            status: 403
+        };
     }
 
     return {
@@ -461,7 +478,7 @@ async function resolveAndAuthorizeRequest(req, siteKey, origin, referer, env) {
         site: siteRecord,
         branding: siteRecord,
         session: sessionPayload,
-        allowedOrigin: origin || '*'
+        allowedOrigin: origin || null
     };
 }
 
@@ -478,8 +495,54 @@ async function handleCorsPreflight(req, url, env) {
     const origin = req.headers.get('Origin') || '';
     const siteKey = url.searchParams.get('site');
 
-    let allowedOrigin = '*';
+    // 1. Cross-origin access is specifically intended for /idx/v1/bootstrap
+    if (url.pathname === '/idx/v1/bootstrap') {
+        if (!siteKey || !origin || !env.DB) {
+            return new Response(null, { status: 403 });
+        }
 
+        try {
+            const site = await env.DB.prepare("SELECT id FROM sneak_sites WHERE site_key = ?").bind(siteKey).first();
+            if (site) {
+                const doms = await env.DB.prepare(
+                    "SELECT domain FROM sneak_domains WHERE site_id = ? AND status = 'active' AND verified = 1"
+                ).bind(site.id).all();
+                const host = new URL(origin).hostname.toLowerCase();
+                const isDevHost = host === 'localhost' || host === '127.0.0.1' || host === '::1';
+                const envName = (env.SNEAK_ENV || 'staging').toLowerCase();
+
+                let matched = false;
+                if (isDevHost && envName === 'development') {
+                    matched = true;
+                } else {
+                    matched = (doms.results || []).some(r => {
+                        const d = r.domain.toLowerCase().trim();
+                        if (d === '*') return false; // Disallow global '*'
+                        if (d === host) return true;
+                        if (d.startsWith('*.')) {
+                            const root = d.slice(2);
+                            return host === root || host.endsWith('.' + root);
+                        }
+                        return false;
+                    });
+                }
+
+                if (matched) {
+                    const headers = new Headers();
+                    headers.set('Access-Control-Allow-Origin', origin);
+                    headers.set('Access-Control-Allow-Methods', 'GET, OPTIONS');
+                    headers.set('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, X-Site-Key, X-SNEAK-Session');
+                    headers.set('Access-Control-Max-Age', '86400');
+                    headers.set('Vary', 'Origin');
+                    return new Response(null, { status: 204, headers });
+                }
+            }
+        } catch {}
+
+        return new Response(null, { status: 403 });
+    }
+
+    // 2. For other tenant endpoints (/idx/v1/*): only permit verified domains or same-origin
     if (siteKey && origin && env.DB) {
         try {
             const site = await env.DB.prepare("SELECT id FROM sneak_sites WHERE site_key = ?").bind(siteKey).first();
@@ -490,22 +553,28 @@ async function handleCorsPreflight(req, url, env) {
                 const host = new URL(origin).hostname.toLowerCase();
                 const matched = (doms.results || []).some(r => {
                     const d = r.domain.toLowerCase().trim();
-                    return d === '*' || d === host || (d.startsWith('*.') && (host === d.slice(2) || host.endsWith('.' + d.slice(2))));
+                    if (d === '*') return false;
+                    if (d === host) return true;
+                    if (d.startsWith('*.')) {
+                        const root = d.slice(2);
+                        return host === root || host.endsWith('.' + root);
+                    }
+                    return false;
                 });
-                if (matched) allowedOrigin = origin;
+                if (matched) {
+                    const headers = new Headers();
+                    headers.set('Access-Control-Allow-Origin', origin);
+                    headers.set('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+                    headers.set('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, X-Site-Key, X-SNEAK-Session');
+                    headers.set('Access-Control-Max-Age', '86400');
+                    headers.set('Vary', 'Origin');
+                    return new Response(null, { status: 204, headers });
+                }
             }
         } catch {}
-    } else if (origin) {
-        allowedOrigin = origin;
     }
 
-    const headers = new Headers();
-    headers.set('Access-Control-Allow-Origin', allowedOrigin);
-    headers.set('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-    headers.set('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, X-Site-Key, X-SNEAK-Session');
-    headers.set('Access-Control-Max-Age', '86400');
-    headers.set('Vary', 'Origin');
-    return new Response(null, { status: 204, headers });
+    return new Response(null, { status: 403 });
 }
 
 async function handleStaticWithCSP(req, siteKey, env) {
@@ -1571,13 +1640,15 @@ function escapeODataString(str) {
     return str.replace(/'/g, "''");
 }
 
-function jsonResponse(data, status = 200, allowedOrigin = '*', cacheControl = null) {
+function jsonResponse(data, status = 200, allowedOrigin = null, cacheControl = null) {
     const headers = new Headers();
     headers.set('Content-Type', 'application/json');
-    headers.set('Access-Control-Allow-Origin', allowedOrigin);
+    if (allowedOrigin) {
+        headers.set('Access-Control-Allow-Origin', allowedOrigin);
+        headers.set('Vary', 'Origin');
+    }
     headers.set('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
     headers.set('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, X-Site-Key, X-SNEAK-Session');
-    headers.set('Vary', 'Origin');
 
     if (cacheControl) {
         headers.set('Cache-Control', cacheControl);

@@ -1,5 +1,5 @@
--- Migration: 0005_sneak_branding.sql
--- Description: Creates the sneak_branding table for tenant branding and UI customization.
+-- Migration: 0004_sneak_branding.sql
+-- Description: Creates the sneak_branding table for custom tenant styles and assets.
 
 CREATE TABLE IF NOT EXISTS sneak_branding (
     site_id TEXT PRIMARY KEY REFERENCES sneak_sites(id) ON DELETE CASCADE,

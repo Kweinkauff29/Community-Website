@@ -1,4 +1,4 @@
--- Migration: 0006_sneak_widget_configs.sql
+-- Migration: 0005_sneak_widget_configs.sql
 -- Description: Creates the sneak_widget_configs table for configuring widgets (search, search_bar, listing_grid, open_houses, featured_listings).
 
 CREATE TABLE IF NOT EXISTS sneak_widget_configs (

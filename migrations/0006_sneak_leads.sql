@@ -1,5 +1,5 @@
--- Migration: 0007_sneak_leads.sql
--- Description: Creates the sneak_leads table for capturing and tracking tenant leads and inquiries.
+-- Migration: 0006_sneak_leads.sql
+-- Description: Creates the sneak_leads table for capturing inbound leads per site.
 
 CREATE TABLE IF NOT EXISTS sneak_leads (
     id TEXT PRIMARY KEY,
