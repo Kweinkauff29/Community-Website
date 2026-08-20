@@ -670,6 +670,77 @@ export async function handleUpdateWidget(db, siteId, widgetType, body, actor) {
 }
 
 /**
+ * GET /api/admin/accounts/:id/members
+ */
+export async function handleListAccountMembers(db, accountId) {
+    const res = await db.prepare(`
+        SELECT id, account_id, email, role, status, invited_at, activated_at, last_login_at, created_at
+        FROM sneak_member_users
+        WHERE account_id = ?
+        ORDER BY created_at ASC
+    `).bind(accountId).all();
+
+    return json({ members: res.results || [] });
+}
+
+/**
+ * POST /api/admin/accounts/:id/members
+ */
+export async function handleCreateAccountMemberInvite(db, accountId, body, actor) {
+    const { email, role = 'owner' } = body;
+    const cleanEmail = (email || '').toLowerCase().trim();
+    if (!cleanEmail || !cleanEmail.includes('@')) {
+        return error('A valid email address is required.');
+    }
+
+    const account = await db.prepare("SELECT id, account_name FROM sneak_accounts WHERE id = ?").bind(accountId).first();
+    if (!account) return error('Account not found', 404);
+
+    let user = await db.prepare("SELECT * FROM sneak_member_users WHERE email = ?").bind(cleanEmail).first();
+    const userId = user?.id || `muser_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
+    const now = new Date().toISOString();
+
+    if (!user) {
+        await db.prepare(`
+            INSERT INTO sneak_member_users (id, account_id, email, role, status, invited_at, created_at, updated_at)
+            VALUES (?, ?, ?, ?, 'invited', ?, ?, ?)
+        `).bind(userId, accountId, cleanEmail, role, now, now, now).run();
+    } else {
+        await db.prepare(`
+            UPDATE sneak_member_users
+            SET account_id = ?, role = ?, invited_at = ?, updated_at = ?
+            WHERE id = ?
+        `).bind(accountId, role, now, now, userId).run();
+    }
+
+    // Generate single-use magic invitation link
+    const bytes = crypto.getRandomValues(new Uint8Array(32));
+    const rawToken = Array.from(bytes).map(b => b.toString(16).padStart(2, '0')).join('');
+    const enc = new TextEncoder();
+    const hashBuffer = await crypto.subtle.digest('SHA-256', enc.encode(rawToken));
+    const tokenHash = Array.from(new Uint8Array(hashBuffer)).map(b => b.toString(16).padStart(2, '0')).join('');
+
+    const linkId = `ml_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
+    const expiresAt = new Date(Date.now() + (900 * 1000)).toISOString(); // 15 minutes
+
+    await db.prepare(`
+        INSERT INTO sneak_member_magic_links (id, user_id, token_hash, purpose, created_at, expires_at, used_at)
+        VALUES (?, ?, ?, 'invite', ?, ?, NULL)
+    `).bind(linkId, userId, tokenHash, now, expiresAt).run();
+
+    await logAudit(db, actor, 'CREATE_MEMBER_INVITE', 'member_user', userId, `Invited ${cleanEmail} for account ${account.account_name}`);
+
+    const inviteUrl = `https://sneak-idx-member-staging.bonitaspringsrealtors.workers.dev/?token=${encodeURIComponent(rawToken)}`;
+
+    return json({
+        success: true,
+        user: { id: userId, account_id: accountId, email: cleanEmail, role, status: 'invited' },
+        inviteUrl,
+        rawToken
+    }, 201);
+}
+
+/**
  * GET /api/admin/sites/:id/embed
  */
 export async function handleGetEmbed(db, siteId) {

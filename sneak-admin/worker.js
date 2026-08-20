@@ -212,6 +212,17 @@ export default {
                 return await api.handleCreateSite(db, accountId, body, actor);
             }
 
+            // /api/admin/accounts/:id/members
+            const accMembersMatch = path.match(/^\/api\/admin\/accounts\/([^\/]+)\/members$/);
+            if (accMembersMatch) {
+                const accountId = accMembersMatch[1];
+                if (method === 'GET') return await api.handleListAccountMembers(db, accountId);
+                if (method === 'POST') {
+                    const body = await request.json();
+                    return await api.handleCreateAccountMemberInvite(db, accountId, body, actor);
+                }
+            }
+
             // /api/admin/sites/:id
             const siteMatch = path.match(/^\/api\/admin\/sites\/([^\/]+)$/);
             if (siteMatch) {

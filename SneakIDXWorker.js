@@ -308,9 +308,11 @@ async function handleBootstrap(req, url, env) {
     const query = `
         SELECT 
             s.id AS site_id, s.account_id, s.site_key, s.status AS site_status,
-            a.account_name, a.status AS account_status
+            a.account_name, a.status AS account_status,
+            b.entitlement_status, b.billing_status, b.grace_until
         FROM sneak_sites s
         JOIN sneak_accounts a ON s.account_id = a.id
+        LEFT JOIN sneak_account_billing b ON a.id = b.account_id
         WHERE s.site_key = ?
     `;
     const siteRecord = await env.DB.prepare(query).bind(siteKey).first();
@@ -320,6 +322,15 @@ async function handleBootstrap(req, url, env) {
 
     if (siteRecord.site_status !== 'active' || siteRecord.account_status !== 'active') {
         return jsonResponse({ error: 'SiteInactive', message: 'This SNEAK site is currently inactive or suspended.' }, 403);
+    }
+
+    // Billing entitlement check (only enforced if billing record exists)
+    if (siteRecord.billing_status && siteRecord.billing_status !== 'none') {
+        const isEntitled = siteRecord.entitlement_status === 'active' || 
+            (siteRecord.entitlement_status === 'grace' && siteRecord.grace_until && new Date(siteRecord.grace_until) > new Date());
+        if (!isEntitled) {
+            return jsonResponse({ error: 'BillingInactive', message: 'This SNEAK site subscription is currently inactive.' }, 403);
+        }
     }
 
     // 2. Fetch verified domains (status = 'active' AND verified = 1)
@@ -399,10 +410,12 @@ async function resolveAndAuthorizeRequest(req, siteKey, origin, referer, env) {
             s.scope_type, s.scope_value,
             a.account_name, a.status AS account_status, a.plan, a.agent_mls_id AS default_agent_mls_id, a.office_mls_id AS default_office_mls_id,
             b.display_name, b.brokerage, b.logo_url, b.agent_photo_url, b.primary_color, b.secondary_color,
-            b.phone, b.email, b.website_url, b.config_json AS branding_config
+            b.phone, b.email, b.website_url, b.config_json AS branding_config,
+            bill.entitlement_status, bill.billing_status, bill.grace_until
         FROM sneak_sites s
         JOIN sneak_accounts a ON s.account_id = a.id
         LEFT JOIN sneak_branding b ON s.id = b.site_id
+        LEFT JOIN sneak_account_billing bill ON a.id = bill.account_id
         WHERE s.site_key = ?
     `;
 
@@ -413,6 +426,15 @@ async function resolveAndAuthorizeRequest(req, siteKey, origin, referer, env) {
 
     if (siteRecord.site_status !== 'active' || siteRecord.account_status !== 'active') {
         return { authorized: false, error: 'SiteInactive', message: 'This SNEAK site is currently inactive or suspended.', status: 403 };
+    }
+
+    // Billing entitlement check (only enforced if billing record exists)
+    if (siteRecord.billing_status && siteRecord.billing_status !== 'none') {
+        const isEntitled = siteRecord.entitlement_status === 'active' || 
+            (siteRecord.entitlement_status === 'grace' && siteRecord.grace_until && new Date(siteRecord.grace_until) > new Date());
+        if (!isEntitled) {
+            return { authorized: false, error: 'BillingInactive', message: 'This SNEAK site subscription is currently inactive.', status: 403 };
+        }
     }
 
     // Extract Session Token from Header (Authorization: Bearer <token> or X-SNEAK-Session) or query string
