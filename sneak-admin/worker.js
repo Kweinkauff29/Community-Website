@@ -244,6 +244,11 @@ export default {
                 }
             }
 
+            // /api/admin/readiness
+            if (path === '/api/admin/readiness' && method === 'GET') {
+                return await api.handleGetReadiness(db, env);
+            }
+
             // /api/admin/domains/diagnostic
             if (path === '/api/admin/domains/diagnostic' && method === 'GET') {
                 return await api.handleGetDomainDiagnostic(env);

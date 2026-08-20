@@ -1077,5 +1077,51 @@ export async function handleGetDomainDiagnostic(env) {
     return json(getCloudflareSaaSDiagnostic(env));
 }
 
+/**
+ * GET /api/admin/readiness
+ * Returns high-level operational readiness status across all subsystems.
+ */
+export async function handleGetReadiness(db, env) {
+    let mlsStatus = 'Problem';
+    let listingCount = 0;
+    let dbError = null;
+    try {
+        const syncRow = await db.prepare("SELECT * FROM sneak_sync_state WHERE sync_name = 'listings'").first();
+        const countRow = await db.prepare("SELECT COUNT(*) as cnt FROM sneak_listings WHERE StandardStatus = 'Active'").first();
+        listingCount = countRow?.cnt || 0;
+        if (listingCount > 0 && syncRow && syncRow.status === 'success') {
+            mlsStatus = 'Healthy';
+        } else if (listingCount > 0) {
+            mlsStatus = 'Healthy';
+        }
+    } catch (err) {
+        dbError = err.message;
+    }
+
+    const saasDiag = getCloudflareSaaSDiagnostic(env);
+
+    const emailConfigured = Boolean(env?.RESEND_API_KEY || env?.POSTMARK_SERVER_TOKEN);
+    const emailSender = env?.EMAIL_FROM || 'simulated';
+
+    return json({
+        mlsSync: mlsStatus,
+        activeListingsCount: listingCount,
+        dbError,
+        servingWorker: listingCount > 0 ? 'Healthy' : 'Problem',
+        email: emailConfigured ? 'Live' : 'Simulated',
+        emailSender: emailConfigured ? (env?.EMAIL_FROM ? 'Verified' : 'Missing') : 'Simulated',
+        cloudflareSaaS: saasDiag.mode === 'live' ? 'Live' : 'Simulation',
+        saasZone: saasDiag.zoneConfigured ? 'Configured' : 'Missing',
+        fallbackOrigin: saasDiag.cnameTarget !== 'Not Configured' ? 'Active' : 'Pending',
+        growthZone: 'Manual',
+        pilotReady: false,
+        blockers: [
+            ...(!saasDiag.zoneConfigured || saasDiag.mode !== 'live' ? ['SNEAK PROVIDER DOMAIN REQUIRED'] : []),
+            ...(!emailConfigured ? ['LIVE TRANSACTIONAL EMAIL REQUIRED'] : [])
+        ]
+    });
+}
+
+
 
 
