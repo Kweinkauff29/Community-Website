@@ -9,13 +9,22 @@
  * - Strictly targets sneak-idx-staging (database ID: 6b91eeca-d65f-434c-a49f-419dff98285f).
  * - Refuses execution against community-idx or any legacy/production database.
  * - Defaults to --dry-run. Explicit --execute flag is required to perform writes.
- * - Safely handles zero values (value ?? null).
+ * - Uses shared locked filter from scripts/bridge-config.mjs.
+ * - Streams and chunks data efficiently (no giant in-memory arrays).
  */
 
 import fs from 'node:fs';
 import path from 'node:path';
 import { execSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
+import {
+    BRIDGE_BASE_URL,
+    BRIDGE_PROPERTY_ENDPOINT,
+    FINAL_SNEAK_LISTING_FILTER,
+    SELECT_PARAM,
+    DETERMINISTIC_ORDERBY,
+    MAX_PAGE_SIZE
+} from './bridge-config.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const rootDir = path.resolve(__dirname, '..');
@@ -60,24 +69,8 @@ if (bridgeToken === undefined) {
 const isExecute = process.argv.includes('--execute');
 const isDryRun = !isExecute || process.argv.includes('--dry-run');
 
-// 3. Schema Fields
-const INTENDED_FIELDS = [
-    'ListingKey', 'ListingId', 'ListPrice', 'OriginalListPrice',
-    'UnparsedAddress', 'StreetNumber', 'StreetName', 'UnitNumber',
-    'City', 'StateOrProvince', 'PostalCode', 'CountyOrParish',
-    'BedroomsTotal', 'BathroomsTotalInteger', 'BathroomsFull', 'BathroomsHalf',
-    'LivingArea', 'StandardStatus', 'PropertyType', 'PropertySubType',
-    'ListingContractDate', 'ModificationTimestamp', 'StatusChangeTimestamp',
-    'YearBuilt', 'LotSizeAcres', 'Latitude', 'Longitude', 'Coordinates',
-    'Media', 'PublicRemarks', 'SubdivisionName',
-    'ListAgentKey', 'ListAgentMlsId', 'ListAgentFullName', 'ListAgentEmail', 'ListAgentDirectPhone',
-    'ListOfficeKey', 'ListOfficeMlsId', 'ListOfficeName', 'ListOfficePhone',
-    'OriginatingSystemKey', 'OriginatingSystemName'
-];
-
 function extractPrimaryPhoto(media) {
     if (!Array.isArray(media) || media.length === 0) return null;
-    // Sort by Order if present
     const sorted = [...media].sort((a, b) => {
         const orderA = a.Order ?? 999;
         const orderB = b.Order ?? 999;
@@ -97,6 +90,7 @@ function escapeSql(val) {
 function recordToSql(r) {
     const primaryPhoto = extractPrimaryPhoto(r.Media);
     
+    // Map Coordinates GeoJSON array [lon, lat] -> Latitude = Coordinates[1], Longitude = Coordinates[0]
     let lat = r.Latitude ?? null;
     let lon = r.Longitude ?? null;
     if (lat == null && lon == null && Array.isArray(r.Coordinates) && r.Coordinates.length >= 2) {
@@ -171,6 +165,7 @@ async function runHydration() {
     console.log('====================================================');
     console.log(`Target Database: ${TARGET_DB_NAME} (${TARGET_DB_ID})`);
     console.log(`Execution Mode:  ${isExecute ? 'EXECUTE (WRITING TO REMOTE D1)' : 'DRY RUN (READ ONLY)'}`);
+    console.log(`Locked Filter:   ${FINAL_SNEAK_LISTING_FILTER}`);
     console.log('====================================================');
 
     if (!bridgeToken) {
@@ -180,97 +175,175 @@ async function runHydration() {
         process.exit(0);
     }
 
-    const selectFields = INTENDED_FIELDS.filter(f => f !== 'Latitude' && f !== 'Longitude').join(',');
-    const filter = "StateOrProvince eq 'FL' and (StandardStatus eq 'Active' or StandardStatus eq 'Active Under Contract' or StandardStatus eq 'Pending')";
-    
-    let skip = 0;
-    const top = 200;
-    let hasMore = true;
+    // Step A: Fetch Expected @odata.count
+    console.log('\n[Step 1] Querying Expected Listing Count from Bridge...');
+    const countUrl = new URL(BRIDGE_PROPERTY_ENDPOINT);
+    countUrl.searchParams.set('$top', '1');
+    countUrl.searchParams.set('$filter', FINAL_SNEAK_LISTING_FILTER);
+    countUrl.searchParams.set('$count', 'true');
+    countUrl.searchParams.set('access_token', bridgeToken);
+
+    const countRes = await fetch(countUrl.toString(), { headers: { Accept: 'application/json' } });
+    if (!countRes.ok) throw new Error(`Bridge Count Query HTTP ${countRes.status}: ${countRes.statusText}`);
+    const countData = await countRes.json();
+    const expectedCount = countData['@odata.count'] || 0;
+    console.log(`  Expected Bridge Records (@odata.count): ${expectedCount.toLocaleString()}`);
+
+    const maxPagesArg = process.argv.find(a => a.startsWith('--pages='));
+    const isPagesAll = maxPagesArg ? maxPagesArg.includes('all') : false;
+    const maxPages = isPagesAll ? Infinity : (maxPagesArg ? parseInt(maxPagesArg.split('=')[1], 10) : (isDryRun ? Infinity : Infinity));
+
+    const top = MAX_PAGE_SIZE;
+    let pageCount = 0;
     let totalFetched = 0;
     let totalTransformed = 0;
     let totalWithCoords = 0;
     let totalWithPhotos = 0;
-    const sqlStatements = [];
+    let totalWithAgentMlsId = 0;
+    let totalWithOfficeMlsId = 0;
+    let totalWithOfficeKey = 0;
 
-    let pageCount = 0;
-    const maxPagesArg = process.argv.find(a => a.startsWith('--pages='));
-    const maxPages = maxPagesArg ? (maxPagesArg.includes('all') ? Infinity : parseInt(maxPagesArg.split('=')[1], 10)) : (isDryRun ? 5 : Infinity);
+    const seenListingKeys = new Set();
+    let duplicateCount = 0;
+
+    const scratchDir = path.join(rootDir, 'scratch');
+    if (isExecute && !fs.existsSync(scratchDir)) {
+        fs.mkdirSync(scratchDir, { recursive: true });
+    }
 
     const startTime = Date.now();
+    let batchIndex = 0;
+    let writtenCount = 0;
 
-    while (hasMore && pageCount < maxPages) {
+    let nextUrl = new URL(BRIDGE_PROPERTY_ENDPOINT);
+    nextUrl.searchParams.set('$top', String(top));
+    nextUrl.searchParams.set('$filter', FINAL_SNEAK_LISTING_FILTER);
+    nextUrl.searchParams.set('$select', SELECT_PARAM);
+    nextUrl.searchParams.set('$orderby', DETERMINISTIC_ORDERBY);
+    nextUrl.searchParams.set('access_token', bridgeToken);
+
+    let currentUrl = nextUrl.toString();
+
+    while (currentUrl && pageCount < maxPages) {
         pageCount++;
-        const url = new URL('https://api.bridgedataoutput.com/api/v2/OData/bsaor/Property');
-        url.searchParams.set('$top', String(top));
-        url.searchParams.set('$skip', String(skip));
-        url.searchParams.set('$filter', filter);
-        url.searchParams.set('$select', selectFields);
-        url.searchParams.set('access_token', bridgeToken);
 
-        const res = await fetch(url.toString(), { headers: { Accept: 'application/json' } });
+        const res = await fetch(currentUrl, { headers: { Accept: 'application/json' } });
         if (!res.ok) {
-            throw new Error(`Bridge API Error HTTP ${res.status}: ${res.statusText}`);
+            let errText = '';
+            try { errText = JSON.stringify(await res.json()); } catch { errText = await res.text(); }
+            throw new Error(`Bridge API Fetch Error HTTP ${res.status} on page ${pageCount}:\n${errText}`);
         }
 
         const data = await res.json();
         const records = data.value || [];
         totalFetched += records.length;
 
+        const currentBatchSql = [];
+
         for (const r of records) {
-            if (!r.ListingKey) continue;
+            if (!r.ListingKey) {
+                console.error(`  Warning: Record on page ${pageCount} missing ListingKey!`);
+                continue;
+            }
+
+            if (seenListingKeys.has(r.ListingKey)) {
+                duplicateCount++;
+            } else {
+                seenListingKeys.add(r.ListingKey);
+            }
+
             totalTransformed++;
             const lat = r.Latitude ?? (Array.isArray(r.Coordinates) ? r.Coordinates[1] : null);
             const lon = r.Longitude ?? (Array.isArray(r.Coordinates) ? r.Coordinates[0] : null);
             if (lat != null && lon != null) totalWithCoords++;
             if (extractPrimaryPhoto(r.Media)) totalWithPhotos++;
-            sqlStatements.push(recordToSql(r));
+            if (r.ListAgentMlsId) totalWithAgentMlsId++;
+            if (r.ListOfficeMlsId) totalWithOfficeMlsId++;
+            if (r.ListOfficeKey) totalWithOfficeKey++;
+
+            if (isExecute) {
+                currentBatchSql.push(recordToSql(r));
+            }
         }
 
-        console.log(`  Fetched page ${pageCount}: ${records.length} records (Total so far: ${totalFetched})`);
+        if (pageCount % 10 === 0 || !data['@odata.nextLink'] || pageCount === maxPages) {
+            const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
+            console.log(`  Page ${pageCount}: fetched ${totalFetched.toLocaleString()}/${expectedCount.toLocaleString()} records (${elapsed}s elapsed, ${writtenCount.toLocaleString()} written)`);
+        }
 
-        if (records.length < top) {
-            hasMore = false;
+        // In EXECUTE mode, write batch immediately to D1 in chunks of 500
+        if (isExecute && currentBatchSql.length > 0) {
+            const chunkSize = 500;
+            for (let c = 0; c < currentBatchSql.length; c += chunkSize) {
+                batchIndex++;
+                const chunkRows = currentBatchSql.slice(c, c + chunkSize);
+                const chunkSql = chunkRows.join('\n');
+                const batchFile = path.join(scratchDir, `hydrate-chunk-${batchIndex}.sql`);
+                fs.writeFileSync(batchFile, chunkSql, 'utf8');
+
+                try {
+                    execSync(`npx wrangler d1 execute ${TARGET_DB_NAME} --remote --file=${batchFile} -c ${WRANGLER_CONFIG}`, {
+                        cwd: rootDir,
+                        stdio: 'pipe'
+                    });
+                    writtenCount += chunkRows.length;
+                } catch (batchErr) {
+                    console.error(`\nFATAL D1 BATCH FAILURE on batch ${batchIndex} (rows written before failure: ${writtenCount})`);
+                    console.error('Batch error detail:', batchErr.message);
+                    if (fs.existsSync(batchFile)) { try { fs.unlinkSync(batchFile); } catch {} }
+                    process.exit(1);
+                }
+
+                if (fs.existsSync(batchFile)) {
+                    try { fs.unlinkSync(batchFile); } catch {}
+                }
+            }
+        }
+
+        // Advance to nextLink
+        if (data['@odata.nextLink']) {
+            let nLink = data['@odata.nextLink'];
+            if (!nLink.includes('access_token=')) {
+                nLink += (nLink.includes('?') ? '&' : '?') + `access_token=${bridgeToken}`;
+            }
+            currentUrl = nLink;
         } else {
-            skip += top;
+            currentUrl = null;
         }
     }
 
-    const fetchDuration = ((Date.now() - startTime) / 1000).toFixed(1);
-    console.log(`\nFetch Summary (${fetchDuration}s):`);
-    console.log(`- Total Records Fetched:      ${totalFetched}`);
-    console.log(`- Total Transformed SQL rows: ${totalTransformed}`);
-    console.log(`- Records with Coordinates:   ${totalWithCoords} (${Math.round((totalWithCoords/totalTransformed)*100)}%)`);
-    console.log(`- Records with Primary Photo: ${totalWithPhotos} (${Math.round((totalWithPhotos/totalTransformed)*100)}%)`);
+    const duration = ((Date.now() - startTime) / 1000).toFixed(1);
+
+    console.log('\n====================================================');
+    console.log(`HYDRATION AUDIT SUMMARY (${duration}s total)`);
+    console.log('====================================================');
+    console.log(`- Expected Count (@odata.count):   ${expectedCount.toLocaleString()}`);
+    console.log(`- Total Records Fetched:           ${totalFetched.toLocaleString()}`);
+    console.log(`- Total Unique ListingKeys:        ${seenListingKeys.size.toLocaleString()}`);
+    console.log(`- Duplicate ListingKeys:           ${duplicateCount}`);
+    console.log(`- Total Pages Fetched:             ${pageCount}`);
+    console.log(`- Records with Coordinates:        ${totalWithCoords.toLocaleString()} (${Math.round((totalWithCoords/totalTransformed)*100)}%)`);
+    console.log(`- Records with Primary Photo:      ${totalWithPhotos.toLocaleString()} (${Math.round((totalWithPhotos/totalTransformed)*100)}%)`);
+    console.log(`- Records with ListAgentMlsId:     ${totalWithAgentMlsId.toLocaleString()} (${Math.round((totalWithAgentMlsId/totalTransformed)*100)}%)`);
+    console.log(`- Records with ListOfficeMlsId:    ${totalWithOfficeMlsId.toLocaleString()} (${Math.round((totalWithOfficeMlsId/totalTransformed)*100)}%)`);
+    console.log(`- Records with ListOfficeKey:      ${totalWithOfficeKey.toLocaleString()} (${Math.round((totalWithOfficeKey/totalTransformed)*100)}%)`);
 
     if (isDryRun) {
-        console.log('\nDRY RUN COMPLETE: Zero database writes performed.');
+        console.log('\n[COMPLETENESS GUARD VERIFICATION]');
+        if (totalFetched !== expectedCount) {
+            console.error(`FAIL: Records fetched (${totalFetched}) does not match expected count (${expectedCount})!`);
+            process.exit(1);
+        }
+        if (duplicateCount > 0) {
+            console.warn(`WARNING: ${duplicateCount} duplicate ListingKeys encountered.`);
+        }
+        console.log('PASS: All completeness guards satisfied. DRY RUN performed 0 database writes.');
         console.log('To execute remote staging ingestion, run: node scripts/hydrate-bridge-staging.mjs --execute');
         return;
     }
 
-    // EXECUTE MODE: Write to sneak-idx-staging in batches
-    console.log('\n[EXECUTE MODE] Writing to sneak-idx-staging in batches of 100...');
-    const scratchDir = path.join(rootDir, 'scratch');
-    if (!fs.existsSync(scratchDir)) fs.mkdirSync(scratchDir, { recursive: true });
-
-    const batchSize = 100;
-    let writtenCount = 0;
-    for (let i = 0; i < sqlStatements.length; i += batchSize) {
-        const batchSql = sqlStatements.slice(i, i + batchSize).join('\n');
-        const batchFile = path.join(scratchDir, `hydrate-batch-${Math.floor(i/batchSize)}.sql`);
-        fs.writeFileSync(batchFile, batchSql, 'utf8');
-
-        console.log(`  Applying batch ${Math.floor(i/batchSize) + 1}/${Math.ceil(sqlStatements.length/batchSize)} (${Math.min(batchSize, sqlStatements.length - i)} rows)...`);
-        execSync(`npx wrangler d1 execute ${TARGET_DB_NAME} --remote --file=${batchFile} -c ${WRANGLER_CONFIG}`, {
-            cwd: rootDir,
-            stdio: 'pipe'
-        });
-
-        writtenCount += Math.min(batchSize, sqlStatements.length - i);
-        fs.unlinkSync(batchFile);
-    }
-
-    // Checkpoint in sneak_sync_state
+    // Update sneak_sync_state only after all batches succeed
+    console.log('\n[Step 3] Updating sneak_sync_state Checkpoint...');
     const syncSql = `INSERT OR REPLACE INTO sneak_sync_state (
         sync_name, last_successful_sync, last_full_reconciliation, last_record_count, status, updated_at
     ) VALUES (
@@ -284,10 +357,10 @@ async function runHydration() {
     });
     fs.unlinkSync(syncFile);
 
-    const totalDuration = ((Date.now() - startTime) / 1000).toFixed(1);
     console.log('\n====================================================');
-    console.log(`STAGING HYDRATION COMPLETED SUCCESSFULLY (${totalDuration}s)`);
-    console.log(`Rows written to ${TARGET_DB_NAME}: ${writtenCount}`);
+    console.log(`STAGING HYDRATION COMPLETED SUCCESSFULLY (${duration}s)`);
+    console.log(`Total Rows Written to ${TARGET_DB_NAME}: ${writtenCount.toLocaleString()}`);
+    console.log(`Total D1 Batches: ${batchIndex}`);
     console.log('====================================================');
 }
 

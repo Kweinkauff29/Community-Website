@@ -16,6 +16,18 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import {
+    BRIDGE_BASE_URL,
+    BRIDGE_PROPERTY_ENDPOINT,
+    BRIDGE_OPENHOUSE_ENDPOINT,
+    FILTER_FLORIDA_ELIGIBLE,
+    FILTER_BSAOR_ANY_STATE,
+    FINAL_SNEAK_LISTING_FILTER,
+    SELECT_FIELDS,
+    SELECT_PARAM,
+    DETERMINISTIC_ORDERBY,
+    MAX_PAGE_SIZE
+} from './bridge-config.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const rootDir = path.resolve(__dirname, '..');
@@ -53,23 +65,8 @@ if (!bridgeToken) {
     process.exit(0);
 }
 
-// 2. Exact 42 field selection intended for sneak_listings
-const INTENDED_FIELDS = [
-    'ListingKey', 'ListingId', 'ListPrice', 'OriginalListPrice',
-    'UnparsedAddress', 'StreetNumber', 'StreetName', 'UnitNumber',
-    'City', 'StateOrProvince', 'PostalCode', 'CountyOrParish',
-    'BedroomsTotal', 'BathroomsTotalInteger', 'BathroomsFull', 'BathroomsHalf',
-    'LivingArea', 'StandardStatus', 'PropertyType', 'PropertySubType',
-    'ListingContractDate', 'ModificationTimestamp', 'StatusChangeTimestamp',
-    'YearBuilt', 'LotSizeAcres', 'Latitude', 'Longitude', 'Coordinates',
-    'Media', 'PublicRemarks', 'SubdivisionName',
-    'ListAgentKey', 'ListAgentMlsId', 'ListAgentFullName', 'ListAgentEmail', 'ListAgentDirectPhone',
-    'ListOfficeKey', 'ListOfficeMlsId', 'ListOfficeName', 'ListOfficePhone',
-    'OriginatingSystemKey', 'OriginatingSystemName'
-];
-
 async function bridgeFetch(endpointPath, queryParams = {}) {
-    const url = new URL(`https://api.bridgedataoutput.com/api/v2/OData/bsaor/${endpointPath}`);
+    const url = new URL(`${BRIDGE_BASE_URL}/${endpointPath}`);
     for (const [k, v] of Object.entries(queryParams)) {
         url.searchParams.set(k, v);
     }
@@ -97,11 +94,12 @@ async function runProbe() {
     console.log('====================================================');
     console.log('SNEAK IDX — AUTHENTICATED BRIDGE FEED AUDIT & PROBE');
     console.log('====================================================');
-    console.log('Target Base: https://api.bridgedataoutput.com/api/v2/OData/bsaor');
+    console.log(`Target Base: ${BRIDGE_BASE_URL}`);
+    console.log(`Final Staging Filter: ${FINAL_SNEAK_LISTING_FILTER}`);
 
     try {
         // --- 1. FIELD VALIDATION ($top=1 without select to inspect native fields) ---
-        console.log('\n[1/5] Probing Property Feed Schema with native record inspect ($top=1)...');
+        console.log('\n[1/6] Probing Property Feed Schema with native record inspect ($top=1)...');
         const rawSampleData = await bridgeFetch('Property', { '$top': '1' });
         const rawRecords = rawSampleData.value || [];
         if (rawRecords.length === 0) {
@@ -114,34 +112,52 @@ async function runProbe() {
         console.log(`  HTTP 200 OK — Successfully retrieved native record (ListingKey: ${sample.ListingKey})`);
         console.log(`  Total native fields present on record: ${nativeKeys.size}`);
         console.log('  Sample Coordinates value:', JSON.stringify(sample.Coordinates));
-        console.log('  Sample Latitude/Longitude fields present?:', 'Latitude' in sample, 'Longitude' in sample);
+        console.log('  Sample Latitude/Longitude scalar fields present?:', 'Latitude' in sample, 'Longitude' in sample);
+        console.log(`  OData $select field count: ${SELECT_FIELDS.length} fields (using Coordinates for lat/lon)`);
 
-        // Check which intended fields are present natively
-        const missing = INTENDED_FIELDS.filter(f => !nativeKeys.has(f));
-        const present = INTENDED_FIELDS.filter(f => nativeKeys.has(f));
-        console.log(`  Intended fields natively present: ${present.length}/${INTENDED_FIELDS.length}`);
-        if (missing.length > 0) {
-            console.log(`  Intended fields NOT in native keys: ${missing.join(', ')}`);
-        }
+        // --- 2. THREE EXPLICIT FILTER COUNTS ---
+        console.log('\n[2/6] Querying 3 Explicit Filter Counts (@odata.count)...');
+        
+        // Filter A: Eligible Florida (StateOrProvince eq 'FL' and active/auc/pending)
+        const countAData = await bridgeFetch('Property', {
+            '$top': '1',
+            '$filter': FILTER_FLORIDA_ELIGIBLE,
+            '$count': 'true'
+        });
+        const countA = countAData['@odata.count'] || 0;
+        console.log(`  [A] Florida Eligible (StateOrProvince eq 'FL'):           ${countA.toLocaleString()}`);
 
-        // Adjust SELECT_FIELDS for OData queries (excluding Latitude/Longitude if rejected by Bridge)
-        const validSelectFields = INTENDED_FIELDS.filter(f => f !== 'Latitude' && f !== 'Longitude' && nativeKeys.has(f));
-        const fieldSelect = validSelectFields.join(',');
-        console.log(`  Valid OData $select list (${validSelectFields.length} fields)`);
+        // Filter B: BSAOR Eligible, Any State (OriginatingSystemKey eq 'bsaor' and active/auc/pending)
+        const countBData = await bridgeFetch('Property', {
+            '$top': '1',
+            '$filter': FILTER_BSAOR_ANY_STATE,
+            '$count': 'true'
+        });
+        const countB = countBData['@odata.count'] || 0;
+        console.log(`  [B] BSAOR Eligible, Any State (OriginatingSystemKey eq 'bsaor'): ${countB.toLocaleString()}`);
 
-        // --- 2. ACTIVE/PENDING COUNTS & ORIGIN SYSTEMS ($top=200 sample audit) ---
-        console.log('\n[2/5] Auditing Dataset Counts & Identifier Coverage ($top=200 audit sample)...');
-        const filter = "StateOrProvince eq 'FL' and (StandardStatus eq 'Active' or StandardStatus eq 'Active Under Contract' or StandardStatus eq 'Pending')";
+        // Filter C: Final SNEAK Filter (OriginatingSystemKey eq 'bsaor' AND StateOrProvince eq 'FL' and active/auc/pending)
+        const countCData = await bridgeFetch('Property', {
+            '$top': '1',
+            '$filter': FINAL_SNEAK_LISTING_FILTER,
+            '$count': 'true'
+        });
+        const countC = countCData['@odata.count'] || 0;
+        console.log(`  [C] FINAL SNEAK FILTER (bsaor + FL + Active/AUC/Pending):  ${countC.toLocaleString()}`);
+        console.log(`  Count Comparison Analysis: Out-of-state BSAOR listings = ${countB - countC}, Non-BSAOR FL listings = ${countA - countC}`);
+
+        // --- 3. DETERMINISTIC ORDERBY & $top=200 SAMPLE AUDIT ---
+        console.log('\n[3/6] Testing Deterministic $orderby=ListingKey asc & $top=200 Sample Audit...');
         const auditData = await bridgeFetch('Property', {
-            '$top': '200',
-            '$filter': filter,
-            '$select': fieldSelect,
+            '$top': String(MAX_PAGE_SIZE),
+            '$filter': FINAL_SNEAK_LISTING_FILTER,
+            '$select': SELECT_PARAM,
+            '$orderby': DETERMINISTIC_ORDERBY,
             '$count': 'true'
         });
 
-        const totalCount = auditData['@odata.count'] || auditData.value?.length || 0;
         const auditRecords = auditData.value || [];
-        console.log(`  Total Florida Active/Pending/Under Contract count (@odata.count): ${totalCount}`);
+        console.log(`  HTTP 200 OK — Successfully retrieved ${auditRecords.length} records with $orderby=${DETERMINISTIC_ORDERBY}`);
 
         // Statistics aggregates
         const originSystems = {};
@@ -192,19 +208,8 @@ async function runProbe() {
         console.log(`    - Usable Map Coordinates: ${withCoords}/${auditRecords.length} (${Math.round((withCoords/auditRecords.length)*100)}%)`);
         console.log(`    - Media / Photos:         ${withMedia}/${auditRecords.length} (${Math.round((withMedia/auditRecords.length)*100)}%)`);
 
-        // --- 3. BSAOR-SPECIFIC FILTER COUNT ---
-        console.log('\n[3/5] Checking BSAOR Origin-Filtered Count...');
-        const bsaorFilter = "OriginatingSystemKey eq 'bsaor' and (StandardStatus eq 'Active' or StandardStatus eq 'Active Under Contract' or StandardStatus eq 'Pending')";
-        const bsaorData = await bridgeFetch('Property', {
-            '$top': '1',
-            '$filter': bsaorFilter,
-            '$count': 'true'
-        });
-        const bsaorCount = bsaorData['@odata.count'] || 0;
-        console.log(`  BSAOR Specific Count (@odata.count): ${bsaorCount}`);
-
         // --- 4. MEDIA STRUCTURE AUDIT ---
-        console.log('\n[4/5] Auditing Media Array Structure & Field Naming...');
+        console.log('\n[4/6] Auditing Media Array Structure & Field Naming...');
         const mediaSample = auditRecords.find(r => Array.isArray(r.Media) && r.Media.length > 0);
         if (mediaSample) {
             const firstPhoto = mediaSample.Media[0];
@@ -214,18 +219,18 @@ async function runProbe() {
         }
 
         // --- 5. OPEN HOUSE RESOURCE AUDIT ---
-        console.log('\n[5/5] Auditing OpenHouse Resource Feed...');
+        console.log('\n[5/6] Auditing OpenHouse Resource Feed...');
         try {
             const ohData = await bridgeFetch('OpenHouse', {
                 '$top': '5',
+                '$filter': "OpenHouseDate ge 2026-08-20",
                 '$count': 'true'
             });
             const ohCount = ohData['@odata.count'] || ohData.value?.length || 0;
-            console.log(`  OpenHouse Endpoint: HTTP 200 OK | Count: ${ohCount}`);
+            console.log(`  OpenHouse Endpoint: HTTP 200 OK | Active Future OH Count: ${ohCount.toLocaleString()}`);
             if (ohData.value?.length > 0) {
                 const sampleOH = ohData.value[0];
-                console.log('  Sample OpenHouse keys:', Object.keys(sampleOH).join(', '));
-                console.log(`  Sample OH: ListingKey=${sampleOH.ListingKey}, Date=${sampleOH.OpenHouseDate || sampleOH.OpenHouseStartTime}`);
+                console.log(`  Sample OH: ListingKey=${sampleOH.ListingKey}, Date=${sampleOH.OpenHouseDate}, Start=${sampleOH.OpenHouseStartTime}`);
             }
         } catch (ohErr) {
             console.log('  OpenHouse Resource Notice:', ohErr.message);

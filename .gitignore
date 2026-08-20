@@ -21,3 +21,6 @@ Thumbs.db
 *.sqlite-wal
 *.sqlite-shm
 *.log
+
+# Scratch SQL generated during hydration/sync
+scratch/*.sql
