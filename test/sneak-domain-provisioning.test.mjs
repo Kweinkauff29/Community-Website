@@ -190,6 +190,19 @@ function createMockDomainDB() {
                         if (b) { b.status = 'removed'; b.removed_at = removed_at; b.updated_at = updated_at; }
                         return { success: true };
                     }
+                    if (query.includes('UPDATE sneak_domain_bindings') && query.includes('status = \'removal_error\'')) {
+                        const error_summary = boundArgs[0];
+                        const updated_at = boundArgs[1];
+                        const bindingId = boundArgs[2];
+                        const b = tables.sneak_domain_bindings.find(x => x.id === bindingId);
+                        if (b) {
+                            b.status = 'removal_error';
+                            b.error_code = 'PROVIDER_DELETE_ERROR';
+                            b.error_summary = error_summary;
+                            b.updated_at = updated_at;
+                        }
+                        return { success: true };
+                    }
                     return { success: true };
                 }
             };
@@ -337,4 +350,53 @@ describe('SNEAK Custom Domain Provisioning & Cloudflare for SaaS Suite (Phase 6.
         assert.ok(htmlB.includes('David Agent B'));
         assert.ok(!htmlB.includes('Sarah Agent A'));
     });
+
+    test('TEST 9: Live Mode Fails Closed on Missing Credentials', async () => {
+        const mockDB = createMockDomainDB();
+        const liveEnvNoToken = { CLOUDFLARE_SAAS_MODE: 'live' };
+
+        const res = await prepareCustomHostname(mockDB, 'site_b', 'www.live-fail-test.com', liveEnvNoToken, 'admin');
+        assert.equal(res.success, false);
+        assert.ok(res.error.includes('CLOUDFLARE_SAAS_API_TOKEN is required in live mode'));
+    });
+
+    test('TEST 10: Explicit Provider Source Identification', async () => {
+        const mockDB = createMockDomainDB();
+        const simEnv = { CLOUDFLARE_SAAS_MODE: 'simulation' };
+
+        const res = await prepareCustomHostname(mockDB, 'site_b', 'www.sim-label-test.com', simEnv, 'admin');
+        assert.equal(res.success, true);
+        assert.equal(res.providerSource, 'SIMULATED PROVIDER');
+    });
+
+    test('TEST 11: Provider Delete Failure Hardening in Live Mode', async () => {
+        const mockDB = createMockDomainDB();
+        // Live mode without tokens will fail delete in Cloudflare
+        const liveEnv = { CLOUDFLARE_SAAS_MODE: 'live', CLOUDFLARE_SAAS_API_TOKEN: 'invalid_token', CLOUDFLARE_SAAS_ZONE_ID: 'invalid_zone', CLOUDFLARE_SAAS_CNAME_TARGET: 'customers.sneakidx.com' };
+
+        // mock fetch failure for live delete
+        const originalFetch = globalThis.fetch;
+        globalThis.fetch = async () => ({
+            json: async () => ({ success: false, errors: [{ code: 1000, message: 'Invalid API token' }] })
+        });
+
+        try {
+            const res = await removeCustomHostname(mockDB, 'bind_a', liveEnv, 'admin');
+            assert.equal(res.success, false);
+            assert.ok(res.error.includes('Cloudflare Custom Hostname deletion failed'));
+
+            // SNEAK authorization was still safely revoked
+            const dom = mockDB.tables.sneak_domains.find(x => x.id === 'dom_a');
+            assert.equal(dom.verified, 0);
+            assert.equal(dom.status, 'disabled');
+
+            // Binding preserved in removal_error state for retry
+            const bind = mockDB.tables.sneak_domain_bindings.find(x => x.id === 'bind_a');
+            assert.equal(bind.status, 'removal_error');
+            assert.equal(bind.error_code, 'PROVIDER_DELETE_ERROR');
+        } finally {
+            globalThis.fetch = originalFetch;
+        }
+    });
 });
+

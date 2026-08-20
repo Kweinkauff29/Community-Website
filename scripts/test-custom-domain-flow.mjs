@@ -56,7 +56,8 @@ function assert(condition, message) {
 
 async function runCustomDomainFlowTests() {
     console.log("====================================================");
-    console.log("SNEAK IDX — END-TO-END CUSTOM DOMAIN & SAAS PIPELINE");
+    console.log("SNEAK IDX — SIMULATED CLOUDFLARE DOMAIN FLOW VALIDATION");
+    console.log("Provider Mode:  SIMULATED CLOUDFLARE ADAPTER");
     console.log(`Admin Worker:   ${ADMIN_URL}`);
     console.log(`Sites Worker:   ${SITES_URL}`);
     console.log(`Member Worker:  ${MEMBER_URL}`);

@@ -244,6 +244,11 @@ export default {
                 }
             }
 
+            // /api/admin/domains/diagnostic
+            if (path === '/api/admin/domains/diagnostic' && method === 'GET') {
+                return await api.handleGetDomainDiagnostic(env);
+            }
+
             // /api/admin/domains/:id
             const domMatch = path.match(/^\/api\/admin\/domains\/([^\/]+)$/);
             if (domMatch) {
@@ -347,6 +352,11 @@ export default {
             if (delMatch && method === 'DELETE') {
                 const bindingId = delMatch[1];
                 return await api.handleRemoveDomainBinding(db, bindingId, actor, env);
+            }
+
+            // /api/admin/domains/diagnostic
+            if (path === '/api/admin/domains/diagnostic' && method === 'GET') {
+                return await api.handleGetDomainDiagnostic(env);
             }
 
             return error('API endpoint not found', 404);

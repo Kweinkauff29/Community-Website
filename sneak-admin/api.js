@@ -1068,4 +1068,14 @@ export async function handleRemoveDomainBinding(db, bindingId, actor, env) {
     return json(result);
 }
 
+import { getCloudflareSaaSDiagnostic } from './cloudflare-saas.js';
+
+/**
+ * GET /api/admin/domains/diagnostic
+ */
+export async function handleGetDomainDiagnostic(env) {
+    return json(getCloudflareSaaSDiagnostic(env));
+}
+
+
 

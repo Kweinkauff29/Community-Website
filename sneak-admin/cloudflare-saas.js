@@ -2,8 +2,8 @@
  * sneak-admin/cloudflare-saas.js
  * 
  * Cloudflare for SaaS Custom Hostname & SSL Management for SNEAK Websites.
- * Provides custom domain normalization, least-privilege API integration,
- * deterministic staging simulation, and atomic D1 state synchronization.
+ * Supports explicit 'live' and 'simulation' modes, fail-closed security,
+ * hardened provider delete recovery, orphan prevention, and atomic D1 synchronization.
  */
 
 const FORBIDDEN_HOST_SUFFIXES = [
@@ -18,9 +18,6 @@ const FORBIDDEN_HOST_SUFFIXES = [
 
 /**
  * Normalizes and validates a requested customer hostname.
- * 
- * @param {string} raw - Raw input (e.g. "https://www.example.com/path", "www.SmithHomes.com")
- * @returns {{ valid: boolean, hostname?: string, error?: string }}
  */
 export function normalizeHostname(raw) {
     if (!raw || typeof raw !== 'string') {
@@ -74,21 +71,37 @@ export function normalizeHostname(raw) {
 
 /**
  * Cloudflare for SaaS API Adapter.
- * Supports live Cloudflare API when tokens are set, or realistic staging adapter.
  */
-class CloudflareSaaSClient {
+export class CloudflareSaaSClient {
     constructor(env) {
+        this.mode = (env?.CLOUDFLARE_SAAS_MODE || 'simulation').toLowerCase();
         this.apiToken = env?.CLOUDFLARE_SAAS_API_TOKEN || null;
         this.zoneId = env?.CLOUDFLARE_SAAS_ZONE_ID || null;
-        this.fallbackTarget = env?.CLOUDFLARE_SAAS_CNAME_TARGET || 'customers.sneakidx.com';
+        this.fallbackTarget = env?.CLOUDFLARE_SAAS_CNAME_TARGET || (this.mode === 'live' ? null : 'customers.sneakidx.com');
     }
 
     get isLive() {
-        return Boolean(this.apiToken && this.zoneId);
+        return this.mode === 'live';
+    }
+
+    validateLiveConfig() {
+        if (this.isLive) {
+            if (!this.apiToken) {
+                throw new Error('CLOUDFLARE_SAAS_API_TOKEN is required in live mode.');
+            }
+            if (!this.zoneId) {
+                throw new Error('CLOUDFLARE_SAAS_ZONE_ID is required in live mode.');
+            }
+            if (!this.fallbackTarget) {
+                throw new Error('CLOUDFLARE_SAAS_CNAME_TARGET is required in live mode.');
+            }
+        }
     }
 
     async createCustomHostname(hostname) {
         if (this.isLive) {
+            this.validateLiveConfig();
+
             const res = await fetch(`https://api.cloudflare.com/client/v4/zones/${this.zoneId}/custom_hostnames`, {
                 method: 'POST',
                 headers: {
@@ -104,11 +117,33 @@ class CloudflareSaaSClient {
                     }
                 })
             });
+
             const data = await res.json();
             if (!data.success) {
                 const err = data.errors?.[0] || { message: 'Cloudflare API error' };
-                throw new Error(err.message || 'Failed to create Cloudflare custom hostname');
+                // Handle already exists in Cloudflare
+                if (err.code === 1434 || (err.message && err.message.toLowerCase().includes('already exists'))) {
+                    // Try to look up existing
+                    const listRes = await fetch(`https://api.cloudflare.com/client/v4/zones/${this.zoneId}/custom_hostnames?hostname=${encodeURIComponent(hostname)}`, {
+                        headers: { 'Authorization': `Bearer ${this.apiToken}` }
+                    });
+                    const listData = await listRes.json();
+                    if (listData.success && listData.result?.[0]) {
+                        const existing = listData.result[0];
+                        return {
+                            providerHostnameId: existing.id,
+                            status: existing.status,
+                            sslStatus: existing.ssl?.status || 'pending_validation',
+                            cnameTarget: this.fallbackTarget,
+                            ownershipTxtName: existing.ownership_verification?.name || null,
+                            ownershipTxtValue: existing.ownership_verification?.value || null,
+                            providerSource: 'REAL CLOUDFLARE'
+                        };
+                    }
+                }
+                throw new Error(`[Cloudflare Error ${err.code || 'API'}]: ${err.message || 'Failed to create Custom Hostname'}`);
             }
+
             const r = data.result;
             return {
                 providerHostnameId: r.id,
@@ -116,62 +151,79 @@ class CloudflareSaaSClient {
                 sslStatus: r.ssl?.status || 'pending_validation',
                 cnameTarget: this.fallbackTarget,
                 ownershipTxtName: r.ownership_verification?.name || null,
-                ownershipTxtValue: r.ownership_verification?.value || null
+                ownershipTxtValue: r.ownership_verification?.value || null,
+                providerSource: 'REAL CLOUDFLARE'
             };
         }
 
-        // Staging Simulated Adapter (Deterministic & Realistic)
+        // SIMULATED PROVIDER ADAPTER
         return {
             providerHostnameId: `cf_cust_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 7)}`,
             status: 'pending_dns',
             sslStatus: 'pending_validation',
-            cnameTarget: this.fallbackTarget,
+            cnameTarget: this.fallbackTarget || 'customers.sneakidx.com',
             ownershipTxtName: `_cf-custom-hostname.${hostname}`,
-            ownershipTxtValue: `sneak-verify-${Date.now().toString(36)}`
+            ownershipTxtValue: `sneak-verify-${Date.now().toString(36)}`,
+            providerSource: 'SIMULATED PROVIDER'
         };
     }
 
     async getCustomHostname(providerHostnameId, hostname) {
         if (this.isLive) {
+            this.validateLiveConfig();
+
             const res = await fetch(`https://api.cloudflare.com/client/v4/zones/${this.zoneId}/custom_hostnames/${providerHostnameId}`, {
                 headers: {
                     'Authorization': `Bearer ${this.apiToken}`,
                     'Content-Type': 'application/json'
                 }
             });
+
             const data = await res.json();
             if (!data.success) {
-                throw new Error(data.errors?.[0]?.message || 'Failed to fetch Cloudflare custom hostname');
+                const err = data.errors?.[0] || { message: 'Cloudflare API error' };
+                throw new Error(`[Cloudflare Error ${err.code || 'API'}]: ${err.message || 'Failed to fetch Custom Hostname details'}`);
             }
+
             const r = data.result;
             return {
                 status: r.status,
                 sslStatus: r.ssl?.status,
                 cnameTarget: this.fallbackTarget,
                 ownershipTxtName: r.ownership_verification?.name || null,
-                ownershipTxtValue: r.ownership_verification?.value || null
+                ownershipTxtValue: r.ownership_verification?.value || null,
+                providerSource: 'REAL CLOUDFLARE'
             };
         }
 
-        // Staging Simulated Refresh (Transitions to active after creation for test verification)
+        // SIMULATED PROVIDER ADAPTER
         return {
             status: 'active',
             sslStatus: 'active',
-            cnameTarget: this.fallbackTarget,
+            cnameTarget: this.fallbackTarget || 'customers.sneakidx.com',
             ownershipTxtName: `_cf-custom-hostname.${hostname}`,
-            ownershipTxtValue: 'verified'
+            ownershipTxtValue: 'verified',
+            providerSource: 'SIMULATED PROVIDER'
         };
     }
 
     async deleteCustomHostname(providerHostnameId) {
         if (this.isLive) {
+            this.validateLiveConfig();
+
             const res = await fetch(`https://api.cloudflare.com/client/v4/zones/${this.zoneId}/custom_hostnames/${providerHostnameId}`, {
                 method: 'DELETE',
                 headers: { 'Authorization': `Bearer ${this.apiToken}` }
             });
+
             const data = await res.json();
-            return data.success;
+            if (!data.success) {
+                const err = data.errors?.[0] || { message: 'Cloudflare API error' };
+                throw new Error(`[Cloudflare Error ${err.code || 'API'}]: ${err.message || 'Failed to delete Custom Hostname'}`);
+            }
+            return true;
         }
+
         return true;
     }
 }
@@ -224,37 +276,45 @@ export async function prepareCustomHostname(db, siteId, rawHostname, env, actor 
         cfResult = await client.createCustomHostname(hostname);
     } catch (err) {
         console.error('[CLOUDFLARE SAAS ERROR]', err.message);
-        return { success: false, error: 'Cloudflare SaaS configuration error: ' + err.message };
+        return { success: false, error: err.message };
     }
 
     // 5. Atomic D1 Binding Record Upsert
     const bindingId = existingBinding?.id || `bind_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
     const now = new Date().toISOString();
 
-    await db.prepare(`
-        INSERT INTO sneak_domain_bindings (
-            id, domain_id, site_id, provider, hostname, provider_hostname_id,
-            status, ssl_status, validation_method, cname_target,
-            ownership_txt_name, ownership_txt_value, last_checked_at, created_at, updated_at
-        ) VALUES (
-            ?, ?, ?, 'cloudflare_saas', ?, ?,
-            ?, ?, 'http', ?,
-            ?, ?, ?, ?, ?
-        )
-        ON CONFLICT(hostname) DO UPDATE SET
-            provider_hostname_id = excluded.provider_hostname_id,
-            status = excluded.status,
-            ssl_status = excluded.ssl_status,
-            cname_target = excluded.cname_target,
-            ownership_txt_name = excluded.ownership_txt_name,
-            ownership_txt_value = excluded.ownership_txt_value,
-            last_checked_at = excluded.last_checked_at,
-            updated_at = excluded.updated_at
-    `).bind(
-        bindingId, domainRecord.id, siteId, hostname, cfResult.providerHostnameId,
-        cfResult.status, cfResult.sslStatus, cfResult.cnameTarget,
-        cfResult.ownershipTxtName, cfResult.ownershipTxtValue, now, now, now
-    ).run();
+    try {
+        await db.prepare(`
+            INSERT INTO sneak_domain_bindings (
+                id, domain_id, site_id, provider, hostname, provider_hostname_id,
+                status, ssl_status, validation_method, cname_target,
+                ownership_txt_name, ownership_txt_value, last_checked_at, created_at, updated_at
+            ) VALUES (
+                ?, ?, ?, 'cloudflare_saas', ?, ?,
+                ?, ?, 'http', ?,
+                ?, ?, ?, ?, ?
+            )
+            ON CONFLICT(hostname) DO UPDATE SET
+                provider_hostname_id = excluded.provider_hostname_id,
+                status = excluded.status,
+                ssl_status = excluded.ssl_status,
+                cname_target = excluded.cname_target,
+                ownership_txt_name = excluded.ownership_txt_name,
+                ownership_txt_value = excluded.ownership_txt_value,
+                last_checked_at = excluded.last_checked_at,
+                updated_at = excluded.updated_at
+        `).bind(
+            bindingId, domainRecord.id, siteId, hostname, cfResult.providerHostnameId,
+            cfResult.status, cfResult.sslStatus, cfResult.cnameTarget,
+            cfResult.ownershipTxtName, cfResult.ownershipTxtValue, now, now, now
+        ).run();
+    } catch (d1Err) {
+        // D1 Write Failure: Attempt Cloudflare cleanup to avoid leaving orphan Custom Hostnames
+        if (cfResult.providerHostnameId && client.isLive) {
+            try { await client.deleteCustomHostname(cfResult.providerHostnameId); } catch {}
+        }
+        return { success: false, error: 'Database error saving domain binding: ' + d1Err.message };
+    }
 
     // 6. Record Audit Log
     try {
@@ -262,13 +322,14 @@ export async function prepareCustomHostname(db, siteId, rawHostname, env, actor 
         await db.prepare(`
             INSERT INTO sneak_admin_audit (id, admin_actor, action, entity_type, entity_id, summary, created_at)
             VALUES (?, ?, 'PREPARE_CUSTOM_HOSTNAME', 'domain_binding', ?, ?, datetime('now'))
-        `).bind(auditId, actor, bindingId, `Prepared custom hostname ${hostname} for site ${site.site_key}`).run();
+        `).bind(auditId, actor, bindingId, `Prepared custom hostname ${hostname} for site ${site.site_key} [${cfResult.providerSource}]`).run();
     } catch {}
 
     const binding = await db.prepare("SELECT * FROM sneak_domain_bindings WHERE id = ?").bind(bindingId).first();
 
     return {
         success: true,
+        providerSource: cfResult.providerSource,
         hostname,
         binding,
         dnsInstructions: {
@@ -296,6 +357,15 @@ export async function refreshCustomHostnameStatus(db, bindingId, env, actor = 's
     try {
         cfResult = await client.getCustomHostname(binding.provider_hostname_id, binding.hostname);
     } catch (err) {
+        const now = new Date().toISOString();
+        await db.prepare(`
+            UPDATE sneak_domain_bindings
+            SET error_code = 'REFRESH_ERROR',
+                error_summary = ?,
+                last_checked_at = ?,
+                updated_at = ?
+            WHERE id = ?
+        `).bind(err.message.slice(0, 255), now, now, bindingId).run();
         return { success: false, error: 'Could not refresh status: ' + err.message };
     }
 
@@ -306,6 +376,8 @@ export async function refreshCustomHostnameStatus(db, bindingId, env, actor = 's
         UPDATE sneak_domain_bindings
         SET status = ?,
             ssl_status = ?,
+            error_code = NULL,
+            error_summary = NULL,
             last_checked_at = ?,
             activated_at = CASE WHEN ? = 1 THEN COALESCE(activated_at, ?) ELSE activated_at END,
             updated_at = ?
@@ -328,6 +400,7 @@ export async function refreshCustomHostnameStatus(db, bindingId, env, actor = 's
 
     return {
         success: true,
+        providerSource: cfResult.providerSource,
         isFullyActive,
         binding: updated
     };
@@ -335,29 +408,54 @@ export async function refreshCustomHostnameStatus(db, bindingId, env, actor = 's
 
 /**
  * Safely removes a custom hostname binding.
+ * Hardened to prevent marking removed if Cloudflare deletion fails in live mode.
  */
 export async function removeCustomHostname(db, bindingId, env, actor = 'admin') {
     const binding = await db.prepare("SELECT * FROM sneak_domain_bindings WHERE id = ?").bind(bindingId).first();
     if (!binding) return { success: false, error: 'Binding not found.' };
 
-    // 1. Disable authorization immediately
+    // 1. Disable authorization in SNEAK immediately
     await db.prepare("UPDATE sneak_domains SET verified = 0, status = 'disabled' WHERE id = ?").bind(binding.domain_id).run();
 
     // 2. Delete from Cloudflare
     const client = new CloudflareSaaSClient(env);
+    let deleteSuccess = false;
+    let deleteError = null;
+
     try {
         if (binding.provider_hostname_id) {
-            await client.deleteCustomHostname(binding.provider_hostname_id);
+            deleteSuccess = await client.deleteCustomHostname(binding.provider_hostname_id);
+        } else {
+            deleteSuccess = true;
         }
     } catch (err) {
+        deleteError = err.message;
         console.error('[CF DELETE ERROR]', err.message);
     }
 
-    // 3. Mark binding removed in D1
     const now = new Date().toISOString();
+
+    if (!deleteSuccess && client.isLive) {
+        // In live mode, if Cloudflare delete failed, mark removal_error and preserve provider_hostname_id
+        await db.prepare(`
+            UPDATE sneak_domain_bindings
+            SET status = 'removal_error',
+                error_code = 'PROVIDER_DELETE_ERROR',
+                error_summary = ?,
+                updated_at = ?
+            WHERE id = ?
+        `).bind(deleteError ? deleteError.slice(0, 255) : 'Cloudflare delete failed', now, bindingId).run();
+
+        return {
+            success: false,
+            error: `Domain disabled in SNEAK, but Cloudflare Custom Hostname deletion failed: ${deleteError || 'Unknown error'}. Preserved binding ID for retry.`
+        };
+    }
+
+    // 3. Mark binding removed in D1
     await db.prepare(`
         UPDATE sneak_domain_bindings
-        SET status = 'removed', removed_at = ?, updated_at = ?
+        SET status = 'removed', removed_at = ?, error_code = NULL, error_summary = NULL, updated_at = ?
         WHERE id = ?
     `).bind(now, now, bindingId).run();
 
@@ -371,4 +469,19 @@ export async function removeCustomHostname(db, bindingId, env, actor = 'admin') 
     } catch {}
 
     return { success: true, message: `Domain ${binding.hostname} removed successfully.` };
+}
+
+/**
+ * Returns sanitized diagnostic information for Cloudflare for SaaS configuration.
+ */
+export function getCloudflareSaaSDiagnostic(env) {
+    const client = new CloudflareSaaSClient(env);
+    return {
+        mode: client.mode,
+        isLive: client.isLive,
+        zoneConfigured: Boolean(env?.CLOUDFLARE_SAAS_ZONE_ID),
+        tokenConfigured: Boolean(env?.CLOUDFLARE_SAAS_API_TOKEN),
+        cnameTarget: client.fallbackTarget || 'Not Configured',
+        provider: 'cloudflare_saas'
+    };
 }
