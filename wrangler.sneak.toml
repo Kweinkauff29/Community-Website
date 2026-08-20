@@ -20,8 +20,7 @@ run_worker_first = true
 [[d1_databases]]
 binding = "DB"
 database_name = "sneak-idx-staging"
-# IMPORTANT: Insert database_id returned by 'wrangler d1 create sneak-idx-staging' prior to remote deployment
-database_id = "00000000-0000-0000-0000-000000000000"
+database_id = "6b91eeca-d65f-434c-a49f-419dff98285f"
 migrations_dir = "migrations"
 
 # Scheduled cron jobs for Bridge MLS sync (Disabled for initial staging deployment)
