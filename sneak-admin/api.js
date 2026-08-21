@@ -686,7 +686,7 @@ export async function handleListAccountMembers(db, accountId) {
 /**
  * POST /api/admin/accounts/:id/members
  */
-export async function handleCreateAccountMemberInvite(db, accountId, body, actor) {
+export async function handleCreateAccountMemberInvite(db, accountId, body, actor, env = {}) {
     const { email, role = 'owner' } = body;
     const cleanEmail = (email || '').toLowerCase().trim();
     if (!cleanEmail || !cleanEmail.includes('@')) {
@@ -708,35 +708,55 @@ export async function handleCreateAccountMemberInvite(db, accountId, body, actor
     } else {
         await db.prepare(`
             UPDATE sneak_member_users
-            SET account_id = ?, role = ?, invited_at = ?, updated_at = ?
+            SET account_id = ?, role = ?, status = 'invited', invited_at = ?, updated_at = ?
             WHERE id = ?
         `).bind(accountId, role, now, now, userId).run();
     }
 
-    // Generate single-use magic invitation link
-    const bytes = crypto.getRandomValues(new Uint8Array(32));
-    const rawToken = Array.from(bytes).map(b => b.toString(16).padStart(2, '0')).join('');
-    const enc = new TextEncoder();
-    const hashBuffer = await crypto.subtle.digest('SHA-256', enc.encode(rawToken));
-    const tokenHash = Array.from(new Uint8Array(hashBuffer)).map(b => b.toString(16).padStart(2, '0')).join('');
+    // Trigger Member Worker's public magic-link request server-side
+    let invitationRequested = false;
+    let invitationError = null;
+    try {
+        const memberUrl = env?.MEMBER_PORTAL_URL || 'https://sneak-idx-member-staging.bonitaspringsrealtors.workers.dev';
+        const requestPayload = JSON.stringify({ email: cleanEmail });
+        const requestHeaders = {
+            'Content-Type': 'application/json',
+            'Origin': memberUrl,
+            'Host': new URL(memberUrl).host
+        };
 
-    const linkId = `ml_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
-    const expiresAt = new Date(Date.now() + (900 * 1000)).toISOString(); // 15 minutes
+        let dispatchRes;
+        if (env?.MEMBER_WORKER && typeof env.MEMBER_WORKER.fetch === 'function') {
+            dispatchRes = await env.MEMBER_WORKER.fetch(new Request(`${memberUrl}/api/member/auth/magic-link`, {
+                method: 'POST',
+                headers: requestHeaders,
+                body: requestPayload
+            }));
+        } else {
+            dispatchRes = await fetch(`${memberUrl}/api/member/auth/magic-link`, {
+                method: 'POST',
+                headers: requestHeaders,
+                body: requestPayload
+            });
+        }
 
-    await db.prepare(`
-        INSERT INTO sneak_member_magic_links (id, user_id, token_hash, purpose, created_at, expires_at, used_at)
-        VALUES (?, ?, ?, 'invite', ?, ?, NULL)
-    `).bind(linkId, userId, tokenHash, now, expiresAt).run();
+        if (dispatchRes.ok) {
+            invitationRequested = true;
+        } else {
+            invitationError = `Member worker HTTP ${dispatchRes.status}`;
+        }
+    } catch (dispatchErr) {
+        invitationError = dispatchErr.message;
+        console.error('[ADMIN INVITATION DISPATCH ERROR]', dispatchErr.message);
+    }
 
     await logAudit(db, actor, 'CREATE_MEMBER_INVITE', 'member_user', userId, `Invited ${cleanEmail} for account ${account.account_name}`);
-
-    const inviteUrl = `https://sneak-idx-member-staging.bonitaspringsrealtors.workers.dev/?token=${encodeURIComponent(rawToken)}`;
 
     return json({
         success: true,
         user: { id: userId, account_id: accountId, email: cleanEmail, role, status: 'invited' },
-        inviteUrl,
-        rawToken
+        invitationRequested,
+        invitationError
     }, 201);
 }
 
@@ -1152,15 +1172,14 @@ export async function handleGetReadiness(db, env) {
     }
 
     const saasDiag = getCloudflareSaaSDiagnostic(env);
-    const mailjetConfigured = Boolean((env?.MAILJET_API_KEY || env?.MJ_API_KEY) && (env?.MAILJET_SECRET_KEY || env?.MJ_API_SECRET));
-    const emailConfigured = mailjetConfigured || Boolean(env?.RESEND_API_KEY || env?.POSTMARK_SERVER_TOKEN);
-    const emailMode = mailjetConfigured ? 'Mailjet' : (env?.RESEND_API_KEY ? 'Resend' : (env?.POSTMARK_SERVER_TOKEN ? 'Postmark' : 'Simulated'));
 
     let launchChecks = [];
     let allChecksPassed = false;
     let anyCheckFailed = false;
     let fallbackOriginStatus = 'Missing';
     let senderDomainStatus = 'Missing';
+    let emailConfigured = Boolean((env?.MAILJET_API_KEY || env?.MJ_API_KEY) && (env?.MAILJET_SECRET_KEY || env?.MJ_API_SECRET)) || Boolean(env?.RESEND_API_KEY || env?.POSTMARK_SERVER_TOKEN);
+    let emailMode = emailConfigured ? (Boolean((env?.MAILJET_API_KEY || env?.MJ_API_KEY) && (env?.MAILJET_SECRET_KEY || env?.MJ_API_SECRET)) ? 'Mailjet' : (env?.RESEND_API_KEY ? 'Resend' : 'Postmark')) : 'Simulated';
 
     try {
         const checkRows = await db.prepare("SELECT * FROM sneak_launch_checks ORDER BY check_key ASC").all();
@@ -1175,6 +1194,12 @@ export async function handleGetReadiness(db, env) {
                 fallbackOriginStatus = 'Active';
             } else if (saasDiag.cnameTarget && saasDiag.cnameTarget !== 'Not Configured') {
                 fallbackOriginStatus = 'Pending';
+            }
+
+            const provCheck = launchChecks.find(c => c.check_key === 'email_provider_configured');
+            if (provCheck?.status === 'pass' && provCheck?.source === 'real_mailjet') {
+                emailConfigured = true;
+                emailMode = 'Mailjet';
             }
 
             const emailVerCheck = launchChecks.find(c => c.check_key === 'email_domain_verified');

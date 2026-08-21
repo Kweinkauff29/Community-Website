@@ -219,7 +219,7 @@ export default {
                 if (method === 'GET') return await api.handleListAccountMembers(db, accountId);
                 if (method === 'POST') {
                     const body = await request.json();
-                    return await api.handleCreateAccountMemberInvite(db, accountId, body, actor);
+                    return await api.handleCreateAccountMemberInvite(db, accountId, body, actor, env);
                 }
             }
 

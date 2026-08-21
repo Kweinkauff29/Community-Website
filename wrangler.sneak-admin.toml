@@ -17,3 +17,8 @@ binding = "DB"
 database_name = "sneak-idx-staging"
 database_id = "6b91eeca-d65f-434c-a49f-419dff98285f"
 migrations_dir = "migrations"
+
+[[services]]
+binding = "MEMBER_WORKER"
+service = "sneak-idx-member-staging"
+

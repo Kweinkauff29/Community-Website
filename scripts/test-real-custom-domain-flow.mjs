@@ -141,13 +141,15 @@ async function runRealCloudflareDomainTests() {
     });
 
 async function recordCheck(adminCookie, check_key, status, source, detail) {
-    try {
-        await fetch(`${ADMIN_URL}/api/admin/launch-checks`, {
-            method: "POST",
-            headers: { "Cookie": adminCookie, "Content-Type": "application/json", "Origin": ADMIN_URL },
-            body: JSON.stringify({ check_key, status, source, detail })
-        });
-    } catch {}
+    const res = await fetch(`${ADMIN_URL}/api/admin/launch-checks`, {
+        method: "POST",
+        headers: { "Cookie": adminCookie, "Content-Type": "application/json", "Origin": ADMIN_URL },
+        body: JSON.stringify({ check_key, status, source, detail })
+    });
+    if (!res.ok) {
+        const err = await res.text();
+        throw new Error(`Failed to record launch check ${check_key}: HTTP ${res.status} ${err}`);
+    }
 }
 
     // 4. Create Real Custom Hostname via Control Plane
@@ -226,34 +228,41 @@ async function recordCheck(adminCookie, check_key, status, source, detail) {
     assert(searchRes.status === 200, "Real origin search returned HTTP 200 OK");
     const searchData = await searchRes.json();
     assert(Array.isArray(searchData.listings), "Search returned listings array");
+    assert(searchData.listings.length > 0, "Search returned in-scope listings");
 
-    let inScopeKey = null;
-    if (searchData.listings.length > 0) {
-        inScopeKey = searchData.listings[0].ListingKey;
-        // Verify scope conformity on returned listing
-        assert(searchData.listings[0].ListAgentMlsId === "B3650316" || !searchData.listings[0].ListAgentMlsId, "Listing conforms to agent scope");
-    }
+    const allInScope = searchData.listings.every(l => l.ListAgentMlsId === "B3650316" || !l.ListAgentMlsId);
+    assert(allInScope, "Every returned search listing conforms to agent scope B3650316");
 
-    // Detail test for in-scope listing
-    if (inScopeKey) {
-        const detailRes = await fetch(`${SERVING_URL}/api/listings/${inScopeKey}`, {
-            headers: { "Origin": `https://${realTestHostname}`, "Authorization": `Bearer ${token}` }
-        });
-        assert(detailRes.status === 200, "Real origin listing detail returned HTTP 200 OK");
-        const detailData = await detailRes.json();
-        assert(detailData.listing?.ListingKey === inScopeKey, "Detail matches requested listing");
-    }
+    const inScopeKey = searchData.listings[0].ListingKey;
+
+    // In-scope listing detail test
+    const detailRes = await fetch(`${SERVING_URL}/api/listings/${inScopeKey}`, {
+        headers: { "Origin": `https://${realTestHostname}`, "Authorization": `Bearer ${token}` }
+    });
+    assert(detailRes.status === 200, "Real origin listing detail returned HTTP 200 OK");
+    const detailData = await detailRes.json();
+    assert(detailData.listing?.ListingKey === inScopeKey, "Detail matches requested listing");
 
     const ohRes = await fetch(`${SERVING_URL}/api/open-houses`, {
         headers: { "Origin": `https://${realTestHostname}`, "Authorization": `Bearer ${token}` }
     });
     assert(ohRes.status === 200, "Real origin open houses returned HTTP 200 OK");
 
-    // Out-of-scope listing detail test
-    const outOfScopeRes = await fetch(`${SERVING_URL}/api/listings/OUT_OF_SCOPE_FOREIGN_999`, {
+    // Real out-of-scope listing detail test (find actual foreign listing)
+    let foreignKey = "224000001";
+    try {
+        const foreignSearch = await fetch(`${SERVING_URL}/api/listings/search?limit=20`);
+        if (foreignSearch.ok) {
+            const fsData = await foreignSearch.json();
+            const foreign = fsData.listings?.find(l => l.ListAgentMlsId && l.ListAgentMlsId !== "B3650316");
+            if (foreign) foreignKey = foreign.ListingKey;
+        }
+    } catch {}
+
+    const outOfScopeRes = await fetch(`${SERVING_URL}/api/listings/${foreignKey}`, {
         headers: { "Origin": `https://${realTestHostname}`, "Authorization": `Bearer ${token}` }
     });
-    assert(outOfScopeRes.status === 403 || outOfScopeRes.status === 404, "Out-of-scope listing detail securely rejected");
+    assert(outOfScopeRes.status === 403, `Real out-of-scope listing strictly rejected with HTTP 403 ScopeMismatch (status: ${outOfScopeRes.status})`);
 
     await recordCheck(adminCookie, 'cloudflare_real_idx', 'pass', 'real_cloudflare', { hostname: realTestHostname });
 
@@ -271,6 +280,11 @@ async function recordCheck(adminCookie, check_key, status, source, detail) {
     console.log("\n====================================================");
     console.log(`REAL CLOUDFLARE SAAS VALIDATION RESULTS: ${passed} PASSED, ${failed} FAILED`);
     console.log("====================================================");
+
+    if (failed > 0) {
+        console.error(`\nFAILED: ${failed} assertion(s) failed.`);
+        process.exit(1);
+    }
 }
 
 runRealCloudflareDomainTests().catch(err => {

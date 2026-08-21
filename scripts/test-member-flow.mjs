@@ -111,8 +111,8 @@ async function runMemberFlowTests() {
     });
     assert(entRes.status === 200, "GrowthZone entitlement configured via Admin API");
 
-    // 4. Admin Creates Member Invitation Magic Link
-    console.log("\n[4] Admin Generating Member Invitation Link...");
+    // 4. Admin Creates Member Invitation
+    console.log("\n[4] Admin Generating Member Invitation via Member Worker...");
     const inviteRes = await fetch(`${ADMIN_URL}/api/admin/accounts/${accountId}/members`, {
         method: "POST",
         headers: { "Cookie": adminCookie, "Content-Type": "application/json", "Origin": ADMIN_URL },
@@ -120,8 +120,10 @@ async function runMemberFlowTests() {
     });
     assert(inviteRes.status === 201, "Member user invited with HTTP 201 Created");
     const inviteData = await inviteRes.json();
-    const rawInviteToken = inviteData.rawToken;
-    assert(Boolean(rawInviteToken), "Received single-use magic invitation token");
+    assert(inviteData.invitationRequested === true, "Invitation dispatch triggered server-side");
+    assert(!inviteData.rawToken, "Admin API response contains ZERO rawToken");
+    const memberUserId = inviteData.user?.id;
+    assert(Boolean(memberUserId), "Member user record created");
 
     // 5. Test Public Magic Link Zero-Token Security
     console.log("\n[5] Testing Public Magic Link Security & Anti-Enumeration...");
@@ -139,7 +141,20 @@ async function runMemberFlowTests() {
 
     // 6. Member Consumes Magic Link & Receives 7-Day Session
     console.log("\n[6] Member Verifying & Consuming Magic Link...");
-    const verifyRes = await fetch(`${MEMBER_URL}/api/member/auth/verify?token=${encodeURIComponent(rawInviteToken)}`);
+    const testBytes = crypto.getRandomValues(new Uint8Array(32));
+    const testRawToken = Array.from(testBytes).map(b => b.toString(16).padStart(2, '0')).join('');
+    const enc = new TextEncoder();
+    const testHashBuf = await crypto.subtle.digest('SHA-256', enc.encode(testRawToken));
+    const testTokenHash = Array.from(new Uint8Array(testHashBuf)).map(b => b.toString(16).padStart(2, '0')).join('');
+    const testLinkId = `ml_test_${Date.now()}`;
+    const testExpiresAt = new Date(Date.now() + 900000).toISOString();
+    const testNow = new Date().toISOString();
+
+    const insertCmd = `INSERT INTO sneak_member_magic_links (id, user_id, token_hash, purpose, created_at, expires_at, used_at) VALUES ('${testLinkId}', '${memberUserId}', '${testTokenHash}', 'login', '${testNow}', '${testExpiresAt}', NULL)`;
+    const childProc = await import('node:child_process');
+    childProc.execSync(`npx wrangler d1 execute sneak-idx-staging -c wrangler.sneak-admin.toml --remote --command="${insertCmd}"`, { stdio: 'pipe' });
+
+    const verifyRes = await fetch(`${MEMBER_URL}/api/member/auth/verify?token=${encodeURIComponent(testRawToken)}`);
     assert(verifyRes.status === 200, "Magic link verified with HTTP 200 OK");
     const memberCookieHeader = verifyRes.headers.get("Set-Cookie") || "";
     assert(memberCookieHeader.includes("__Host-sneak_member_session="), "Received __Host-sneak_member_session cookie");
@@ -148,7 +163,7 @@ async function runMemberFlowTests() {
 
     // 7. Single-Use Replay Prevention
     console.log("\n[7] Verifying Atomic Single-Use Consumption...");
-    const replayRes = await fetch(`${MEMBER_URL}/api/member/auth/verify?token=${encodeURIComponent(rawInviteToken)}`);
+    const replayRes = await fetch(`${MEMBER_URL}/api/member/auth/verify?token=${encodeURIComponent(testRawToken)}`);
     assert(replayRes.status === 401, "Replaying already consumed magic link rejected with HTTP 401");
 
     // 8. Member Portal Overview & GrowthZone Billing Tab

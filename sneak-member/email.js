@@ -8,7 +8,7 @@
  * - Supports Resend / Postmark / Simulated Staging Adapters
  */
 
-const DEFAULT_FROM = 'SNEAK IDX <idx@bonitaspringsrealtors.com>';
+const DEFAULT_FROM = 'SNEAK IDX <no-reply@ccorealtors.org>';
 
 /**
  * Builds HTML template for Member Magic Link Sign-In.

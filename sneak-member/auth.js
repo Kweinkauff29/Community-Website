@@ -60,7 +60,7 @@ export async function createMagicLinkRecord(db, userId, purpose = 'login', ttlSe
     return rawToken;
 }
 
-import { sendMagicLinkEmail } from './email.js';
+import { sendMagicLinkEmail, sendInvitationEmail } from './email.js';
 
 /**
  * Public magic link request handler with pseudonymized rate limiting & enumeration protection.
@@ -111,7 +111,7 @@ export async function requestPublicMagicLink(db, email, ipHash, env = {}) {
 
     // 2. Lookup member user
     const user = await db.prepare(`
-        SELECT u.id, u.account_id, u.status AS user_status, a.status AS account_status
+        SELECT u.id, u.account_id, u.status AS user_status, a.status AS account_status, a.account_name
         FROM sneak_member_users u
         JOIN sneak_accounts a ON u.account_id = a.id
         WHERE u.email = ?
@@ -127,7 +127,11 @@ export async function requestPublicMagicLink(db, email, ipHash, env = {}) {
         if (rawToken) {
             const baseUrl = env?.MEMBER_PORTAL_URL || 'https://sneak-idx-member-staging.bonitaspringsrealtors.workers.dev';
             const verifyUrl = `${baseUrl}/api/member/auth/verify?token=${encodeURIComponent(rawToken)}`;
-            await sendMagicLinkEmail(env, { email: cleanEmail, verifyUrl, expiresMinutes: 15 });
+            if (user.user_status === 'invited') {
+                await sendInvitationEmail(env, { email: cleanEmail, inviteUrl: verifyUrl, accountName: user.account_name });
+            } else {
+                await sendMagicLinkEmail(env, { email: cleanEmail, verifyUrl, expiresMinutes: 15 });
+            }
         }
     } catch (err) {
         console.error('[MAGIC LINK DISPATCH ERROR]', err.message);
