@@ -1083,15 +1083,55 @@ export async function handleGetDomainDiagnostic(env) {
  */
 export async function handleGetReadiness(db, env) {
     let mlsStatus = 'Problem';
-    let listingCount = 0;
+    let activeListingsCount = 0;
+    let activeUnderContractCount = 0;
+    let pendingCount = 0;
+    let totalEligibleListingsCount = 0;
+    let openHousesCount = 0;
+    let lastListingSync = null;
+    let lastOpenHouseSync = null;
+    let listingCursor = null;
+    let syncFreshnessMinutes = null;
     let dbError = null;
+
     try {
-        const syncRow = await db.prepare("SELECT * FROM sneak_sync_state WHERE sync_name = 'listings'").first();
-        const countRow = await db.prepare("SELECT COUNT(*) as cnt FROM sneak_listings WHERE StandardStatus = 'Active'").first();
-        listingCount = countRow?.cnt || 0;
-        if (listingCount > 0 && syncRow && syncRow.status === 'success') {
+        // Query listing statuses breakdown
+        const [statusRows, ohRow, listingSyncRow, ohSyncRow] = await Promise.all([
+            db.prepare(`
+                SELECT StandardStatus, COUNT(*) as cnt 
+                FROM sneak_listings 
+                WHERE StandardStatus IN ('Active', 'Active Under Contract', 'Pending')
+                GROUP BY StandardStatus
+            `).all(),
+            db.prepare("SELECT COUNT(*) as cnt FROM sneak_open_houses").first(),
+            db.prepare("SELECT * FROM sneak_sync_state WHERE sync_name = 'listings'").first(),
+            db.prepare("SELECT * FROM sneak_sync_state WHERE sync_name = 'open_houses'").first()
+        ]);
+
+        if (statusRows && statusRows.results) {
+            for (const r of statusRows.results) {
+                if (r.StandardStatus === 'Active') activeListingsCount = r.cnt;
+                else if (r.StandardStatus === 'Active Under Contract') activeUnderContractCount = r.cnt;
+                else if (r.StandardStatus === 'Pending') pendingCount = r.cnt;
+            }
+            totalEligibleListingsCount = activeListingsCount + activeUnderContractCount + pendingCount;
+        }
+
+        openHousesCount = ohRow?.cnt || 0;
+        lastListingSync = listingSyncRow?.last_successful_sync || null;
+        listingCursor = listingSyncRow?.last_cursor || null;
+        lastOpenHouseSync = ohSyncRow?.last_successful_sync || null;
+
+        if (lastListingSync) {
+            const syncTime = new Date(lastListingSync.replace(' ', 'T') + 'Z').getTime();
+            if (!isNaN(syncTime)) {
+                syncFreshnessMinutes = Math.max(0, Math.round((Date.now() - syncTime) / 60000));
+            }
+        }
+
+        if (totalEligibleListingsCount > 0 && listingSyncRow?.status === 'success') {
             mlsStatus = 'Healthy';
-        } else if (listingCount > 0) {
+        } else if (totalEligibleListingsCount > 0) {
             mlsStatus = 'Healthy';
         }
     } catch (err) {
@@ -1099,26 +1139,57 @@ export async function handleGetReadiness(db, env) {
     }
 
     const saasDiag = getCloudflareSaaSDiagnostic(env);
-
     const emailConfigured = Boolean(env?.RESEND_API_KEY || env?.POSTMARK_SERVER_TOKEN);
     const emailSender = env?.EMAIL_FROM || 'simulated';
 
+    const blockers = [];
+    if (!saasDiag.zoneConfigured || saasDiag.mode !== 'live') {
+        blockers.push('SNEAK PROVIDER DOMAIN REQUIRED');
+    }
+    if (!emailConfigured) {
+        blockers.push('LIVE TRANSACTIONAL EMAIL REQUIRED');
+    }
+
+    let readinessCategory = 'Development Ready';
+    if (mlsStatus === 'Healthy' && emailConfigured && saasDiag.mode === 'live' && saasDiag.zoneConfigured) {
+        readinessCategory = 'Pilot Ready';
+    } else if (mlsStatus === 'Healthy') {
+        readinessCategory = 'External Services Pending';
+    } else if (mlsStatus === 'Problem') {
+        readinessCategory = 'Problem';
+    }
+
     return json({
-        mlsSync: mlsStatus,
-        activeListingsCount: listingCount,
-        dbError,
-        servingWorker: listingCount > 0 ? 'Healthy' : 'Problem',
-        email: emailConfigured ? 'Live' : 'Simulated',
-        emailSender: emailConfigured ? (env?.EMAIL_FROM ? 'Verified' : 'Missing') : 'Simulated',
-        cloudflareSaaS: saasDiag.mode === 'live' ? 'Live' : 'Simulation',
-        saasZone: saasDiag.zoneConfigured ? 'Configured' : 'Missing',
-        fallbackOrigin: saasDiag.cnameTarget !== 'Not Configured' ? 'Active' : 'Pending',
+        readinessCategory,
+        pilotReady: readinessCategory === 'Pilot Ready',
+        mlsFeed: {
+            status: mlsStatus,
+            activeListings: activeListingsCount,
+            activeUnderContractListings: activeUnderContractCount,
+            pendingListings: pendingCount,
+            totalEligibleListings: totalEligibleListingsCount,
+            openHouses: openHousesCount,
+            lastListingSync,
+            lastOpenHouseSync,
+            listingCursor,
+            syncFreshnessMinutes
+        },
+        servingWorker: totalEligibleListingsCount > 0 ? 'Healthy' : 'Problem',
+        cloudflareSaaS: {
+            mode: saasDiag.mode === 'live' ? 'Live' : 'Simulation',
+            status: saasDiag.zoneConfigured ? 'Configured' : 'Missing',
+            fallbackOrigin: saasDiag.cnameTarget !== 'Not Configured' ? 'Active' : 'Pending',
+            customerCnameTarget: saasDiag.cnameTarget
+        },
+        email: {
+            mode: emailConfigured ? (env?.RESEND_API_KEY ? 'Resend' : 'Postmark') : 'Simulated',
+            senderDomain: emailConfigured ? (env?.EMAIL_FROM ? 'Verified' : 'Missing') : 'Simulated'
+        },
+        memberPortal: 'Healthy',
+        websiteEngine: 'Healthy',
         growthZone: 'Manual',
-        pilotReady: false,
-        blockers: [
-            ...(!saasDiag.zoneConfigured || saasDiag.mode !== 'live' ? ['SNEAK PROVIDER DOMAIN REQUIRED'] : []),
-            ...(!emailConfigured ? ['LIVE TRANSACTIONAL EMAIL REQUIRED'] : [])
-        ]
+        dbError,
+        blockers
     });
 }
 

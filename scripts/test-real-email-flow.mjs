@@ -75,15 +75,28 @@ async function runRealEmailFlowTests() {
     });
     assert(readinessRes.status === 200, "Readiness endpoint returned HTTP 200 OK");
     const readiness = await readinessRes.json();
-    console.log(`  [INFO] MLS Sync:               ${readiness.mlsSync}`);
+    console.log(`  [INFO] Readiness Category:     ${readiness.readinessCategory}`);
+    console.log(`  [INFO] MLS Sync Status:        ${readiness.mlsFeed?.status}`);
+    console.log(`  [INFO] Active Listings:        ${readiness.mlsFeed?.activeListings}`);
+    console.log(`  [INFO] Active Under Contract:  ${readiness.mlsFeed?.activeUnderContractListings}`);
+    console.log(`  [INFO] Pending Listings:       ${readiness.mlsFeed?.pendingListings}`);
+    console.log(`  [INFO] Total Eligible Listings:${readiness.mlsFeed?.totalEligibleListings}`);
+    console.log(`  [INFO] Open Houses:            ${readiness.mlsFeed?.openHouses}`);
+    console.log(`  [INFO] Last Listing Delta:     ${readiness.mlsFeed?.lastListingSync}`);
+    console.log(`  [INFO] Last Open House Sync:   ${readiness.mlsFeed?.lastOpenHouseSync}`);
+    console.log(`  [INFO] Sync Freshness:         ${readiness.mlsFeed?.syncFreshnessMinutes} min`);
     console.log(`  [INFO] Serving Worker:         ${readiness.servingWorker}`);
-    console.log(`  [INFO] Cloudflare SaaS Mode:   ${readiness.cloudflareSaaS}`);
-    console.log(`  [INFO] SaaS Zone:              ${readiness.saasZone}`);
-    console.log(`  [INFO] Email Status:           ${readiness.email}`);
-    console.log(`  [INFO] Email Sender:           ${readiness.emailSender}`);
+    console.log(`  [INFO] Cloudflare SaaS Mode:   ${readiness.cloudflareSaaS?.mode}`);
+    console.log(`  [INFO] SaaS Zone:              ${readiness.cloudflareSaaS?.status}`);
+    console.log(`  [INFO] Fallback Origin:        ${readiness.cloudflareSaaS?.fallbackOrigin}`);
+    console.log(`  [INFO] Customer CNAME Target:  ${readiness.cloudflareSaaS?.customerCnameTarget}`);
+    console.log(`  [INFO] Email Status:           ${readiness.email?.mode}`);
+    console.log(`  [INFO] Email Sender:           ${readiness.email?.senderDomain}`);
+    console.log(`  [INFO] Member Portal:          ${readiness.memberPortal}`);
+    console.log(`  [INFO] Website Engine:         ${readiness.websiteEngine}`);
     console.log(`  [INFO] GrowthZone Billing:     ${readiness.growthZone}`);
 
-    if (readiness.email !== 'Live') {
+    if (readiness.email?.mode === 'Simulated') {
         console.log("\n====================================================");
         console.log("STATUS: LIVE TRANSACTIONAL EMAIL REQUIRED FOR PILOT LAUNCH");
         console.log("1. Live Transactional Email credential (RESEND_API_KEY / POSTMARK_SERVER_TOKEN) is not yet configured.");
