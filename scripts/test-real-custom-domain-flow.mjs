@@ -199,6 +199,28 @@ async function recordCheck(adminCookie, check_key, status, source, detail) {
     assert(httpsHtml.includes(`https://${realTestHostname}`), "Canonical URL uses real custom hostname");
     assert(!httpsHtml.includes("PREVIEW MODE"), "Preview banner absent on live custom hostname");
     await recordCheck(adminCookie, 'cloudflare_real_https', 'pass', 'real_cloudflare', { hostname: realTestHostname, status: 200 });
+
+    // 6a. Exercise Real IDX from Real Origin
+    console.log(`\n[6a] Testing Real SNEAK IDX APIs from Origin: https://${realTestHostname}...`);
+    const bootRes = await fetch(`${SERVING_URL}/api/bootstrap?site_key=${siteKey}`, {
+        headers: { "Origin": `https://${realTestHostname}` }
+    });
+    assert(bootRes.status === 200, "Real origin bootstrap returned HTTP 200 OK");
+    const bootData = await bootRes.json();
+    const token = bootData.token;
+
+    const searchRes = await fetch(`${SERVING_URL}/api/listings/search?limit=5`, {
+        headers: { "Origin": `https://${realTestHostname}`, "Authorization": `Bearer ${token}` }
+    });
+    assert(searchRes.status === 200, "Real origin search returned HTTP 200 OK");
+    const searchData = await searchRes.json();
+    assert(Array.isArray(searchData.listings), "Search returned listings array");
+
+    const ohRes = await fetch(`${SERVING_URL}/api/open-houses`, {
+        headers: { "Origin": `https://${realTestHostname}`, "Authorization": `Bearer ${token}` }
+    });
+    assert(ohRes.status === 200, "Real origin open houses returned HTTP 200 OK");
+
     await recordCheck(adminCookie, 'cloudflare_real_idx', 'pass', 'real_cloudflare', { hostname: realTestHostname });
 
     // 7. Delete Real Custom Hostname

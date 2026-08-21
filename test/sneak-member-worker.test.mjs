@@ -387,4 +387,55 @@ describe('SNEAK Member Worker & GrowthZone Alignment Suite (Phase 5.1)', () => {
         }), env, {});
         assert.equal(stripeRes.status, 404, 'Stripe webhook endpoint removed');
     });
+
+    test('TEST 8: Mailjet Send API v3.1 integration & error handling', async () => {
+        const originalFetch = globalThis.fetch;
+        let capturedPayload = null;
+        let capturedAuth = null;
+
+        globalThis.fetch = async (url, opts) => {
+            if (url === 'https://api.mailjet.com/v3.1/send') {
+                capturedAuth = opts.headers['Authorization'];
+                capturedPayload = JSON.parse(opts.body);
+                return {
+                    ok: true,
+                    status: 200,
+                    json: async () => ({
+                        Messages: [{
+                            Status: 'success',
+                            CustomID: 'SNEAK-IDX',
+                            To: [{ Email: 'agent@test.com', MessageID: 123456789 }]
+                        }]
+                    })
+                };
+            }
+            return { ok: false, status: 404, text: async () => 'Not found' };
+        };
+
+        try {
+            const env = {
+                MAILJET_API_KEY: 'test_key',
+                MAILJET_SECRET_KEY: 'test_secret',
+                EMAIL_FROM: 'SNEAK IDX <idx@mail.coconutcoasthomes.com>'
+            };
+
+            const result = await sendTransactionalEmail(env, {
+                to: 'agent@test.com',
+                subject: 'Test Subject',
+                html: '<p>Test Body</p>',
+                text: 'Test Body'
+            });
+
+            assert.equal(result.success, true);
+            assert.equal(result.provider, 'mailjet');
+            assert.equal(result.id, '123456789');
+            assert.equal(capturedAuth, 'Basic ' + btoa('test_key:test_secret'));
+            assert.equal(capturedPayload.Messages[0].From.Email, 'idx@mail.coconutcoasthomes.com');
+            assert.equal(capturedPayload.Messages[0].From.Name, 'SNEAK IDX');
+            assert.equal(capturedPayload.Messages[0].To[0].Email, 'agent@test.com');
+        } finally {
+            globalThis.fetch = originalFetch;
+        }
+    });
 });
+

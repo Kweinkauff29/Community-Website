@@ -1139,7 +1139,9 @@ export async function handleGetReadiness(db, env) {
     }
 
     const saasDiag = getCloudflareSaaSDiagnostic(env);
-    const emailConfigured = Boolean(env?.RESEND_API_KEY || env?.POSTMARK_SERVER_TOKEN);
+    const mailjetConfigured = Boolean((env?.MAILJET_API_KEY || env?.MJ_API_KEY) && (env?.MAILJET_SECRET_KEY || env?.MJ_API_SECRET));
+    const emailConfigured = mailjetConfigured || Boolean(env?.RESEND_API_KEY || env?.POSTMARK_SERVER_TOKEN);
+    const emailMode = mailjetConfigured ? 'Mailjet' : (env?.RESEND_API_KEY ? 'Resend' : (env?.POSTMARK_SERVER_TOKEN ? 'Postmark' : 'Simulated'));
 
     let launchChecks = [];
     let allChecksPassed = false;
@@ -1165,7 +1167,7 @@ export async function handleGetReadiness(db, env) {
             const emailVerCheck = launchChecks.find(c => c.check_key === 'email_domain_verified');
             if (emailVerCheck?.status === 'pass') {
                 senderDomainStatus = 'Verified';
-            } else if (emailConfigured && env?.EMAIL_FROM) {
+            } else if (emailConfigured && (env?.EMAIL_FROM || env?.FROM_EMAIL)) {
                 senderDomainStatus = 'Pending Verification';
             } else if (emailConfigured) {
                 senderDomainStatus = 'Configured';
@@ -1215,7 +1217,7 @@ export async function handleGetReadiness(db, env) {
             customerCnameTarget: saasDiag.cnameTarget
         },
         email: {
-            mode: emailConfigured ? (env?.RESEND_API_KEY ? 'Resend' : 'Postmark') : 'Simulated',
+            mode: emailMode,
             senderDomain: senderDomainStatus
         },
         memberPortal: 'Healthy',
@@ -1226,6 +1228,21 @@ export async function handleGetReadiness(db, env) {
         blockers
     });
 }
+
+const ALLOWED_LAUNCH_CHECK_KEYS = new Set([
+    'cloudflare_saas_enabled',
+    'cloudflare_fallback_active',
+    'cloudflare_real_custom_hostname',
+    'cloudflare_real_ssl',
+    'cloudflare_real_https',
+    'cloudflare_real_idx',
+    'cloudflare_real_removal',
+    'email_provider_configured',
+    'email_domain_verified',
+    'email_real_invitation',
+    'email_real_login',
+    'email_replay_protection'
+]);
 
 /**
  * GET /api/admin/launch-checks
@@ -1244,18 +1261,24 @@ export async function handleRecordLaunchCheck(db, body, actor = 'admin') {
     if (!check_key || !status || !source) {
         return error('check_key, status, and source are required.');
     }
+    if (!ALLOWED_LAUNCH_CHECK_KEYS.has(check_key)) {
+        return error(`Unknown check_key '${check_key}'. Must be one of the 12 authorized launch check keys.`, 400);
+    }
     if (!['pass', 'pending', 'fail'].includes(status)) {
-        return error('Invalid status. Must be pass, pending, or fail.');
+        return error('Invalid status. Must be pass, pending, or fail.', 400);
     }
 
-    // SIMULATION GUARD: Simulation cannot mark real Cloudflare or email checks as pass
-    const normalizedSource = source.toLowerCase();
+    // STRICT SOURCE GUARDS: Simulation or unauthorized sources cannot pass real checks
+    const normalizedSource = source.toLowerCase().trim();
     if (status === 'pass') {
-        if (check_key.startsWith('cloudflare_real_') && normalizedSource.includes('simulat')) {
-            return error(`Simulation source '${source}' cannot mark real check '${check_key}' as pass.`, 400);
+        if (check_key.startsWith('cloudflare_') && normalizedSource !== 'real_cloudflare') {
+            return error(`Source '${source}' is not authorized to pass Cloudflare check '${check_key}'. Requires 'real_cloudflare'.`, 400);
         }
-        if ((check_key === 'email_real_invitation' || check_key === 'email_real_login') && normalizedSource.includes('simulat')) {
-            return error(`Simulation source '${source}' cannot mark real email check '${check_key}' as pass.`, 400);
+        if (check_key.startsWith('email_') && check_key !== 'email_replay_protection' && normalizedSource !== 'real_mailjet') {
+            return error(`Source '${source}' is not authorized to pass email check '${check_key}'. Requires 'real_mailjet'.`, 400);
+        }
+        if (check_key === 'email_replay_protection' && normalizedSource !== 'system') {
+            return error(`Source '${source}' is not authorized to pass check 'email_replay_protection'. Requires 'system'.`, 400);
         }
     }
 

@@ -501,7 +501,12 @@ describe('SNEAK Custom Domain Provisioning & Cloudflare for SaaS Suite (Phase 6.
         ];
         for (const k of checkKeys) {
             const c = mockDB.tables.sneak_launch_checks.find(x => x.check_key === k);
-            if (c) { c.status = 'pass'; c.source = 'real_service'; }
+            if (c) {
+                c.status = 'pass';
+                if (k.startsWith('cloudflare_')) c.source = 'real_cloudflare';
+                else if (k.startsWith('email_') && k !== 'email_replay_protection') c.source = 'real_mailjet';
+                else if (k === 'email_replay_protection') c.source = 'system';
+            }
         }
 
         // 3. Verified State with all evidence passed: Pilot Ready
@@ -510,7 +515,8 @@ describe('SNEAK Custom Domain Provisioning & Cloudflare for SaaS Suite (Phase 6.
             CLOUDFLARE_SAAS_API_TOKEN: 'valid_token',
             CLOUDFLARE_SAAS_ZONE_ID: 'valid_zone',
             CLOUDFLARE_SAAS_CNAME_TARGET: 'sneak-customers.coconutcoasthomes.com',
-            RESEND_API_KEY: 're_valid_key',
+            MAILJET_API_KEY: 'mj_valid_key',
+            MAILJET_SECRET_KEY: 'mj_valid_secret',
             EMAIL_FROM: 'SNEAK IDX <idx@mail.coconutcoasthomes.com>'
         };
 
@@ -519,6 +525,7 @@ describe('SNEAK Custom Domain Provisioning & Cloudflare for SaaS Suite (Phase 6.
         assert.equal(r2.readinessCategory, 'Pilot Ready');
         assert.equal(r2.pilotReady, true);
         assert.equal(r2.cloudflareSaaS.fallbackOrigin, 'Active');
+        assert.equal(r2.email.mode, 'Mailjet');
         assert.equal(r2.email.senderDomain, 'Verified');
     });
 });

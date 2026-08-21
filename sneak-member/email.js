@@ -141,7 +141,67 @@ export function renderInvitationTemplate({ inviteUrl, accountName }) {
 export async function sendTransactionalEmail(env, { to, subject, html, text }) {
     const from = env?.EMAIL_FROM || DEFAULT_FROM;
 
-    // 1. Resend Adapter (if RESEND_API_KEY is configured)
+    // 1. Mailjet Adapter (Primary for SNEAK)
+    const mailjetApiKey = env?.MAILJET_API_KEY || env?.MJ_API_KEY;
+    const mailjetSecretKey = env?.MAILJET_SECRET_KEY || env?.MJ_API_SECRET;
+    if (mailjetApiKey && mailjetSecretKey) {
+        try {
+            let fromEmail = 'idx@mail.coconutcoasthomes.com';
+            let fromName = 'SNEAK IDX';
+            const fromStr = env?.EMAIL_FROM || env?.FROM_EMAIL || DEFAULT_FROM;
+            const fromMatch = fromStr.match(/^(?:(.*)<)?([^>]+)>?$/);
+            if (fromMatch) {
+                fromName = (fromMatch[1] || 'SNEAK IDX').trim();
+                fromEmail = fromMatch[2].trim();
+            }
+
+            const auth = 'Basic ' + btoa(`${mailjetApiKey}:${mailjetSecretKey}`);
+            const payload = {
+                Messages: [
+                    {
+                        From: {
+                            Email: fromEmail,
+                            Name: fromName
+                        },
+                        To: [
+                            {
+                                Email: to,
+                                Name: ''
+                            }
+                        ],
+                        Subject: subject,
+                        TextPart: text || '',
+                        HTMLPart: html,
+                        CustomID: 'SNEAK-IDX'
+                    }
+                ]
+            };
+
+            const res = await fetch('https://api.mailjet.com/v3.1/send', {
+                method: 'POST',
+                headers: {
+                    'Authorization': auth,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(payload)
+            });
+
+            if (!res.ok) {
+                const errText = await res.text();
+                console.error('[EMAIL MAILJET ERROR]', res.status, errText);
+                return { success: false, error: `Mailjet HTTP ${res.status}` };
+            }
+
+            const data = await res.json();
+            const messageId = data?.Messages?.[0]?.To?.[0]?.MessageID || data?.Messages?.[0]?.CustomID || 'mj_sent';
+            return { success: true, id: String(messageId), provider: 'mailjet' };
+        } catch (err) {
+            console.error('[EMAIL MAILJET EXCEPTION]', err.message);
+            return { success: false, error: err.message };
+        }
+    }
+
+    // 2. Resend Adapter (Legacy fallback)
     if (env?.RESEND_API_KEY) {
         try {
             const res = await fetch('https://api.resend.com/emails', {
