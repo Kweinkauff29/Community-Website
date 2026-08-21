@@ -20,10 +20,35 @@ import {
     refreshCustomHostnameStatus,
     removeCustomHostname
 } from '../sneak-admin/cloudflare-saas.js';
+import { handleRecordLaunchCheck, handleGetReadiness } from '../sneak-admin/api.js';
 import worker from '../sneak-sites/worker.js';
 
-function createMockDomainDB() {
+export function createMockDomainDB() {
     const tables = {
+        sneak_launch_checks: [
+            { check_key: 'cloudflare_saas_enabled', status: 'pending', source: 'system' },
+            { check_key: 'cloudflare_fallback_active', status: 'pending', source: 'system' },
+            { check_key: 'cloudflare_real_custom_hostname', status: 'pending', source: 'system' },
+            { check_key: 'cloudflare_real_ssl', status: 'pending', source: 'system' },
+            { check_key: 'cloudflare_real_https', status: 'pending', source: 'system' },
+            { check_key: 'cloudflare_real_idx', status: 'pending', source: 'system' },
+            { check_key: 'cloudflare_real_removal', status: 'pending', source: 'system' },
+            { check_key: 'email_provider_configured', status: 'pending', source: 'system' },
+            { check_key: 'email_domain_verified', status: 'pending', source: 'system' },
+            { check_key: 'email_real_invitation', status: 'pending', source: 'system' },
+            { check_key: 'email_real_login', status: 'pending', source: 'system' },
+            { check_key: 'email_replay_protection', status: 'pending', source: 'system' }
+        ],
+        sneak_sync_state: [
+            { sync_name: 'listings', status: 'success', last_successful_sync: '2026-08-21 14:00:00', last_cursor: '2026-08-21T14:00:00Z' },
+            { sync_name: 'open_houses', status: 'success', last_successful_sync: '2026-08-21 14:00:00', last_cursor: null }
+        ],
+        sneak_listings: [
+            { ListingKey: 'lst_1', StandardStatus: 'Active', ListAgentMlsId: 'B3650316' }
+        ],
+        sneak_open_houses: [
+            { OpenHouseKey: 'oh_1', ListingKey: 'lst_1' }
+        ],
         sneak_accounts: [
             { id: 'acc_a', account_name: 'Agent A Realty', status: 'active', plan: 'pro' },
             { id: 'acc_b', account_name: 'Agent B Realty', status: 'active', plan: 'pro' }
@@ -60,8 +85,6 @@ function createMockDomainDB() {
             { account_id: 'acc_a', status: 'active', plan: 'pro', grace_until: null },
             { account_id: 'acc_b', status: 'active', plan: 'pro', grace_until: null }
         ],
-        sneak_listings: [],
-        sneak_open_houses: [],
         sneak_leads: [],
         sneak_admin_audit: []
     };
@@ -134,9 +157,42 @@ function createMockDomainDB() {
                             }]
                         };
                     }
+                    if (query.includes('FROM sneak_launch_checks') && query.includes('WHERE check_key = ?')) {
+                        const c = tables.sneak_launch_checks.find(x => x.check_key === boundArgs[0]);
+                        return { results: c ? [c] : [] };
+                    }
+                    if (query.includes('FROM sneak_launch_checks')) {
+                        return { results: tables.sneak_launch_checks };
+                    }
+                    if (query.includes('FROM sneak_sync_state') && (query.includes("'listings'") || boundArgs[0] === 'listings')) {
+                        const s = tables.sneak_sync_state.find(x => x.sync_name === 'listings');
+                        return { results: s ? [s] : [] };
+                    }
+                    if (query.includes('FROM sneak_sync_state') && (query.includes("'open_houses'") || boundArgs[0] === 'open_houses')) {
+                        const s = tables.sneak_sync_state.find(x => x.sync_name === 'open_houses');
+                        return { results: s ? [s] : [] };
+                    }
+                    if (query.includes('FROM sneak_sync_state')) {
+                        return { results: tables.sneak_sync_state };
+                    }
+                    if (query.includes('GROUP BY StandardStatus')) {
+                        return { results: [{ StandardStatus: 'Active', cnt: tables.sneak_listings.length }] };
+                    }
+                    if (query.includes('COUNT(*) as cnt FROM sneak_listings')) {
+                        return { results: [{ cnt: tables.sneak_listings.length }] };
+                    }
+                    if (query.includes('COUNT(*) as cnt FROM sneak_open_houses')) {
+                        return { results: [{ cnt: tables.sneak_open_houses.length }] };
+                    }
                     return { results: [] };
                 },
                 async run() {
+                    if (query.includes('INSERT INTO sneak_launch_checks')) {
+                        const [check_key, status, source, checked_at, detail_json] = boundArgs;
+                        tables.sneak_launch_checks = tables.sneak_launch_checks.filter(x => x.check_key !== check_key);
+                        tables.sneak_launch_checks.push({ check_key, status, source, checked_at, detail_json });
+                        return { success: true };
+                    }
                     if (query.includes('INSERT INTO sneak_domains')) {
                         const [id, site_id, domain] = boundArgs;
                         tables.sneak_domains.push({ id, site_id, domain, verified: 0, status: 'active', created_at: new Date().toISOString() });
@@ -153,13 +209,7 @@ function createMockDomainDB() {
                         return { success: true };
                     }
                     if (query.includes('UPDATE sneak_domain_bindings') && query.includes('status = ?')) {
-                        const status = boundArgs[0];
-                        const ssl_status = boundArgs[1];
-                        const last_checked_at = boundArgs[2];
-                        const isFullyActive = boundArgs[3];
-                        const activated_at = boundArgs[4];
-                        const updated_at = boundArgs[5];
-                        const bindingId = boundArgs[6];
+                        const [status, ssl_status, last_checked_at, isFullyActive, activated_at, updated_at, bindingId] = boundArgs;
                         const b = tables.sneak_domain_bindings.find(x => x.id === bindingId);
                         if (b) {
                             b.status = status;
@@ -398,5 +448,79 @@ describe('SNEAK Custom Domain Provisioning & Cloudflare for SaaS Suite (Phase 6.
             globalThis.fetch = originalFetch;
         }
     });
+
+    test('TEST 12: Launch Checks Model & Simulation Guard', async () => {
+        const mockDB = createMockDomainDB();
+
+        // 1. Simulation source cannot mark real cloudflare check as pass
+        const blockedSimCF = await handleRecordLaunchCheck(mockDB, {
+            check_key: 'cloudflare_real_custom_hostname',
+            status: 'pass',
+            source: 'simulated_provider'
+        }, 'admin');
+        assert.equal(blockedSimCF.status, 400);
+
+        // 2. Simulation source cannot mark real email check as pass
+        const blockedSimEmail = await handleRecordLaunchCheck(mockDB, {
+            check_key: 'email_real_invitation',
+            status: 'pass',
+            source: 'simulated_email'
+        }, 'admin');
+        assert.equal(blockedSimEmail.status, 400);
+
+        // 3. Real source can record pass
+        const validReal = await handleRecordLaunchCheck(mockDB, {
+            check_key: 'cloudflare_real_custom_hostname',
+            status: 'pass',
+            source: 'real_cloudflare',
+            detail: { hostname: 'sneak-test.coconutcoasthomes.com' }
+        }, 'admin');
+        assert.equal(validReal.status, 200);
+        const check = mockDB.tables.sneak_launch_checks.find(x => x.check_key === 'cloudflare_real_custom_hostname');
+        assert.equal(check.status, 'pass');
+    });
+
+    test('TEST 13: Evidence-Based Readiness Category Calculation', async () => {
+        const mockDB = createMockDomainDB();
+        const simEnv = { CLOUDFLARE_SAAS_MODE: 'simulation' };
+
+        // 1. Initial State: External Services Pending
+        const r1Res = await handleGetReadiness(mockDB, simEnv);
+        const r1 = await r1Res.json();
+        assert.equal(r1.readinessCategory, 'External Services Pending');
+        assert.equal(r1.pilotReady, false);
+        assert.equal(r1.cloudflareSaaS.fallbackOrigin, 'Pending');
+        assert.equal(r1.email.senderDomain, 'Missing');
+
+        // 2. Mark all 12 checks passed with real sources
+        const checkKeys = [
+            'cloudflare_saas_enabled', 'cloudflare_fallback_active', 'cloudflare_real_custom_hostname',
+            'cloudflare_real_ssl', 'cloudflare_real_https', 'cloudflare_real_idx', 'cloudflare_real_removal',
+            'email_provider_configured', 'email_domain_verified', 'email_real_invitation',
+            'email_real_login', 'email_replay_protection'
+        ];
+        for (const k of checkKeys) {
+            const c = mockDB.tables.sneak_launch_checks.find(x => x.check_key === k);
+            if (c) { c.status = 'pass'; c.source = 'real_service'; }
+        }
+
+        // 3. Verified State with all evidence passed: Pilot Ready
+        const liveEnv = {
+            CLOUDFLARE_SAAS_MODE: 'live',
+            CLOUDFLARE_SAAS_API_TOKEN: 'valid_token',
+            CLOUDFLARE_SAAS_ZONE_ID: 'valid_zone',
+            CLOUDFLARE_SAAS_CNAME_TARGET: 'sneak-customers.coconutcoasthomes.com',
+            RESEND_API_KEY: 're_valid_key',
+            EMAIL_FROM: 'SNEAK IDX <idx@mail.coconutcoasthomes.com>'
+        };
+
+        const r2Res = await handleGetReadiness(mockDB, liveEnv);
+        const r2 = await r2Res.json();
+        assert.equal(r2.readinessCategory, 'Pilot Ready');
+        assert.equal(r2.pilotReady, true);
+        assert.equal(r2.cloudflareSaaS.fallbackOrigin, 'Active');
+        assert.equal(r2.email.senderDomain, 'Verified');
+    });
 });
+
 

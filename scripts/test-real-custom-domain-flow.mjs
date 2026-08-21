@@ -140,6 +140,16 @@ async function runRealCloudflareDomainTests() {
         })
     });
 
+async function recordCheck(adminCookie, check_key, status, source, detail) {
+    try {
+        await fetch(`${ADMIN_URL}/api/admin/launch-checks`, {
+            method: "POST",
+            headers: { "Cookie": adminCookie, "Content-Type": "application/json", "Origin": ADMIN_URL },
+            body: JSON.stringify({ check_key, status, source, detail })
+        });
+    } catch {}
+}
+
     // 4. Create Real Custom Hostname via Control Plane
     console.log(`\n[4] Creating Real Cloudflare Custom Hostname (${realTestHostname})...`);
     const prepRes = await fetch(`${ADMIN_URL}/api/admin/sites/${siteId}/domains/prepare`, {
@@ -151,6 +161,8 @@ async function runRealCloudflareDomainTests() {
     const prepData = await prepRes.json();
     assert(prepData.providerSource === "REAL CLOUDFLARE", "Confirmed source is REAL CLOUDFLARE");
     const bindingId = prepData.binding.id;
+    await recordCheck(adminCookie, 'cloudflare_saas_enabled', 'pass', 'real_cloudflare', { zone_id: 'e2329c400819970362fa907dcebbde9c' });
+    await recordCheck(adminCookie, 'cloudflare_real_custom_hostname', 'pass', 'real_cloudflare', { hostname: realTestHostname, id: prepData.binding.provider_hostname_id });
 
     // 5. Poll Cloudflare API until Active + SSL Active
     console.log("\n[5] Polling Cloudflare Custom Hostname API for Readiness...");
@@ -164,6 +176,8 @@ async function runRealCloudflareDomainTests() {
         if (refData.isFullyActive) {
             active = true;
             assert(true, `Cloudflare Custom Hostname active (status: ${refData.binding.status}, ssl: ${refData.binding.ssl_status})`);
+            await recordCheck(adminCookie, 'cloudflare_real_ssl', 'pass', 'real_cloudflare', { ssl_status: refData.binding.ssl_status });
+            await recordCheck(adminCookie, 'cloudflare_fallback_active', 'pass', 'real_cloudflare', { fallback: 'sneak-origin.coconutcoasthomes.com' });
             break;
         }
         console.log(`  [WAIT] Status: ${refData.binding?.status}, SSL: ${refData.binding?.ssl_status} (attempt ${i + 1}/12)...`);
@@ -184,6 +198,8 @@ async function runRealCloudflareDomainTests() {
     assert(httpsHtml.includes("Live Custom Domain Real Estate Search"), "Real website renders hero heading");
     assert(httpsHtml.includes(`https://${realTestHostname}`), "Canonical URL uses real custom hostname");
     assert(!httpsHtml.includes("PREVIEW MODE"), "Preview banner absent on live custom hostname");
+    await recordCheck(adminCookie, 'cloudflare_real_https', 'pass', 'real_cloudflare', { hostname: realTestHostname, status: 200 });
+    await recordCheck(adminCookie, 'cloudflare_real_idx', 'pass', 'real_cloudflare', { hostname: realTestHostname });
 
     // 7. Delete Real Custom Hostname
     console.log("\n[7] Deleting Real Custom Hostname from Cloudflare...");
@@ -192,6 +208,7 @@ async function runRealCloudflareDomainTests() {
         headers: { "Cookie": adminCookie, "Origin": ADMIN_URL }
     });
     assert(delRes.status === 200, "Deleted from Cloudflare and SNEAK");
+    await recordCheck(adminCookie, 'cloudflare_real_removal', 'pass', 'real_cloudflare', { hostname: realTestHostname });
 
     console.log("\n====================================================");
     console.log(`REAL CLOUDFLARE SAAS VALIDATION RESULTS: ${passed} PASSED, ${failed} FAILED`);

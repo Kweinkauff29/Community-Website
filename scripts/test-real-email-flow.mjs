@@ -96,6 +96,17 @@ async function runRealEmailFlowTests() {
     console.log(`  [INFO] Website Engine:         ${readiness.websiteEngine}`);
     console.log(`  [INFO] GrowthZone Billing:     ${readiness.growthZone}`);
 
+    console.log("\n[3] Querying Authoritative Launch Checks State...");
+    const checksRes = await fetch(`${ADMIN_URL}/api/admin/launch-checks`, {
+        headers: { "Cookie": adminCookie }
+    });
+    assert(checksRes.status === 200, "Launch checks endpoint returned HTTP 200 OK");
+    const checksData = await checksRes.json();
+    console.log("  Authoritative Launch Evidence Table:");
+    for (const c of checksData.checks || []) {
+        console.log(`    - [${c.status.toUpperCase()}] ${c.check_key.padEnd(32)} | Source: ${c.source.padEnd(16)} | Checked: ${c.checked_at}`);
+    }
+
     if (readiness.email?.mode === 'Simulated') {
         console.log("\n====================================================");
         console.log("STATUS: LIVE TRANSACTIONAL EMAIL REQUIRED FOR PILOT LAUNCH");

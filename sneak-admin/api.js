@@ -1140,7 +1140,38 @@ export async function handleGetReadiness(db, env) {
 
     const saasDiag = getCloudflareSaaSDiagnostic(env);
     const emailConfigured = Boolean(env?.RESEND_API_KEY || env?.POSTMARK_SERVER_TOKEN);
-    const emailSender = env?.EMAIL_FROM || 'simulated';
+
+    let launchChecks = [];
+    let allChecksPassed = false;
+    let anyCheckFailed = false;
+    let fallbackOriginStatus = 'Missing';
+    let senderDomainStatus = 'Missing';
+
+    try {
+        const checkRows = await db.prepare("SELECT * FROM sneak_launch_checks ORDER BY check_key ASC").all();
+        if (checkRows && checkRows.results) {
+            launchChecks = checkRows.results;
+            const passCount = launchChecks.filter(c => c.status === 'pass').length;
+            allChecksPassed = (launchChecks.length >= 12 && passCount === launchChecks.length);
+            anyCheckFailed = launchChecks.some(c => c.status === 'fail');
+
+            const fbCheck = launchChecks.find(c => c.check_key === 'cloudflare_fallback_active');
+            if (fbCheck?.status === 'pass') {
+                fallbackOriginStatus = 'Active';
+            } else if (saasDiag.cnameTarget && saasDiag.cnameTarget !== 'Not Configured') {
+                fallbackOriginStatus = 'Pending';
+            }
+
+            const emailVerCheck = launchChecks.find(c => c.check_key === 'email_domain_verified');
+            if (emailVerCheck?.status === 'pass') {
+                senderDomainStatus = 'Verified';
+            } else if (emailConfigured && env?.EMAIL_FROM) {
+                senderDomainStatus = 'Pending Verification';
+            } else if (emailConfigured) {
+                senderDomainStatus = 'Configured';
+            }
+        }
+    } catch {}
 
     const blockers = [];
     if (!saasDiag.zoneConfigured || saasDiag.mode !== 'live') {
@@ -1151,12 +1182,14 @@ export async function handleGetReadiness(db, env) {
     }
 
     let readinessCategory = 'Development Ready';
-    if (mlsStatus === 'Healthy' && emailConfigured && saasDiag.mode === 'live' && saasDiag.zoneConfigured) {
+    if (mlsStatus === 'Healthy' && allChecksPassed) {
         readinessCategory = 'Pilot Ready';
+    } else if (anyCheckFailed || mlsStatus === 'Problem') {
+        readinessCategory = 'Problem';
+    } else if (saasDiag.mode === 'live' && saasDiag.zoneConfigured && emailConfigured) {
+        readinessCategory = 'External Verification Pending';
     } else if (mlsStatus === 'Healthy') {
         readinessCategory = 'External Services Pending';
-    } else if (mlsStatus === 'Problem') {
-        readinessCategory = 'Problem';
     }
 
     return json({
@@ -1178,20 +1211,72 @@ export async function handleGetReadiness(db, env) {
         cloudflareSaaS: {
             mode: saasDiag.mode === 'live' ? 'Live' : 'Simulation',
             status: saasDiag.zoneConfigured ? 'Configured' : 'Missing',
-            fallbackOrigin: saasDiag.cnameTarget !== 'Not Configured' ? 'Active' : 'Pending',
+            fallbackOrigin: fallbackOriginStatus,
             customerCnameTarget: saasDiag.cnameTarget
         },
         email: {
             mode: emailConfigured ? (env?.RESEND_API_KEY ? 'Resend' : 'Postmark') : 'Simulated',
-            senderDomain: emailConfigured ? (env?.EMAIL_FROM ? 'Verified' : 'Missing') : 'Simulated'
+            senderDomain: senderDomainStatus
         },
         memberPortal: 'Healthy',
         websiteEngine: 'Healthy',
         growthZone: 'Manual',
+        launchChecks,
         dbError,
         blockers
     });
 }
+
+/**
+ * GET /api/admin/launch-checks
+ */
+export async function handleListLaunchChecks(db) {
+    const rows = await db.prepare("SELECT * FROM sneak_launch_checks ORDER BY check_key ASC").all();
+    return json({ checks: rows?.results || [] });
+}
+
+/**
+ * POST /api/admin/launch-checks
+ * Records authoritative launch evidence.
+ */
+export async function handleRecordLaunchCheck(db, body, actor = 'admin') {
+    const { check_key, status, source, detail } = body;
+    if (!check_key || !status || !source) {
+        return error('check_key, status, and source are required.');
+    }
+    if (!['pass', 'pending', 'fail'].includes(status)) {
+        return error('Invalid status. Must be pass, pending, or fail.');
+    }
+
+    // SIMULATION GUARD: Simulation cannot mark real Cloudflare or email checks as pass
+    const normalizedSource = source.toLowerCase();
+    if (status === 'pass') {
+        if (check_key.startsWith('cloudflare_real_') && normalizedSource.includes('simulat')) {
+            return error(`Simulation source '${source}' cannot mark real check '${check_key}' as pass.`, 400);
+        }
+        if ((check_key === 'email_real_invitation' || check_key === 'email_real_login') && normalizedSource.includes('simulat')) {
+            return error(`Simulation source '${source}' cannot mark real email check '${check_key}' as pass.`, 400);
+        }
+    }
+
+    const detailJson = detail ? (typeof detail === 'string' ? detail : JSON.stringify(detail)) : null;
+    const now = new Date().toISOString();
+
+    await db.prepare(`
+        INSERT INTO sneak_launch_checks (check_key, status, source, checked_at, detail_json, updated_at)
+        VALUES (?, ?, ?, ?, ?, ?)
+        ON CONFLICT(check_key) DO UPDATE SET
+            status = excluded.status,
+            source = excluded.source,
+            checked_at = excluded.checked_at,
+            detail_json = excluded.detail_json,
+            updated_at = excluded.updated_at
+    `).bind(check_key, status, source, now, detailJson, now).run();
+
+    const updated = await db.prepare("SELECT * FROM sneak_launch_checks WHERE check_key = ?").bind(check_key).first();
+    return json({ success: true, check: updated });
+}
+
 
 
 

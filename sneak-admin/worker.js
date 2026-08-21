@@ -244,6 +244,15 @@ export default {
                 }
             }
 
+            // /api/admin/launch-checks
+            if (path === '/api/admin/launch-checks') {
+                if (method === 'GET') return await api.handleListLaunchChecks(db);
+                if (method === 'POST') {
+                    const body = await request.json();
+                    return await api.handleRecordLaunchCheck(db, body, actor);
+                }
+            }
+
             // /api/admin/readiness
             if (path === '/api/admin/readiness' && method === 'GET') {
                 return await api.handleGetReadiness(db, env);
