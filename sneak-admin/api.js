@@ -1068,13 +1068,26 @@ export async function handleRemoveDomainBinding(db, bindingId, actor, env) {
     return json(result);
 }
 
-import { getCloudflareSaaSDiagnostic } from './cloudflare-saas.js';
+import { getCloudflareSaaSDiagnostic, CloudflareSaaSClient } from './cloudflare-saas.js';
 
 /**
  * GET /api/admin/domains/diagnostic
  */
 export async function handleGetDomainDiagnostic(env) {
     return json(getCloudflareSaaSDiagnostic(env));
+}
+
+/**
+ * GET /api/admin/domains/fallback-origin
+ */
+export async function handleGetFallbackOrigin(env) {
+    const client = new CloudflareSaaSClient(env);
+    try {
+        const result = await client.getFallbackOrigin();
+        return json(result);
+    } catch (err) {
+        return json({ success: false, error: err.message, status: 'error' }, 500);
+    }
 }
 
 /**

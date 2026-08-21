@@ -213,18 +213,53 @@ export class CloudflareSaaSClient {
 
             const res = await fetch(`https://api.cloudflare.com/client/v4/zones/${this.zoneId}/custom_hostnames/${providerHostnameId}`, {
                 method: 'DELETE',
-                headers: { 'Authorization': `Bearer ${this.apiToken}` }
+                headers: {
+                    'Authorization': `Bearer ${this.apiToken}`
+                }
             });
 
             const data = await res.json();
             if (!data.success) {
-                const err = data.errors?.[0] || { message: 'Cloudflare API error' };
-                throw new Error(`[Cloudflare Error ${err.code || 'API'}]: ${err.message || 'Failed to delete Custom Hostname'}`);
+                const err = data.errors?.[0] || { message: 'Cloudflare delete error' };
+                // If not found in Cloudflare, treat as already deleted
+                if (err.code === 1436 || (err.message && err.message.toLowerCase().includes('not found'))) {
+                    return true;
+                }
+                throw new Error(`[Cloudflare Error ${err.code || 'API'}]: ${err.message}`);
             }
             return true;
         }
 
+        // Simulation Mode
         return true;
+    }
+
+    async getFallbackOrigin() {
+        if (this.isLive) {
+            this.validateLiveConfig();
+            const res = await fetch(`https://api.cloudflare.com/client/v4/zones/${this.zoneId}/custom_hostnames/fallback_origin`, {
+                headers: { 'Authorization': `Bearer ${this.apiToken}` }
+            });
+            const data = await res.json();
+            if (!data.success) {
+                const err = data.errors?.[0] || { message: 'Cloudflare API error' };
+                return { success: false, error: err.message, status: 'error' };
+            }
+            return {
+                success: true,
+                origin: data.result?.origin || null,
+                status: data.result?.status || 'pending',
+                providerSource: 'REAL CLOUDFLARE'
+            };
+        }
+
+        // Simulation Mode
+        return {
+            success: true,
+            origin: 'sneak-origin.coconutcoasthomes.com',
+            status: 'active',
+            providerSource: 'SIMULATED PROVIDER'
+        };
     }
 }
 

@@ -263,6 +263,11 @@ export default {
                 return await api.handleGetDomainDiagnostic(env);
             }
 
+            // /api/admin/domains/fallback-origin
+            if (path === '/api/admin/domains/fallback-origin' && method === 'GET') {
+                return await api.handleGetFallbackOrigin(env);
+            }
+
             // /api/admin/domains/:id
             const domMatch = path.match(/^\/api\/admin\/domains\/([^\/]+)$/);
             if (domMatch) {

@@ -20,7 +20,7 @@ import {
     refreshCustomHostnameStatus,
     removeCustomHostname
 } from '../sneak-admin/cloudflare-saas.js';
-import { handleRecordLaunchCheck, handleGetReadiness } from '../sneak-admin/api.js';
+import { handleRecordLaunchCheck, handleGetReadiness, handleGetFallbackOrigin } from '../sneak-admin/api.js';
 import worker from '../sneak-sites/worker.js';
 
 export function createMockDomainDB() {
@@ -528,6 +528,59 @@ describe('SNEAK Custom Domain Provisioning & Cloudflare for SaaS Suite (Phase 6.
         assert.equal(r2.email.mode, 'Mailjet');
         assert.equal(r2.email.senderDomain, 'Verified');
     });
+
+    test('TEST 14: Strict Security Rules for Launch Evidence (Phase 6.3B)', async () => {
+        const mockDB = createMockDomainDB();
+
+        // 1. Arbitrary / unknown launch check key rejected
+        const blockedKey = await handleRecordLaunchCheck(mockDB, {
+            check_key: 'arbitrary_unauthorized_key',
+            status: 'pass',
+            source: 'real_cloudflare'
+        }, 'admin');
+        assert.equal(blockedKey.status, 400);
+
+        // 2. Wrong source for Cloudflare check rejected
+        const blockedWrongCFSource = await handleRecordLaunchCheck(mockDB, {
+            check_key: 'cloudflare_fallback_active',
+            status: 'pass',
+            source: 'real_mailjet'
+        }, 'admin');
+        assert.equal(blockedWrongCFSource.status, 400);
+
+        // 3. Wrong source for Mailjet email check rejected
+        const blockedWrongEmailSource = await handleRecordLaunchCheck(mockDB, {
+            check_key: 'email_provider_configured',
+            status: 'pass',
+            source: 'real_cloudflare'
+        }, 'admin');
+        assert.equal(blockedWrongEmailSource.status, 400);
+
+        // 4. System check requires source = system
+        const blockedReplaySource = await handleRecordLaunchCheck(mockDB, {
+            check_key: 'email_replay_protection',
+            status: 'pass',
+            source: 'real_mailjet'
+        }, 'admin');
+        assert.equal(blockedReplaySource.status, 400);
+
+        // 5. Valid system source accepted for email_replay_protection
+        const validReplay = await handleRecordLaunchCheck(mockDB, {
+            check_key: 'email_replay_protection',
+            status: 'pass',
+            source: 'system'
+        }, 'admin');
+        assert.equal(validReplay.status, 200);
+
+        // 6. Fallback origin endpoint test in simulation
+        const simEnv = { CLOUDFLARE_SAAS_MODE: 'simulation' };
+        const fbRes = await handleGetFallbackOrigin(simEnv);
+        const fbData = await fbRes.json();
+        assert.equal(fbData.success, true);
+        assert.equal(fbData.status, 'active');
+        assert.equal(fbData.providerSource, 'SIMULATED PROVIDER');
+    });
 });
+
 
 

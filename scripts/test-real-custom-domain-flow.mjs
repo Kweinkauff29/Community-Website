@@ -164,6 +164,18 @@ async function recordCheck(adminCookie, check_key, status, source, detail) {
     await recordCheck(adminCookie, 'cloudflare_saas_enabled', 'pass', 'real_cloudflare', { zone_id: 'e2329c400819970362fa907dcebbde9c' });
     await recordCheck(adminCookie, 'cloudflare_real_custom_hostname', 'pass', 'real_cloudflare', { hostname: realTestHostname, id: prepData.binding.provider_hostname_id });
 
+    // 4a. Verify Real Fallback Origin State
+    console.log("\n[4a] Querying Real Cloudflare Fallback Origin Status...");
+    const fbRes = await fetch(`${ADMIN_URL}/api/admin/domains/fallback-origin`, {
+        headers: { "Cookie": adminCookie }
+    });
+    assert(fbRes.status === 200, "Fallback origin query returned HTTP 200 OK");
+    const fbData = await fbRes.json();
+    console.log(`  [INFO] Fallback Origin: ${fbData.origin} | Status: ${fbData.status} | Source: ${fbData.providerSource}`);
+    if (fbData.status === 'active' && fbData.providerSource === 'REAL CLOUDFLARE') {
+        await recordCheck(adminCookie, 'cloudflare_fallback_active', 'pass', 'real_cloudflare', { fallback: fbData.origin });
+    }
+
     // 5. Poll Cloudflare API until Active + SSL Active
     console.log("\n[5] Polling Cloudflare Custom Hostname API for Readiness...");
     let active = false;
@@ -177,7 +189,6 @@ async function recordCheck(adminCookie, check_key, status, source, detail) {
             active = true;
             assert(true, `Cloudflare Custom Hostname active (status: ${refData.binding.status}, ssl: ${refData.binding.ssl_status})`);
             await recordCheck(adminCookie, 'cloudflare_real_ssl', 'pass', 'real_cloudflare', { ssl_status: refData.binding.ssl_status });
-            await recordCheck(adminCookie, 'cloudflare_fallback_active', 'pass', 'real_cloudflare', { fallback: 'sneak-origin.coconutcoasthomes.com' });
             break;
         }
         console.log(`  [WAIT] Status: ${refData.binding?.status}, SSL: ${refData.binding?.ssl_status} (attempt ${i + 1}/12)...`);
@@ -200,7 +211,7 @@ async function recordCheck(adminCookie, check_key, status, source, detail) {
     assert(!httpsHtml.includes("PREVIEW MODE"), "Preview banner absent on live custom hostname");
     await recordCheck(adminCookie, 'cloudflare_real_https', 'pass', 'real_cloudflare', { hostname: realTestHostname, status: 200 });
 
-    // 6a. Exercise Real IDX from Real Origin
+    // 6a. Exercise Real Comprehensive IDX from Real Origin
     console.log(`\n[6a] Testing Real SNEAK IDX APIs from Origin: https://${realTestHostname}...`);
     const bootRes = await fetch(`${SERVING_URL}/api/bootstrap?site_key=${siteKey}`, {
         headers: { "Origin": `https://${realTestHostname}` }
@@ -216,10 +227,33 @@ async function recordCheck(adminCookie, check_key, status, source, detail) {
     const searchData = await searchRes.json();
     assert(Array.isArray(searchData.listings), "Search returned listings array");
 
+    let inScopeKey = null;
+    if (searchData.listings.length > 0) {
+        inScopeKey = searchData.listings[0].ListingKey;
+        // Verify scope conformity on returned listing
+        assert(searchData.listings[0].ListAgentMlsId === "B3650316" || !searchData.listings[0].ListAgentMlsId, "Listing conforms to agent scope");
+    }
+
+    // Detail test for in-scope listing
+    if (inScopeKey) {
+        const detailRes = await fetch(`${SERVING_URL}/api/listings/${inScopeKey}`, {
+            headers: { "Origin": `https://${realTestHostname}`, "Authorization": `Bearer ${token}` }
+        });
+        assert(detailRes.status === 200, "Real origin listing detail returned HTTP 200 OK");
+        const detailData = await detailRes.json();
+        assert(detailData.listing?.ListingKey === inScopeKey, "Detail matches requested listing");
+    }
+
     const ohRes = await fetch(`${SERVING_URL}/api/open-houses`, {
         headers: { "Origin": `https://${realTestHostname}`, "Authorization": `Bearer ${token}` }
     });
     assert(ohRes.status === 200, "Real origin open houses returned HTTP 200 OK");
+
+    // Out-of-scope listing detail test
+    const outOfScopeRes = await fetch(`${SERVING_URL}/api/listings/OUT_OF_SCOPE_FOREIGN_999`, {
+        headers: { "Origin": `https://${realTestHostname}`, "Authorization": `Bearer ${token}` }
+    });
+    assert(outOfScopeRes.status === 403 || outOfScopeRes.status === 404, "Out-of-scope listing detail securely rejected");
 
     await recordCheck(adminCookie, 'cloudflare_real_idx', 'pass', 'real_cloudflare', { hostname: realTestHostname });
 
@@ -230,6 +264,8 @@ async function recordCheck(adminCookie, check_key, status, source, detail) {
         headers: { "Cookie": adminCookie, "Origin": ADMIN_URL }
     });
     assert(delRes.status === 200, "Deleted from Cloudflare and SNEAK");
+    const delData = await delRes.json();
+    assert(delData.success === true, "Provider confirmed deletion");
     await recordCheck(adminCookie, 'cloudflare_real_removal', 'pass', 'real_cloudflare', { hostname: realTestHostname });
 
     console.log("\n====================================================");
