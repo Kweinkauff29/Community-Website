@@ -236,7 +236,7 @@ async function runRealEmailFlowTests() {
         const inviteLinks = queryD1(`SELECT id, user_id, purpose, created_at, expires_at, used_at FROM sneak_member_magic_links WHERE user_id = '${existingUser.id}' AND purpose = 'invite' ORDER BY created_at DESC LIMIT 1`);
         existingInviteLink = inviteLinks[0] || null;
 
-        const loginLinks = queryD1(`SELECT id, user_id, purpose, created_at, expires_at, used_at FROM sneak_member_magic_links WHERE user_id = '${existingUser.id}' AND purpose = 'login' ORDER BY created_at DESC LIMIT 1`);
+        const loginLinks = queryD1(`SELECT id, user_id, purpose, created_at, expires_at, used_at FROM sneak_member_magic_links WHERE user_id = '${existingUser.id}' AND purpose = 'login' ${existingInviteLink ? `AND created_at >= '${existingInviteLink.created_at}'` : ''} ORDER BY created_at DESC LIMIT 1`);
         existingLoginLink = loginLinks[0] || null;
     }
 
@@ -306,8 +306,10 @@ async function runRealEmailFlowTests() {
     const isLoginConsumed = Boolean(existingLoginLink?.used_at);
 
     if (!isLoginConsumed) {
-        // RUN 2: Magic Login Email Dispatch & Wait
-        if (existingLoginLink && !existingLoginLink.used_at) {
+        const nowIso = new Date().toISOString();
+        const isLoginExpired = existingLoginLink ? (existingLoginLink.expires_at < nowIso) : true;
+
+        if (existingLoginLink && !existingLoginLink.used_at && !isLoginExpired) {
             console.log(`\n[8] Existing active magic login link detected in D1 (Link ID: ${existingLoginLink.id}, Created: ${existingLoginLink.created_at}).`);
             console.log("  [INFO] Re-dispatch skipped to preserve single-use login token in inbox.");
         } else {
