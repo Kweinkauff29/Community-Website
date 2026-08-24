@@ -1073,6 +1073,10 @@ async function handleListingDetail(listingKey, site, req, env, ctx, allowedOrigi
     const d1Listing = await env.DB.prepare(query).bind(listingKey, listingKey, ...scope.binds).first();
 
     if (!d1Listing) {
+        const globalExists = await env.DB.prepare("SELECT ListingKey FROM sneak_listings WHERE (ListingKey = ? OR ListingId = ?)").bind(listingKey, listingKey).first();
+        if (globalExists) {
+            return jsonResponse({ error: 'ScopeMismatch', message: 'Property is outside this tenant authorized scope.' }, 403, allowedOrigin);
+        }
         return jsonResponse({ error: 'ListingNotFound', message: 'Property not found or not accessible within this scope.' }, 404, allowedOrigin);
     }
 

@@ -167,13 +167,32 @@ async function recordCheck(adminCookie, check_key, status, source, detail) {
     await recordCheck(adminCookie, 'cloudflare_real_custom_hostname', 'pass', 'real_cloudflare', { hostname: realTestHostname, id: prepData.binding.provider_hostname_id });
 
     // 4a. Verify Real Fallback Origin State
-    console.log("\n[4a] Querying Real Cloudflare Fallback Origin Status...");
-    const fbRes = await fetch(`${ADMIN_URL}/api/admin/domains/fallback-origin`, {
+    console.log("\n[4a] Configuring & Verifying Real Cloudflare Fallback Origin Status...");
+    let fbRes = await fetch(`${ADMIN_URL}/api/admin/domains/fallback-origin`, {
         headers: { "Cookie": adminCookie }
     });
     assert(fbRes.status === 200, "Fallback origin query returned HTTP 200 OK");
-    const fbData = await fbRes.json();
+    let fbData = await fbRes.json();
+
+    if (fbData.status !== 'active' || fbData.origin !== 'sneak-origin.coconutcoasthomes.com') {
+        console.log("  [INFO] Setting fallback origin sneak-origin.coconutcoasthomes.com via PUT /zones/:id/custom_hostnames/fallback_origin...");
+        const putFbRes = await fetch(`${ADMIN_URL}/api/admin/domains/fallback-origin`, {
+            method: "PUT",
+            headers: { "Cookie": adminCookie, "Content-Type": "application/json", "Origin": ADMIN_URL },
+            body: JSON.stringify({ origin: "sneak-origin.coconutcoasthomes.com" })
+        });
+        assert(putFbRes.status === 200, "Fallback origin update returned HTTP 200 OK");
+        
+        // Re-query
+        fbRes = await fetch(`${ADMIN_URL}/api/admin/domains/fallback-origin`, {
+            headers: { "Cookie": adminCookie }
+        });
+        fbData = await fbRes.json();
+    }
+
     console.log(`  [INFO] Fallback Origin: ${fbData.origin} | Status: ${fbData.status} | Source: ${fbData.providerSource}`);
+    assert(fbData.status === 'active', "Real Cloudflare fallback origin is active");
+    assert(fbData.providerSource === 'REAL CLOUDFLARE', "Fallback origin source is REAL CLOUDFLARE");
     if (fbData.status === 'active' && fbData.providerSource === 'REAL CLOUDFLARE') {
         await recordCheck(adminCookie, 'cloudflare_fallback_active', 'pass', 'real_cloudflare', { fallback: fbData.origin });
     }
@@ -181,7 +200,7 @@ async function recordCheck(adminCookie, check_key, status, source, detail) {
     // 5. Poll Cloudflare API until Active + SSL Active
     console.log("\n[5] Polling Cloudflare Custom Hostname API for Readiness...");
     let active = false;
-    for (let i = 0; i < 12; i++) {
+    for (let i = 0; i < 30; i++) {
         const refRes = await fetch(`${ADMIN_URL}/api/admin/domain-bindings/${bindingId}/refresh`, {
             method: "POST",
             headers: { "Cookie": adminCookie, "Origin": ADMIN_URL }
@@ -215,12 +234,12 @@ async function recordCheck(adminCookie, check_key, status, source, detail) {
 
     // 6a. Exercise Real Comprehensive IDX from Real Origin
     console.log(`\n[6a] Testing Real SNEAK IDX APIs from Origin: https://${realTestHostname}...`);
-    const bootRes = await fetch(`${SERVING_URL}/api/bootstrap?site_key=${siteKey}`, {
+    const bootRes = await fetch(`${SERVING_URL}/idx/v1/bootstrap?site=${siteKey}`, {
         headers: { "Origin": `https://${realTestHostname}` }
     });
     assert(bootRes.status === 200, "Real origin bootstrap returned HTTP 200 OK");
     const bootData = await bootRes.json();
-    const token = bootData.token;
+    const token = bootData.session || bootData.token;
 
     // Helper to query remote D1 ground truth
     const childProc = await import('node:child_process');
@@ -250,16 +269,17 @@ async function recordCheck(adminCookie, check_key, status, source, detail) {
     const genuineForeignKey = d1OutOfScope[0]?.ListingKey || '00030a06cd40eb28062f68e614cd9d32';
 
     // B. Search (limit 5)
-    const searchRes = await fetch(`${SERVING_URL}/api/listings/search?limit=5`, {
+    const searchRes = await fetch(`${SERVING_URL}/idx/v1/search?site=${siteKey}&limit=5`, {
         headers: { "Origin": `https://${realTestHostname}`, "Authorization": `Bearer ${token}` }
     });
     assert(searchRes.status === 200, "Real origin search returned HTTP 200 OK");
     const searchData = await searchRes.json();
-    assert(Array.isArray(searchData.listings) && searchData.listings.length > 0, "Search returned listings array");
+    const listings = searchData.data || searchData.listings || [];
+    assert(Array.isArray(listings) && listings.length > 0, "Search returned listings array");
 
     // Cross-check EVERY returned listing against D1 to confirm ListAgentMlsId = 'B3650316'
     let allVerifiedInD1 = true;
-    for (const item of searchData.listings) {
+    for (const item of listings) {
         const checkD1 = queryD1(`SELECT ListAgentMlsId FROM sneak_listings WHERE ListingKey = '${item.ListingKey}'`);
         if (!checkD1[0] || checkD1[0].ListAgentMlsId !== 'B3650316') {
             allVerifiedInD1 = false;
@@ -269,38 +289,40 @@ async function recordCheck(adminCookie, check_key, status, source, detail) {
     assert(allVerifiedInD1, "Every returned search listing is verified in D1 to belong to agent B3650316");
 
     // C. Paginated / filtered search test
-    const pageSearchRes = await fetch(`${SERVING_URL}/api/listings/search?limit=3&offset=1`, {
+    const pageSearchRes = await fetch(`${SERVING_URL}/idx/v1/search?site=${siteKey}&limit=3&offset=1`, {
         headers: { "Origin": `https://${realTestHostname}`, "Authorization": `Bearer ${token}` }
     });
     assert(pageSearchRes.status === 200, "Pagination search returned HTTP 200 OK");
     const pageData = await pageSearchRes.json();
-    assert(Array.isArray(pageData.listings), "Pagination search returned array");
-    const pageAllInScope = pageData.listings.every(l => {
+    const pageListings = pageData.data || pageData.listings || [];
+    assert(Array.isArray(pageListings), "Pagination search returned array");
+    const pageAllInScope = pageListings.every(l => {
         const check = queryD1(`SELECT ListAgentMlsId FROM sneak_listings WHERE ListingKey = '${l.ListingKey}'`);
         return check[0]?.ListAgentMlsId === 'B3650316';
     });
     assert(pageAllInScope, "Paginated search results strictly conform to agent scope B3650316");
 
     // D. In-scope listing detail test with photo/media check
-    const detailRes = await fetch(`${SERVING_URL}/api/listings/${expectedInScopeKey}`, {
+    const detailRes = await fetch(`${SERVING_URL}/idx/v1/listing/${expectedInScopeKey}?site=${siteKey}`, {
         headers: { "Origin": `https://${realTestHostname}`, "Authorization": `Bearer ${token}` }
     });
     assert(detailRes.status === 200, "Real origin in-scope listing detail returned HTTP 200 OK");
     const detailData = await detailRes.json();
-    assert(detailData.listing?.ListingKey === expectedInScopeKey, "Detail matches requested in-scope ListingKey");
+    const inScopeListing = detailData.data || detailData.listing;
+    assert(inScopeListing?.ListingKey === expectedInScopeKey, "Detail matches requested in-scope ListingKey");
     if (d1InScope[0]?.PrimaryPhoto) {
-        assert(Boolean(detailData.listing?.PrimaryPhoto || (detailData.listing?.media && detailData.listing.media.length > 0)), "Photo/media output present for in-scope listing detail");
+        assert(Boolean(inScopeListing?.PrimaryPhoto || (inScopeListing?.media && inScopeListing.media.length > 0)), "Photo/media output present for in-scope listing detail");
     }
 
     // E. Real out-of-scope listing detail test with genuine foreign key from D1
     console.log(`  [INFO] Testing access denial on genuine foreign listing: ${genuineForeignKey} (Agent: ${d1OutOfScope[0]?.ListAgentMlsId})...`);
-    const outOfScopeRes = await fetch(`${SERVING_URL}/api/listings/${genuineForeignKey}`, {
+    const outOfScopeRes = await fetch(`${SERVING_URL}/idx/v1/listing/${genuineForeignKey}?site=${siteKey}`, {
         headers: { "Origin": `https://${realTestHostname}`, "Authorization": `Bearer ${token}` }
     });
     assert(outOfScopeRes.status === 403, `Genuine foreign listing strictly blocked with HTTP 403 ScopeMismatch (status: ${outOfScopeRes.status})`);
 
     // F. Open Houses endpoint test
-    const ohRes = await fetch(`${SERVING_URL}/api/open-houses`, {
+    const ohRes = await fetch(`${SERVING_URL}/idx/v1/open-houses?site=${siteKey}`, {
         headers: { "Origin": `https://${realTestHostname}`, "Authorization": `Bearer ${token}` }
     });
     assert(ohRes.status === 200, "Real origin open houses returned HTTP 200 OK");

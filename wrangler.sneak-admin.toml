@@ -11,6 +11,10 @@ head_sampling_rate = 1
 
 [vars]
 SNEAK_ENV = "staging"
+CLOUDFLARE_SAAS_MODE = "live"
+CLOUDFLARE_SAAS_ZONE_ID = "e2329c400819970362fa907dcebbde9c"
+CLOUDFLARE_SAAS_CNAME_TARGET = "sneak-customers.coconutcoasthomes.com"
+CLOUDFLARE_SAAS_FALLBACK_ORIGIN = "sneak-origin.coconutcoasthomes.com"
 
 [[d1_databases]]
 binding = "DB"

@@ -1,6 +1,13 @@
 name = "sneak-idx-sites-staging"
 main = "sneak-sites/worker.js"
 compatibility_date = "2024-01-01"
+workers_dev = true
+
+routes = [
+    { pattern = "sneak-origin.coconutcoasthomes.com/*", zone_name = "coconutcoasthomes.com" },
+    { pattern = "sneak-customers.coconutcoasthomes.com/*", zone_name = "coconutcoasthomes.com" },
+    { pattern = "sneak-test.coconutcoasthomes.com/*", zone_name = "coconutcoasthomes.com" }
+]
 
 [observability]
 enabled = true

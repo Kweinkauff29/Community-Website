@@ -69,6 +69,36 @@ export function normalizeHostname(raw) {
     return { valid: true, hostname: cleaned };
 }
 
+export function mapCloudflareStatus(rawStatus) {
+    if (!rawStatus) return 'pending_validation';
+    const s = String(rawStatus).toLowerCase();
+    if (['active', 'pending_dns', 'pending_validation', 'pending_ssl', 'requested', 'removing', 'removed', 'error'].includes(s)) {
+        return s;
+    }
+    if (s === 'pending' || s === 'pending_ownership' || s === 'pending_ownership_validation') {
+        return 'pending_validation';
+    }
+    if (s === 'blocked' || s === 'moved') {
+        return 'error';
+    }
+    return 'pending_validation';
+}
+
+export function mapCloudflareSslStatus(rawSslStatus) {
+    if (!rawSslStatus) return 'pending_validation';
+    const s = String(rawSslStatus).toLowerCase();
+    if (['initializing', 'pending_validation', 'pending_deployment', 'active', 'cancelled', 'error'].includes(s)) {
+        return s;
+    }
+    if (s === 'pending_issuance' || s === 'pending') {
+        return 'pending_validation';
+    }
+    if (s === 'timed_out' || s === 'deleted') {
+        return 'error';
+    }
+    return 'pending_validation';
+}
+
 /**
  * Cloudflare for SaaS API Adapter.
  */
@@ -132,8 +162,8 @@ export class CloudflareSaaSClient {
                         const existing = listData.result[0];
                         return {
                             providerHostnameId: existing.id,
-                            status: existing.status,
-                            sslStatus: existing.ssl?.status || 'pending_validation',
+                            status: mapCloudflareStatus(existing.status),
+                            sslStatus: mapCloudflareSslStatus(existing.ssl?.status),
                             cnameTarget: this.fallbackTarget,
                             ownershipTxtName: existing.ownership_verification?.name || null,
                             ownershipTxtValue: existing.ownership_verification?.value || null,
@@ -147,8 +177,8 @@ export class CloudflareSaaSClient {
             const r = data.result;
             return {
                 providerHostnameId: r.id,
-                status: r.status || 'pending_validation',
-                sslStatus: r.ssl?.status || 'pending_validation',
+                status: mapCloudflareStatus(r.status),
+                sslStatus: mapCloudflareSslStatus(r.ssl?.status),
                 cnameTarget: this.fallbackTarget,
                 ownershipTxtName: r.ownership_verification?.name || null,
                 ownershipTxtValue: r.ownership_verification?.value || null,
@@ -187,8 +217,8 @@ export class CloudflareSaaSClient {
 
             const r = data.result;
             return {
-                status: r.status,
-                sslStatus: r.ssl?.status,
+                status: mapCloudflareStatus(r.status),
+                sslStatus: mapCloudflareSslStatus(r.ssl?.status),
                 cnameTarget: this.fallbackTarget,
                 ownershipTxtName: r.ownership_verification?.name || null,
                 ownershipTxtValue: r.ownership_verification?.value || null,
@@ -243,6 +273,14 @@ export class CloudflareSaaSClient {
             const data = await res.json();
             if (!data.success) {
                 const err = data.errors?.[0] || { message: 'Cloudflare API error' };
+                if (res.status === 404 || err.code === 1551 || (err.message && err.message.toLowerCase().includes('not found'))) {
+                    return {
+                        success: true,
+                        origin: null,
+                        status: 'missing',
+                        providerSource: 'REAL CLOUDFLARE'
+                    };
+                }
                 return { success: false, error: err.message, status: 'error' };
             }
             return {
@@ -257,6 +295,39 @@ export class CloudflareSaaSClient {
         return {
             success: true,
             origin: 'sneak-origin.coconutcoasthomes.com',
+            status: 'active',
+            providerSource: 'SIMULATED PROVIDER'
+        };
+    }
+
+    async updateFallbackOrigin(origin) {
+        if (this.isLive) {
+            this.validateLiveConfig();
+            const res = await fetch(`https://api.cloudflare.com/client/v4/zones/${this.zoneId}/custom_hostnames/fallback_origin`, {
+                method: 'PUT',
+                headers: {
+                    'Authorization': `Bearer ${this.apiToken}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ origin })
+            });
+            const data = await res.json();
+            if (!data.success) {
+                const err = data.errors?.[0] || { message: 'Cloudflare API error' };
+                return { success: false, error: err.message, status: 'error' };
+            }
+            return {
+                success: true,
+                origin: data.result?.origin || origin,
+                status: data.result?.status || 'pending',
+                providerSource: 'REAL CLOUDFLARE'
+            };
+        }
+
+        // Simulation Mode
+        return {
+            success: true,
+            origin,
             status: 'active',
             providerSource: 'SIMULATED PROVIDER'
         };

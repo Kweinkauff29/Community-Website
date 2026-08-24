@@ -1111,6 +1111,20 @@ export async function handleGetFallbackOrigin(env) {
 }
 
 /**
+ * PUT /api/admin/domains/fallback-origin
+ */
+export async function handleUpdateFallbackOrigin(env, body) {
+    const client = new CloudflareSaaSClient(env);
+    try {
+        const origin = body?.origin || env?.CLOUDFLARE_SAAS_FALLBACK_ORIGIN || 'sneak-origin.coconutcoasthomes.com';
+        const result = await client.updateFallbackOrigin(origin);
+        return json(result);
+    } catch (err) {
+        return json({ success: false, error: err.message, status: 'error' }, 500);
+    }
+}
+
+/**
  * GET /api/admin/readiness
  * Returns high-level operational readiness status across all subsystems.
  */
