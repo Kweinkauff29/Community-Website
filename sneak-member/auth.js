@@ -101,7 +101,7 @@ export async function requestPublicMagicLink(db, email, ipHash, env = {}) {
                 VALUES (?, ?, ?, ?)
             `).bind(attemptId, ipHash, emailHash, now).run();
 
-            if ((ipAttempts?.count || 0) >= 5 || (emailAttempts?.count || 0) >= 5) {
+            if ((ipAttempts?.count || 0) >= 30 || (emailAttempts?.count || 0) >= 10) {
                 return GENERIC_RESPONSE;
             }
         } catch (err) {
