@@ -222,47 +222,88 @@ async function recordCheck(adminCookie, check_key, status, source, detail) {
     const bootData = await bootRes.json();
     const token = bootData.token;
 
+    // Helper to query remote D1 ground truth
+    const childProc = await import('node:child_process');
+    function queryD1(sql) {
+        try {
+            const raw = childProc.execSync(`npx wrangler d1 execute sneak-idx-staging -c wrangler.sneak-admin.toml --remote --json --command="${sql}"`, {
+                cwd: rootDir,
+                encoding: 'utf8',
+                stdio: ['pipe', 'pipe', 'ignore']
+            });
+            const parsed = JSON.parse(raw);
+            return parsed[0]?.results || [];
+        } catch {
+            return [];
+        }
+    }
+
+    // A. Query D1 ground truth for in-scope (ListAgentMlsId = 'B3650316') and out-of-scope (ListAgentMlsId != 'B3650316')
+    console.log("  [INFO] Querying staging D1 ground truth for agent scope B3650316...");
+    const d1InScope = queryD1("SELECT ListingKey, ListAgentMlsId, StandardStatus, PrimaryPhoto FROM sneak_listings WHERE ListAgentMlsId = 'B3650316' AND StandardStatus IN ('Active', 'Active Under Contract', 'Pending') LIMIT 5");
+    const d1OutOfScope = queryD1("SELECT ListingKey, ListAgentMlsId, StandardStatus FROM sneak_listings WHERE ListAgentMlsId IS NOT NULL AND ListAgentMlsId != 'B3650316' AND StandardStatus IN ('Active', 'Active Under Contract', 'Pending') LIMIT 5");
+
+    assert(d1InScope.length > 0, `D1 contains active listings for agent B3650316 (found: ${d1InScope.length})`);
+    assert(d1OutOfScope.length > 0, `D1 contains genuine foreign listings (found: ${d1OutOfScope.length})`);
+
+    const expectedInScopeKey = d1InScope[0]?.ListingKey || '02f7b20b542866120267624789752d46';
+    const genuineForeignKey = d1OutOfScope[0]?.ListingKey || '00030a06cd40eb28062f68e614cd9d32';
+
+    // B. Search (limit 5)
     const searchRes = await fetch(`${SERVING_URL}/api/listings/search?limit=5`, {
         headers: { "Origin": `https://${realTestHostname}`, "Authorization": `Bearer ${token}` }
     });
     assert(searchRes.status === 200, "Real origin search returned HTTP 200 OK");
     const searchData = await searchRes.json();
-    assert(Array.isArray(searchData.listings), "Search returned listings array");
-    assert(searchData.listings.length > 0, "Search returned in-scope listings");
+    assert(Array.isArray(searchData.listings) && searchData.listings.length > 0, "Search returned listings array");
 
-    const allInScope = searchData.listings.every(l => l.ListAgentMlsId === "B3650316" || !l.ListAgentMlsId);
-    assert(allInScope, "Every returned search listing conforms to agent scope B3650316");
+    // Cross-check EVERY returned listing against D1 to confirm ListAgentMlsId = 'B3650316'
+    let allVerifiedInD1 = true;
+    for (const item of searchData.listings) {
+        const checkD1 = queryD1(`SELECT ListAgentMlsId FROM sneak_listings WHERE ListingKey = '${item.ListingKey}'`);
+        if (!checkD1[0] || checkD1[0].ListAgentMlsId !== 'B3650316') {
+            allVerifiedInD1 = false;
+            console.error(`  [FAIL] Returned listing ${item.ListingKey} belongs to ${checkD1[0]?.ListAgentMlsId}, not B3650316`);
+        }
+    }
+    assert(allVerifiedInD1, "Every returned search listing is verified in D1 to belong to agent B3650316");
 
-    const inScopeKey = searchData.listings[0].ListingKey;
-
-    // In-scope listing detail test
-    const detailRes = await fetch(`${SERVING_URL}/api/listings/${inScopeKey}`, {
+    // C. Paginated / filtered search test
+    const pageSearchRes = await fetch(`${SERVING_URL}/api/listings/search?limit=3&offset=1`, {
         headers: { "Origin": `https://${realTestHostname}`, "Authorization": `Bearer ${token}` }
     });
-    assert(detailRes.status === 200, "Real origin listing detail returned HTTP 200 OK");
-    const detailData = await detailRes.json();
-    assert(detailData.listing?.ListingKey === inScopeKey, "Detail matches requested listing");
+    assert(pageSearchRes.status === 200, "Pagination search returned HTTP 200 OK");
+    const pageData = await pageSearchRes.json();
+    assert(Array.isArray(pageData.listings), "Pagination search returned array");
+    const pageAllInScope = pageData.listings.every(l => {
+        const check = queryD1(`SELECT ListAgentMlsId FROM sneak_listings WHERE ListingKey = '${l.ListingKey}'`);
+        return check[0]?.ListAgentMlsId === 'B3650316';
+    });
+    assert(pageAllInScope, "Paginated search results strictly conform to agent scope B3650316");
 
+    // D. In-scope listing detail test with photo/media check
+    const detailRes = await fetch(`${SERVING_URL}/api/listings/${expectedInScopeKey}`, {
+        headers: { "Origin": `https://${realTestHostname}`, "Authorization": `Bearer ${token}` }
+    });
+    assert(detailRes.status === 200, "Real origin in-scope listing detail returned HTTP 200 OK");
+    const detailData = await detailRes.json();
+    assert(detailData.listing?.ListingKey === expectedInScopeKey, "Detail matches requested in-scope ListingKey");
+    if (d1InScope[0]?.PrimaryPhoto) {
+        assert(Boolean(detailData.listing?.PrimaryPhoto || (detailData.listing?.media && detailData.listing.media.length > 0)), "Photo/media output present for in-scope listing detail");
+    }
+
+    // E. Real out-of-scope listing detail test with genuine foreign key from D1
+    console.log(`  [INFO] Testing access denial on genuine foreign listing: ${genuineForeignKey} (Agent: ${d1OutOfScope[0]?.ListAgentMlsId})...`);
+    const outOfScopeRes = await fetch(`${SERVING_URL}/api/listings/${genuineForeignKey}`, {
+        headers: { "Origin": `https://${realTestHostname}`, "Authorization": `Bearer ${token}` }
+    });
+    assert(outOfScopeRes.status === 403, `Genuine foreign listing strictly blocked with HTTP 403 ScopeMismatch (status: ${outOfScopeRes.status})`);
+
+    // F. Open Houses endpoint test
     const ohRes = await fetch(`${SERVING_URL}/api/open-houses`, {
         headers: { "Origin": `https://${realTestHostname}`, "Authorization": `Bearer ${token}` }
     });
     assert(ohRes.status === 200, "Real origin open houses returned HTTP 200 OK");
-
-    // Real out-of-scope listing detail test (find actual foreign listing)
-    let foreignKey = "224000001";
-    try {
-        const foreignSearch = await fetch(`${SERVING_URL}/api/listings/search?limit=20`);
-        if (foreignSearch.ok) {
-            const fsData = await foreignSearch.json();
-            const foreign = fsData.listings?.find(l => l.ListAgentMlsId && l.ListAgentMlsId !== "B3650316");
-            if (foreign) foreignKey = foreign.ListingKey;
-        }
-    } catch {}
-
-    const outOfScopeRes = await fetch(`${SERVING_URL}/api/listings/${foreignKey}`, {
-        headers: { "Origin": `https://${realTestHostname}`, "Authorization": `Bearer ${token}` }
-    });
-    assert(outOfScopeRes.status === 403, `Real out-of-scope listing strictly rejected with HTTP 403 ScopeMismatch (status: ${outOfScopeRes.status})`);
 
     await recordCheck(adminCookie, 'cloudflare_real_idx', 'pass', 'real_cloudflare', { hostname: realTestHostname });
 

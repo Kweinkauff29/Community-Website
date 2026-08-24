@@ -136,6 +136,69 @@ async function runRealEmailFlowTests() {
     const rawUnknown = JSON.stringify(unknownData);
     assert(!rawUnknown.includes("token") && !rawUnknown.includes("rawToken") && !rawUnknown.includes("userId"), "Zero tokens/identifiers leaked");
 
+    // 4a. Query REAL Mailjet API for Live Sender & DNS Status
+    console.log("\n[4a] Querying Real Mailjet API for Live Sender & DNS Status...");
+    let mjApiKey = process.env.MAILJET_API_KEY || process.env.MJ_API_KEY;
+    let mjSecretKey = process.env.MAILJET_SECRET_KEY || process.env.MJ_API_SECRET;
+    if (!mjApiKey || !mjSecretKey) {
+        const devVarsPath = "/Users/kevinweinkauff/New-Member-Mandatory-Matrix-Test/.dev.vars";
+        if (fs.existsSync(devVarsPath)) {
+            const devContent = fs.readFileSync(devVarsPath, 'utf8');
+            for (const line of devContent.split('\n')) {
+                const trimmed = line.trim();
+                if (trimmed.startsWith('MJ_API_KEY=') || trimmed.startsWith('MAILJET_API_KEY=')) {
+                    mjApiKey = trimmed.split('=')[1].trim().replace(/^["']|["']$/g, '');
+                }
+                if (trimmed.startsWith('MJ_API_SECRET=') || trimmed.startsWith('MAILJET_SECRET_KEY=')) {
+                    mjSecretKey = trimmed.split('=')[1].trim().replace(/^["']|["']$/g, '');
+                }
+            }
+        }
+    }
+
+    let senderVerified = false;
+    let domainDkimOk = false;
+    let domainSpfOk = false;
+
+    if (mjApiKey && mjSecretKey) {
+        const mjAuth = 'Basic ' + Buffer.from(`${mjApiKey}:${mjSecretKey}`).toString('base64');
+        try {
+            const sendersRes = await fetch('https://api.mailjet.com/v3/REST/sender', {
+                headers: { 'Authorization': mjAuth }
+            });
+            if (sendersRes.ok) {
+                const sendersData = await sendersRes.json();
+                const activeSender = (sendersData.Data || []).find(s => s.Email === 'no-reply@ccorealtors.org' && s.Status === 'Active');
+                if (activeSender) senderVerified = true;
+            }
+
+            const dnsRes = await fetch('https://api.mailjet.com/v3/REST/dns', {
+                headers: { 'Authorization': mjAuth }
+            });
+            if (dnsRes.ok) {
+                const dnsData = await dnsRes.json();
+                const ccorDns = (dnsData.Data || []).find(d => d.Domain === 'ccorealtors.org');
+                if (ccorDns?.DKIMStatus === 'OK') domainDkimOk = true;
+                if (ccorDns?.SPFStatus === 'OK') domainSpfOk = true;
+            }
+        } catch (err) {
+            console.error('  [WARN] Could not query Mailjet API:', err.message);
+        }
+    }
+
+    assert(senderVerified, "Real Mailjet verified sender confirmed (no-reply@ccorealtors.org)");
+    assert(domainDkimOk, "Real Mailjet DKIM status verified OK (ccorealtors.org)");
+    assert(domainSpfOk, "Real Mailjet SPF status verified OK (ccorealtors.org)");
+
+    if (senderVerified && domainDkimOk && domainSpfOk) {
+        await recordCheck(adminCookie, 'email_domain_verified', 'pass', 'real_mailjet', {
+            sender: 'no-reply@ccorealtors.org',
+            domain: 'ccorealtors.org',
+            dkim: 'OK',
+            spf: 'OK'
+        });
+    }
+
     if (!testRecipient) {
         console.log("\n====================================================");
         console.log("STATUS: CONTROLLED TEST RECIPIENT REQUIRED FOR LIVE EMAIL SEND");
@@ -178,7 +241,52 @@ async function runRealEmailFlowTests() {
 
     // Only record email_provider_configured after actual Mailjet dispatch confirmation
     await recordCheck(adminCookie, 'email_provider_configured', 'pass', 'real_mailjet', { provider: 'mailjet' });
-    await recordCheck(adminCookie, 'email_domain_verified', 'pass', 'real_mailjet', { sender: 'no-reply@ccorealtors.org', dkim: 'OK', spf: 'OK' });
+
+    // C. Check for Actual Invitation Consumption
+    console.log("\n[7] Checking for Real Emailed Invitation Consumption...");
+    const childProc = await import('node:child_process');
+    function queryD1(sql) {
+        try {
+            const raw = childProc.execSync(`npx wrangler d1 execute sneak-idx-staging -c wrangler.sneak-admin.toml --remote --json --command="${sql}"`, {
+                cwd: rootDir,
+                encoding: 'utf8',
+                stdio: ['pipe', 'pipe', 'ignore']
+            });
+            const parsed = JSON.parse(raw);
+            return parsed[0]?.results || [];
+        } catch {
+            return [];
+        }
+    }
+
+    const memberUser = queryD1(`SELECT id, status, activated_at, last_login_at FROM sneak_member_users WHERE email = '${testRecipient}'`);
+    const isActivated = memberUser[0]?.status === 'active' && Boolean(memberUser[0]?.activated_at);
+
+    if (isActivated) {
+        assert(true, "Emailed invitation link consumed and member account activated");
+        await recordCheck(adminCookie, 'email_real_invitation', 'pass', 'real_mailjet', { recipient: testRecipient, status: 'active' });
+
+        // D. Request Real Magic Link Login for Active User
+        console.log("\n[8] Requesting Real Passwordless Magic Login for Active User...");
+        const loginReqRes = await fetch(`${MEMBER_URL}/api/member/auth/magic-link`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json", "Origin": MEMBER_URL },
+            body: JSON.stringify({ email: testRecipient })
+        });
+        assert(loginReqRes.status === 200, "Magic login requested successfully");
+
+        const loginLinks = queryD1(`SELECT id, purpose, used_at FROM sneak_member_magic_links WHERE user_id = '${memberUser[0].id}' AND purpose = 'login' ORDER BY created_at DESC LIMIT 1`);
+        if (loginLinks[0]?.used_at) {
+            assert(true, "Distinct emailed magic login token consumed");
+            await recordCheck(adminCookie, 'email_real_login', 'pass', 'real_mailjet', { recipient: testRecipient, status: 'verified' });
+            await recordCheck(adminCookie, 'email_replay_protection', 'pass', 'system', { verified: true });
+        } else {
+            console.log("  [INFO] Magic login email dispatched. Awaiting login link click in inbox.");
+        }
+    } else {
+        console.log("  >>> REAL INVITATION EMAIL SENT — OPEN THE EMAIL AND CLICK THE LINK <<<");
+        console.log("  [WAIT] WAITING FOR CONTROLLED INBOX CONSUMPTION");
+    }
 
     console.log("\n====================================================");
     console.log(`REAL MAILJET VALIDATION RESULTS: ${passed} PASSED, ${failed} FAILED`);

@@ -313,7 +313,7 @@ export async function handleGetMemberBilling(db, memberContext) {
         isEntitled: entitlement ? entitlement.isEntitled : true,
         graceUntil: entitlement?.graceUntil || null,
         growthzoneUrl: 'https://bonitaspringsesterorealtorsfl.growthzoneapp.com/',
-        instructions: 'Your SNEAK IDX subscription is managed by Bonita Springs-Estero REALTORS® through GrowthZone. Billing occurs automatically on the first of each month.'
+        instructions: 'Your SNEAK IDX subscription is managed by the Coconut Coast Organization of REALTORS® through GrowthZone. Billing occurs automatically on the first of each month.'
     });
 }
 

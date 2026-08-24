@@ -123,11 +123,14 @@ export async function requestPublicMagicLink(db, email, ipHash, env = {}) {
 
     // 3. Create single-use token internally and dispatch exclusively via transactional email
     try {
-        const rawToken = await createMagicLinkRecord(db, user.id, 'login', 900);
+        const isInvited = (user.user_status === 'invited');
+        const purpose = isInvited ? 'invite' : 'login';
+        const ttlSeconds = isInvited ? 86400 : 900; // 24 hours for invitation, 15 minutes for login
+        const rawToken = await createMagicLinkRecord(db, user.id, purpose, ttlSeconds);
         if (rawToken) {
             const baseUrl = env?.MEMBER_PORTAL_URL || 'https://sneak-idx-member-staging.bonitaspringsrealtors.workers.dev';
             const verifyUrl = `${baseUrl}/api/member/auth/verify?token=${encodeURIComponent(rawToken)}`;
-            if (user.user_status === 'invited') {
+            if (isInvited) {
                 await sendInvitationEmail(env, { email: cleanEmail, inviteUrl: verifyUrl, accountName: user.account_name });
             } else {
                 await sendMagicLinkEmail(env, { email: cleanEmail, verifyUrl, expiresMinutes: 15 });

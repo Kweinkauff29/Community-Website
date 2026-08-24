@@ -544,7 +544,7 @@ export function renderMemberUI() {
                 <p style="margin-bottom: 8px;"><strong>Service Status:</strong> <span class="badge \${status === 'ACTIVE' ? 'badge-success' : 'badge-warning'}">\${status}</span></p>
                 <p style="margin-bottom: 16px;"><strong>Billing Schedule:</strong> Recurring on the 1st of each month.</p>
                 <p style="color: var(--text-muted); font-size: 0.875rem; line-height: 1.5;">
-                    Your SNEAK IDX subscription is administered directly by Bonita Springs-Estero REALTORS® through GrowthZone. To view past statements or update your payment method, click below to open GrowthZone.
+                    Your SNEAK IDX subscription is administered directly by Coconut Coast Organization of REALTORS® through GrowthZone. To view past statements or update your payment method, click below to open GrowthZone.
                 </p>
             \`;
         }

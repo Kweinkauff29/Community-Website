@@ -30,7 +30,7 @@ export function renderMagicLinkTemplate({ verifyUrl, expiresMinutes = 15 }) {
                     <tr>
                         <td align="left" style="padding-bottom: 24px; border-bottom: 1px solid rgba(255,255,255,0.08);">
                             <div style="font-size: 20px; font-weight: 700; color: #38bdf8; letter-spacing: 0.5px;">SNEAK IDX</div>
-                            <div style="font-size: 13px; color: #94a3b8; margin-top: 2px;">Bonita Springs-Estero REALTORS®</div>
+                            <div style="font-size: 13px; color: #94a3b8; margin-top: 2px;">Coconut Coast Organization of REALTORS®</div>
                         </td>
                     </tr>
                     <tr>
@@ -58,7 +58,7 @@ export function renderMagicLinkTemplate({ verifyUrl, expiresMinutes = 15 }) {
                         <td style="padding-top: 24px; border-top: 1px solid rgba(255,255,255,0.08);">
                             <p style="font-size: 12px; line-height: 1.4; color: #64748b; margin: 0;">
                                 If you did not request this sign-in link, no action is needed. Your account remains secure.<br>
-                                © ${new Date().getFullYear()} Bonita Springs-Estero REALTORS®. All rights reserved.
+                                © ${new Date().getFullYear()} Coconut Coast Organization of REALTORS®. All rights reserved.
                             </p>
                         </td>
                     </tr>
@@ -91,7 +91,7 @@ export function renderInvitationTemplate({ inviteUrl, accountName }) {
                     <tr>
                         <td align="left" style="padding-bottom: 24px; border-bottom: 1px solid rgba(255,255,255,0.08);">
                             <div style="font-size: 20px; font-weight: 700; color: #38bdf8; letter-spacing: 0.5px;">SNEAK IDX</div>
-                            <div style="font-size: 13px; color: #94a3b8; margin-top: 2px;">Bonita Springs-Estero REALTORS®</div>
+                            <div style="font-size: 13px; color: #94a3b8; margin-top: 2px;">Coconut Coast Organization of REALTORS®</div>
                         </td>
                     </tr>
                     <tr>
@@ -101,7 +101,7 @@ export function renderInvitationTemplate({ inviteUrl, accountName }) {
                                 You have been invited to manage your MLS search, domain settings, custom branding, and embed codes for <strong>${accountName || 'your real estate business'}</strong>.
                             </p>
                             <p style="font-size: 15px; line-height: 1.5; color: #cbd5e1; margin: 0 0 24px 0;">
-                                Billing is administered through GrowthZone on the first of each month. Click below to activate your account and configure your website integration:
+                                This invitation link is valid for 24 hours. Billing is administered through GrowthZone on the first of each month. Click below to activate your account and configure your website integration:
                             </p>
                             <table border="0" cellspacing="0" cellpadding="0" style="margin: 28px 0;">
                                 <tr>
@@ -121,8 +121,8 @@ export function renderInvitationTemplate({ inviteUrl, accountName }) {
                     <tr>
                         <td style="padding-top: 24px; border-top: 1px solid rgba(255,255,255,0.08);">
                             <p style="font-size: 12px; line-height: 1.4; color: #64748b; margin: 0;">
-                                If you did not apply for SNEAK IDX, please contact member services at BER.<br>
-                                © ${new Date().getFullYear()} Bonita Springs-Estero REALTORS®. All rights reserved.
+                                If you did not request or apply for SNEAK IDX, please contact CCOR Member Services.<br>
+                                © ${new Date().getFullYear()} Coconut Coast Organization of REALTORS®. All rights reserved.
                             </p>
                         </td>
                     </tr>
@@ -293,6 +293,6 @@ export async function sendMagicLinkEmail(env, { email, verifyUrl, expiresMinutes
 export async function sendInvitationEmail(env, { email, inviteUrl, accountName }) {
     const subject = 'Welcome to SNEAK IDX — Your Account is Ready';
     const html = renderInvitationTemplate({ inviteUrl, accountName });
-    const text = `Welcome to SNEAK IDX. Click here to activate your account for ${accountName || 'your business'}: ${inviteUrl}`;
+    const text = `Welcome to SNEAK IDX. Click here to activate your account for ${accountName || 'your business'} (Valid for 24 hours): ${inviteUrl}. If you did not request or apply for SNEAK IDX, please contact CCOR Member Services.`;
     return sendTransactionalEmail(env, { to: email, subject, html, text });
 }

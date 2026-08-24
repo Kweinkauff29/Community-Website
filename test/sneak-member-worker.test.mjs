@@ -273,11 +273,19 @@ describe('SNEAK Member Worker & GrowthZone Alignment Suite (Phase 5.1)', () => {
         const magicHtml = renderMagicLinkTemplate({ verifyUrl: 'https://preview.sneakidx.com/verify?token=abc', expiresMinutes: 15 });
         assert.ok(magicHtml.includes('Sign In to SNEAK Portal'));
         assert.ok(magicHtml.includes('15 minutes'));
+        assert.ok(magicHtml.includes('Coconut Coast Organization of REALTORS®'));
+        assert.ok(!magicHtml.includes('Bonita Springs-Estero'));
+        assert.ok(!magicHtml.includes('BER'));
         assert.ok(!magicHtml.includes('sk_test_'));
 
         const inviteHtml = renderInvitationTemplate({ inviteUrl: 'https://preview.sneakidx.com/invite?token=abc', accountName: 'Naples Realty' });
         assert.ok(inviteHtml.includes('Naples Realty'));
         assert.ok(inviteHtml.includes('GrowthZone'));
+        assert.ok(inviteHtml.includes('24 hours'));
+        assert.ok(inviteHtml.includes('Coconut Coast Organization of REALTORS®'));
+        assert.ok(inviteHtml.includes('CCOR Member Services'));
+        assert.ok(!inviteHtml.includes('Bonita Springs-Estero'));
+        assert.ok(!inviteHtml.includes('BER'));
     });
 
     test('TEST 3: Atomic single-use consumption & simultaneous replay prevention', async () => {
