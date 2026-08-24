@@ -12,12 +12,12 @@
 
 ## 1. Pilot Member Master Registry
 
-| Pilot ID | Profile Type | Member Name | MLS ID | Email | Website / Custom Domain | Account ID | Site ID | Plan | Template | Status |
+| Pilot ID | Member Name | MLS ID | Email | Website / Custom Domain | Account ID | Site ID | Plan | Product Type | Template | Status |
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
-| **PILOT-01** | IDX Embed Only | *Pending Operator Input* | *Pending* | *Pending* | *Existing Member Site* | *Pending* | *Pending* | `starter` / `embed` | N/A (`embed.js`) | Planned |
-| **PILOT-02** | Essential Website | *Pending Operator Input* | *Pending* | *Pending* | *Real Custom Domain* | *Pending* | *Pending* | `pro` / `website` | `essential` | Planned |
-| **PILOT-03** | Coastal Website | *Pending Operator Input* | *Pending* | *Pending* | *Real Custom Domain* | *Pending* | *Pending* | `premium` / `coastal` | `coastal` | Planned |
-| **PILOT-04** *(Opt)* | Brokerage Website | *Pending Operator Input* | *Pending Office ID* | *Pending* | *Real Custom Domain* | *Pending* | *Pending* | `brokerage` | `brokerage` | Deferred |
+| **PILOT-01** | *Pending Operator Input* | *Pending* | *Pending* | *Existing Member Site* | *Pending* | *Pending* | `standard` | IDX Embed Only | N/A / embed | Planned |
+| **PILOT-02** | *Pending Operator Input* | *Pending* | *Pending* | *Real Custom Domain* | *Pending* | *Pending* | `pro` | Turnkey Website | `essential` | Planned |
+| **PILOT-03** | *Pending Operator Input* | *Pending* | *Pending* | *Real Custom Domain* | *Pending* | *Pending* | `pro` | Turnkey Website | `coastal` | Planned |
+| **PILOT-04** *(Opt)* | *Pending Operator Input* | *Pending Office ID* | *Pending* | *Real Custom Domain* | *Pending* | *Pending* | `brokerage` | Brokerage Website | `brokerage` | Deferred |
 
 ---
 
