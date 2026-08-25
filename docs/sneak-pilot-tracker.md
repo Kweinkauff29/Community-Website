@@ -14,7 +14,7 @@
 
 | Pilot ID | Member Name | MLS ID | Email | Website / Custom Domain | Account ID | Site ID | Plan | Product Type | Template | Status |
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
-| **PILOT-01** | Ursula Weinkauff | `633942` | `kmwcollegeapps@gmail.com` | `https://coconutcoastrealtors.org` | `acc_1787583729221_cv3ma` | `site_1787583729221_rzxfa` | `standard` | IDX Embed Only | N/A / embed | Ready for Embed Installation |
+| **PILOT-01** | Ursula Weinkauff | `633942` | `kmwcollegeapps@gmail.com` | `https://coconutcoastrealtors.org` | `acc_1787583729221_cv3ma` | `site_1787583729221_rzxfa` | `standard` | IDX Embed Only | N/A / embed | Launched |
 | **PILOT-02** | *Pending Operator Input* | *Pending* | *Pending* | *Real Custom Domain* | *Pending* | *Pending* | `pro` | Turnkey Website | `essential` | Planned |
 | **PILOT-03** | *Pending Operator Input* | *Pending* | *Pending* | *Real Custom Domain* | *Pending* | *Pending* | `pro` | Turnkey Website | `coastal` | Planned |
 | **PILOT-04** *(Opt)* | *Pending Operator Input* | *Pending Office ID* | *Pending* | *Real Custom Domain* | *Pending* | *Pending* | `brokerage` | Brokerage Website | `brokerage` | Deferred |
@@ -31,12 +31,12 @@ Every participant must complete all verification gates before being marked **Lau
 - [x] **Invitation Gate:** Verified live Mailjet authentication previously satisfied & account normalized.
 - [x] **Member Portal Gate:** Member successfully authenticated and accessed portal dashboard for `Ursula Weinkauff — SNEAK Pilot`.
 - [x] **Branding & Config Gate:** Display name (`Ursula Weinkauff`), brokerage (`Local Real Estate LLC`), colors (`#0f2942`, `#2b6cb0`), and email configured.
-- [ ] **Domain / Embed Gate:** PENDING LIVE EMBED — Authorized Origin `https://coconutcoastrealtors.org` verified in D1.
-- [ ] **Live HTTPS Gate:** PENDING LIVE EMBED.
-- [ ] **Live IDX Functionality Gate:** PENDING LIVE EMBED — (Backend/API Prevalidation: `PASS` across search, detail, foreign 403, and open houses).
-- [ ] **Lead Ingestion Gate:** PENDING LIVE FRONTEND + MEMBER PORTAL VERIFICATION — (Backend Ingestion: `PASS` via lead `lead_mt7p1g83_qz43m`).
-- [ ] **Cross-Device Gate:** PENDING LIVE EMBED.
-- [x] **Staff Observation Gate:** Onboarding duration, identity reconciliation findings, and intervention count logged.
+- [x] **Domain / Embed Gate:** PASS — Installed and executing on `https://coconutcoastrealtors.org/idx-test/` with authorized Origin `https://coconutcoastrealtors.org`.
+- [x] **Live HTTPS Gate:** PASS — Loads over HTTPS 200 OK with zero mixed content errors.
+- [x] **Live IDX Functionality Gate:** PASS — Bootstrap, signed session token, search scoped to `633942`, property detail, photos, and open houses verified live.
+- [x] **Lead Ingestion Gate:** PASS — Live frontend lead `lead_mt8ob2jq_km1b1` ingested and confirmed in D1 / Member Portal.
+- [x] **Cross-Device Gate:** PASS — Responsive desktop and mobile layout verified with zero horizontal overflow.
+- [x] **Staff Observation Gate:** Onboarding duration, live verification metrics, and intervention count logged.
 
 ---
 
@@ -63,24 +63,21 @@ Every participant must complete all verification gates before being marked **Lau
 * **Operational Milestones:**
   * Account & Site Provisioned Date: 2026-08-24 20:33 UTC
   * Invitation Gate Satisfied Date: 2026-08-24 16:03 UTC (Pre-verified real Mailjet auth normalized)
-  * Backend API Prevalidation Date: 2026-08-24 20:33 UTC (All endpoints 100% PASS)
-  * Embed Snippet Generated Date: 2026-08-24 20:34 UTC
-  * Live Origin Verification Date: 2026-08-24 20:33 UTC
-* **Identity Reconciliation Findings:**
-  * D1 listing records for `ListAgentMlsId = '633942'` associate with `Ursula S Weinkauff` (Local Real Estate LLC).
-  * Operator explicitly authorized Ursula Weinkauff's verified agent scope `633942` for PILOT-01 with Kevin Weinkauff acting as the controlled pilot operator.
-  * Account, site key (`ursula-weinkauff-pilot`), branding, and entitlement normalized to Ursula Weinkauff.
+  * Embed Snippet Installed on Page: 2026-08-25 12:58 UTC
+  * Live On-Site Verification Date: 2026-08-25 13:00 UTC (100% PASS across all 12 launch gates)
+* **Live Validation Evidence:**
+  * Live Public URL: `https://coconutcoastrealtors.org/idx-test/` (HTTP 200 OK)
+  * Live Bootstrap & Session: PASS (`Origin: https://coconutcoastrealtors.org`)
+  * Scoped Listings: `32b7c013c8d1f5df2c05fb412ed9edba` ($27,500), `38ebadbb74aabba3938a3bea4d5007a4` ($1,150,000)
+  * Foreign Listing Denial: `00030a06cd40eb28062f68e614cd9d32` $\rightarrow$ HTTP 403 `ScopeMismatch`
+  * Live Frontend Lead ID: `lead_mt8ob2jq_km1b1` (Confirmed in D1 and Member Portal)
+  * Desktop / Mobile UX: PASS (Responsive container, touch-friendly UI)
 * **Observability & Timing:**
   * Staff Setup Time: ~9 minutes
-  * Member Implementation Time: In progress (Awaiting HTML embed paste in Beaver Builder)
+  * Member Implementation Time: ~2 minutes (HTML snippet paste in WordPress)
   * Staff Interventions Required: 2 (Identity reconciliation & selection)
   * Support Questions Logged: 0
-* **Scope Verification Evidence:**
-  * Backend Verified Listings (Scope 633942): `32b7c013c8d1f5df2c05fb412ed9edba` ($27,500, Lehigh Acres), `38ebadbb74aabba3938a3bea4d5007a4` ($1,150,000, Naples)
-  * Backend Verified Foreign Listing (HTTP 403 Confirmed): `00030a06cd40eb28062f68e614cd9d32` (Agent: `P3401594`)
-* **Issues / Observations:**
-  * Identity reconciled and aligned with D1 ground truth (`Ursula S Weinkauff`, MLS ID `633942`).
-  * Embed snippet generated and ready for operator installation on `https://coconutcoastrealtors.org/idx-test/`.
+* **Final Status:** **LAUNCHED**
 
 ---
 
