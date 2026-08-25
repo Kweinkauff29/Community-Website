@@ -73,7 +73,12 @@ export function transformListingRecord(r) {
         InternetEntireListingDisplayYN: (r.InternetEntireListingDisplayYN === true || r.InternetEntireListingDisplayYN === 1) ? 1 : 0,
         InternetAddressDisplayYN: (r.InternetAddressDisplayYN === true || r.InternetAddressDisplayYN === 1) ? 1 : 0,
         OriginatingSystemKey: r.OriginatingSystemKey ?? null,
-        OriginatingSystemName: r.OriginatingSystemName ?? null
+        OriginatingSystemName: r.OriginatingSystemName ?? null,
+        WaterfrontYN: (r.WaterfrontYN === true || r.WaterfrontYN === 1) ? 1 : 0,
+        PoolPrivateYN: (r.PoolPrivateYN === true || r.PoolPrivateYN === 1) ? 1 : 0,
+        GarageSpaces: r.GarageSpaces != null ? Number(r.GarageSpaces) : 0,
+        NewConstructionYN: (r.NewConstructionYN === true || r.NewConstructionYN === 1) ? 1 : 0,
+        Zoning: r.Zoning ?? null
     };
 }
 

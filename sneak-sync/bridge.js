@@ -56,7 +56,12 @@ export const SELECT_PARAM = [
     "InternetEntireListingDisplayYN",
     "InternetAddressDisplayYN",
     "OriginatingSystemKey",
-    "OriginatingSystemName"
+    "OriginatingSystemName",
+    "WaterfrontYN",
+    "PoolPrivateYN",
+    "GarageSpaces",
+    "NewConstructionYN",
+    "Zoning"
 ].join(",");
 
 export const DETERMINISTIC_ORDERBY = "ListingKey asc";

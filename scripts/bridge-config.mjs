@@ -16,7 +16,7 @@ export const FILTER_BSAOR_ANY_STATE = "OriginatingSystemKey eq 'bsaor' and (Stan
 // LOCKED FINAL SNEAK STAGING FILTER
 export const FINAL_SNEAK_LISTING_FILTER = "OriginatingSystemKey eq 'bsaor' and StateOrProvince eq 'FL' and (StandardStatus eq 'Active' or StandardStatus eq 'Active Under Contract' or StandardStatus eq 'Pending')";
 
-// 40 OData select fields (Coordinates used in place of scalar Latitude/Longitude)
+// 45 OData select fields (Coordinates used in place of scalar Latitude/Longitude)
 export const SELECT_FIELDS = [
     'ListingKey', 'ListingId', 'ListPrice', 'OriginalListPrice',
     'UnparsedAddress', 'StreetNumber', 'StreetName', 'UnitNumber',
@@ -29,7 +29,8 @@ export const SELECT_FIELDS = [
     'ListAgentKey', 'ListAgentMlsId', 'ListAgentFullName', 'ListAgentEmail', 'ListAgentDirectPhone',
     'ListOfficeKey', 'ListOfficeMlsId', 'ListOfficeName', 'ListOfficePhone',
     'InternetEntireListingDisplayYN', 'InternetAddressDisplayYN',
-    'OriginatingSystemKey', 'OriginatingSystemName'
+    'OriginatingSystemKey', 'OriginatingSystemName',
+    'WaterfrontYN', 'PoolPrivateYN', 'GarageSpaces', 'NewConstructionYN', 'Zoning'
 ];
 
 export const SELECT_PARAM = SELECT_FIELDS.join(',');

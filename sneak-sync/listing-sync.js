@@ -126,8 +126,9 @@ export async function runListingDelta(env) {
                 ListAgentKey, ListAgentFullName, ListAgentEmail, ListAgentDirectPhone, ListAgentMlsId,
                 ListOfficeKey, ListOfficeName, ListOfficePhone, ListOfficeMlsId,
                 InternetEntireListingDisplayYN, InternetAddressDisplayYN,
-                OriginatingSystemKey, OriginatingSystemName
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+                OriginatingSystemKey, OriginatingSystemName,
+                WaterfrontYN, PoolPrivateYN, GarageSpaces, NewConstructionYN, Zoning
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
         `;
 
         const deleteSql = `DELETE FROM sneak_listings WHERE ListingKey = ?;`;
@@ -166,7 +167,8 @@ export async function runListingDelta(env) {
                         row.ListAgentKey, row.ListAgentFullName, row.ListAgentEmail, row.ListAgentDirectPhone, row.ListAgentMlsId,
                         row.ListOfficeKey, row.ListOfficeName, row.ListOfficePhone, row.ListOfficeMlsId,
                         row.InternetEntireListingDisplayYN, row.InternetAddressDisplayYN,
-                        row.OriginatingSystemKey, row.OriginatingSystemName
+                        row.OriginatingSystemKey, row.OriginatingSystemName,
+                        row.WaterfrontYN, row.PoolPrivateYN, row.GarageSpaces, row.NewConstructionYN, row.Zoning
                     ));
                 } else {
                     recordsRemoved++;

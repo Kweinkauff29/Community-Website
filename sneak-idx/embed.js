@@ -130,9 +130,10 @@
             widgetPath = `${widgetRoot}?type=open-houses&`;
         }
 
-        // Construct iframe URL with signed session token
+        // Construct iframe URL with signed session token and deterministic build version
         const separator = widgetPath.includes('?') ? '&' : '?';
-        let iframeUrl = `${baseUrl}${widgetPath}${separator}site=${encodeURIComponent(siteKey)}&session=${encodeURIComponent(data.session)}&embed=true`;
+        const buildVersion = '2026.08.25.7.3a';
+        let iframeUrl = `${baseUrl}${widgetPath}${separator}site=${encodeURIComponent(siteKey)}&session=${encodeURIComponent(data.session)}&embed=true&v=${encodeURIComponent(buildVersion)}`;
         if (customParams) {
             iframeUrl += `&${customParams}`;
         }
@@ -149,7 +150,7 @@
         // Create responsive iframe
         const iframe = document.createElement('iframe');
         iframe.src = iframeUrl;
-        iframe.title = `SNEAK IDX Real Estate Search (${siteKey})`;
+        iframe.title = `CCOR IDX Real Estate Search (${siteKey})`;
         iframe.style.width = '100%';
         iframe.style.height = customHeight;
         iframe.style.minHeight = '500px';
@@ -163,7 +164,7 @@
         mountContainer(container);
     })
     .catch(function (err) {
-        console.warn('[SNEAK IDX] Bootstrap failed:', err);
+        console.warn('[CCOR IDX Plug-in] Bootstrap failed:', err);
         renderAuthError('Unable to load property search at this time.');
     });
 

@@ -764,10 +764,25 @@ function buildCommonListingFilters(params, site) {
     const city = (params.get('city') || '').substring(0, 200);
     const county = (params.get('county') || params.get('CountyOrParish') || '').substring(0, 200).trim();
     const postalCode = (params.get('postalCode') || params.get('zip') || params.get('PostalCode') || '').substring(0, 20).trim();
+    const subdivision = (params.get('subdivision') || params.get('SubdivisionName') || '').substring(0, 200).trim();
     const minPrice = parseFloat(params.get('minPrice')) || null;
     const maxPrice = parseFloat(params.get('maxPrice')) || null;
     const beds = parseInt(params.get('beds'), 10) || null;
     const baths = parseInt(params.get('baths'), 10) || null;
+    const minSqft = parseFloat(params.get('minSqft') || params.get('minLivingArea')) || null;
+    const maxSqft = parseFloat(params.get('maxSqft') || params.get('maxLivingArea')) || null;
+    const minAcres = parseFloat(params.get('minAcres') || params.get('minLotSizeAcres')) || null;
+    const maxAcres = parseFloat(params.get('maxAcres') || params.get('maxLotSizeAcres')) || null;
+    const minYear = parseInt(params.get('minYear') || params.get('minYearBuilt'), 10) || null;
+    const maxYear = parseInt(params.get('maxYear') || params.get('maxYearBuilt'), 10) || null;
+    const waterfront = params.get('waterfront');
+    const pool = params.get('pool');
+    const garage = parseInt(params.get('garage') || params.get('minGarage'), 10) || null;
+    const newConstruction = params.get('newConstruction');
+    const openHouseOnly = params.get('openHouse') === '1' || params.get('openHouseOnly') === 'true';
+    const priceReduced = params.get('priceReduced') === '1' || params.get('priceReduced') === 'true';
+    const newListingDays = parseInt(params.get('newListingDays'), 10) || null;
+    const zoning = (params.get('zoning') || '').trim();
     const propertyType = (params.get('propertyType') || 'sale').toLowerCase();
     const propertySubType = params.get('propertySubType');
     const status = params.get('status') || 'Active';
@@ -816,7 +831,7 @@ function buildCommonListingFilters(params, site) {
 
     // 4. Property Type Filtering
     if (propertyType === 'sale') {
-        whereClauses.push("(PropertyType = 'Residential' OR PropertyType = 'Residential Income')");
+        whereClauses.push("(PropertyType = 'Residential' OR PropertyType = 'Residential Income' OR PropertyType = 'Boat Dock')");
     } else if (propertyType === 'rental') {
         whereClauses.push("PropertyType = 'Residential Lease'");
     } else if (propertyType === 'commercial') {
@@ -872,7 +887,13 @@ function buildCommonListingFilters(params, site) {
         bindValues.push(postalCode);
     }
 
-    // 9. Price Range
+    // 9. Subdivision Filtering
+    if (subdivision) {
+        whereClauses.push("LOWER(SubdivisionName) LIKE ?");
+        bindValues.push(`%${subdivision.toLowerCase()}%`);
+    }
+
+    // 10. Price Range
     if (minPrice !== null && minPrice > 0) {
         whereClauses.push("ListPrice >= ?");
         bindValues.push(minPrice);
@@ -882,7 +903,7 @@ function buildCommonListingFilters(params, site) {
         bindValues.push(maxPrice);
     }
 
-    // 10. Bedrooms / Bathrooms (Only apply to residential search)
+    // 11. Bedrooms / Bathrooms (Only apply to residential search)
     if (propertyType === 'sale' || propertyType === 'rental' || propertyType === 'all') {
         if (beds !== null && beds > 0) {
             whereClauses.push("BedroomsTotal >= ?");
@@ -894,11 +915,70 @@ function buildCommonListingFilters(params, site) {
         }
     }
 
-    // 11. Text Search
+    // 12. Size: Living Area (Sqft) min/max
+    if (minSqft !== null && minSqft > 0) {
+        whereClauses.push("LivingArea >= ?");
+        bindValues.push(minSqft);
+    }
+    if (maxSqft !== null && maxSqft > 0) {
+        whereClauses.push("LivingArea <= ?");
+        bindValues.push(maxSqft);
+    }
+
+    // 13. Size: Lot Size (Acres) min/max
+    if (minAcres !== null && minAcres > 0) {
+        whereClauses.push("LotSizeAcres >= ?");
+        bindValues.push(minAcres);
+    }
+    if (maxAcres !== null && maxAcres > 0) {
+        whereClauses.push("LotSizeAcres <= ?");
+        bindValues.push(maxAcres);
+    }
+
+    // 14. Year Built min/max
+    if (minYear !== null && minYear > 0) {
+        whereClauses.push("YearBuilt >= ?");
+        bindValues.push(minYear);
+    }
+    if (maxYear !== null && maxYear > 0) {
+        whereClauses.push("YearBuilt <= ?");
+        bindValues.push(maxYear);
+    }
+
+    // 15. Wave-1 Amenities
+    if (waterfront === '1' || waterfront === 'true') {
+        whereClauses.push("WaterfrontYN = 1");
+    }
+    if (pool === '1' || pool === 'true') {
+        whereClauses.push("PoolPrivateYN = 1");
+    }
+    if (garage !== null && garage > 0) {
+        whereClauses.push("GarageSpaces >= ?");
+        bindValues.push(garage);
+    }
+    if (newConstruction === '1' || newConstruction === 'true') {
+        whereClauses.push("NewConstructionYN = 1");
+    }
+    if (priceReduced) {
+        whereClauses.push("(OriginalListPrice IS NOT NULL AND ListPrice < OriginalListPrice)");
+    }
+    if (newListingDays !== null && newListingDays > 0) {
+        whereClauses.push("ListingContractDate >= date('now', ?)");
+        bindValues.push(`-${newListingDays} days`);
+    }
+    if (openHouseOnly) {
+        whereClauses.push("ListingKey IN (SELECT DISTINCT ListingKey FROM sneak_open_houses WHERE OpenHouseStatus = 'Active' AND (OpenHouseDate IS NULL OR OpenHouseDate >= date('now')))");
+    }
+    if (zoning) {
+        whereClauses.push("LOWER(Zoning) = LOWER(?)");
+        bindValues.push(zoning);
+    }
+
+    // 16. Unified Text Search
     if (q) {
-        whereClauses.push("(ListingKey = ? OR ListingId = ? OR LOWER(UnparsedAddress) LIKE ? OR LOWER(City) LIKE ? OR LOWER(SubdivisionName) LIKE ? OR LOWER(ListAgentFullName) LIKE ? OR LOWER(ListAgentMlsId) = ?)");
+        whereClauses.push("(ListingKey = ? OR ListingId = ? OR PostalCode = ? OR LOWER(UnparsedAddress) LIKE ? OR LOWER(City) LIKE ? OR LOWER(SubdivisionName) LIKE ? OR LOWER(ListAgentFullName) LIKE ? OR LOWER(ListAgentMlsId) = ?)");
         const likeQ = `%${q.toLowerCase()}%`;
-        bindValues.push(q, q, likeQ, likeQ, likeQ, likeQ, q.toLowerCase());
+        bindValues.push(q, q, q, likeQ, likeQ, likeQ, likeQ, q.toLowerCase());
     }
 
     return {
@@ -999,6 +1079,12 @@ async function handleSearch(url, site, env, ctx, allowedOrigin) {
         orderSQL = "ORDER BY ListPrice DESC, ListingContractDate DESC";
     } else if (sort === 'priceAsc') {
         orderSQL = "ORDER BY ListPrice ASC, ListingContractDate DESC";
+    } else if (sort === 'sqftDesc') {
+        orderSQL = "ORDER BY LivingArea DESC NULLS LAST, ListPrice DESC";
+    } else if (sort === 'acresDesc') {
+        orderSQL = "ORDER BY LotSizeAcres DESC NULLS LAST, ListPrice DESC";
+    } else if (sort === 'yearDesc') {
+        orderSQL = "ORDER BY YearBuilt DESC NULLS LAST, ListPrice DESC";
     } else if (sort === 'dateAsc') {
         orderSQL = "ORDER BY ListingContractDate ASC";
     }
@@ -1015,6 +1101,7 @@ async function handleSearch(url, site, env, ctx, allowedOrigin) {
         PropertyType, PropertySubType, PrimaryPhoto, ListingContractDate,
         Latitude, Longitude, ModificationTimestamp, YearBuilt, LotSizeAcres,
         ListAgentFullName, ListOfficeName, ListOfficePhone, ListAgentMlsId, ListOfficeMlsId, SubdivisionName,
+        WaterfrontYN, PoolPrivateYN, GarageSpaces, NewConstructionYN, Zoning,
         InternetEntireListingDisplayYN, InternetAddressDisplayYN
     `;
     const searchSQL = `SELECT ${selectCols} FROM sneak_listings ${filter.whereSQL} ${orderSQL} LIMIT ? OFFSET ?`;

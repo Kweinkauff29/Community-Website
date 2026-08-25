@@ -527,4 +527,91 @@ describe('SNEAK IDX Phase 2.2 Test Suite', () => {
         const mData = await mRes.json();
         assert.ok(Array.isArray(mData.data));
     });
+
+    // PHASE 7.3A SEARCH PARITY TESTS
+    test('PHASE 7.3A: Commercial and Land property category queries execute successfully', async () => {
+        const env = {
+            SNEAK_ENV: 'staging',
+            SNEAK_SIGNING_SECRET: TEST_SIGNING_SECRET,
+            DB: createMockDB()
+        };
+
+        const bReq = new Request('https://sneak.staging/idx/v1/bootstrap?site=demo-ccor', {
+            method: 'GET',
+            headers: { Origin: 'https://preview.sneakidx.com' }
+        });
+        const bRes = await worker.fetch(bReq, env);
+        const { session } = await bRes.json();
+
+        // Commercial search
+        const commReq = new Request(`https://sneak.staging/idx/v1/search?site=demo-ccor&session=${session}&propertyType=commercial`, {
+            method: 'GET'
+        });
+        const commRes = await worker.fetch(commReq, env);
+        assert.equal(commRes.status, 200);
+
+        // Land search
+        const landReq = new Request(`https://sneak.staging/idx/v1/search?site=demo-ccor&session=${session}&propertyType=land`, {
+            method: 'GET'
+        });
+        const landRes = await worker.fetch(landReq, env);
+        assert.equal(landRes.status, 200);
+
+        // Rental search
+        const rentalReq = new Request(`https://sneak.staging/idx/v1/search?site=demo-ccor&session=${session}&propertyType=rental`, {
+            method: 'GET'
+        });
+        const rentalRes = await worker.fetch(rentalReq, env);
+        assert.equal(rentalRes.status, 200);
+    });
+
+    test('PHASE 7.3A: Advanced Wave-1 and More Filters parameters parse cleanly', async () => {
+        const env = {
+            SNEAK_ENV: 'staging',
+            SNEAK_SIGNING_SECRET: TEST_SIGNING_SECRET,
+            DB: createMockDB()
+        };
+
+        const bReq = new Request('https://sneak.staging/idx/v1/bootstrap?site=demo-ccor', {
+            method: 'GET',
+            headers: { Origin: 'https://preview.sneakidx.com' }
+        });
+        const bRes = await worker.fetch(bReq, env);
+        const { session } = await bRes.json();
+
+        const advUrl = `https://sneak.staging/idx/v1/search?site=demo-ccor&session=${session}` +
+            `&minSqft=2000&maxSqft=5000&minAcres=0.5&maxAcres=5&minYear=2015&maxYear=2025` +
+            `&waterfront=1&pool=1&garage=2&newConstruction=1&openHouse=1&priceReduced=1` +
+            `&subdivision=Pelican+Landing&county=Lee&postalCode=34134&sort=sqftDesc`;
+
+        const advReq = new Request(advUrl, { method: 'GET' });
+        const advRes = await worker.fetch(advReq, env);
+        assert.equal(advRes.status, 200);
+        const advData = await advRes.json();
+        assert.ok(advData.data);
+    });
+
+    test('PHASE 7.3A: Sort parameters (priceAsc, priceDesc, sqftDesc, acresDesc, yearDesc) are accepted', async () => {
+        const env = {
+            SNEAK_ENV: 'staging',
+            SNEAK_SIGNING_SECRET: TEST_SIGNING_SECRET,
+            DB: createMockDB()
+        };
+
+        const bReq = new Request('https://sneak.staging/idx/v1/bootstrap?site=demo-ccor', {
+            method: 'GET',
+            headers: { Origin: 'https://preview.sneakidx.com' }
+        });
+        const bRes = await worker.fetch(bReq, env);
+        const { session } = await bRes.json();
+
+        const sorts = ['dateDesc', 'priceAsc', 'priceDesc', 'sqftDesc', 'acresDesc', 'yearDesc'];
+        for (const s of sorts) {
+            const req = new Request(`https://sneak.staging/idx/v1/search?site=demo-ccor&session=${session}&sort=${s}`, {
+                method: 'GET'
+            });
+            const res = await worker.fetch(req, env);
+            assert.equal(res.status, 200, `Sort ${s} failed`);
+        }
+    });
 });
