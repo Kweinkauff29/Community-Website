@@ -143,40 +143,41 @@ export function renderMemberUI() {
         }
         .form-control:focus { border-color: var(--accent-primary); }
         .btn {
-            padding: 9px 16px;
-            font-size: 0.875rem;
-            font-weight: 600;
-            border-radius: var(--radius-md);
-            cursor: pointer;
-            border: 1px solid transparent;
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            transition: all 0.15s ease;
-        }
+        .nav-item.active { background: var(--accent-primary); color: #fff; font-weight: 600; }
+        
+        .main-content { flex: 1; padding: 40px; overflow-y: auto; max-width: 1100px; }
+        
+        /* Typography & Components */
+        h1 { font-size: 1.8rem; font-weight: 800; letter-spacing: -0.02em; margin-bottom: 8px; }
+        .page-desc { color: var(--text-secondary); font-size: 0.95rem; margin-bottom: 32px; }
+        .card { background: var(--bg-surface); border: 1px solid var(--border-subtle); border-radius: var(--radius-lg); padding: 24px; margin-bottom: 24px; }
+        .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .card-title { font-size: 1.15rem; font-weight: 700; }
+        
+        .btn { padding: 10px 18px; border-radius: var(--radius-md); font-weight: 600; font-size: 0.875rem; cursor: pointer; border: none; display: inline-flex; align-items: center; gap: 8px; font-family: var(--font-main); transition: all 0.15s ease; }
         .btn-primary { background: var(--accent-primary); color: #fff; }
         .btn-primary:hover { background: var(--accent-hover); }
-        .btn-secondary { background: var(--bg-surface-elevated); color: var(--text-primary); border-color: var(--border-strong); }
+        .btn-secondary { background: var(--bg-surface-elevated); color: var(--text-primary); border: 1px solid var(--border-strong); }
         .btn-secondary:hover { background: var(--bg-surface-highlight); }
-        .btn-danger { background: rgba(239, 68, 68, 0.1); color: var(--danger); border-color: rgba(239, 68, 68, 0.2); }
+        .btn-danger { background: rgba(239, 68, 68, 0.1); color: var(--danger); border: 1px solid rgba(239, 68, 68, 0.2); }
         .btn-danger:hover { background: var(--danger); color: #fff; }
-
-        /* Badges & Tables */
-        .badge {
-            display: inline-flex;
-            align-items: center;
-            padding: 3px 8px;
-            border-radius: var(--radius-full);
-            font-size: 0.75rem;
-            font-weight: 600;
-        }
-        .badge-success { background: rgba(16, 185, 129, 0.15); color: var(--success); }
-        .badge-warning { background: rgba(245, 158, 11, 0.15); color: var(--warning); }
-        .badge-danger { background: rgba(239, 68, 68, 0.15); color: var(--danger); }
+        
+        .form-group { margin-bottom: 16px; }
+        .form-label { display: block; font-size: 0.875rem; font-weight: 600; color: var(--text-secondary); margin-bottom: 6px; }
+        .form-control { width: 100%; padding: 10px 14px; background: var(--bg-base); border: 1px solid var(--border-strong); border-radius: var(--radius-md); color: var(--text-primary); font-family: var(--font-main); font-size: 0.9rem; }
+        .form-control:focus { outline: none; border-color: var(--accent-primary); box-shadow: 0 0 0 3px var(--accent-glow); }
+        
+        .badge { display: inline-flex; align-items: center; padding: 4px 10px; border-radius: 9999px; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; }
+        .badge-success { background: rgba(16, 185, 129, 0.1); color: var(--success); border: 1px solid rgba(16, 185, 129, 0.2); }
+        .badge-warning { background: rgba(245, 158, 11, 0.1); color: var(--warning); border: 1px solid rgba(245, 158, 11, 0.2); }
+        .badge-danger { background: rgba(239, 68, 68, 0.1); color: var(--danger); border: 1px solid rgba(239, 68, 68, 0.2); }
+        
+        .brand-badge { background: rgba(59, 130, 246, 0.1); color: var(--accent-primary); border: 1px solid rgba(59, 130, 246, 0.2); padding: 4px 8px; border-radius: 6px; font-weight: 700; font-size: 0.75rem; }
+        
         .table { width: 100%; border-collapse: collapse; text-align: left; }
-        .table th { padding: 12px; color: var(--text-muted); font-size: 0.8rem; font-weight: 600; text-transform: uppercase; border-bottom: 1px solid var(--border-subtle); }
-        .table td { padding: 12px; border-bottom: 1px solid var(--border-subtle); font-size: 0.9rem; }
-
+        .table th { padding: 12px 16px; border-bottom: 1px solid var(--border-subtle); color: var(--text-muted); font-size: 0.8rem; text-transform: uppercase; font-weight: 600; }
+        .table td { padding: 16px; border-bottom: 1px solid var(--border-subtle); font-size: 0.9rem; }
+        
         /* Auth Screen */
         .auth-container { max-width: 400px; margin: 100px auto; padding: 32px; background: var(--bg-surface); border: 1px solid var(--border-subtle); border-radius: var(--radius-lg); text-align: center; }
         .code-box { background: var(--bg-base); padding: 14px; border-radius: var(--radius-md); border: 1px solid var(--border-strong); overflow-x: auto; color: #60a5fa; font-size: 0.8rem; margin: 12px 0; }
@@ -185,7 +186,7 @@ export function renderMemberUI() {
 <body>
     <div id="authScreen" class="auth-container" style="display: none;">
         <div style="margin-bottom: 24px;">
-            <span class="brand-badge">SNEAK IDX</span>
+            <span class="brand-badge">CCOR IDX Plug-in</span>
             <h2 style="margin-top: 12px;">Member Sign In</h2>
             <p style="color: var(--text-muted); font-size: 0.875rem; margin-top: 6px;">Sign in securely with a single-use magic link</p>
         </div>
@@ -202,7 +203,7 @@ export function renderMemberUI() {
     <div id="appContainer" class="app-container" style="display: none;">
         <aside class="sidebar">
             <div class="sidebar-header">
-                <span class="brand-badge">SNEAK IDX</span>
+                <span class="brand-badge">CCOR IDX Plug-in</span>
                 <span style="font-weight: 700; font-size: 0.95rem;">Member Portal</span>
             </div>
             <nav class="sidebar-nav">
@@ -544,7 +545,7 @@ export function renderMemberUI() {
                 <p style="margin-bottom: 8px;"><strong>Service Status:</strong> <span class="badge \${status === 'ACTIVE' ? 'badge-success' : 'badge-warning'}">\${status}</span></p>
                 <p style="margin-bottom: 16px;"><strong>Billing Schedule:</strong> Recurring on the 1st of each month.</p>
                 <p style="color: var(--text-muted); font-size: 0.875rem; line-height: 1.5;">
-                    Your SNEAK IDX subscription is administered directly by Coconut Coast Organization of REALTORS® through GrowthZone. To view past statements or update your payment method, click below to open GrowthZone.
+                    Your CCOR IDX Plug-in subscription is administered directly by Coconut Coast Organization of REALTORS® through GrowthZone. To view past statements or update your payment method, click below to open GrowthZone.
                 </p>
             \`;
         }

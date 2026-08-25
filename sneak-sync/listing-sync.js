@@ -121,13 +121,13 @@ export async function runListingDelta(env) {
                 City, StateOrProvince, PostalCode, CountyOrParish,
                 BedroomsTotal, BathroomsTotalInteger, BathroomsFull, BathroomsHalf,
                 LivingArea, StandardStatus, PropertyType, PropertySubType,
-                PrimaryPhoto, ListingContractDate, ModificationTimestamp, StatusChangeTimestamp,
+                PrimaryPhoto, MediaJSON, ListingContractDate, ModificationTimestamp, StatusChangeTimestamp,
                 Latitude, Longitude, YearBuilt, LotSizeAcres, SubdivisionName, PublicRemarks,
                 ListAgentKey, ListAgentFullName, ListAgentEmail, ListAgentDirectPhone, ListAgentMlsId,
                 ListOfficeKey, ListOfficeName, ListOfficePhone, ListOfficeMlsId,
                 InternetEntireListingDisplayYN, InternetAddressDisplayYN,
                 OriginatingSystemKey, OriginatingSystemName
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
         `;
 
         const deleteSql = `DELETE FROM sneak_listings WHERE ListingKey = ?;`;
@@ -161,7 +161,7 @@ export async function runListingDelta(env) {
                         row.City, row.StateOrProvince, row.PostalCode, row.CountyOrParish,
                         row.BedroomsTotal, row.BathroomsTotalInteger, row.BathroomsFull, row.BathroomsHalf,
                         row.LivingArea, row.StandardStatus, row.PropertyType, row.PropertySubType,
-                        row.PrimaryPhoto, row.ListingContractDate, row.ModificationTimestamp, row.StatusChangeTimestamp,
+                        row.PrimaryPhoto, row.MediaJSON, row.ListingContractDate, row.ModificationTimestamp, row.StatusChangeTimestamp,
                         row.Latitude, row.Longitude, row.YearBuilt, row.LotSizeAcres, row.SubdivisionName, row.PublicRemarks,
                         row.ListAgentKey, row.ListAgentFullName, row.ListAgentEmail, row.ListAgentDirectPhone, row.ListAgentMlsId,
                         row.ListOfficeKey, row.ListOfficeName, row.ListOfficePhone, row.ListOfficeMlsId,

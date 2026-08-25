@@ -11,8 +11,17 @@ export function extractPrimaryPhoto(media) {
     return first ? first.MediaURL : null;
 }
 
+export function extractOrderedMediaUrls(media) {
+    if (!Array.isArray(media) || media.length === 0) return null;
+    const sorted = [...media].sort((a, b) => (a.Order ?? 999) - (b.Order ?? 999));
+    const urls = sorted.map(m => m && m.MediaURL).filter(Boolean);
+    const uniqueUrls = Array.from(new Set(urls));
+    return uniqueUrls.length > 0 ? JSON.stringify(uniqueUrls) : null;
+}
+
 export function transformListingRecord(r) {
     const primaryPhoto = extractPrimaryPhoto(r.Media);
+    const mediaJson = extractOrderedMediaUrls(r.Media);
     let lat = r.Latitude ?? null;
     let lon = r.Longitude ?? null;
     if (lat == null && lon == null && Array.isArray(r.Coordinates) && r.Coordinates.length >= 2) {
@@ -42,6 +51,7 @@ export function transformListingRecord(r) {
         PropertyType: r.PropertyType ?? null,
         PropertySubType: r.PropertySubType ?? null,
         PrimaryPhoto: primaryPhoto,
+        MediaJSON: mediaJson,
         ListingContractDate: r.ListingContractDate ?? null,
         ModificationTimestamp: r.ModificationTimestamp ?? null,
         StatusChangeTimestamp: r.StatusChangeTimestamp ?? null,
@@ -60,8 +70,8 @@ export function transformListingRecord(r) {
         ListOfficeName: r.ListOfficeName ?? null,
         ListOfficePhone: r.ListOfficePhone ?? null,
         ListOfficeMlsId: r.ListOfficeMlsId ?? null,
-        InternetEntireListingDisplayYN: r.InternetEntireListingDisplayYN === false ? 0 : 1,
-        InternetAddressDisplayYN: r.InternetAddressDisplayYN === false ? 0 : 1,
+        InternetEntireListingDisplayYN: (r.InternetEntireListingDisplayYN === true || r.InternetEntireListingDisplayYN === 1) ? 1 : 0,
+        InternetAddressDisplayYN: (r.InternetAddressDisplayYN === true || r.InternetAddressDisplayYN === 1) ? 1 : 0,
         OriginatingSystemKey: r.OriginatingSystemKey ?? null,
         OriginatingSystemName: r.OriginatingSystemName ?? null
     };

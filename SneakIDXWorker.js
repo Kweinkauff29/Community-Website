@@ -726,10 +726,11 @@ function buildTenantListingScope(site, tableAlias = '') {
 
 /**
  * Validates whether a listing is eligible for IDX / Internet display.
+ * Strictly fail-closed: requires InternetEntireListingDisplayYN = 1.
  */
 function isListingIdxEligible(listing) {
     if (!listing) return false;
-    if (listing.InternetEntireListingDisplayYN === 0 || listing.InternetEntireListingDisplayYN === false) {
+    if (listing.InternetEntireListingDisplayYN !== 1) {
         return false;
     }
     const eligibleStatuses = ['Active', 'Active Under Contract', 'Pending'];
@@ -740,12 +741,13 @@ function isListingIdxEligible(listing) {
 }
 
 /**
- * Suppresses address fields if InternetAddressDisplayYN is false or 0.
+ * Suppresses address fields if InternetAddressDisplayYN is not 1.
+ * Strictly fail-closed: suppresses address on false or null/unknown.
  */
 function applyListingDisplayControls(item) {
     if (!item) return item;
     const transformed = { ...item };
-    if (transformed.InternetAddressDisplayYN === 0 || transformed.InternetAddressDisplayYN === false) {
+    if (transformed.InternetAddressDisplayYN !== 1) {
         transformed.UnparsedAddress = "Address Undisclosed";
         transformed.StreetNumber = "";
         transformed.StreetName = "";
@@ -782,8 +784,8 @@ function buildCommonListingFilters(params, site) {
     whereClauses.push(scope.clause);
     bindValues.push(...scope.binds);
 
-    // 2. Internet Entire Listing Display Compliance
-    whereClauses.push("COALESCE(InternetEntireListingDisplayYN, 1) = 1");
+    // 2. Internet Entire Listing Display Compliance (Fail Closed)
+    whereClauses.push("InternetEntireListingDisplayYN = 1");
 
     // Optional agent or office filter narrowing for market-scoped sites
     if (site.scope_type === 'market') {
@@ -826,8 +828,8 @@ function buildCommonListingFilters(params, site) {
         bindValues.push(propertyType);
     }
 
-    // 5. SubType Filtering with Shared Expansion Logic
-    if (propertySubType) {
+    // 5. SubType Filtering (Only apply residential expansion if propertyType is sale or rental)
+    if (propertySubType && (propertyType === 'sale' || propertyType === 'rental' || propertyType === 'all')) {
         const subTypes = propertySubType.split(',').map(s => s.trim()).filter(Boolean);
         if (subTypes.length > 0) {
             const expanded = [];
@@ -880,14 +882,16 @@ function buildCommonListingFilters(params, site) {
         bindValues.push(maxPrice);
     }
 
-    // 10. Bedrooms / Bathrooms
-    if (beds !== null && beds > 0) {
-        whereClauses.push("BedroomsTotal >= ?");
-        bindValues.push(beds);
-    }
-    if (baths !== null && baths > 0) {
-        whereClauses.push("BathroomsTotalInteger >= ?");
-        bindValues.push(baths);
+    // 10. Bedrooms / Bathrooms (Only apply to residential search)
+    if (propertyType === 'sale' || propertyType === 'rental' || propertyType === 'all') {
+        if (beds !== null && beds > 0) {
+            whereClauses.push("BedroomsTotal >= ?");
+            bindValues.push(beds);
+        }
+        if (baths !== null && baths > 0) {
+            whereClauses.push("BathroomsTotalInteger >= ?");
+            bindValues.push(baths);
+        }
     }
 
     // 11. Text Search
@@ -1142,60 +1146,24 @@ async function handleListingDetail(listingKey, site, req, env, ctx, allowedOrigi
 
     let fullDetails = applyListingDisplayControls({ ...d1Listing });
 
-    // Fetch extended details from Bridge API if token is bound
-    if (env.BRIDGE_TOKEN) {
-        const cache = caches.default;
-        const cacheUrl = new URL(req.url);
-        cacheUrl.searchParams.delete('site');
-        cacheUrl.searchParams.delete('session');
-        const cacheKey = new Request(cacheUrl.toString(), { method: 'GET' });
-        
-        let cached = await cache.match(cacheKey);
-        if (cached) {
-            try {
-                const cachedData = await cached.json();
-                fullDetails = applyListingDisplayControls({ ...fullDetails, ...cachedData });
-            } catch {}
-        } else {
-            try {
-                const sel = 'ListingKey,ListingId,UnparsedAddress,City,PostalCode,CountyOrParish,ListPrice,PropertyType,PropertySubType,BedroomsTotal,BathroomsTotalInteger,LivingArea,LotSizeAcres,YearBuilt,StandardStatus,SubdivisionName,ListAgentFullName,ListAgentEmail,ListAgentDirectPhone,ListAgentKey,ListOfficeName,ListOfficePhone,ListOfficeMlsId,PublicRemarks,Coordinates,Media,ModificationTimestamp,InternetEntireListingDisplayYN,InternetAddressDisplayYN';
-                const safeKey = escapeODataString(d1Listing.ListingKey);
-                const bridgeUrl = `https://api.bridgedataoutput.com/api/v2/OData/bsaor/Property?$filter=ListingKey eq '${encodeURIComponent(safeKey)}'&$select=${sel}&access_token=${env.BRIDGE_TOKEN}`;
-                const bridgeRes = await fetch(bridgeUrl, { headers: { Accept: 'application/json' } });
-                
-                if (bridgeRes.ok) {
-                    const bridgeJson = await bridgeRes.json();
-                    const p = bridgeJson.value && bridgeJson.value[0];
-                    if (p) {
-                        if (!isListingIdxEligible(p)) {
-                            return jsonResponse({ error: 'ListingNotFound', message: 'Property is not accessible for online display.' }, 404, allowedOrigin);
-                        }
-                        fullDetails = applyListingDisplayControls({ ...fullDetails, ...p });
-                        const cacheHeaders = new Headers({
-                            'Content-Type': 'application/json',
-                            'Cache-Control': 'public, s-maxage=600'
-                        });
-                        const responseToCache = new Response(JSON.stringify(fullDetails), { headers: cacheHeaders });
-                        if (ctx && ctx.waitUntil) {
-                            ctx.waitUntil(cache.put(cacheKey, responseToCache));
-                        }
-                    }
-                }
-            } catch (err) {
-                console.warn('Bridge detail fetch fallback failed:', err);
-            }
-        }
-    }
-
     if (fullDetails.Longitude && fullDetails.Latitude && !fullDetails.Coordinates) {
         fullDetails.Coordinates = [fullDetails.Longitude, fullDetails.Latitude];
     }
 
-    if (fullDetails.Media && Array.isArray(fullDetails.Media)) {
-        fullDetails.Media = fullDetails.Media.sort((a, b) => (a.Order || 0) - (b.Order || 0));
-    } else if (fullDetails.PrimaryPhoto) {
-        fullDetails.Media = [{ MediaURL: fullDetails.PrimaryPhoto, Order: 0 }];
+    // Parse synchronized full media gallery from D1 MediaJSON
+    let mediaArray = [];
+    if (fullDetails.MediaJSON) {
+        try {
+            const parsed = JSON.parse(fullDetails.MediaJSON);
+            if (Array.isArray(parsed) && parsed.length > 0) {
+                mediaArray = parsed.map((url, idx) => ({ MediaURL: url, Order: idx }));
+            }
+        } catch {}
     }
+    if (mediaArray.length === 0 && fullDetails.PrimaryPhoto) {
+        mediaArray = [{ MediaURL: fullDetails.PrimaryPhoto, Order: 0 }];
+    }
+    fullDetails.Media = mediaArray;
 
     if (ctx && ctx.waitUntil) {
         ctx.waitUntil(recordUsage(site.site_id, 'listing_views', env));
@@ -1214,64 +1182,32 @@ async function handleListingMedia(listingKey, site, req, env, ctx, allowedOrigin
     }
 
     const row = await env.DB.prepare(
-        `SELECT ListingKey, PrimaryPhoto FROM sneak_listings WHERE (ListingKey = ? OR ListingId = ?) AND ${scope.clause}`
+        `SELECT ListingKey, PrimaryPhoto, MediaJSON, InternetEntireListingDisplayYN, StandardStatus FROM sneak_listings WHERE (ListingKey = ? OR ListingId = ?) AND ${scope.clause}`
     ).bind(listingKey, listingKey, ...scope.binds).first();
 
-    if (!row) {
+    if (!row || !isListingIdxEligible(row)) {
         return jsonResponse({ error: 'ListingNotFound', message: 'Property media not accessible.' }, 404, allowedOrigin);
     }
 
-    const realKey = row.ListingKey;
-    const cache = caches.default;
-    const cacheUrl = new URL(req.url);
-    cacheUrl.searchParams.delete('site');
-    cacheUrl.searchParams.delete('session');
-    const cacheKey = new Request(cacheUrl.toString(), { method: 'GET' });
-
-    const cached = await cache.match(cacheKey);
-    if (cached) {
-        const h = new Headers(cached.headers);
-        h.set('Access-Control-Allow-Origin', allowedOrigin);
-        h.set('Vary', 'Origin');
-        return new Response(await cached.text(), { status: cached.status, headers: h });
-    }
-
     let mediaUrls = [];
-
-    if (env.BRIDGE_TOKEN) {
+    if (row.MediaJSON) {
         try {
-            const safeKey = escapeODataString(realKey);
-            const bridgeUrl = `https://api.bridgedataoutput.com/api/v2/OData/bsaor/Property?$filter=ListingKey eq '${encodeURIComponent(safeKey)}'&$select=ListingKey,Media&access_token=${env.BRIDGE_TOKEN}`;
-            const res = await fetch(bridgeUrl, { headers: { Accept: 'application/json' } });
-            if (res.ok) {
-                const data = await res.json();
-                const p = data.value && data.value[0];
-                if (p && p.Media && Array.isArray(p.Media)) {
-                    mediaUrls = p.Media
-                        .sort((a, b) => (a.Order || 0) - (b.Order || 0))
-                        .map(m => m.MediaURL || m.MediaUrl || m.MediaURLLarge)
-                        .filter(Boolean);
-                }
+            const parsed = JSON.parse(row.MediaJSON);
+            if (Array.isArray(parsed)) {
+                mediaUrls = parsed.filter(Boolean);
             }
-        } catch (err) {
-            console.warn('Error fetching media upstream:', err);
-        }
+        } catch {}
     }
-
-    if (!mediaUrls.length && row.PrimaryPhoto) {
+    if (mediaUrls.length === 0 && row.PrimaryPhoto) {
         mediaUrls = [row.PrimaryPhoto];
     }
 
     const payload = {
-        listingKey: realKey,
+        listingKey: row.ListingKey,
         media: mediaUrls
     };
 
-    const outResponse = jsonResponse(payload, 200, allowedOrigin, 'public, max-age=600, s-maxage=3600');
-    if (ctx && ctx.waitUntil && mediaUrls.length > 0) {
-        ctx.waitUntil(cache.put(cacheKey, outResponse.clone()));
-    }
-    return outResponse;
+    return jsonResponse(payload, 200, allowedOrigin, 'public, max-age=300, s-maxage=600');
 }
 
 /**

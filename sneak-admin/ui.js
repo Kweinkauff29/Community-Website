@@ -10,7 +10,7 @@ export function renderAdminHtml() {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SNEAK IDX — Administration Portal</title>
+    <title>CCOR IDX Plug-in — Administration Portal</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -268,7 +268,7 @@ export function renderAdminHtml() {
 <body>
     <header>
         <div class="brand-logo">
-            <span>⚡ SNEAK IDX</span>
+            <span>⚡ CCOR IDX Plug-in</span>
             <span class="badge-env">Admin Portal (Staging)</span>
         </div>
         <nav class="nav-links" id="mainNav" style="display: none;">
@@ -319,7 +319,7 @@ export function renderAdminHtml() {
             document.getElementById('app').innerHTML = \`
                 <div class="auth-container">
                     <h2 style="margin-bottom: 0.5rem; font-size: 1.25rem;">Admin Authentication</h2>
-                    <p style="color: var(--text-muted); font-size: 0.875rem; margin-bottom: 1.5rem;">Enter password to access SNEAK IDX administration.</p>
+                    <p style="color: var(--text-muted); font-size: 0.875rem; margin-bottom: 1.5rem;">Enter password to access CCOR IDX Plug-in administration.</p>
                     <form onsubmit="handleLogin(event)">
                         <div class="form-group">
                             <label>Password</label>

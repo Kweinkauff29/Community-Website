@@ -97,6 +97,12 @@ function recordToUpsertSql(r) {
         lat = r.Coordinates[1];
     }
 
+    const media = r.Media || [];
+    const sorted = [...media].sort((a, b) => (a.Order ?? 999) - (b.Order ?? 999));
+    const urls = sorted.map(m => m && m.MediaURL).filter(Boolean);
+    const uniqueUrls = Array.from(new Set(urls));
+    const mediaJson = uniqueUrls.length > 0 ? JSON.stringify(uniqueUrls) : null;
+
     const values = [
         escapeSql(r.ListingKey),
         escapeSql(r.ListingId ?? r.ListingKey),
@@ -119,6 +125,7 @@ function recordToUpsertSql(r) {
         escapeSql(r.PropertyType ?? null),
         escapeSql(r.PropertySubType ?? null),
         escapeSql(primaryPhoto),
+        escapeSql(mediaJson),
         escapeSql(r.ListingContractDate ?? null),
         escapeSql(r.ModificationTimestamp ?? null),
         escapeSql(r.StatusChangeTimestamp ?? null),
@@ -137,8 +144,8 @@ function recordToUpsertSql(r) {
         escapeSql(r.ListOfficeName ?? null),
         escapeSql(r.ListOfficePhone ?? null),
         escapeSql(r.ListOfficeMlsId ?? null),
-        r.InternetEntireListingDisplayYN === false ? 0 : 1,
-        r.InternetAddressDisplayYN === false ? 0 : 1,
+        (r.InternetEntireListingDisplayYN === true || r.InternetEntireListingDisplayYN === 1) ? 1 : 0,
+        (r.InternetAddressDisplayYN === true || r.InternetAddressDisplayYN === 1) ? 1 : 0,
         escapeSql(r.OriginatingSystemKey ?? 'bsaor'),
         escapeSql(r.OriginatingSystemName ?? 'Bonita Springs')
     ];
@@ -149,7 +156,7 @@ function recordToUpsertSql(r) {
         City, StateOrProvince, PostalCode, CountyOrParish,
         BedroomsTotal, BathroomsTotalInteger, BathroomsFull, BathroomsHalf,
         LivingArea, StandardStatus, PropertyType, PropertySubType,
-        PrimaryPhoto, ListingContractDate, ModificationTimestamp, StatusChangeTimestamp,
+        PrimaryPhoto, MediaJSON, ListingContractDate, ModificationTimestamp, StatusChangeTimestamp,
         Latitude, Longitude, YearBuilt, LotSizeAcres, SubdivisionName, PublicRemarks,
         ListAgentKey, ListAgentFullName, ListAgentEmail, ListAgentDirectPhone, ListAgentMlsId,
         ListOfficeKey, ListOfficeName, ListOfficePhone, ListOfficeMlsId,

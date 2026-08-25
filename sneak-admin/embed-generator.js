@@ -8,45 +8,50 @@ const STAGING_SERVING_URL = "https://sneak-idx-worker-staging.bonitaspringsrealt
 
 export function generateEmbedSnippets(siteKey, allowedDomains = [], branding = {}) {
     const primaryColor = branding.primary_color || '#1a365d';
+    const scriptUrl = `${STAGING_SERVING_URL}/embed.js`;
 
-    const snippets = {
-        search: {
-            name: "Full Search & Interactive Map",
-            description: "Complete searchable MLS map and listings explorer.",
-            operational: true,
-            htmlSnippet: `<!-- SNEAK IDX Full Search Widget -->
+    const snippets = [
+        {
+            widgetType: "search",
+            name: "Full Search & Map",
+            description: "Interactive MLS search with grid, filters, and dynamic map markers.",
+            htmlSnippet: `<!-- CCOR IDX Full Search Widget -->
 <div id="sneak-idx-search" data-site="${siteKey}" data-widget="search" style="width: 100%; min-height: 800px;"></div>
-<script src="${STAGING_SERVING_URL}/embed.js" data-site="${siteKey}" data-widget="search" async defer></script>`,
-            previewUrl: `${STAGING_SERVING_URL}/search/?site=${siteKey}`
+<script src="${scriptUrl}" async defer></script>`,
+            recommendedWidth: "100%",
+            responsive: true
         },
-        search_bar: {
+        {
+            widgetType: "search_bar",
             name: "Quick Search Bar",
-            description: "Compact search bar for homepages redirecting to the full search experience.",
-            operational: true,
-            htmlSnippet: `<!-- SNEAK IDX Quick Search Bar -->
+            description: "Compact single-line MLS property search bar suitable for hero headers.",
+            htmlSnippet: `<!-- CCOR IDX Quick Search Bar -->
 <div id="sneak-idx-search-bar" data-site="${siteKey}" data-widget="search_bar" style="width: 100%;"></div>
-<script src="${STAGING_SERVING_URL}/embed.js" data-site="${siteKey}" data-widget="search_bar" async defer></script>`,
-            previewUrl: `${STAGING_SERVING_URL}/search/?site=${siteKey}&view=compact`
+<script src="${scriptUrl}" async defer></script>`,
+            recommendedWidth: "100%",
+            responsive: true
         },
-        listing_grid: {
-            name: "Featured Listings Grid",
-            description: "Responsive showcase grid of in-scope active inventory.",
-            operational: true,
-            htmlSnippet: `<!-- SNEAK IDX Listing Grid -->
+        {
+            widgetType: "listing_grid",
+            name: "Listing Grid",
+            description: "Responsive grid showcasing active and pending properties.",
+            htmlSnippet: `<!-- CCOR IDX Listing Grid -->
 <div id="sneak-idx-grid" data-site="${siteKey}" data-widget="listing_grid" style="width: 100%; min-height: 600px;"></div>
-<script src="${STAGING_SERVING_URL}/embed.js" data-site="${siteKey}" data-widget="listing_grid" async defer></script>`,
-            previewUrl: `${STAGING_SERVING_URL}/search/?site=${siteKey}&layout=grid`
+<script src="${scriptUrl}" async defer></script>`,
+            recommendedWidth: "100%",
+            responsive: true
         },
-        open_houses: {
-            name: "Upcoming Open Houses",
-            description: "Live schedule of upcoming open houses for in-scope properties.",
-            operational: true,
-            htmlSnippet: `<!-- SNEAK IDX Open Houses Widget -->
+        {
+            widgetType: "open_houses",
+            name: "Open Houses Showcase",
+            description: "Scheduled upcoming open house events with calendar tags.",
+            htmlSnippet: `<!-- CCOR IDX Open Houses Widget -->
 <div id="sneak-idx-open-houses" data-site="${siteKey}" data-widget="open_houses" style="width: 100%; min-height: 500px;"></div>
-<script src="${STAGING_SERVING_URL}/embed.js" data-site="${siteKey}" data-widget="open_houses" async defer></script>`,
-            previewUrl: `${STAGING_SERVING_URL}/search/?site=${siteKey}&openhouses=1`
+<script src="${scriptUrl}" async defer></script>`,
+            recommendedWidth: "100%",
+            responsive: true
         }
-    };
+    ];
 
     return {
         siteKey,

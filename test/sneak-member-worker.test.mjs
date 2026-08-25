@@ -271,7 +271,7 @@ describe('SNEAK Member Worker & GrowthZone Alignment Suite (Phase 5.1)', () => {
 
     test('TEST 2: Transactional email templates render properly without leaking tokens', () => {
         const magicHtml = renderMagicLinkTemplate({ verifyUrl: 'https://preview.sneakidx.com/verify?token=abc', expiresMinutes: 15 });
-        assert.ok(magicHtml.includes('Sign In to SNEAK Portal'));
+        assert.ok(magicHtml.includes('Sign In to CCOR IDX Plug-in Portal'));
         assert.ok(magicHtml.includes('15 minutes'));
         assert.ok(magicHtml.includes('Coconut Coast Organization of REALTORS®'));
         assert.ok(!magicHtml.includes('Bonita Springs-Estero'));

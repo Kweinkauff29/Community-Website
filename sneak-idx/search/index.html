@@ -4,7 +4,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title id="pageTitle">Property Search | Powered by SNEAK IDX</title>
+  <title id="pageTitle">Property Search | CCOR IDX Plug-in</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -1399,7 +1399,7 @@
       color: #1e293b;
     }
 
-    .sneak-powered-by {
+    .ccor-powered-by {
       margin-top: 20px;
       display: flex;
       align-items: center;
@@ -1409,10 +1409,78 @@
       color: #94a3b8;
     }
 
-    .sneak-powered-by a {
-      color: var(--accent);
-      text-decoration: none;
+    .ccor-powered-by strong {
+      color: var(--primary);
       font-weight: 700;
+    }
+
+    /* Dual Range Price Slider */
+    .dual-range-container {
+      position: relative;
+      width: 100%;
+      height: 36px;
+      display: flex;
+      align-items: center;
+      margin: 10px 0 6px;
+    }
+
+    .range-track {
+      position: absolute;
+      width: 100%;
+      height: 6px;
+      background: #e2e8f0;
+      border-radius: 3px;
+    }
+
+    .range-highlight {
+      position: absolute;
+      height: 6px;
+      background: var(--primary);
+      border-radius: 3px;
+      left: 0%;
+      right: 0%;
+    }
+
+    .range-input {
+      position: absolute;
+      width: 100%;
+      pointer-events: none;
+      -webkit-appearance: none;
+      appearance: none;
+      background: transparent;
+      margin: 0;
+      outline: none;
+      height: 6px;
+    }
+
+    .range-input::-webkit-slider-thumb {
+      pointer-events: auto;
+      -webkit-appearance: none;
+      appearance: none;
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background: var(--primary);
+      border: 2px solid #fff;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+      cursor: pointer;
+      transition: transform 0.1s ease;
+    }
+
+    .range-input::-moz-range-thumb {
+      pointer-events: auto;
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background: var(--primary);
+      border: 2px solid #fff;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+      cursor: pointer;
+      transition: transform 0.1s ease;
+    }
+
+    .range-input::-webkit-slider-thumb:hover {
+      transform: scale(1.15);
     }
 
     /* Responsive adjustments */
@@ -1476,19 +1544,22 @@
         <div class="filter-divider"></div>
         <button class="filter-arrow" id="filterLeft"><i class="fas fa-chevron-left"></i></button>
         <div class="filters-bar" id="filtersBar">
-          <div class="filter-dropdown-wrap">
+          <div class="filter-dropdown-wrap" id="priceWrap">
             <button class="filter-dropdown-btn" id="priceBtn">Price</button>
-            <div class="filter-dropdown-panel" id="pricePanel">
+            <div class="filter-dropdown-panel" id="pricePanel" style="width:280px">
               <label>Price Range</label>
-              <div class="filter-btn-group">
-                <input type="number" id="priceMin" placeholder="No Min">
-                <input type="number" id="priceMax" placeholder="No Max">
+              <div id="priceRangeLabel" style="font-weight:700;color:var(--primary);margin-bottom:8px;text-align:center;font-size:0.9rem;">No Min — No Max</div>
+              <div class="dual-range-container">
+                <div class="range-track"></div>
+                <div class="range-highlight" id="priceRangeHighlight"></div>
+                <input type="range" class="range-input" id="priceRangeMin" min="0" max="30" value="0" step="1" aria-label="Minimum Price">
+                <input type="range" class="range-input" id="priceRangeMax" min="0" max="30" value="30" step="1" aria-label="Maximum Price">
               </div>
               <button class="apply-btn" id="priceApplyBtn">Apply</button>
             </div>
           </div>
 
-          <div class="filter-dropdown-wrap">
+          <div class="filter-dropdown-wrap" id="subTypeWrap">
             <button class="filter-dropdown-btn" id="subTypeBtn">Home Type</button>
             <div class="filter-dropdown-panel" id="subTypePanel" style="width:220px">
               <label><input type="checkbox" value="Single Family Residence" checked> Single Family</label>
@@ -1500,7 +1571,7 @@
             </div>
           </div>
 
-          <div class="filter-dropdown-wrap">
+          <div class="filter-dropdown-wrap" id="bedsWrap">
             <button class="filter-dropdown-btn" id="bedsBtn">Beds</button>
             <div class="filter-dropdown-panel" id="bedsPanel" style="width:280px">
               <label>Bedrooms</label>
@@ -1516,7 +1587,7 @@
             </div>
           </div>
 
-          <div class="filter-dropdown-wrap">
+          <div class="filter-dropdown-wrap" id="bathsWrap">
             <button class="filter-dropdown-btn" id="bathsBtn">Baths</button>
             <div class="filter-dropdown-panel" id="bathsPanel" style="width:240px">
               <label>Bathrooms</label>
@@ -1531,7 +1602,7 @@
             </div>
           </div>
 
-          <div class="filter-dropdown-wrap">
+          <div class="filter-dropdown-wrap" id="cityWrap">
             <button class="filter-dropdown-btn" id="cityBtn">City</button>
             <div class="filter-dropdown-panel" id="cityPanel">
               <label><input type="checkbox" name="city" value="Bonita Springs"> Bonita Springs</label>
@@ -1542,7 +1613,7 @@
             </div>
           </div>
 
-          <div class="filter-dropdown-wrap">
+          <div class="filter-dropdown-wrap" id="sortWrap">
             <button class="filter-dropdown-btn" id="sortBtn">Sort</button>
             <div class="filter-dropdown-panel" id="sortPanel">
               <label><input type="radio" name="sort" value="dateDesc" checked> Newest Listing</label>
@@ -1616,9 +1687,9 @@
       the Internet Data Exchange logo and detailed information about those properties will include the name of the
       listing broker(s) when required by the MLS. All rights reserved.</p>
     
-    <div class="sneak-powered-by" id="poweredByContainer">
+    <div class="ccor-powered-by" id="poweredByContainer">
       <span>Powered by</span>
-      <a href="https://sneakidx.com" target="_blank" rel="noopener">SNEAK IDX Platform</a>
+      <strong>CCOR IDX Plug-in</strong>
     </div>
   </footer>
 
@@ -1642,12 +1713,20 @@
         <div class="detail-badges" id="detailBadges"></div>
         <div class="detail-stats" id="detailStats"></div>
         <div class="detail-description" id="detailDesc"></div>
-        <div class="detail-agent-section" id="detailAgentSection">
-          <div class="detail-agent-name" id="detailAgentName"></div>
-          <div class="detail-agent-office" id="detailAgentOffice"></div>
-          <div class="detail-agent-btns">
-            <button class="detail-agent-btn primary" id="detailContactBtn"><i class="fas fa-envelope"></i> Inquire About Property</button>
-            <button class="detail-agent-btn outline" id="detailViewAgentBtn"><i class="fas fa-user"></i> View Agent Listings</button>
+
+        <!-- Area B: Site Owner CTA (Ursula Weinkauff / Local Real Estate LLC) -->
+        <div class="detail-owner-cta" id="detailOwnerCta" style="margin-top:24px;padding:22px;background:linear-gradient(135deg,#0f172a,#1e3a8a);border-radius:12px;color:#fff;box-shadow:0 4px 14px rgba(0,0,0,0.15);">
+          <h4 style="margin:0 0 6px;font-size:1.1rem;font-weight:700;">Interested in this property?</h4>
+          <p style="margin:0 0 14px;font-size:0.9rem;opacity:0.92;line-height:1.4;">Contact <strong id="ctaOwnerName">Ursula Weinkauff</strong> at <span id="ctaOwnerBrokerage">Local Real Estate LLC</span> for private showings, disclosures, and offer guidance.</p>
+          <button class="detail-agent-btn primary" id="detailContactBtn" style="background:#fff;color:#1e3a8a;font-weight:700;border:none;padding:12px 20px;border-radius:8px;cursor:pointer;display:inline-flex;align-items:center;gap:8px;"><i class="fas fa-envelope"></i> Request Information</button>
+        </div>
+
+        <!-- Area A: Listing Attribution & Disclaimers -->
+        <div class="detail-attribution-section" id="detailAttributionSection" style="margin-top:20px;padding:16px;background:#f8fafc;border-radius:10px;border:1px solid #e2e8f0;font-size:0.85rem;color:#64748b;">
+          <div style="font-weight:600;color:#334155;margin-bottom:4px;" id="detailListingCourtesy"></div>
+          <div id="detailListingAgent"></div>
+          <div style="font-size:0.75rem;margin-top:8px;line-height:1.4;color:#94a3b8;">
+            Real estate listings held by brokerage firms other than the website owner are marked with the Internet Data Exchange logo and detailed information about them includes the name of the listing brokers. All information deemed reliable but not guaranteed.
           </div>
         </div>
       </div>
@@ -1677,16 +1756,6 @@
           <i class="fas fa-paper-plane"></i> Submit Inquiry
         </button>
       </form>
-    </div>
-  </div>
-
-  <!-- Agent Modal -->
-  <div class="agent-modal-overlay" id="agentModalOverlay">
-    <div class="agent-modal" style="background:#fff;border-radius:16px;max-width:700px;width:100%;max-height:85vh;overflow-y:auto;padding:24px;position:relative;">
-      <button class="agent-modal-close" id="agentModalClose">&times;</button>
-      <h3 id="agentModalTitle" style="color:var(--primary);margin-bottom:4px;">Agent Listings</h3>
-      <div id="agentModalSub" style="color:#64748b;font-size:0.85rem;margin-bottom:20px;"></div>
-      <div class="agent-listings-grid" id="agentListingsGrid" style="display:grid;grid-template-columns:repeat(auto-fill, minmax(200px, 1fr));gap:14px;"></div>
     </div>
   </div>
 
@@ -1750,6 +1819,15 @@
       return headers;
     }
 
+    // Price ladder steps for discrete range slider
+    const PRICE_STEPS = [
+      null, 25000, 50000, 75000, 100000, 150000, 200000, 250000, 300000, 350000, 400000, 450000, 500000,
+      600000, 700000, 800000, 900000, 1000000, 1250000, 1500000, 1750000, 2000000, 2500000, 3000000,
+      4000000, 5000000, 7500000, 10000000, 15000000, 20000000, null
+    ];
+    let priceMinIdx = 0;
+    let priceMaxIdx = PRICE_STEPS.length - 1;
+
     // State
     let tenantConfig = null;
     let map, markers = [], markerCluster;
@@ -1767,6 +1845,12 @@
 
     const fmt = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 });
     const kFmt = (n) => { if (n >= 1e6) return '$' + (n / 1e6).toFixed(1) + 'm'; if (n >= 1e3) return '$' + (n / 1e3).toFixed(0) + 'k'; return '$' + n; };
+    const formatPriceStep = (val) => {
+      if (!val) return null;
+      if (val >= 1000000) return '$' + (val / 1000000).toFixed(val % 1000000 === 0 ? 0 : 1) + 'M';
+      if (val >= 1000) return '$' + (val / 1000).toFixed(0) + 'K';
+      return '$' + val;
+    };
 
     // --- Init ---
     document.addEventListener('DOMContentLoaded', async () => {
@@ -1776,6 +1860,7 @@
 
       initMap();
       setupEventListeners();
+      updatePriceSliderUI();
       updateDisclaimerDates();
       updateCartUI();
 
@@ -1825,8 +1910,8 @@
       } catch (err) {
         console.warn('Could not load tenant configuration:', err);
         applyTenantBranding({
-          displayName: 'Real Estate Search',
-          brokerage: 'Listing Brokerage',
+          displayName: 'Ursula Weinkauff',
+          brokerage: 'Local Real Estate LLC',
           primaryColor: '#1a2a3a',
           secondaryColor: '#2596be'
         });
@@ -1847,7 +1932,8 @@
 
       // Title & Header Branding
       const displayName = cfg.displayName || cfg.siteName || 'Real Estate Search';
-      document.title = `${displayName} | SNEAK IDX Property Search`;
+      const brokerage = cfg.brokerage || 'Local Real Estate LLC';
+      document.title = `${displayName} | CCOR IDX Plug-in Property Search`;
       document.getElementById('brandTitle').textContent = displayName;
 
       if (cfg.logoUrl) {
@@ -1855,6 +1941,12 @@
         logoImg.src = cfg.logoUrl;
         logoImg.style.display = 'block';
       }
+
+      // Update Detail Site Owner CTA
+      const ctaName = document.getElementById('ctaOwnerName');
+      const ctaBroker = document.getElementById('ctaOwnerBrokerage');
+      if (ctaName) ctaName.textContent = displayName;
+      if (ctaBroker) ctaBroker.textContent = brokerage;
 
       // Nav Links
       if (cfg.brandingConfig && cfg.brandingConfig.headerLinks) {
@@ -1880,6 +1972,71 @@
       }
     }
 
+    function updatePriceSliderUI(e) {
+      const minSlider = document.getElementById('priceRangeMin');
+      const maxSlider = document.getElementById('priceRangeMax');
+      let minIdx = parseInt(minSlider.value, 10);
+      let maxIdx = parseInt(maxSlider.value, 10);
+
+      if (minIdx > maxIdx) {
+        if (e && e.target === minSlider) {
+          minSlider.value = maxIdx;
+          minIdx = maxIdx;
+        } else {
+          maxSlider.value = minIdx;
+          maxIdx = minIdx;
+        }
+      }
+
+      priceMinIdx = minIdx;
+      priceMaxIdx = maxIdx;
+
+      const minPct = (minIdx / (PRICE_STEPS.length - 1)) * 100;
+      const maxPct = (maxIdx / (PRICE_STEPS.length - 1)) * 100;
+      const highlight = document.getElementById('priceRangeHighlight');
+      if (highlight) {
+        highlight.style.left = minPct + '%';
+        highlight.style.right = (100 - maxPct) + '%';
+      }
+
+      const minPrice = PRICE_STEPS[minIdx];
+      const maxPrice = PRICE_STEPS[maxIdx];
+      const minStr = minPrice ? formatPriceStep(minPrice) : 'No Min';
+      const maxStr = maxPrice ? formatPriceStep(maxPrice) : 'No Max';
+
+      const labelEl = document.getElementById('priceRangeLabel');
+      if (labelEl) labelEl.textContent = `${minStr} — ${maxStr}`;
+
+      const pb = document.getElementById('priceBtn');
+      if (pb) {
+        if (minPrice || maxPrice) {
+          pb.classList.add('has-value');
+          pb.innerText = `${minStr} - ${maxStr}`;
+        } else {
+          pb.classList.remove('has-value');
+          pb.innerText = 'Price';
+        }
+      }
+    }
+
+    function setPropertyType(type) {
+      currentPropertyType = type;
+      document.querySelectorAll('#propertyTypePills .pill-btn').forEach(b => {
+        b.classList.toggle('active', b.dataset.type === type);
+      });
+
+      const isResidential = (type === 'sale' || type === 'rental');
+      const subTypeWrap = document.getElementById('subTypeWrap');
+      const bedsWrap = document.getElementById('bedsWrap');
+      const bathsWrap = document.getElementById('bathsWrap');
+
+      if (subTypeWrap) subTypeWrap.style.display = isResidential ? '' : 'none';
+      if (bedsWrap) bedsWrap.style.display = isResidential ? '' : 'none';
+      if (bathsWrap) bathsWrap.style.display = isResidential ? '' : 'none';
+
+      triggerSearch();
+    }
+
     function buildFilterParams() {
       const queryParams = new URLSearchParams();
       queryParams.set('site', SITE_KEY);
@@ -1887,10 +2044,17 @@
       // Property Type
       queryParams.set('propertyType', currentPropertyType);
 
-      // SubType
-      const subTypes = Array.from(document.querySelectorAll('#subTypePanel input:checked')).map(i => i.value);
-      if (subTypes.length && subTypes.length < 5) {
-        queryParams.set('propertySubType', subTypes.join(','));
+      // SubType, Beds, Baths (only applied for residential)
+      if (currentPropertyType === 'sale' || currentPropertyType === 'rental') {
+        const subTypes = Array.from(document.querySelectorAll('#subTypePanel input:checked')).map(i => i.value);
+        if (subTypes.length && subTypes.length < 5) {
+          queryParams.set('propertySubType', subTypes.join(','));
+        }
+
+        const beds = document.querySelector('#bedsGroup .selected')?.dataset.val;
+        const baths = document.querySelector('#bathsGroup .selected')?.dataset.val;
+        if (beds && Number(beds) > 0) queryParams.set('beds', beds);
+        if (baths && Number(baths) > 0) queryParams.set('baths', baths);
       }
 
       // Cities
@@ -1899,17 +2063,11 @@
         queryParams.set('city', cities.join(','));
       }
 
-      // Prices
-      const minP = document.getElementById('priceMin').value;
-      const maxP = document.getElementById('priceMax').value;
+      // Prices from Slider
+      const minP = PRICE_STEPS[priceMinIdx];
+      const maxP = PRICE_STEPS[priceMaxIdx];
       if (minP) queryParams.set('minPrice', minP);
       if (maxP) queryParams.set('maxPrice', maxP);
-
-      // Beds & Baths
-      const beds = document.querySelector('#bedsGroup .selected')?.dataset.val;
-      const baths = document.querySelector('#bathsGroup .selected')?.dataset.val;
-      if (beds && Number(beds) > 0) queryParams.set('beds', beds);
-      if (baths && Number(baths) > 0) queryParams.set('baths', baths);
 
       // Search text
       const q = (document.getElementById('searchInput').value || '').trim();
@@ -1997,6 +2155,32 @@
         const sl = item.StandardStatus === 'Active Under Contract' ? 'Under Contract' : item.StandardStatus || 'Active';
         const isSaved = savedListings.some(s => s.key === item.ListingKey);
 
+        let detailsHtml = '';
+        if (item.PropertyType === 'Land') {
+          detailsHtml = `
+            <div class="card-details">
+              ${item.LotSizeAcres ? `<span class="card-detail-item"><i class="fas fa-tree"></i> ${item.LotSizeAcres} acres</span>` : ''}
+              ${item.PropertySubType ? `<span class="card-detail-item"><i class="fas fa-tag"></i> ${item.PropertySubType}</span>` : ''}
+              ${item.SubdivisionName ? `<span class="card-detail-item"><i class="fas fa-map-pin"></i> ${item.SubdivisionName}</span>` : ''}
+            </div>
+          `;
+        } else if (item.PropertyType === 'Commercial Sale') {
+          detailsHtml = `
+            <div class="card-details">
+              ${item.LivingArea ? `<span class="card-detail-item"><i class="fas fa-ruler-combined"></i> ${item.LivingArea.toLocaleString()} sqft</span>` : ''}
+              <span class="card-detail-item"><i class="fas fa-building"></i> Commercial</span>
+            </div>
+          `;
+        } else {
+          detailsHtml = `
+            <div class="card-details">
+              <span class="card-detail-item"><i class="fas fa-bed"></i> ${item.BedroomsTotal || 0} bd</span>
+              <span class="card-detail-item"><i class="fas fa-bath"></i> ${item.BathroomsTotalInteger || 0} ba</span>
+              <span class="card-detail-item"><i class="fas fa-ruler-combined"></i> ${(item.LivingArea || 0).toLocaleString()} sqft</span>
+            </div>
+          `;
+        }
+
         card.innerHTML = `
           <div class="card-img-wrapper">
             <img src="${imgUrl}" id="img-${item.ListingKey}" class="card-img" loading="lazy">
@@ -2007,11 +2191,7 @@
           <div class="card-content">
             ${item.PropertySubType ? '<div class="card-subtype">' + item.PropertySubType + '</div>' : ''}
             <div class="card-address">${item.UnparsedAddress || 'Address Available Upon Request'}</div>
-            <div class="card-details">
-              <span class="card-detail-item"><i class="fas fa-bed"></i> ${item.BedroomsTotal || 0} bd</span>
-              <span class="card-detail-item"><i class="fas fa-bath"></i> ${item.BathroomsTotalInteger || 0} ba</span>
-              <span class="card-detail-item"><i class="fas fa-ruler-combined"></i> ${(item.LivingArea || 0).toLocaleString()} sqft</span>
-            </div>
+            ${detailsHtml}
             <div class="card-meta">
               <div style="font-weight:600;color:var(--primary);"><i class="fas fa-map-marker-alt"></i> ${item.City || ''}</div>
               <div style="font-size:0.75rem;color:#64748b;">${item.ListOfficeName || ''}</div>
@@ -2066,9 +2246,9 @@
               <div class="popup-price">${fmt.format(price)}</div>
               <div class="popup-address">${item.UnparsedAddress || ''}</div>
               <div class="popup-details">
-                <span>${item.BedroomsTotal || 0} bd</span>
-                <span>${item.BathroomsTotalInteger || 0} ba</span>
-                <span>${(item.LivingArea || 0).toLocaleString()} sqft</span>
+                ${item.PropertyType === 'Land' 
+                  ? `<span>${item.LotSizeAcres ? item.LotSizeAcres + ' acres' : item.PropertySubType || 'Land'}</span>`
+                  : `<span>${item.BedroomsTotal || 0} bd</span><span>${item.BathroomsTotalInteger || 0} ba</span><span>${(item.LivingArea || 0).toLocaleString()} sqft</span>`}
               </div>
               <button class="popup-btn" onclick="openDetailByKey('${item.ListingKey}')">View Details</button>
             </div>
@@ -2166,6 +2346,18 @@
       document.getElementById('detailAddr').textContent = `${item.UnparsedAddress || ''}${item.City ? ', ' + item.City : ''}`;
       document.getElementById('detailDesc').textContent = item.PublicRemarks || 'Loading full property description...';
 
+      // Area A: Listing Attribution
+      const listingCourtesy = document.getElementById('detailListingCourtesy');
+      const listingAgent = document.getElementById('detailListingAgent');
+      if (listingCourtesy) listingCourtesy.textContent = `Listed by: ${item.ListOfficeName || 'Listing Brokerage'}`;
+      if (listingAgent) listingAgent.textContent = `Listing Agent: ${item.ListAgentFullName || 'Listing Agent'}`;
+
+      // Area B: Site Owner CTA (Ursula Weinkauff / Local Real Estate LLC)
+      const ctaName = document.getElementById('ctaOwnerName');
+      const ctaBroker = document.getElementById('ctaOwnerBrokerage');
+      if (ctaName) ctaName.textContent = tenantConfig?.displayName || 'Ursula Weinkauff';
+      if (ctaBroker) ctaBroker.textContent = tenantConfig?.brokerage || 'Local Real Estate LLC';
+
       // Badges
       const badges = document.getElementById('detailBadges');
       badges.innerHTML = '';
@@ -2181,7 +2373,7 @@
       if (item.PropertySubType) addBadge(item.PropertySubType, 'var(--primary)');
       if (item.PropertyType) addBadge(item.PropertyType, '#64748b');
 
-      // Stats
+      // Stats (Context-aware: suppress 0 beds for Land/Commercial)
       const stats = document.getElementById('detailStats');
       stats.innerHTML = '';
       if (item.BedroomsTotal) stats.innerHTML += `<div class="detail-stat"><i class="fas fa-bed"></i>${item.BedroomsTotal} Beds</div>`;
@@ -2189,10 +2381,6 @@
       if (item.LivingArea) stats.innerHTML += `<div class="detail-stat"><i class="fas fa-ruler-combined"></i>${(item.LivingArea).toLocaleString()} sqft</div>`;
       if (item.YearBuilt) stats.innerHTML += `<div class="detail-stat"><i class="fas fa-calendar"></i>Built ${item.YearBuilt}</div>`;
       if (item.LotSizeAcres) stats.innerHTML += `<div class="detail-stat"><i class="fas fa-tree"></i>${item.LotSizeAcres} acres</div>`;
-
-      // Agent Info
-      document.getElementById('detailAgentName').textContent = item.ListAgentFullName || 'Listing Agent';
-      document.getElementById('detailAgentOffice').textContent = item.ListOfficeName || '';
 
       // Save State
       updateDetailSaveBtn();
@@ -2202,7 +2390,7 @@
         map.flyTo([item.Latitude, item.Longitude], 15);
       }
 
-      // Fetch Full Detail & Media from SNEAK API
+      // Fetch Full Detail & Media from D1-backed Serving Endpoints
       try {
         const [detailRes, mediaRes] = await Promise.all([
           fetch(`${API_BASE}/idx/v1/listing/${encodeURIComponent(item.ListingKey)}?site=${encodeURIComponent(SITE_KEY)}`, {
@@ -2220,11 +2408,15 @@
             if (currentDetail.PublicRemarks) {
               document.getElementById('detailDesc').innerHTML = currentDetail.PublicRemarks;
             }
-            if (currentDetail.ListAgentFullName) {
-              document.getElementById('detailAgentName').textContent = currentDetail.ListAgentFullName;
+            if (listingCourtesy && currentDetail.ListOfficeName) {
+              listingCourtesy.textContent = `Listed by: ${currentDetail.ListOfficeName}`;
             }
-            if (currentDetail.ListOfficeName) {
-              document.getElementById('detailAgentOffice').textContent = currentDetail.ListOfficeName;
+            if (listingAgent && currentDetail.ListAgentFullName) {
+              listingAgent.textContent = `Listing Agent: ${currentDetail.ListAgentFullName}`;
+            }
+            if (currentDetail.Media && currentDetail.Media.length) {
+              currentMediaUrls = currentDetail.Media.map(m => m.MediaURL || m);
+              updateGalleryUI();
             }
           }
         }
@@ -2355,7 +2547,7 @@
       currentDetail = item;
       document.getElementById('contactOverlay').style.display = 'flex';
       document.getElementById('contactAgentLabel').textContent = `${item.UnparsedAddress || 'Property'} • Listed at ${fmt.format(item.ListPrice || 0)}`;
-      document.getElementById('contactMessage').value = `Hi, I am interested in the property at ${item.UnparsedAddress || ''} (MLS #${item.ListingId || item.ListingKey}) listed at ${fmt.format(item.ListPrice || 0)}. Please contact me with more information.`;
+      document.getElementById('contactMessage').value = `Hi Ursula, I am interested in the property at ${item.UnparsedAddress || ''} (MLS #${item.ListingId || item.ListingKey}) listed at ${fmt.format(item.ListPrice || 0)}. Please contact me with more information.`;
     }
 
     async function handleLeadSubmit(e) {
@@ -2419,12 +2611,17 @@
       // Pills
       document.querySelectorAll('#propertyTypePills .pill-btn').forEach(btn => {
         btn.onclick = () => {
-          document.querySelectorAll('#propertyTypePills .pill-btn').forEach(b => b.classList.remove('active'));
-          btn.classList.add('active');
-          currentPropertyType = btn.dataset.type;
-          triggerSearch();
+          setPropertyType(btn.dataset.type);
         };
       });
+
+      // Price Slider Inputs
+      const minSlider = document.getElementById('priceRangeMin');
+      const maxSlider = document.getElementById('priceRangeMax');
+      if (minSlider && maxSlider) {
+        minSlider.addEventListener('input', updatePriceSliderUI);
+        maxSlider.addEventListener('input', updatePriceSliderUI);
+      }
 
       // Dropdowns
       document.querySelectorAll('.filter-dropdown-btn').forEach(btn => {
@@ -2463,23 +2660,23 @@
       document.querySelectorAll('.apply-btn').forEach(btn => {
         btn.onclick = () => {
           document.querySelectorAll('.filter-dropdown-panel').forEach(p => p.classList.remove('open'));
-          updateFilterLabels();
           triggerSearch();
         };
       });
 
       // Clear Filters
       document.getElementById('clearFiltersBtn').onclick = () => {
-        document.getElementById('priceMin').value = '';
-        document.getElementById('priceMax').value = '';
+        if (minSlider) minSlider.value = 0;
+        if (maxSlider) maxSlider.value = PRICE_STEPS.length - 1;
+        updatePriceSliderUI();
+
         document.getElementById('searchInput').value = '';
         document.querySelectorAll('#subTypePanel input').forEach(i => i.checked = true);
         document.querySelectorAll('#cityPanel input').forEach(i => i.checked = false);
         document.querySelectorAll('#bedsGroup .filter-option-btn').forEach((b, i) => b.classList.toggle('selected', i === 0));
         document.querySelectorAll('#bathsGroup .filter-option-btn').forEach((b, i) => b.classList.toggle('selected', i === 0));
         document.querySelector('input[name="sort"][value="dateDesc"]').checked = true;
-        updateFilterLabels();
-        triggerSearch();
+        setPropertyType('sale');
       };
 
       // Search Enter Key
@@ -2508,18 +2705,6 @@
         localStorage.setItem('savedListings_' + SITE_KEY, '[]');
         updateCartUI();
       };
-    }
-
-    function updateFilterLabels() {
-      const min = document.getElementById('priceMin').value, max = document.getElementById('priceMax').value;
-      const pb = document.getElementById('priceBtn');
-      if (min || max) {
-        pb.classList.add('has-value');
-        pb.innerText = (min ? '$' + kFmt(min) + '+' : '') + (min && max ? '-' : '') + (max ? '<$' + kFmt(max) : '');
-      } else {
-        pb.classList.remove('has-value');
-        pb.innerText = 'Price';
-      }
     }
 
     function highlightMarker(k, active) {
