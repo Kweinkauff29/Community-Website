@@ -725,11 +725,43 @@ function buildTenantListingScope(site, tableAlias = '') {
    ========================================================================== */
 
 /**
+ * Validates whether a listing is eligible for IDX / Internet display.
+ */
+function isListingIdxEligible(listing) {
+    if (!listing) return false;
+    if (listing.InternetEntireListingDisplayYN === 0 || listing.InternetEntireListingDisplayYN === false) {
+        return false;
+    }
+    const eligibleStatuses = ['Active', 'Active Under Contract', 'Pending'];
+    if (listing.StandardStatus && !eligibleStatuses.includes(listing.StandardStatus)) {
+        return false;
+    }
+    return true;
+}
+
+/**
+ * Suppresses address fields if InternetAddressDisplayYN is false or 0.
+ */
+function applyListingDisplayControls(item) {
+    if (!item) return item;
+    const transformed = { ...item };
+    if (transformed.InternetAddressDisplayYN === 0 || transformed.InternetAddressDisplayYN === false) {
+        transformed.UnparsedAddress = "Address Undisclosed";
+        transformed.StreetNumber = "";
+        transformed.StreetName = "";
+        transformed.UnitNumber = "";
+    }
+    return transformed;
+}
+
+/**
  * Shared filter helper that parses and standardizes SQL query filters
  * for BOTH /idx/v1/search and /idx/v1/map endpoints.
  */
 function buildCommonListingFilters(params, site) {
     const city = (params.get('city') || '').substring(0, 200);
+    const county = (params.get('county') || params.get('CountyOrParish') || '').substring(0, 200).trim();
+    const postalCode = (params.get('postalCode') || params.get('zip') || params.get('PostalCode') || '').substring(0, 20).trim();
     const minPrice = parseFloat(params.get('minPrice')) || null;
     const maxPrice = parseFloat(params.get('maxPrice')) || null;
     const beds = parseInt(params.get('beds'), 10) || null;
@@ -750,6 +782,9 @@ function buildCommonListingFilters(params, site) {
     whereClauses.push(scope.clause);
     bindValues.push(...scope.binds);
 
+    // 2. Internet Entire Listing Display Compliance
+    whereClauses.push("COALESCE(InternetEntireListingDisplayYN, 1) = 1");
+
     // Optional agent or office filter narrowing for market-scoped sites
     if (site.scope_type === 'market') {
         const agentMlsId = params.get('agentMlsId');
@@ -764,7 +799,7 @@ function buildCommonListingFilters(params, site) {
         }
     }
 
-    // 2. Standard Status Filtering
+    // 3. Standard Status Filtering
     if (status === 'Pending') {
         whereClauses.push("(StandardStatus = 'Pending' OR StandardStatus = 'Active Under Contract')");
     } else if (status === 'Active Under Contract') {
@@ -777,7 +812,7 @@ function buildCommonListingFilters(params, site) {
         whereClauses.push("StandardStatus = 'Active'");
     }
 
-    // 3. Property Type Filtering
+    // 4. Property Type Filtering
     if (propertyType === 'sale') {
         whereClauses.push("(PropertyType = 'Residential' OR PropertyType = 'Residential Income')");
     } else if (propertyType === 'rental') {
@@ -791,7 +826,7 @@ function buildCommonListingFilters(params, site) {
         bindValues.push(propertyType);
     }
 
-    // 4. SubType Filtering with Shared Expansion Logic
+    // 5. SubType Filtering with Shared Expansion Logic
     if (propertySubType) {
         const subTypes = propertySubType.split(',').map(s => s.trim()).filter(Boolean);
         if (subTypes.length > 0) {
@@ -810,7 +845,7 @@ function buildCommonListingFilters(params, site) {
         }
     }
 
-    // 5. City Filtering
+    // 6. City Filtering
     if (city) {
         const cities = city.split(',').map(c => c.trim()).filter(Boolean);
         if (cities.length === 1) {
@@ -823,7 +858,19 @@ function buildCommonListingFilters(params, site) {
         }
     }
 
-    // 6. Price Range
+    // 7. County Filtering
+    if (county) {
+        whereClauses.push("LOWER(CountyOrParish) = LOWER(?)");
+        bindValues.push(county);
+    }
+
+    // 8. Postal Code Filtering
+    if (postalCode) {
+        whereClauses.push("PostalCode = ?");
+        bindValues.push(postalCode);
+    }
+
+    // 9. Price Range
     if (minPrice !== null && minPrice > 0) {
         whereClauses.push("ListPrice >= ?");
         bindValues.push(minPrice);
@@ -833,7 +880,7 @@ function buildCommonListingFilters(params, site) {
         bindValues.push(maxPrice);
     }
 
-    // 7. Bedrooms / Bathrooms
+    // 10. Bedrooms / Bathrooms
     if (beds !== null && beds > 0) {
         whereClauses.push("BedroomsTotal >= ?");
         bindValues.push(beds);
@@ -843,7 +890,7 @@ function buildCommonListingFilters(params, site) {
         bindValues.push(baths);
     }
 
-    // 8. Text Search
+    // 11. Text Search
     if (q) {
         whereClauses.push("(ListingKey = ? OR ListingId = ? OR LOWER(UnparsedAddress) LIKE ? OR LOWER(City) LIKE ? OR LOWER(SubdivisionName) LIKE ? OR LOWER(ListAgentFullName) LIKE ? OR LOWER(ListAgentMlsId) = ?)");
         const likeQ = `%${q.toLowerCase()}%`;
@@ -866,17 +913,21 @@ function buildCommonListingFilters(params, site) {
  * GET /idx/v1/config?site=abc123
  */
 async function handleGetConfig(site, branding, env, allowedOrigin) {
-    const widgetRows = await env.DB.prepare(
-        "SELECT widget_type, enabled, config_json FROM sneak_widget_configs WHERE site_id = ?"
-    ).bind(site.site_id).all();
+    const rawWidgets = await env.DB.prepare(`
+        SELECT widget_type, config_json, enabled 
+        FROM sneak_widget_configs 
+        WHERE site_id = ?
+    `).bind(site.site_id).all();
 
     const widgets = {};
-    (widgetRows.results || []).forEach(w => {
-        let parsed = {};
-        try { parsed = JSON.parse(w.config_json); } catch {}
+    (rawWidgets.results || []).forEach(w => {
+        let conf = {};
+        if (w.config_json) {
+            try { conf = JSON.parse(w.config_json); } catch {}
+        }
         widgets[w.widget_type] = {
             enabled: Boolean(w.enabled),
-            config: parsed
+            config: conf
         };
     });
 
@@ -897,6 +948,9 @@ async function handleGetConfig(site, branding, env, allowedOrigin) {
         phone: branding.phone || '',
         email: branding.email || '',
         websiteUrl: branding.website_url || '',
+        displayScope: site.scope_type || 'market',
+        participantAgentMlsId: site.default_agent_mls_id || site.scope_value || null,
+        featuredListingsScope: 'agent',
         scope: {
             type: site.scope_type || 'market',
             value: site.scope_value || null
@@ -907,6 +961,7 @@ async function handleGetConfig(site, branding, env, allowedOrigin) {
             map: true,
             savedListings: true,
             openHouses: true,
+            featuredListings: true,
             leadCapture: true
         },
         widgets
@@ -916,7 +971,7 @@ async function handleGetConfig(site, branding, env, allowedOrigin) {
 }
 
 /**
- * GET /idx/v1/search?site=abc123&city=...&minPrice=...&beds=...
+ * GET /idx/v1/search?site=abc123&page=1&limit=20&sort=newest&city=...
  */
 async function handleSearch(url, site, env, ctx, allowedOrigin) {
     const params = url.searchParams;
@@ -930,11 +985,12 @@ async function handleSearch(url, site, env, ctx, allowedOrigin) {
     }
 
     const page = Math.max(1, parseInt(params.get('page'), 10) || 1);
-    const limit = Math.min(100, Math.max(1, parseInt(params.get('limit') || params.get('pageSize'), 10) || 24));
+    const limit = Math.min(100, Math.max(1, parseInt(params.get('limit'), 10) || 20));
     const offset = (page - 1) * limit;
-    const sort = params.get('sort') || 'dateDesc';
 
-    let orderSQL = "ORDER BY ListingContractDate DESC, ModificationTimestamp DESC";
+    // Sorting
+    const sort = params.get('sort') || 'newest';
+    let orderSQL = "ORDER BY ModificationTimestamp DESC, ListingContractDate DESC";
     if (sort === 'priceDesc') {
         orderSQL = "ORDER BY ListPrice DESC, ListingContractDate DESC";
     } else if (sort === 'priceAsc') {
@@ -954,16 +1010,20 @@ async function handleSearch(url, site, env, ctx, allowedOrigin) {
         BedroomsTotal, BathroomsTotalInteger, LivingArea, StandardStatus,
         PropertyType, PropertySubType, PrimaryPhoto, ListingContractDate,
         Latitude, Longitude, ModificationTimestamp, YearBuilt, LotSizeAcres,
-        ListAgentFullName, ListOfficeName, ListOfficePhone, ListAgentMlsId, ListOfficeMlsId, SubdivisionName
+        ListAgentFullName, ListOfficeName, ListOfficePhone, ListAgentMlsId, ListOfficeMlsId, SubdivisionName,
+        InternetEntireListingDisplayYN, InternetAddressDisplayYN
     `;
     const searchSQL = `SELECT ${selectCols} FROM sneak_listings ${filter.whereSQL} ${orderSQL} LIMIT ? OFFSET ?`;
     const results = await env.DB.prepare(searchSQL).bind(...filter.bindValues, limit, offset).all();
 
-    const formattedListings = (results.results || []).map(row => ({
-        ...row,
-        Coordinates: (row.Longitude && row.Latitude) ? [row.Longitude, row.Latitude] : null,
-        Media: row.PrimaryPhoto ? [{ MediaURL: row.PrimaryPhoto, Order: 0 }] : []
-    }));
+    const formattedListings = (results.results || []).map(row => {
+        const item = applyListingDisplayControls(row);
+        return {
+            ...item,
+            Coordinates: (item.Longitude && item.Latitude) ? [item.Longitude, item.Latitude] : null,
+            Media: item.PrimaryPhoto ? [{ MediaURL: item.PrimaryPhoto, Order: 0 }] : []
+        };
+    });
 
     if (ctx && ctx.waitUntil) {
         ctx.waitUntil(recordUsage(site.site_id, 'searches', env));
@@ -1000,21 +1060,19 @@ async function handleMap(url, site, env, ctx, allowedOrigin) {
     const mapClauses = [...filter.whereClauses];
     const mapBinds = [...filter.bindValues];
 
-    // Must have coordinates
-    mapClauses.push("Latitude IS NOT NULL AND Longitude IS NOT NULL");
-
-    // Viewport Bounding Box
+    // Bounding Box Viewport Filters
     const north = parseFloat(params.get('north'));
     const south = parseFloat(params.get('south'));
     const east = parseFloat(params.get('east'));
     const west = parseFloat(params.get('west'));
 
-    if (!isNaN(north) && !isNaN(south) && !isNaN(east) && !isNaN(west)) {
-        mapClauses.push("Latitude BETWEEN ? AND ?");
+    if (!isNaN(north) && !isNaN(south)) {
+        mapClauses.push("Latitude >= ? AND Latitude <= ?");
         mapBinds.push(Math.min(south, north), Math.max(south, north));
-
+    }
+    if (!isNaN(east) && !isNaN(west)) {
         if (west <= east) {
-            mapClauses.push("Longitude BETWEEN ? AND ?");
+            mapClauses.push("Longitude >= ? AND Longitude <= ?");
             mapBinds.push(west, east);
         } else {
             mapClauses.push("(Longitude >= ? OR Longitude <= ?)");
@@ -1022,33 +1080,31 @@ async function handleMap(url, site, env, ctx, allowedOrigin) {
         }
     }
 
-    const markerLimit = 1000;
-    const mapWhereSQL = `WHERE ${mapClauses.join(' AND ')}`;
-
-    const selectCols = `
-        ListingKey, ListingId, ListPrice, UnparsedAddress, City,
-        BedroomsTotal, BathroomsTotalInteger, LivingArea, StandardStatus,
-        PropertyType, PropertySubType, PrimaryPhoto, Latitude, Longitude
+    const markerLimit = Math.min(2000, Math.max(1, parseInt(params.get('limit'), 10) || 500));
+    const mapSQL = `
+        SELECT ListingKey, ListingId, ListPrice, UnparsedAddress, City, StandardStatus, PropertyType, PropertySubType, PrimaryPhoto, Latitude, Longitude, InternetAddressDisplayYN, InternetEntireListingDisplayYN
+        FROM sneak_listings
+        WHERE ${mapClauses.join(' AND ')}
+        LIMIT ?
     `;
-    const mapSQL = `SELECT ${selectCols} FROM sneak_listings ${mapWhereSQL} ORDER BY ListingContractDate DESC LIMIT ?`;
-    const results = await env.DB.prepare(mapSQL).bind(...mapBinds, markerLimit).all();
 
-    const markers = (results.results || []).map(row => ({
-        ListingKey: row.ListingKey,
-        ListingId: row.ListingId,
-        ListPrice: row.ListPrice,
-        UnparsedAddress: row.UnparsedAddress,
-        City: row.City,
-        BedroomsTotal: row.BedroomsTotal,
-        BathroomsTotalInteger: row.BathroomsTotalInteger,
-        LivingArea: row.LivingArea,
-        StandardStatus: row.StandardStatus,
-        PropertyType: row.PropertyType,
-        PropertySubType: row.PropertySubType,
-        PrimaryPhoto: row.PrimaryPhoto,
-        Latitude: row.Latitude,
-        Longitude: row.Longitude
-    }));
+    const results = await env.DB.prepare(mapSQL).bind(...mapBinds, markerLimit).all();
+    const markers = (results.results || []).map(row => {
+        const item = applyListingDisplayControls(row);
+        return {
+            ListingKey: item.ListingKey,
+            ListingId: item.ListingId,
+            ListPrice: item.ListPrice,
+            UnparsedAddress: item.UnparsedAddress,
+            City: item.City,
+            StandardStatus: item.StandardStatus,
+            PropertyType: item.PropertyType,
+            PropertySubType: item.PropertySubType,
+            PrimaryPhoto: item.PrimaryPhoto,
+            Latitude: item.Latitude,
+            Longitude: item.Longitude
+        };
+    });
 
     return jsonResponse({
         data: markers,
@@ -1073,14 +1129,18 @@ async function handleListingDetail(listingKey, site, req, env, ctx, allowedOrigi
     const d1Listing = await env.DB.prepare(query).bind(listingKey, listingKey, ...scope.binds).first();
 
     if (!d1Listing) {
-        const globalExists = await env.DB.prepare("SELECT ListingKey FROM sneak_listings WHERE (ListingKey = ? OR ListingId = ?)").bind(listingKey, listingKey).first();
-        if (globalExists) {
+        const globalExists = await env.DB.prepare("SELECT ListingKey, InternetEntireListingDisplayYN, StandardStatus FROM sneak_listings WHERE (ListingKey = ? OR ListingId = ?)").bind(listingKey, listingKey).first();
+        if (globalExists && isListingIdxEligible(globalExists)) {
             return jsonResponse({ error: 'ScopeMismatch', message: 'Property is outside this tenant authorized scope.' }, 403, allowedOrigin);
         }
         return jsonResponse({ error: 'ListingNotFound', message: 'Property not found or not accessible within this scope.' }, 404, allowedOrigin);
     }
 
-    let fullDetails = { ...d1Listing };
+    if (!isListingIdxEligible(d1Listing)) {
+        return jsonResponse({ error: 'ListingNotFound', message: 'Property is not accessible for online display.' }, 404, allowedOrigin);
+    }
+
+    let fullDetails = applyListingDisplayControls({ ...d1Listing });
 
     // Fetch extended details from Bridge API if token is bound
     if (env.BRIDGE_TOKEN) {
@@ -1094,11 +1154,11 @@ async function handleListingDetail(listingKey, site, req, env, ctx, allowedOrigi
         if (cached) {
             try {
                 const cachedData = await cached.json();
-                fullDetails = { ...fullDetails, ...cachedData };
+                fullDetails = applyListingDisplayControls({ ...fullDetails, ...cachedData });
             } catch {}
         } else {
             try {
-                const sel = 'ListingKey,ListingId,UnparsedAddress,City,PostalCode,CountyOrParish,ListPrice,PropertyType,PropertySubType,BedroomsTotal,BathroomsTotalInteger,LivingArea,LotSizeAcres,YearBuilt,StandardStatus,SubdivisionName,ListAgentFullName,ListAgentEmail,ListAgentDirectPhone,ListAgentKey,ListOfficeName,ListOfficePhone,ListOfficeMlsId,PublicRemarks,Coordinates,Media,ModificationTimestamp';
+                const sel = 'ListingKey,ListingId,UnparsedAddress,City,PostalCode,CountyOrParish,ListPrice,PropertyType,PropertySubType,BedroomsTotal,BathroomsTotalInteger,LivingArea,LotSizeAcres,YearBuilt,StandardStatus,SubdivisionName,ListAgentFullName,ListAgentEmail,ListAgentDirectPhone,ListAgentKey,ListOfficeName,ListOfficePhone,ListOfficeMlsId,PublicRemarks,Coordinates,Media,ModificationTimestamp,InternetEntireListingDisplayYN,InternetAddressDisplayYN';
                 const safeKey = escapeODataString(d1Listing.ListingKey);
                 const bridgeUrl = `https://api.bridgedataoutput.com/api/v2/OData/bsaor/Property?$filter=ListingKey eq '${encodeURIComponent(safeKey)}'&$select=${sel}&access_token=${env.BRIDGE_TOKEN}`;
                 const bridgeRes = await fetch(bridgeUrl, { headers: { Accept: 'application/json' } });
@@ -1107,12 +1167,15 @@ async function handleListingDetail(listingKey, site, req, env, ctx, allowedOrigi
                     const bridgeJson = await bridgeRes.json();
                     const p = bridgeJson.value && bridgeJson.value[0];
                     if (p) {
-                        fullDetails = { ...fullDetails, ...p };
+                        if (!isListingIdxEligible(p)) {
+                            return jsonResponse({ error: 'ListingNotFound', message: 'Property is not accessible for online display.' }, 404, allowedOrigin);
+                        }
+                        fullDetails = applyListingDisplayControls({ ...fullDetails, ...p });
                         const cacheHeaders = new Headers({
                             'Content-Type': 'application/json',
                             'Cache-Control': 'public, s-maxage=600'
                         });
-                        const responseToCache = new Response(JSON.stringify(p), { headers: cacheHeaders });
+                        const responseToCache = new Response(JSON.stringify(fullDetails), { headers: cacheHeaders });
                         if (ctx && ctx.waitUntil) {
                             ctx.waitUntil(cache.put(cacheKey, responseToCache));
                         }

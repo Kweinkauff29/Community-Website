@@ -125,8 +125,9 @@ export async function runListingDelta(env) {
                 Latitude, Longitude, YearBuilt, LotSizeAcres, SubdivisionName, PublicRemarks,
                 ListAgentKey, ListAgentFullName, ListAgentEmail, ListAgentDirectPhone, ListAgentMlsId,
                 ListOfficeKey, ListOfficeName, ListOfficePhone, ListOfficeMlsId,
+                InternetEntireListingDisplayYN, InternetAddressDisplayYN,
                 OriginatingSystemKey, OriginatingSystemName
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
         `;
 
         const deleteSql = `DELETE FROM sneak_listings WHERE ListingKey = ?;`;
@@ -164,6 +165,7 @@ export async function runListingDelta(env) {
                         row.Latitude, row.Longitude, row.YearBuilt, row.LotSizeAcres, row.SubdivisionName, row.PublicRemarks,
                         row.ListAgentKey, row.ListAgentFullName, row.ListAgentEmail, row.ListAgentDirectPhone, row.ListAgentMlsId,
                         row.ListOfficeKey, row.ListOfficeName, row.ListOfficePhone, row.ListOfficeMlsId,
+                        row.InternetEntireListingDisplayYN, row.InternetAddressDisplayYN,
                         row.OriginatingSystemKey, row.OriginatingSystemName
                     ));
                 } else {

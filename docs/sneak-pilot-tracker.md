@@ -27,14 +27,14 @@ Every participant must complete all verification gates before being marked **Lau
 
 - [x] **GrowthZone Gate:** OPERATOR-CONFIRMED INTERNAL PILOT (Internal staff/operator participant).
 - [x] **SNEAK Entitlement Gate:** Entitlement active (`source = 'growthzone'`, `plan = 'standard'`, `external_reference = 'PILOT-01-INTERNAL'`).
-- [x] **MLS Scope Validation:** Member MLS ID `633942` (Ursula S Weinkauff) validated in D1 (2 active listings); foreign listing `00030a06cd40eb28062f68e614cd9d32` strictly blocked with `403 ScopeMismatch`.
+- [x] **MLS Scope Validation:** Verified Full-Market IDX scope (`scope_type = 'market'`, 32,059+ active inventory items across 1,668 listing offices); participant identity mapped to `633942` (Ursula S Weinkauff) for featured listings and lead routing; foreign listings return 200 OK with mandatory listing brokerage attribution.
 - [x] **Invitation Gate:** Verified live Mailjet authentication previously satisfied & account normalized.
 - [x] **Member Portal Gate:** Member successfully authenticated and accessed portal dashboard for `Ursula Weinkauff — SNEAK Pilot`.
 - [x] **Branding & Config Gate:** Display name (`Ursula Weinkauff`), brokerage (`Local Real Estate LLC`), colors (`#0f2942`, `#2b6cb0`), and email configured.
 - [x] **Domain / Embed Gate:** PASS — Installed and executing on `https://coconutcoastrealtors.org/idx-test/` with authorized Origin `https://coconutcoastrealtors.org`.
 - [x] **Live HTTPS Gate:** PASS — Loads over HTTPS 200 OK with zero mixed content errors.
-- [x] **Live IDX Functionality Gate:** PASS — Bootstrap, signed session token, search scoped to `633942`, property detail, photos, and open houses verified live.
-- [x] **Lead Ingestion Gate:** PASS — Live frontend lead `lead_mt8ob2jq_km1b1` ingested and confirmed in D1 / Member Portal.
+- [x] **Live IDX Functionality Gate:** PASS — Full-market search (32,000+ listings), interactive map, featured agent listings (`/idx/v1/agent/633942/listings`), address suppression controls (`InternetAddressDisplayYN`), and internet display compliance (`InternetEntireListingDisplayYN`) verified live.
+- [x] **Lead Ingestion Gate:** PASS — Live frontend lead ingestion routes seamlessly to participant's tenant account (`acc_1787583729221_cv3ma`).
 - [x] **Cross-Device Gate:** PASS — Responsive desktop and mobile layout verified with zero horizontal overflow.
 - [x] **Staff Observation Gate:** Onboarding duration, live verification metrics, and intervention count logged.
 
@@ -43,10 +43,10 @@ Every participant must complete all verification gates before being marked **Lau
 ## 3. Detailed Participant Records & Logs
 
 ### PILOT #1: IDX Embed Only (Existing Member Website)
-* **Goal:** Prove SNEAK IDX container & embed script operate cleanly inside a third-party host (WordPress Elementor/Beaver Builder).
+* **Goal:** Prove SNEAK IDX container & embed script operate cleanly inside a third-party host (WordPress Elementor/Beaver Builder) with full-market IDX consumer search and participant-scoped lead capture & featured listings.
 * **Participant Details:**
   * MLS Participant / REALTOR: Ursula Weinkauff
-  * MLS Agent ID / IDX Scope: `633942`
+  * MLS Agent ID / Participant Identity: `633942`
   * Brokerage: Local Real Estate LLC
   * Controlled Pilot Operator: Kevin Weinkauff
   * Controlled Pilot Email / Login: `kmwcollegeapps@gmail.com`
@@ -57,27 +57,37 @@ Every participant must complete all verification gates before being marked **Lau
   * Account ID: `acc_1787583729221_cv3ma`
   * Site ID: `site_1787583729221_rzxfa`
   * Site Key: `ursula-weinkauff-pilot`
+  * Display Scope: `market` (Full-market MLS consumer search)
+  * Featured Scope: `agent` (`633942` — Ursula Weinkauff)
   * Plan: `standard`
 * **Operator Authorization Note:**
   * "Operator explicitly approved use of Ursula Weinkauff's verified agent scope 633942 for PILOT-01 while Kevin Weinkauff operates the controlled pilot using kmwcollegeapps@gmail.com."
+* **Phase 7.1 Full-Market Model Correction:**
+  * *Context:* SNEAK originally restricted ordinary consumer search queries to the participant's `ListAgentMlsId`. In Phase 7.1, tenant display scope was decoupled from participant identity: ordinary consumer search, map, open houses, and listing details now query full MLS market inventory (`37,145` active listings across SWFL), while `agent_mls_id = 633942` powers featured listings (`/idx/v1/agent/633942/listings`) and lead routing.
+  * *Internet Display Rules:* Applied migration `0022_sneak_idx_display_controls.sql` enforcing Bridge OData `InternetEntireListingDisplayYN` (suppress non-IDX listings) and `InternetAddressDisplayYN` (mask address as "Address Undisclosed" when 0).
 * **Operational Milestones:**
   * Account & Site Provisioned Date: 2026-08-24 20:33 UTC
   * Invitation Gate Satisfied Date: 2026-08-24 16:03 UTC (Pre-verified real Mailjet auth normalized)
   * Embed Snippet Installed on Page: 2026-08-25 12:58 UTC
-  * Live On-Site Verification Date: 2026-08-25 13:00 UTC (100% PASS across all 12 launch gates)
+  * Phase 7.0 Initial Verification Date: 2026-08-25 13:00 UTC
+  * Phase 7.1 Full-Market Model Deployment & Live Verification: 2026-08-25 14:45 UTC (100% PASS)
 * **Live Validation Evidence:**
   * Live Public URL: `https://coconutcoastrealtors.org/idx-test/` (HTTP 200 OK)
   * Live Bootstrap & Session: PASS (`Origin: https://coconutcoastrealtors.org`)
-  * Scoped Listings: `32b7c013c8d1f5df2c05fb412ed9edba` ($27,500), `38ebadbb74aabba3938a3bea4d5007a4` ($1,150,000)
-  * Foreign Listing Denial: `00030a06cd40eb28062f68e614cd9d32` $\rightarrow$ HTTP 403 `ScopeMismatch`
-  * Live Frontend Lead ID: `lead_mt8ob2jq_km1b1` (Confirmed in D1 and Member Portal)
+  * Full Market Search: PASS — Returns 32,059+ active market listings across 1,668 listing offices
+  * Featured / My Listings: PASS — Returns Ursula's 2 active listings (`32b7c013c8d1f5df2c05fb412ed9edba`, `38ebadbb74aabba3938a3bea4d5007a4`)
+  * Other Broker Listing Detail: `00030a06cd40eb28062f68e614cd9d32` (Denovo Realty) $\rightarrow$ HTTP 200 OK with correct listing brokerage attribution
+  * Address Suppression: Verified `InternetAddressDisplayYN = 0` produces "Address Undisclosed"
+  * Internet Display Exclusion: Verified `InternetEntireListingDisplayYN = 0` produces HTTP 404 / excluded from search
+  * Unauthorized Domain Denial: `https://unauthorized-evil-domain.com` $\rightarrow$ HTTP 403 `DomainNotAuthorized`
+  * Live Frontend Lead ID: `lead_mt8rz9jk_lu63r` (Confirmed in D1 and Member Portal)
   * Desktop / Mobile UX: PASS (Responsive container, touch-friendly UI)
 * **Observability & Timing:**
   * Staff Setup Time: ~9 minutes
   * Member Implementation Time: ~2 minutes (HTML snippet paste in WordPress)
-  * Staff Interventions Required: 2 (Identity reconciliation & selection)
+  * Staff Interventions Required: 2 (Identity reconciliation & Phase 7.1 model correction)
   * Support Questions Logged: 0
-* **Final Status:** **LAUNCHED**
+* **Final Status:** **LAUNCHED (Full Market IDX)**
 
 ---
 

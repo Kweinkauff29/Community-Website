@@ -53,6 +53,8 @@ export const SELECT_PARAM = [
     "ListOfficeMlsId",
     "ListOfficeName",
     "ListOfficePhone",
+    "InternetEntireListingDisplayYN",
+    "InternetAddressDisplayYN",
     "OriginatingSystemKey",
     "OriginatingSystemName"
 ].join(",");

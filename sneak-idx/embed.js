@@ -27,15 +27,34 @@
         return;
     }
 
-    // Read configuration attributes
-    const siteKey = currentScript.getAttribute('data-site') || currentScript.getAttribute('data-site-key');
-    const widgetType = currentScript.getAttribute('data-widget') || 'search';
-    const customHeight = currentScript.getAttribute('data-height') || '850px';
-    const targetSelector = currentScript.getAttribute('data-target');
-    const customParams = currentScript.getAttribute('data-params') || '';
+    // Read configuration attributes from script tag or fallback to container element
+    let siteKey = currentScript.getAttribute('data-site') || currentScript.getAttribute('data-site-key');
+    let widgetType = currentScript.getAttribute('data-widget');
+    let customHeight = currentScript.getAttribute('data-height');
+    let targetSelector = currentScript.getAttribute('data-target');
+    let customParams = currentScript.getAttribute('data-params') || '';
+
+    // If missing on script tag, check container elements in DOM
+    if (!siteKey) {
+        const container = document.getElementById('sneak-idx-search') ||
+                          document.getElementById('sneak-idx-search-bar') ||
+                          document.getElementById('sneak-idx-grid') ||
+                          document.getElementById('sneak-idx-open-houses') ||
+                          document.querySelector('[data-site]') ||
+                          document.querySelector('[data-site-key]');
+        if (container) {
+            siteKey = container.getAttribute('data-site') || container.getAttribute('data-site-key');
+            if (!widgetType) widgetType = container.getAttribute('data-widget');
+            if (!customHeight) customHeight = container.getAttribute('data-height');
+            if (!targetSelector && container.id) targetSelector = '#' + container.id;
+        }
+    }
+
+    widgetType = widgetType || 'search';
+    customHeight = customHeight || '850px';
 
     if (!siteKey) {
-        console.error('[SNEAK IDX] Missing required "data-site" attribute on embed script.');
+        console.error('[SNEAK IDX] Missing required "data-site" attribute on embed script or container.');
         return;
     }
 

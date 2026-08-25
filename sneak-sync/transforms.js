@@ -60,6 +60,8 @@ export function transformListingRecord(r) {
         ListOfficeName: r.ListOfficeName ?? null,
         ListOfficePhone: r.ListOfficePhone ?? null,
         ListOfficeMlsId: r.ListOfficeMlsId ?? null,
+        InternetEntireListingDisplayYN: r.InternetEntireListingDisplayYN === false ? 0 : 1,
+        InternetAddressDisplayYN: r.InternetAddressDisplayYN === false ? 0 : 1,
         OriginatingSystemKey: r.OriginatingSystemKey ?? null,
         OriginatingSystemName: r.OriginatingSystemName ?? null
     };

@@ -16,7 +16,7 @@ export function generateEmbedSnippets(siteKey, allowedDomains = [], branding = {
             operational: true,
             htmlSnippet: `<!-- SNEAK IDX Full Search Widget -->
 <div id="sneak-idx-search" data-site="${siteKey}" data-widget="search" style="width: 100%; min-height: 800px;"></div>
-<script src="${STAGING_SERVING_URL}/embed.js" async defer></script>`,
+<script src="${STAGING_SERVING_URL}/embed.js" data-site="${siteKey}" data-widget="search" async defer></script>`,
             previewUrl: `${STAGING_SERVING_URL}/search/?site=${siteKey}`
         },
         search_bar: {
@@ -25,7 +25,7 @@ export function generateEmbedSnippets(siteKey, allowedDomains = [], branding = {
             operational: true,
             htmlSnippet: `<!-- SNEAK IDX Quick Search Bar -->
 <div id="sneak-idx-search-bar" data-site="${siteKey}" data-widget="search_bar" style="width: 100%;"></div>
-<script src="${STAGING_SERVING_URL}/embed.js" async defer></script>`,
+<script src="${STAGING_SERVING_URL}/embed.js" data-site="${siteKey}" data-widget="search_bar" async defer></script>`,
             previewUrl: `${STAGING_SERVING_URL}/search/?site=${siteKey}&view=compact`
         },
         listing_grid: {
@@ -34,7 +34,7 @@ export function generateEmbedSnippets(siteKey, allowedDomains = [], branding = {
             operational: true,
             htmlSnippet: `<!-- SNEAK IDX Listing Grid -->
 <div id="sneak-idx-grid" data-site="${siteKey}" data-widget="listing_grid" style="width: 100%; min-height: 600px;"></div>
-<script src="${STAGING_SERVING_URL}/embed.js" async defer></script>`,
+<script src="${STAGING_SERVING_URL}/embed.js" data-site="${siteKey}" data-widget="listing_grid" async defer></script>`,
             previewUrl: `${STAGING_SERVING_URL}/search/?site=${siteKey}&layout=grid`
         },
         open_houses: {
@@ -43,7 +43,7 @@ export function generateEmbedSnippets(siteKey, allowedDomains = [], branding = {
             operational: true,
             htmlSnippet: `<!-- SNEAK IDX Open Houses Widget -->
 <div id="sneak-idx-open-houses" data-site="${siteKey}" data-widget="open_houses" style="width: 100%; min-height: 500px;"></div>
-<script src="${STAGING_SERVING_URL}/embed.js" async defer></script>`,
+<script src="${STAGING_SERVING_URL}/embed.js" data-site="${siteKey}" data-widget="open_houses" async defer></script>`,
             previewUrl: `${STAGING_SERVING_URL}/search/?site=${siteKey}&openhouses=1`
         }
     };

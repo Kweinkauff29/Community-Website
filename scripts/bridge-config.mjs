@@ -28,6 +28,7 @@ export const SELECT_FIELDS = [
     'Media', 'PublicRemarks', 'SubdivisionName',
     'ListAgentKey', 'ListAgentMlsId', 'ListAgentFullName', 'ListAgentEmail', 'ListAgentDirectPhone',
     'ListOfficeKey', 'ListOfficeMlsId', 'ListOfficeName', 'ListOfficePhone',
+    'InternetEntireListingDisplayYN', 'InternetAddressDisplayYN',
     'OriginatingSystemKey', 'OriginatingSystemName'
 ];
 

@@ -137,6 +137,8 @@ function recordToUpsertSql(r) {
         escapeSql(r.ListOfficeName ?? null),
         escapeSql(r.ListOfficePhone ?? null),
         escapeSql(r.ListOfficeMlsId ?? null),
+        r.InternetEntireListingDisplayYN === false ? 0 : 1,
+        r.InternetAddressDisplayYN === false ? 0 : 1,
         escapeSql(r.OriginatingSystemKey ?? 'bsaor'),
         escapeSql(r.OriginatingSystemName ?? 'Bonita Springs')
     ];
@@ -151,6 +153,7 @@ function recordToUpsertSql(r) {
         Latitude, Longitude, YearBuilt, LotSizeAcres, SubdivisionName, PublicRemarks,
         ListAgentKey, ListAgentFullName, ListAgentEmail, ListAgentDirectPhone, ListAgentMlsId,
         ListOfficeKey, ListOfficeName, ListOfficePhone, ListOfficeMlsId,
+        InternetEntireListingDisplayYN, InternetAddressDisplayYN,
         OriginatingSystemKey, OriginatingSystemName
     ) VALUES (${values.join(', ')});`;
 }
