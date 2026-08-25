@@ -45,13 +45,21 @@ Every participant must complete all verification gates before being marked **Lau
 ### PILOT #1: IDX Embed Only (Existing Member Website)
 * **Goal:** Prove SNEAK IDX container & embed script operate cleanly inside a third-party host (WordPress Elementor/Beaver Builder).
 * **Participant Details:**
-  * Member Name: Ursula Weinkauff (Local Real Estate LLC)
-  * MLS Agent ID: `633942`
-  * Email Address: `kmwcollegeapps@gmail.com`
+  * MLS Participant / REALTOR: Ursula Weinkauff
+  * MLS Agent ID / IDX Scope: `633942`
+  * Brokerage: Local Real Estate LLC
+  * Controlled Pilot Operator: Kevin Weinkauff
+  * Controlled Pilot Email / Login: `kmwcollegeapps@gmail.com`
+  * Pilot Type: Internal Controlled IDX Embed Validation
   * Existing Member Website URL: `https://coconutcoastrealtors.org`
   * Authorized Embed Origin: `https://coconutcoastrealtors.org`
   * Target Test Page: `https://coconutcoastrealtors.org/idx-test/`
+  * Account ID: `acc_1787583729221_cv3ma`
+  * Site ID: `site_1787583729221_rzxfa`
   * Site Key: `ursula-weinkauff-pilot`
+  * Plan: `standard`
+* **Operator Authorization Note:**
+  * "Operator explicitly approved use of Ursula Weinkauff's verified agent scope 633942 for PILOT-01 while Kevin Weinkauff operates the controlled pilot using kmwcollegeapps@gmail.com."
 * **Operational Milestones:**
   * Account & Site Provisioned Date: 2026-08-24 20:33 UTC
   * Invitation Gate Satisfied Date: 2026-08-24 16:03 UTC (Pre-verified real Mailjet auth normalized)
@@ -60,7 +68,7 @@ Every participant must complete all verification gates before being marked **Lau
   * Live Origin Verification Date: 2026-08-24 20:33 UTC
 * **Identity Reconciliation Findings:**
   * D1 listing records for `ListAgentMlsId = '633942'` associate with `Ursula S Weinkauff` (Local Real Estate LLC).
-  * Operator directed to proceed with Ursula Weinkauff for PILOT-01.
+  * Operator explicitly authorized Ursula Weinkauff's verified agent scope `633942` for PILOT-01 with Kevin Weinkauff acting as the controlled pilot operator.
   * Account, site key (`ursula-weinkauff-pilot`), branding, and entitlement normalized to Ursula Weinkauff.
 * **Observability & Timing:**
   * Staff Setup Time: ~9 minutes
