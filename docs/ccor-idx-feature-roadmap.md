@@ -19,40 +19,50 @@ graph TD
 
 ## 2. Feature Roadmap by Phase
 
-### Phase 7.3A — Search Parity Foundation (CURRENT)
+### Phase 7.3A — Search Parity Foundation
 * **Goal:** Deliver consumer-grade search filtering across residential, commercial, and land properties with full mobile responsiveness and deterministic build telemetry.
-* **Status:** `IN DEVELOPMENT / ACTIVE`
+* **Status:** `COMPLETE`
 * **Features Included:**
   * Responsive 4-category navigation (`For Sale`, `Rental`, `Commercial`, `Lot & Land`).
   * Discrete dual-handle price range slider (`$0 — $20M+`).
   * Context-aware filter controls (automatic suppression of beds/baths/residential subtypes for commercial and land).
   * Comprehensive **More Filters** drawer (20+ consumer-facing filters).
-  * **Wave-1 Advanced Filters:**
-    * Waterfront (`WaterfrontYN = 1`)
-    * Private Pool (`PoolPrivateYN = 1`)
-    * Garage Spaces (`GarageSpaces >= N`)
-    * New Construction (`NewConstructionYN = 1`)
-    * Living Area Sq Ft min/max (`LivingArea`)
-    * Lot Size Acres min/max (`LotSizeAcres`)
-    * Year Built min/max (`YearBuilt`)
-    * County, Postal Code (ZIP), Subdivision Name
-    * Listing Activity (Open House Only, New in 7 Days, Price Reduced)
+  * **Wave-1 Advanced Filters:** Waterfront, Pool, Garage, New Construction, Sqft, Acres, Year Built, County, ZIP, Subdivision, Activity.
   * Multi-photo gallery served directly from D1 `MediaJSON` cache.
   * Site-owner lead capture routing with complete MLS broker attribution separation.
-  * Deterministic UI build identification (`data-ui-build="2026.08.25.7.3a"`).
+  * Deterministic UI build identification (`2026.08.25.7.3a`).
 
 ---
 
-### Phase 7.3B — Interactive Map Search (PLANNED)
-* **Goal:** Provide modern spatial property discovery with interactive polygons, radius search, and live viewport bounding.
+### Phase 7.3B1 — Interactive Map/List Synchronization & Mobile Map UX (CURRENT)
+* **Goal:** Deliver a unified, debounced viewport-synchronized map/list search experience with context-aware popups, card/marker cross-highlighting, and responsive tablet/mobile segmented toggle.
+* **Status:** `COMPLETE / DEPLOYED`
+* **Features Included:**
+  * **Search As I Move Map:** 400ms debounced viewport bounding box search (`north, south, east, west`) applied simultaneously across `/idx/v1/search` and `/idx/v1/map`.
+  * **Map Search Loop Prevention:** Map auto-fits initial results once on page load; user-initiated pan/zoom searches strictly maintain user viewport without resetting or jumping.
+  * **Search As I Move Control:** Unobtrusive `Search as I move` checkbox overlay with dynamic `Search this area` button when toggle is unchecked.
+  * **Context-Aware Map Popups:**
+    * *Residential & Rental:* Price, address, `X bd • Y ba • Z sqft`, photo preview, View Details CTA. Zero fake `0 bd • 0 ba`.
+    * *Lot & Land:* Price, address, `X Acres • Subdivision/City`, photo preview, View Details CTA (beds/baths suppressed).
+    * *Commercial:* Price, address, `X sqft • Y Acres • Subtype • Zoning`, photo preview, View Details CTA (beds/baths suppressed).
+  * **Bidirectional Map ↔ Card Synchronization:**
+    * Hovering/focusing a listing card raises and glows the corresponding map marker pin (`pin-highlighted`).
+    * Clicking a map marker pin highlights the listing card and smoothly scrolls it into view on desktop.
+  * **Mobile / Tablet Segmented View Toggle (<= 1024px):** Replaced vertical stacking with `List | Map` segmented control (defaults to List mode with active listing count; Map mode automatically resizes Leaflet tiles via `map.invalidateSize()`).
+  * **Race-Safe Fetching & Lightweight Loaders:** `AbortController` request cancellation prevents stale query overwrites; non-blocking spinner/overlay keeps the map draggable during movement.
+  * **Truncation Indicator:** Map query selects `limit + 1` to gracefully flag and display `Too many properties to display. Zoom in to see more.`
+  * **Deterministic UI Build:** `2026.08.27.7.3b1` telemetry verified across search app, embed loader, and console.
+
+---
+
+### Phase 7.3B2 — Spatial Map Search: Radius, Near Me & Polygon Search (PLANNED)
+* **Goal:** Provide advanced spatial geometry property discovery with interactive freehand polygons, radius search, and GPS device centering.
 * **Status:** `FUTURE`
 * **Feature Candidates:**
-  * **Search As I Move Map:** Debounced viewport bounding box search (`minLat, maxLat, minLng, maxLng`).
   * **Draw Polygon:** Freehand polygon and boundary drawing with turf.js spatial polygon inclusion.
   * **Radius Search:** Center-point distance radius filtering (`radiusMiles, centerLat, centerLng`).
   * **Near Me / Current Location:** HTML5 Geolocation device location centering.
-  * **Map / List View Toggle:** Responsive full-map vs. full-list toggle on mobile viewports.
-  * **Hide Map:** Consumer preference toggle to view grid only.
+  * **Hide Map:** Consumer preference toggle to view grid only on desktop.
 
 ---
 

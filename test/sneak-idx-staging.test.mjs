@@ -105,7 +105,10 @@ function createMockDB() {
             ListOfficePhone: '(239) 555-0199',
             ListAgentMlsId: 'DEMO_AGENT_01',
             ListOfficeMlsId: 'DEMO_OFFICE_01',
-            SubdivisionName: 'Bonita Beach'
+            SubdivisionName: 'Bonita Beach',
+            Zoning: 'RS-1',
+            InternetAddressDisplayYN: 1,
+            InternetEntireListingDisplayYN: 1
         }
     ];
 
@@ -613,5 +616,134 @@ describe('SNEAK IDX Phase 2.2 Test Suite', () => {
             const res = await worker.fetch(req, env);
             assert.equal(res.status, 200, `Sort ${s} failed`);
         }
+    });
+
+    // PHASE 7.3B1 INTERACTIVE MAP & VIEWPORT SYNCHRONIZATION TESTS
+    test('PHASE 7.3B1: /idx/v1/map returns full context-aware marker payload with truncation metadata', async () => {
+        const env = {
+            SNEAK_ENV: 'staging',
+            SNEAK_SIGNING_SECRET: TEST_SIGNING_SECRET,
+            DB: createMockDB()
+        };
+
+        const bReq = new Request('https://sneak.staging/idx/v1/bootstrap?site=demo-ccor', {
+            method: 'GET',
+            headers: { Origin: 'https://preview.sneakidx.com' }
+        });
+        const bRes = await worker.fetch(bReq, env);
+        const { session } = await bRes.json();
+
+        const mapReq = new Request(`https://sneak.staging/idx/v1/map?site=demo-ccor&session=${session}&limit=500`, {
+            method: 'GET'
+        });
+        const mapRes = await worker.fetch(mapReq, env);
+        assert.equal(mapRes.status, 200);
+        const mapData = await mapRes.json();
+
+        assert.equal(typeof mapData.truncated, 'boolean');
+        assert.equal(typeof mapData.count, 'number');
+        assert.equal(typeof mapData.limit, 'number');
+        assert.ok(Array.isArray(mapData.data));
+
+        if (mapData.data.length > 0) {
+            const m = mapData.data[0];
+            assert.ok('ListingKey' in m);
+            assert.ok('ListingId' in m);
+            assert.ok('ListPrice' in m);
+            assert.ok('UnparsedAddress' in m);
+            assert.ok('City' in m);
+            assert.ok('PropertyType' in m);
+            assert.ok('Latitude' in m);
+            assert.ok('Longitude' in m);
+            assert.ok('BedroomsTotal' in m);
+            assert.ok('BathroomsTotalInteger' in m);
+            assert.ok('LivingArea' in m);
+            assert.ok('LotSizeAcres' in m);
+            assert.ok('SubdivisionName' in m);
+            assert.ok('YearBuilt' in m);
+            assert.ok('Zoning' in m);
+            assert.ok('ListOfficeName' in m);
+        }
+    });
+
+    test('PHASE 7.3B1: Viewport bounding box parameters (north, south, east, west) are accepted on /search and /map', async () => {
+        const env = {
+            SNEAK_ENV: 'staging',
+            SNEAK_SIGNING_SECRET: TEST_SIGNING_SECRET,
+            DB: createMockDB()
+        };
+
+        const bReq = new Request('https://sneak.staging/idx/v1/bootstrap?site=demo-ccor', {
+            method: 'GET',
+            headers: { Origin: 'https://preview.sneakidx.com' }
+        });
+        const bRes = await worker.fetch(bReq, env);
+        const { session } = await bRes.json();
+
+        // Test bounded /search
+        const boundedSearchReq = new Request(
+            `https://sneak.staging/idx/v1/search?site=demo-ccor&session=${session}&north=26.40&south=26.30&east=-81.70&west=-81.90`,
+            { method: 'GET' }
+        );
+        const boundedSearchRes = await worker.fetch(boundedSearchReq, env);
+        assert.equal(boundedSearchRes.status, 200);
+        const searchData = await boundedSearchRes.json();
+        assert.ok(Array.isArray(searchData.data));
+
+        // Test bounded /map
+        const boundedMapReq = new Request(
+            `https://sneak.staging/idx/v1/map?site=demo-ccor&session=${session}&north=26.40&south=26.30&east=-81.70&west=-81.90`,
+            { method: 'GET' }
+        );
+        const boundedMapRes = await worker.fetch(boundedMapReq, env);
+        assert.equal(boundedMapRes.status, 200);
+        const mapData = await boundedMapRes.json();
+        assert.ok(Array.isArray(mapData.data));
+    });
+
+    test('PHASE 7.3B1: Category-specific /map queries succeed for sale, rental, commercial, and land', async () => {
+        const env = {
+            SNEAK_ENV: 'staging',
+            SNEAK_SIGNING_SECRET: TEST_SIGNING_SECRET,
+            DB: createMockDB()
+        };
+
+        const bReq = new Request('https://sneak.staging/idx/v1/bootstrap?site=demo-ccor', {
+            method: 'GET',
+            headers: { Origin: 'https://preview.sneakidx.com' }
+        });
+        const bRes = await worker.fetch(bReq, env);
+        const { session } = await bRes.json();
+
+        const categories = ['sale', 'rental', 'commercial', 'land'];
+        for (const cat of categories) {
+            const req = new Request(`https://sneak.staging/idx/v1/map?site=demo-ccor&session=${session}&propertyType=${cat}`, {
+                method: 'GET'
+            });
+            const res = await worker.fetch(req, env);
+            assert.equal(res.status, 200, `Map query for ${cat} failed`);
+        }
+    });
+
+    test('PHASE 7.3B1: Out-of-bounds coordinates fail safely without crashing SQL execution', async () => {
+        const env = {
+            SNEAK_ENV: 'staging',
+            SNEAK_SIGNING_SECRET: TEST_SIGNING_SECRET,
+            DB: createMockDB()
+        };
+
+        const bReq = new Request('https://sneak.staging/idx/v1/bootstrap?site=demo-ccor', {
+            method: 'GET',
+            headers: { Origin: 'https://preview.sneakidx.com' }
+        });
+        const bRes = await worker.fetch(bReq, env);
+        const { session } = await bRes.json();
+
+        // Invalid latitudes > 90 and longitudes > 180
+        const req = new Request(`https://sneak.staging/idx/v1/map?site=demo-ccor&session=${session}&north=105&south=-95&east=200&west=-200`, {
+            method: 'GET'
+        });
+        const res = await worker.fetch(req, env);
+        assert.equal(res.status, 200);
     });
 });

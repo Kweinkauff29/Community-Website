@@ -72,29 +72,30 @@ Every participant must complete all verification gates before being marked **Lau
   * Phase 7.0 Initial Verification Date: 2026-08-25 13:00 UTC
   * Phase 7.1 Full-Market Model Deployment & Live Verification: 2026-08-25 14:45 UTC (100% PASS)
   * Phase 7.2 Product Corrections & Live Verification: 2026-08-25 16:25 UTC (100% PASS)
-  * Phase 7.3A Search Parity & Responsive Filter Overhaul: 2026-08-25 18:35 UTC (API PASS / Browser Verification Pending Operator Visual Check)
-* **Phase 7.3A Search Parity & Live Fixes:**
-  * *Responsive Property Category Navigation:* Completely overhauled `#propertyTypePills` with smooth horizontal touch-scrolling (`overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none`), guaranteeing all 4 categories (`For Sale`, `Rental`, `Commercial`, `Lot & Land`) remain 100% visible and interactive across desktop, tablet, and mobile embed viewports.
-  * *UI Build Telemetry & Cache Busting:* Injected deterministic build tag `CCOR_IDX_UI_BUILD = '2026.08.25.7.3a'`, `data-ui-build="2026.08.25.7.3a"` on body, and `&v=2026.08.25.7.3a` cache-buster in `embed.js`.
-  * *More Filters Drawer:* Implemented sliding drawer containing 20+ consumer-facing filters grouped into Property Subtype, Size & Year Built, Location (City Chips, County, ZIP, Subdivision), Wave-1 Amenities (Waterfront, Private Pool, Garage Spaces, New Construction), and Listing Activity (Open House, New in 7 Days, Price Reduced).
-  * *Context-Aware Category State Isolation:* Commercial and Land searches dynamically suppress beds, baths, and residential subtypes from primary bar and drawer.
-  * *Card Presentation:* Commercial cards display building sqft, lot size, subtype, year built. Land cards display lot size acres, subdivision, city, county. Fake `0 bd 0 ba 0 sqft` placeholders suppressed.
-  * *Wave-1 Advanced Search Database Migration:* Applied migration `0024_sneak_advanced_filters.sql` (`WaterfrontYN`, `PoolPrivateYN`, `GarageSpaces`, `NewConstructionYN`, `Zoning`, with indexes on `SubdivisionName`, `PostalCode`, `LivingArea`, `LotSizeAcres`, `YearBuilt`).
+  * Phase 7.3A Search Parity & Responsive Filter Overhaul: 2026-08-25 18:35 UTC (100% PASS)
+  * Phase 7.3B1 Interactive Map/List Synchronization & Mobile UX: 2026-08-27 17:15 UTC (API PASS / Browser Verification Pending Operator Visual Check)
+* **Phase 7.3B1 Interactive Map/List Synchronization & Mobile UX:**
+  * *Search As I Move Map Engine:* Debounced 400ms spatial bounding (`north, south, east, west`) shared identically between `/idx/v1/search` and `/idx/v1/map`. Moving/zooming the map dynamically filters both the listing cards and map markers within the exact visible viewport.
+  * *Map Search Loop Prevention:* Map auto-fits initial results once on page load (`hasInitialMapFit`); user-panned viewport searches strictly maintain user viewport without jumping.
+  * *Search As I Move Overlay:* Compact `Search as I move` checkbox overlay with dynamic `Search this area` button when toggle is unchecked.
+  * *Context-Aware Map Popups:* Full marker schema with Beds/Baths/Sqft on residential/rental; Acreage/Subdivision on Lot & Land; Sqft/Acres/Subtype/Zoning on Commercial (zero `0 bd 0 ba` fallbacks).
+  * *Bidirectional Map ↔ Card Synchronization:* Card hover raises & glows marker pin (`pin-highlighted`); marker click highlights listing card and smoothly scrolls it into view on desktop.
+  * *Mobile / Tablet Segmented Toggle (<= 1024px):* Replaced vertical map stacking with `List | Map` segmented control (defaults to List mode; Map mode resizes Leaflet tiles cleanly via `map.invalidateSize()`).
+  * *Race-Safe Fetching & Lightweight Loaders:* `AbortController` cancellation prevents race condition stale overwrites; non-blocking spinner/overlay maintains map draggability during search.
+  * *Truncation Tracking:* Map query queries `limit + 1` to gracefully detect and display `Too many properties to display. Zoom in to see more.`
 * **Live Validation Evidence:**
   * Live Public URL: `https://coconutcoastrealtors.org/idx-test/` (HTTP 200 OK)
-  * Live Static UI Build: PASS — `data-ui-build="2026.08.25.7.3a"`, `CCOR_IDX_UI_BUILD = '2026.08.25.7.3a'`
-  * Live Commercial API: PASS — 515 active commercial listings
-  * Live Land API: PASS — 8,680 active land listings
-  * Live More Filters API: PASS — Living area, lot acres, year built, subdivision, price reduced, open houses, sort options (`sqftDesc`, `acresDesc`, `yearDesc`) verified
-  * Lead Ingestion Routing: PASS — Ingested lead `lead_mt9025z7_j6nu3` verified in D1 `sneak_leads` assigned to Ursula's site
-  * Automated Regression Suite: PASS — 62/62 tests passing (`node --test test/*.test.mjs`)
+  * Live Static UI Build: PASS — `data-ui-build="2026.08.27.7.3b1"`, `CCOR_IDX_UI_BUILD = '2026.08.27.7.3b1'`, `embed.js &v=2026.08.27.7.3b1`
+  * Live Bounded Search & Map: PASS — Viewport bounding box filters accurately across residential, commercial, and land
+  * Live Marker Schema: PASS — Complete context-aware fields returned from D1 with address suppression enforced
+  * Automated Regression Suite: PASS — 66/66 tests passing (`node --test test/*.test.mjs`)
   * Real Browser Verification: **BROWSER VERIFICATION PENDING** (Automated Chrome CDP environment resolution failure; Operator Visual Verification required)
 * **Observability & Timing:**
   * Staff Setup Time: ~9 minutes
   * Member Implementation Time: ~2 minutes (HTML snippet paste in WordPress)
-  * Staff Interventions Required: 4 (Identity reconciliation, Phase 7.1 model correction, Phase 7.2 product corrections, Phase 7.3A search parity foundation)
+  * Staff Interventions Required: 5 (Identity reconciliation, Phase 7.1 model correction, Phase 7.2 product corrections, Phase 7.3A search parity, Phase 7.3B1 interactive map synchronization)
   * Support Questions Logged: 0
-* **Final Status:** **ACTIVE PILOT (CCOR IDX Plug-in Phase 7.3A Deployed)**
+* **Final Status:** **ACTIVE PILOT (CCOR IDX Plug-in Phase 7.3B1 Deployed)**
 
 ---
 

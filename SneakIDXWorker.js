@@ -981,6 +981,30 @@ function buildCommonListingFilters(params, site) {
         bindValues.push(q, q, q, likeQ, likeQ, likeQ, likeQ, q.toLowerCase());
     }
 
+    // 17. Geographic Viewport Bounding Box (north, south, east, west)
+    const north = parseFloat(params.get('north'));
+    const south = parseFloat(params.get('south'));
+    const east = parseFloat(params.get('east'));
+    const west = parseFloat(params.get('west'));
+
+    if (!isNaN(north) && !isNaN(south) && north >= -90 && north <= 90 && south >= -90 && south <= 90) {
+        const minLat = Math.min(south, north);
+        const maxLat = Math.max(south, north);
+        whereClauses.push("Latitude IS NOT NULL AND Latitude >= ? AND Latitude <= ?");
+        bindValues.push(minLat, maxLat);
+    }
+
+    if (!isNaN(east) && !isNaN(west) && east >= -180 && east <= 180 && west >= -180 && west <= 180) {
+        if (west <= east) {
+            whereClauses.push("Longitude IS NOT NULL AND Longitude >= ? AND Longitude <= ?");
+            bindValues.push(west, east);
+        } else {
+            // Anti-meridian boundary
+            whereClauses.push("Longitude IS NOT NULL AND (Longitude >= ? OR Longitude <= ?)");
+            bindValues.push(west, east);
+        }
+    }
+
     return {
         valid: true,
         whereSQL: `WHERE ${whereClauses.join(' AND ')}`,
@@ -1035,6 +1059,10 @@ async function handleGetConfig(site, branding, env, allowedOrigin) {
         displayScope: site.scope_type || 'market',
         participantAgentMlsId: site.default_agent_mls_id || site.scope_value || null,
         featuredListingsScope: 'agent',
+        tenantScope: {
+            type: site.scope_type || 'market',
+            value: site.scope_value || null
+        },
         scope: {
             type: site.scope_type || 'market',
             value: site.scope_value || null
@@ -1148,39 +1176,24 @@ async function handleMap(url, site, env, ctx, allowedOrigin) {
         }, 403, allowedOrigin);
     }
 
-    const mapClauses = [...filter.whereClauses];
-    const mapBinds = [...filter.bindValues];
-
-    // Bounding Box Viewport Filters
-    const north = parseFloat(params.get('north'));
-    const south = parseFloat(params.get('south'));
-    const east = parseFloat(params.get('east'));
-    const west = parseFloat(params.get('west'));
-
-    if (!isNaN(north) && !isNaN(south)) {
-        mapClauses.push("Latitude >= ? AND Latitude <= ?");
-        mapBinds.push(Math.min(south, north), Math.max(south, north));
-    }
-    if (!isNaN(east) && !isNaN(west)) {
-        if (west <= east) {
-            mapClauses.push("Longitude >= ? AND Longitude <= ?");
-            mapBinds.push(west, east);
-        } else {
-            mapClauses.push("(Longitude >= ? OR Longitude <= ?)");
-            mapBinds.push(west, east);
-        }
-    }
-
     const markerLimit = Math.min(2000, Math.max(1, parseInt(params.get('limit'), 10) || 500));
     const mapSQL = `
-        SELECT ListingKey, ListingId, ListPrice, UnparsedAddress, City, StandardStatus, PropertyType, PropertySubType, PrimaryPhoto, Latitude, Longitude, InternetAddressDisplayYN, InternetEntireListingDisplayYN
+        SELECT 
+            ListingKey, ListingId, ListPrice, UnparsedAddress, City, PostalCode, StandardStatus, 
+            PropertyType, PropertySubType, PrimaryPhoto, Latitude, Longitude, 
+            BedroomsTotal, BathroomsTotalInteger, LivingArea, LotSizeAcres, SubdivisionName, 
+            YearBuilt, Zoning, ListOfficeName, InternetAddressDisplayYN, InternetEntireListingDisplayYN
         FROM sneak_listings
-        WHERE ${mapClauses.join(' AND ')}
+        ${filter.whereSQL}
         LIMIT ?
     `;
 
-    const results = await env.DB.prepare(mapSQL).bind(...mapBinds, markerLimit).all();
-    const markers = (results.results || []).map(row => {
+    const results = await env.DB.prepare(mapSQL).bind(...filter.bindValues, markerLimit + 1).all();
+    const rawListings = results.results || [];
+    const truncated = rawListings.length > markerLimit;
+    const slicedListings = truncated ? rawListings.slice(0, markerLimit) : rawListings;
+
+    const markers = slicedListings.map(row => {
         const item = applyListingDisplayControls(row);
         return {
             ListingKey: item.ListingKey,
@@ -1188,19 +1201,29 @@ async function handleMap(url, site, env, ctx, allowedOrigin) {
             ListPrice: item.ListPrice,
             UnparsedAddress: item.UnparsedAddress,
             City: item.City,
+            PostalCode: item.PostalCode,
             StandardStatus: item.StandardStatus,
             PropertyType: item.PropertyType,
             PropertySubType: item.PropertySubType,
             PrimaryPhoto: item.PrimaryPhoto,
             Latitude: item.Latitude,
-            Longitude: item.Longitude
+            Longitude: item.Longitude,
+            BedroomsTotal: item.BedroomsTotal,
+            BathroomsTotalInteger: item.BathroomsTotalInteger,
+            LivingArea: item.LivingArea,
+            LotSizeAcres: item.LotSizeAcres,
+            SubdivisionName: item.SubdivisionName,
+            YearBuilt: item.YearBuilt,
+            Zoning: item.Zoning,
+            ListOfficeName: item.ListOfficeName
         };
     });
 
     return jsonResponse({
         data: markers,
         count: markers.length,
-        limit: markerLimit
+        limit: markerLimit,
+        truncated
     }, 200, allowedOrigin, 'public, max-age=60, s-maxage=120');
 }
 
