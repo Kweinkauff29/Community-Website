@@ -846,15 +846,27 @@
       max-width: calc(100% - 24px);
     }
 
-    .map-control-check {
+    .map-tools-bar {
       pointer-events: auto;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 6px;
       background: rgba(255, 255, 255, 0.95);
-      backdrop-filter: blur(6px);
-      padding: 6px 12px;
-      border-radius: 20px;
+      backdrop-filter: blur(8px);
+      padding: 5px 8px;
+      border-radius: 24px;
       border: 1px solid var(--border);
-      box-shadow: 0 2px 8px rgba(0,0,0,0.12);
-      font-size: 0.8rem;
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.12);
+      width: fit-content;
+      max-width: 100%;
+    }
+
+    .map-control-check {
+      background: transparent;
+      padding: 4px 8px;
+      border-radius: 16px;
+      font-size: 0.78rem;
       font-weight: 700;
       color: var(--text);
       display: flex;
@@ -862,12 +874,248 @@
       gap: 6px;
       cursor: pointer;
       user-select: none;
-      width: fit-content;
+      white-space: nowrap;
     }
 
     .map-control-check input {
       accent-color: var(--primary);
       cursor: pointer;
+    }
+
+    .map-control-check input:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .map-tool-btn-group {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      border-left: 1px solid #e2e8f0;
+      padding-left: 6px;
+    }
+
+    .map-tool-btn {
+      background: #f1f5f9;
+      border: 1px solid #cbd5e1;
+      color: #334155;
+      padding: 5px 11px;
+      border-radius: 16px;
+      font-size: 0.76rem;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      transition: all 0.15s ease;
+      white-space: nowrap;
+    }
+
+    .map-tool-btn:hover {
+      background: #e2e8f0;
+      color: var(--primary);
+      border-color: var(--primary);
+    }
+
+    .map-tool-btn.active {
+      background: var(--primary);
+      color: #fff;
+      border-color: var(--primary);
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+    }
+
+    .clear-area-btn {
+      background: #fee2e2;
+      border-color: #fca5a5;
+      color: #b91c1c;
+    }
+
+    .clear-area-btn:hover {
+      background: #fecaca;
+      color: #991b1b;
+      border-color: #ef4444;
+    }
+
+    /* Radius Selector Panel */
+    .radius-selector-panel {
+      pointer-events: auto;
+      background: rgba(255, 255, 255, 0.98);
+      backdrop-filter: blur(10px);
+      padding: 10px 14px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      box-shadow: 0 6px 18px rgba(0, 0, 0, 0.16);
+      width: 240px;
+      animation: fadeInDown 0.2s ease;
+    }
+
+    .radius-panel-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.8rem;
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: 8px;
+    }
+
+    .radius-panel-close {
+      background: transparent;
+      border: none;
+      font-size: 1.1rem;
+      color: var(--text-muted);
+      cursor: pointer;
+      line-height: 1;
+      padding: 0 4px;
+    }
+
+    .radius-chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-bottom: 8px;
+    }
+
+    .radius-chip {
+      background: #f8fafc;
+      border: 1px solid #cbd5e1;
+      color: #475569;
+      padding: 4px 10px;
+      border-radius: 14px;
+      font-size: 0.76rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .radius-chip:hover {
+      background: #f1f5f9;
+      border-color: var(--primary);
+      color: var(--primary);
+    }
+
+    .radius-chip.selected {
+      background: var(--primary);
+      color: #fff;
+      border-color: var(--primary);
+    }
+
+    .radius-panel-tip {
+      font-size: 0.72rem;
+      font-weight: 600;
+      color: var(--accent);
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      padding-top: 6px;
+      border-top: 1px solid #f1f5f9;
+    }
+
+    /* Active Spatial Badges */
+    .active-spatial-badge {
+      pointer-events: auto;
+      background: var(--primary);
+      color: #fff;
+      padding: 6px 12px;
+      border-radius: 20px;
+      font-size: 0.78rem;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      box-shadow: 0 3px 10px rgba(0, 0, 0, 0.22);
+      width: fit-content;
+      animation: fadeInDown 0.2s ease;
+    }
+
+    .badge-clear-btn {
+      background: rgba(255, 255, 255, 0.25);
+      border: none;
+      color: #fff;
+      border-radius: 50%;
+      width: 18px;
+      height: 18px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.8rem;
+      cursor: pointer;
+      margin-left: 2px;
+    }
+
+    .badge-clear-btn:hover {
+      background: rgba(255, 255, 255, 0.4);
+    }
+
+    /* Active Spatial Pill in Results Bar */
+    .active-spatial-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: #e0f2fe;
+      border: 1px solid #7dd3fc;
+      color: #0369a1;
+      padding: 4px 10px;
+      border-radius: 16px;
+      font-size: 0.76rem;
+      font-weight: 700;
+      margin-left: 4px;
+      white-space: nowrap;
+    }
+
+    .spatial-pill-clear {
+      background: transparent;
+      border: none;
+      color: #0284c7;
+      cursor: pointer;
+      font-size: 0.9rem;
+      line-height: 1;
+      padding: 0 2px;
+      font-weight: 800;
+    }
+
+    .spatial-pill-clear:hover {
+      color: #0369a1;
+    }
+
+    /* Hide Map Button */
+    .hide-map-btn {
+      background: #fff;
+      border: 1px solid var(--border);
+      padding: 8px 12px;
+      border-radius: 8px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--text);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.2s ease;
+      white-space: nowrap;
+    }
+
+    .hide-map-btn:hover {
+      background: #f8fafc;
+      border-color: var(--primary);
+      color: var(--primary);
+    }
+
+    @media (max-width: 1024px) {
+      .hide-map-btn {
+        display: none !important;
+      }
+    }
+
+    @media (min-width: 1025px) {
+      .main-container.desktop-map-hidden .map-section {
+        display: none !important;
+      }
+      .main-container.desktop-map-hidden .listings-section {
+        flex: 1 1 100% !important;
+        width: 100% !important;
+        max-width: 100% !important;
+      }
     }
 
     .search-this-area-btn {
@@ -1633,7 +1881,7 @@
   </style>
 </head>
 
-<body data-ui-build="2026.08.27.7.3b1">
+<body data-ui-build="2026.08.27.7.3b2a">
 
   <!-- Loading Overlay -->
   <div class="loading-overlay" id="loadingOverlay" style="display:none">
@@ -1766,8 +2014,20 @@
           </div>
         </div>
 
+        <!-- Desktop Hide Map Toggle -->
+        <button class="hide-map-btn" id="hideMapBtn" onclick="toggleDesktopMap()" title="Hide or show the map on desktop">
+          <i class="fas fa-map"></i> <span>Hide Map</span>
+        </button>
+
         <!-- Clear All Button -->
         <button class="clear-filters-btn" id="clearFiltersBtn">Clear All</button>
+
+        <!-- Active Spatial Filter Pill -->
+        <div class="active-spatial-pill" id="activeSpatialPill" style="display:none;">
+          <i class="fas fa-crosshairs"></i>
+          <span id="spatialPillText">Within 5 mi</span>
+          <button class="spatial-pill-clear" onclick="clearSpatialSearch()" title="Clear radius filter">&times;</button>
+        </div>
 
         <!-- Live Results Count -->
         <div class="results-count">
@@ -1940,10 +2200,49 @@
       
       <!-- Map Controls Overlay -->
       <div class="map-controls-overlay">
-        <label class="map-control-check" title="Automatically update listings as you move or zoom the map">
-          <input type="checkbox" id="searchAsIMoveToggle" checked onchange="toggleSearchAsIMove(this.checked)">
-          <span>Search as I move</span>
-        </label>
+        <div class="map-tools-bar">
+          <label class="map-control-check" id="searchAsIMoveWrap" title="Automatically update listings as you move or zoom the map">
+            <input type="checkbox" id="searchAsIMoveToggle" checked onchange="toggleSearchAsIMove(this.checked)">
+            <span id="searchAsIMoveLabel">Search as I move</span>
+          </label>
+          <div class="map-tool-btn-group">
+            <button class="map-tool-btn" id="radiusToolBtn" onclick="toggleRadiusMenu()" title="Search within a radius from a point">
+              <i class="fas fa-bullseye"></i> <span>Radius</span>
+            </button>
+            <button class="map-tool-btn" id="nearMeToolBtn" onclick="triggerNearMe()" title="Search near my current location">
+              <i class="fas fa-location-arrow"></i> <span>Near Me</span>
+            </button>
+            <button class="map-tool-btn clear-area-btn" id="clearAreaBtn" style="display:none;" onclick="clearSpatialSearch()" title="Clear custom area search">
+              <i class="fas fa-times"></i> <span>Clear Area</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Radius Selector Panel -->
+        <div class="radius-selector-panel" id="radiusSelectorPanel" style="display:none;">
+          <div class="radius-panel-header">
+            <span>Select Radius</span>
+            <button class="radius-panel-close" onclick="closeRadiusMenu()">&times;</button>
+          </div>
+          <div class="radius-chips">
+            <button class="radius-chip" data-radius="1" onclick="setRadiusDistance(1)">1 mi</button>
+            <button class="radius-chip" data-radius="2" onclick="setRadiusDistance(2)">2 mi</button>
+            <button class="radius-chip selected" data-radius="5" onclick="setRadiusDistance(5)">5 mi</button>
+            <button class="radius-chip" data-radius="10" onclick="setRadiusDistance(10)">10 mi</button>
+            <button class="radius-chip" data-radius="25" onclick="setRadiusDistance(25)">25 mi</button>
+          </div>
+          <div class="radius-panel-tip" id="radiusPanelTip">
+            <i class="fas fa-mouse-pointer"></i> Click map to place center
+          </div>
+        </div>
+
+        <!-- Active Spatial Badge Overlay -->
+        <div class="active-spatial-badge" id="activeSpatialBadge" style="display:none;">
+          <i class="fas fa-crosshairs"></i>
+          <span id="activeSpatialBadgeText">Within 5 miles</span>
+          <button class="badge-clear-btn" onclick="clearSpatialSearch()">&times;</button>
+        </div>
+
         <button id="searchThisAreaBtn" class="search-this-area-btn" style="display:none;" onclick="triggerExplicitAreaSearch()">
           <i class="fas fa-search-location"></i> Search this area
         </button>
@@ -2077,7 +2376,7 @@
   <!-- CCOR IDX Plug-in Application Logic -->
   <script>
     // Telemetry & Build Identifier
-    const CCOR_IDX_UI_BUILD = '2026.08.27.7.3b1';
+    const CCOR_IDX_UI_BUILD = '2026.08.27.7.3b2a';
     console.log('[CCOR IDX Plug-in] UI build:', CCOR_IDX_UI_BUILD);
 
     // URL Configuration & Session Handling
@@ -2144,6 +2443,20 @@
     let markerByListingKey = new Map();
     let mobileViewMode = 'list';
 
+    // Spatial Search State Model (Phase 7.3B2A)
+    let spatialState = {
+      mode: null, // null | 'viewport' | 'radius'
+      centerLat: null,
+      centerLng: null,
+      radiusMiles: 5,
+      isNearMe: false,
+      radiusCircle: null,
+      locationMarker: null
+    };
+    let isSelectingRadiusCenter = false;
+    let selectedRadiusMiles = 5;
+    let isDesktopMapHidden = localStorage.getItem('ccor_idx_map_visible_' + SITE_KEY) === 'hidden';
+
     // Wave-1 / More Filters State
     let drawerState = {
       subtypes: [],
@@ -2178,6 +2491,13 @@
     // --- DOM Loaded ---
     document.addEventListener('DOMContentLoaded', async () => {
       if (IS_EMBEDDED) document.body.classList.add('is-embedded');
+
+      // Initialize Desktop Map Visibility from localStorage
+      if (isDesktopMapHidden && window.innerWidth > 1024) {
+        document.getElementById('mainContainer')?.classList.add('desktop-map-hidden');
+        const hideBtn = document.getElementById('hideMapBtn');
+        if (hideBtn) hideBtn.innerHTML = '<i class="fas fa-map-marked-alt"></i> <span>Show Map</span>';
+      }
 
       initMap();
       setupEventListeners();
@@ -2225,9 +2545,253 @@
       });
       map.addLayer(markerCluster);
 
-      // Map Viewport Movement Listeners
+      // Map Event Listeners
       map.on('moveend', onMapMoveEnd);
+      map.on('click', onMapClick);
     }
+
+    // --- Spatial Search State Engine (Phase 7.3B2A) ---
+    function setSpatialMode(mode, params = {}) {
+      spatialState.mode = mode;
+      
+      if (mode === 'radius') {
+        spatialState.centerLat = params.centerLat;
+        spatialState.centerLng = params.centerLng;
+        spatialState.radiusMiles = params.radiusMiles || selectedRadiusMiles || 5;
+        spatialState.isNearMe = Boolean(params.isNearMe);
+
+        // Render or update Leaflet Circle
+        if (spatialState.radiusCircle) {
+          map.removeLayer(spatialState.radiusCircle);
+          spatialState.radiusCircle = null;
+        }
+        spatialState.radiusCircle = L.circle([spatialState.centerLat, spatialState.centerLng], {
+          radius: spatialState.radiusMiles * 1609.34,
+          color: 'var(--primary, #1a2a3a)',
+          fillColor: 'var(--accent, #2596be)',
+          fillOpacity: 0.16,
+          weight: 2
+        }).addTo(map);
+
+        // Render distinct location marker if Near Me
+        if (spatialState.locationMarker) {
+          map.removeLayer(spatialState.locationMarker);
+          spatialState.locationMarker = null;
+        }
+        if (spatialState.isNearMe) {
+          spatialState.locationMarker = L.circleMarker([spatialState.centerLat, spatialState.centerLng], {
+            radius: 7,
+            color: '#ffffff',
+            fillColor: '#2563eb',
+            fillOpacity: 1,
+            weight: 2.5
+          }).addTo(map);
+        }
+
+        // Fit map bounds once to the circle without triggering loop
+        suppressViewportSearch = true;
+        map.fitBounds(spatialState.radiusCircle.getBounds().pad(0.08));
+        setTimeout(() => { suppressViewportSearch = false; }, 400);
+      }
+
+      renderSpatialState();
+      fetchListings(1, false);
+      fetchMapMarkers(false);
+    }
+
+    function clearSpatialSearch() {
+      if (spatialState.radiusCircle) {
+        map.removeLayer(spatialState.radiusCircle);
+        spatialState.radiusCircle = null;
+      }
+      if (spatialState.locationMarker) {
+        map.removeLayer(spatialState.locationMarker);
+        spatialState.locationMarker = null;
+      }
+      spatialState = {
+        mode: null,
+        centerLat: null,
+        centerLng: null,
+        radiusMiles: 5,
+        isNearMe: false,
+        radiusCircle: null,
+        locationMarker: null
+      };
+      isSelectingRadiusCenter = false;
+      const mapEl = document.getElementById('map');
+      if (mapEl) mapEl.style.cursor = '';
+      closeRadiusMenu();
+      renderSpatialState();
+      triggerSearch(false);
+    }
+
+    function renderSpatialState() {
+      const searchAsIMoveWrap = document.getElementById('searchAsIMoveWrap');
+      const searchAsIMoveToggle = document.getElementById('searchAsIMoveToggle');
+      const searchAsIMoveLabel = document.getElementById('searchAsIMoveLabel');
+      const clearAreaBtn = document.getElementById('clearAreaBtn');
+      const activeSpatialBadge = document.getElementById('activeSpatialBadge');
+      const activeSpatialBadgeText = document.getElementById('activeSpatialBadgeText');
+      const activeSpatialPill = document.getElementById('activeSpatialPill');
+      const spatialPillText = document.getElementById('spatialPillText');
+      const radiusToolBtn = document.getElementById('radiusToolBtn');
+      const nearMeToolBtn = document.getElementById('nearMeToolBtn');
+
+      const isRadius = (spatialState.mode === 'radius' && spatialState.centerLat !== null);
+
+      if (searchAsIMoveToggle) searchAsIMoveToggle.disabled = isRadius;
+      if (searchAsIMoveLabel) searchAsIMoveLabel.textContent = isRadius ? 'Radius active' : 'Search as I move';
+      if (clearAreaBtn) clearAreaBtn.style.display = isRadius ? 'inline-flex' : 'none';
+      if (activeSpatialBadge) activeSpatialBadge.style.display = isRadius ? 'flex' : 'none';
+      if (activeSpatialPill) activeSpatialPill.style.display = isRadius ? 'inline-flex' : 'none';
+
+      if (isRadius) {
+        const text = spatialState.isNearMe ? `Within ${spatialState.radiusMiles} mi of your location` : `Within ${spatialState.radiusMiles} miles`;
+        if (activeSpatialBadgeText) activeSpatialBadgeText.textContent = text;
+        if (spatialPillText) spatialPillText.textContent = `Within ${spatialState.radiusMiles} mi`;
+      }
+
+      if (radiusToolBtn) radiusToolBtn.classList.toggle('active', isRadius && !spatialState.isNearMe);
+      if (nearMeToolBtn) nearMeToolBtn.classList.toggle('active', isRadius && spatialState.isNearMe);
+    }
+
+    // --- Search Serialization (Phase 7.3B2A / Ready for Phase 7.3C) ---
+    window.serializeSearchState = function() {
+      return {
+        propertyType: currentPropertyType,
+        query: (document.getElementById('searchInput')?.value || '').trim(),
+        price: {
+          min: PRICE_STEPS[priceMinIdx] || null,
+          max: PRICE_STEPS[priceMaxIdx] || null
+        },
+        beds: document.querySelector('#bedsGroup .selected')?.dataset.val || null,
+        baths: document.querySelector('#bathsGroup .selected')?.dataset.val || null,
+        filters: { ...drawerState },
+        sort: document.querySelector('input[name="sort"]:checked')?.value || 'dateDesc',
+        spatial: {
+          mode: spatialState.mode,
+          centerLat: spatialState.centerLat,
+          centerLng: spatialState.centerLng,
+          radiusMiles: spatialState.radiusMiles,
+          isNearMe: spatialState.isNearMe
+        }
+      };
+    };
+
+    window.applySearchState = function(state) {
+      if (!state) return;
+      if (state.propertyType) setPropertyType(state.propertyType);
+      if (state.query && document.getElementById('searchInput')) {
+        document.getElementById('searchInput').value = state.query;
+      }
+      if (state.filters) drawerState = { ...drawerState, ...state.filters };
+      if (state.spatial && state.spatial.mode === 'radius' && state.spatial.centerLat && state.spatial.centerLng) {
+        setSpatialMode('radius', state.spatial);
+      } else {
+        clearSpatialSearch();
+      }
+    };
+
+    // --- Radius Search & Near Me Map Controls ---
+    window.toggleRadiusMenu = function() {
+      const panel = document.getElementById('radiusSelectorPanel');
+      if (!panel) return;
+      const isOpen = panel.style.display === 'block';
+      if (isOpen) {
+        closeRadiusMenu();
+      } else {
+        panel.style.display = 'block';
+        isSelectingRadiusCenter = true;
+        const mapEl = document.getElementById('map');
+        if (mapEl) mapEl.style.cursor = 'crosshair';
+      }
+    };
+
+    window.closeRadiusMenu = function() {
+      const panel = document.getElementById('radiusSelectorPanel');
+      if (panel) panel.style.display = 'none';
+      isSelectingRadiusCenter = false;
+      const mapEl = document.getElementById('map');
+      if (mapEl) mapEl.style.cursor = '';
+    };
+
+    window.setRadiusDistance = function(miles) {
+      selectedRadiusMiles = Number(miles);
+      document.querySelectorAll('#radiusSelectorPanel .radius-chip').forEach(btn => {
+        btn.classList.toggle('selected', Number(btn.dataset.radius) === selectedRadiusMiles);
+      });
+      if (spatialState.mode === 'radius' && spatialState.centerLat !== null && spatialState.centerLng !== null) {
+        setSpatialMode('radius', {
+          centerLat: spatialState.centerLat,
+          centerLng: spatialState.centerLng,
+          radiusMiles: selectedRadiusMiles,
+          isNearMe: spatialState.isNearMe
+        });
+      }
+    };
+
+    function onMapClick(e) {
+      if (isSelectingRadiusCenter) {
+        const { lat, lng } = e.latlng;
+        closeRadiusMenu();
+        setSpatialMode('radius', {
+          centerLat: lat,
+          centerLng: lng,
+          radiusMiles: selectedRadiusMiles || 5,
+          isNearMe: false
+        });
+      }
+    }
+
+    window.triggerNearMe = function() {
+      if (!('geolocation' in navigator)) {
+        alert("We couldn't access your location. You can choose an area directly on the map instead.");
+        return;
+      }
+
+      const btn = document.getElementById('nearMeToolBtn');
+      if (btn) btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> <span>Locating...</span>';
+
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          if (btn) btn.innerHTML = '<i class="fas fa-location-arrow"></i> <span>Near Me</span>';
+          const lat = position.coords.latitude;
+          const lng = position.coords.longitude;
+          setSpatialMode('radius', {
+            centerLat: lat,
+            centerLng: lng,
+            radiusMiles: selectedRadiusMiles || 5,
+            isNearMe: true
+          });
+        },
+        (error) => {
+          if (btn) btn.innerHTML = '<i class="fas fa-location-arrow"></i> <span>Near Me</span>';
+          alert("We couldn't access your location. You can choose an area directly on the map instead.");
+        },
+        { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 }
+      );
+    };
+
+    // --- Desktop Hide / Show Map (Phase 7.3B2A) ---
+    window.toggleDesktopMap = function() {
+      isDesktopMapHidden = !isDesktopMapHidden;
+      const mainContainer = document.getElementById('mainContainer');
+      const hideBtn = document.getElementById('hideMapBtn');
+
+      if (mainContainer) {
+        mainContainer.classList.toggle('desktop-map-hidden', isDesktopMapHidden);
+      }
+      if (hideBtn) {
+        hideBtn.innerHTML = isDesktopMapHidden ? '<i class="fas fa-map-marked-alt"></i> <span>Show Map</span>' : '<i class="fas fa-map"></i> <span>Hide Map</span>';
+      }
+      localStorage.setItem('ccor_idx_map_visible_' + SITE_KEY, isDesktopMapHidden ? 'hidden' : 'visible');
+
+      if (!isDesktopMapHidden && map) {
+        setTimeout(() => {
+          map.invalidateSize();
+        }, 60);
+      }
+    };
 
     // --- Search As I Move & Viewport Handlers ---
     window.toggleSearchAsIMove = function(checked) {
@@ -2246,8 +2810,9 @@
 
     function onMapMoveEnd() {
       if (suppressViewportSearch) return;
-      userHasMovedMap = true;
+      if (spatialState.mode === 'radius') return; // Suspend viewport search when Radius mode is active
 
+      userHasMovedMap = true;
       const b = map.getBounds();
       currentViewportBounds = {
         north: b.getNorth(),
@@ -2351,7 +2916,7 @@
       renderDrawerSubtypes();
       syncToolbarWithCategory();
       updateMoreFiltersBadge();
-      triggerSearch(true);
+      triggerSearch(false);
     }
 
     function syncToolbarWithCategory() {
@@ -2476,7 +3041,7 @@
     }
 
     // --- Query Construction ---
-    function buildFilterParams(includeViewport = true) {
+    function buildFilterParams(includeSpatial = true) {
       const p = new URLSearchParams();
       p.set('site', SITE_KEY);
       p.set('propertyType', currentPropertyType);
@@ -2485,12 +3050,18 @@
       const q = (document.getElementById('searchInput').value || '').trim();
       if (q) p.set('q', q);
 
-      // Viewport Bounds (Phase 7.3B1)
-      if (includeViewport && currentViewportBounds) {
-        p.set('north', currentViewportBounds.north.toFixed(6));
-        p.set('south', currentViewportBounds.south.toFixed(6));
-        p.set('east', currentViewportBounds.east.toFixed(6));
-        p.set('west', currentViewportBounds.west.toFixed(6));
+      // Spatial Filtering: Radius Mode vs. Viewport Mode (Phase 7.3B2A)
+      if (includeSpatial) {
+        if (spatialState.mode === 'radius' && spatialState.centerLat !== null && spatialState.centerLng !== null && spatialState.radiusMiles) {
+          p.set('centerLat', spatialState.centerLat.toFixed(6));
+          p.set('centerLng', spatialState.centerLng.toFixed(6));
+          p.set('radiusMiles', spatialState.radiusMiles.toString());
+        } else if (currentViewportBounds) {
+          p.set('north', currentViewportBounds.north.toFixed(6));
+          p.set('south', currentViewportBounds.south.toFixed(6));
+          p.set('east', currentViewportBounds.east.toFixed(6));
+          p.set('west', currentViewportBounds.west.toFixed(6));
+        }
       }
 
       // Price
@@ -2547,8 +3118,9 @@
       return p;
     }
 
-    function triggerSearch(resetViewport = false) {
-      if (resetViewport) {
+    function triggerSearch(resetSpatial = false) {
+      if (resetSpatial) {
+        clearSpatialSearch();
         currentViewportBounds = null;
         hasInitialMapFit = false;
       }
@@ -2590,7 +3162,8 @@
         renderCarousel(allListings);
         updatePaginationUI(data.pagination);
 
-        const countText = `${totalCount.toLocaleString()} Listings`;
+        const spatialSuffix = (spatialState.mode === 'radius' && spatialState.centerLat !== null) ? ` within ${spatialState.radiusMiles} mi` : '';
+        const countText = `${totalCount.toLocaleString()} Listings${spatialSuffix}`;
         document.getElementById('resultsCount').innerText = countText;
         const mobileListCount = document.getElementById('mobileListCount');
         if (mobileListCount) mobileListCount.textContent = totalCount.toLocaleString();
@@ -2813,7 +3386,8 @@
           </div>
         `);
 
-        m.on('click', () => {
+        m.on('click', (e) => {
+          if (isSelectingRadiusCenter) return; // Ignore popup if in radius center selection mode
           highlightListingCard(item.ListingKey, true);
           const card = document.getElementById('card-' + item.ListingKey);
           if (card && window.innerWidth > 1024) {
@@ -2826,8 +3400,8 @@
         markerByListingKey.set(item.ListingKey, m);
       });
 
-      // Initial fit once on first page load
-      if (!hasInitialMapFit && markers.length > 0) {
+      // Initial fit once on first page load (if not in radius mode)
+      if (!hasInitialMapFit && markers.length > 0 && spatialState.mode !== 'radius') {
         suppressViewportSearch = true;
         map.fitBounds(markerCluster.getBounds().pad(0.1));
         hasInitialMapFit = true;
@@ -2888,8 +3462,8 @@
       prevBtn.disabled = pagination.page <= 1;
       nextBtn.disabled = pagination.page >= pagination.totalPages;
 
-      prevBtn.onclick = () => { if (pagination.page > 1) fetchListings(pagination.page - 1, Boolean(currentViewportBounds)); };
-      nextBtn.onclick = () => { if (pagination.page < pagination.totalPages) fetchListings(pagination.page + 1, Boolean(currentViewportBounds)); };
+      prevBtn.onclick = () => { if (pagination.page > 1) fetchListings(pagination.page - 1, Boolean(currentViewportBounds && spatialState.mode !== 'radius')); };
+      nextBtn.onclick = () => { if (pagination.page < pagination.totalPages) fetchListings(pagination.page + 1, Boolean(currentViewportBounds && spatialState.mode !== 'radius')); };
     }
 
     // --- Detail Modal ---
@@ -3185,8 +3759,9 @@
 
       // Close dropdowns on document click
       document.addEventListener('click', (e) => {
-        if (!e.target.closest('.filter-dropdown-wrap')) {
+        if (!e.target.closest('.filter-dropdown-wrap') && !e.target.closest('.radius-selector-panel') && !e.target.closest('#radiusToolBtn')) {
           closeAllDropdowns();
+          closeRadiusMenu();
         }
       });
     }
@@ -3248,6 +3823,7 @@
         newConstruction: false, openHouse: false, newListing: false, priceReduced: false
       };
 
+      clearSpatialSearch();
       updateMoreFiltersBadge();
       renderDrawerSubtypes();
     }

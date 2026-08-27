@@ -746,4 +746,113 @@ describe('SNEAK IDX Phase 2.2 Test Suite', () => {
         const res = await worker.fetch(req, env);
         assert.equal(res.status, 200);
     });
+
+    // PHASE 7.3B2A TESTS: Radius Search + Near Me + Spatial State + Build Version
+    test('PHASE 7.3B2A: Valid radius query on /idx/v1/search succeeds with centerLat, centerLng, radiusMiles', async () => {
+        const env = {
+            SNEAK_ENV: 'staging',
+            SNEAK_SIGNING_SECRET: TEST_SIGNING_SECRET,
+            DB: createMockDB()
+        };
+
+        const bReq = new Request('https://sneak.staging/idx/v1/bootstrap?site=demo-ccor', {
+            method: 'GET',
+            headers: { Origin: 'https://preview.sneakidx.com' }
+        });
+        const bRes = await worker.fetch(bReq, env);
+        const { session } = await bRes.json();
+
+        const req = new Request(`https://sneak.staging/idx/v1/search?site=demo-ccor&session=${session}&centerLat=26.34&centerLng=-81.78&radiusMiles=5`, {
+            method: 'GET'
+        });
+        const res = await worker.fetch(req, env);
+        assert.equal(res.status, 200);
+        const data = await res.json();
+        assert.ok(Array.isArray(data.data));
+    });
+
+    test('PHASE 7.3B2A: Valid radius query on /idx/v1/map succeeds with centerLat, centerLng, radiusMiles', async () => {
+        const env = {
+            SNEAK_ENV: 'staging',
+            SNEAK_SIGNING_SECRET: TEST_SIGNING_SECRET,
+            DB: createMockDB()
+        };
+
+        const bReq = new Request('https://sneak.staging/idx/v1/bootstrap?site=demo-ccor', {
+            method: 'GET',
+            headers: { Origin: 'https://preview.sneakidx.com' }
+        });
+        const bRes = await worker.fetch(bReq, env);
+        const { session } = await bRes.json();
+
+        const req = new Request(`https://sneak.staging/idx/v1/map?site=demo-ccor&session=${session}&centerLat=26.34&centerLng=-81.78&radiusMiles=10`, {
+            method: 'GET'
+        });
+        const res = await worker.fetch(req, env);
+        assert.equal(res.status, 200);
+        const data = await res.json();
+        assert.ok(Array.isArray(data.data));
+    });
+
+    test('PHASE 7.3B2A: Invalid radius query (radiusMiles > 50 or negative) fails safely without SQL 500 error', async () => {
+        const env = {
+            SNEAK_ENV: 'staging',
+            SNEAK_SIGNING_SECRET: TEST_SIGNING_SECRET,
+            DB: createMockDB()
+        };
+
+        const bReq = new Request('https://sneak.staging/idx/v1/bootstrap?site=demo-ccor', {
+            method: 'GET',
+            headers: { Origin: 'https://preview.sneakidx.com' }
+        });
+        const bRes = await worker.fetch(bReq, env);
+        const { session } = await bRes.json();
+
+        const testUrls = [
+            `https://sneak.staging/idx/v1/search?site=demo-ccor&session=${session}&centerLat=26.34&centerLng=-81.78&radiusMiles=100`, // radius > 50
+            `https://sneak.staging/idx/v1/search?site=demo-ccor&session=${session}&centerLat=26.34&centerLng=-81.78&radiusMiles=-5`,  // negative radius
+            `https://sneak.staging/idx/v1/search?site=demo-ccor&session=${session}&centerLat=95.0&centerLng=-81.78&radiusMiles=5`,   // invalid lat
+            `https://sneak.staging/idx/v1/search?site=demo-ccor&session=${session}&centerLat=26.34&centerLng=200.0&radiusMiles=5`    // invalid lng
+        ];
+
+        for (const url of testUrls) {
+            const req = new Request(url, { method: 'GET' });
+            const res = await worker.fetch(req, env);
+            assert.equal(res.status, 200, `Failed safe fallback for ${url}`);
+        }
+    });
+
+    test('PHASE 7.3B2A: Radius search functions across all property categories (sale, rental, commercial, land)', async () => {
+        const env = {
+            SNEAK_ENV: 'staging',
+            SNEAK_SIGNING_SECRET: TEST_SIGNING_SECRET,
+            DB: createMockDB()
+        };
+
+        const bReq = new Request('https://sneak.staging/idx/v1/bootstrap?site=demo-ccor', {
+            method: 'GET',
+            headers: { Origin: 'https://preview.sneakidx.com' }
+        });
+        const bRes = await worker.fetch(bReq, env);
+        const { session } = await bRes.json();
+
+        for (const cat of ['sale', 'rental', 'commercial', 'land']) {
+            const req = new Request(`https://sneak.staging/idx/v1/search?site=demo-ccor&session=${session}&propertyType=${cat}&centerLat=26.34&centerLng=-81.78&radiusMiles=5`, {
+                method: 'GET'
+            });
+            const res = await worker.fetch(req, env);
+            assert.equal(res.status, 200, `Radius search failed for category ${cat}`);
+            const data = await res.json();
+            assert.ok(Array.isArray(data.data));
+        }
+    });
+
+    test('PHASE 7.3B2A: Frontend build versions are uniformly bumped to 2026.08.27.7.3b2a', () => {
+        const searchHtml = fs.readFileSync(path.join(rootDir, 'sneak-idx/search/index.html'), 'utf8');
+        const embedJs = fs.readFileSync(path.join(rootDir, 'sneak-idx/embed.js'), 'utf8');
+
+        assert.ok(searchHtml.includes('data-ui-build="2026.08.27.7.3b2a"'), 'search/index.html must have data-ui-build="2026.08.27.7.3b2a"');
+        assert.ok(searchHtml.includes("CCOR_IDX_UI_BUILD = '2026.08.27.7.3b2a'"), "search/index.html must have CCOR_IDX_UI_BUILD = '2026.08.27.7.3b2a'");
+        assert.ok(embedJs.includes("const buildVersion = '2026.08.27.7.3b2a'"), "embed.js must have buildVersion = '2026.08.27.7.3b2a'");
+    });
 });

@@ -55,14 +55,27 @@ graph TD
 
 ---
 
-### Phase 7.3B2 — Spatial Map Search: Radius, Near Me & Polygon Search (PLANNED)
-* **Goal:** Provide advanced spatial geometry property discovery with interactive freehand polygons, radius search, and GPS device centering.
+### Phase 7.3B2A — Radius Search, Near Me, Spatial State & Desktop Hide Map (CURRENT)
+* **Goal:** Deliver centralized frontend spatial search state, server-side equirectangular distance filtering in D1 SQLite, responsive Leaflet radius visualization, Near Me geolocation, and desktop map toggle.
+* **Status:** `COMPLETE / DEPLOYED`
+* **Features Included:**
+  * **Centralized Spatial State Engine:** Mode precedence (`viewport` vs `radius`), center point coordinates, distance radius in miles, `isNearMe` origin tracking, search state serialization (`serializeSearchState` / `applySearchState` for Phase 7.3C preparation).
+  * **D1 SQL Equirectangular Distance Filtering:** Bounding box prefilter + parameterized distance math executed server-side across `/idx/v1/search` and `/idx/v1/map`.
+  * **Radius Map UI & Visualization:** Quick distance selector chips (1, 2, 5, 10, 25 mi), interactive map center placement, dynamic Leaflet circle rendering, fit-to-radius bounds once.
+  * **Near Me Geolocation:** Compact GPS location search with HTML5 `navigator.geolocation`, fallback friendly messaging, ephemeral coordinates without telemetry storage.
+  * **Desktop Hide Map (> 1024px):** Toggle button collapses map and expands listings grid to 100% full width; persisted in `localStorage` (`ccor_idx_map_visible_${SITE_KEY}`).
+  * **Active Spatial Badges:** Responsive `Within X mi ✕` pill in secondary filter toolbar and on-map badge overlay with one-click area clearing.
+  * **Deterministic UI Build:** `2026.08.27.7.3b2a` across search UI, embed loader, and tests.
+
+---
+
+### Phase 7.3B2B — Spatial Polygon Drawing (FUTURE)
+* **Goal:** Interactive freehand polygon and boundary drawing with Turf.js spatial polygon inclusion.
 * **Status:** `FUTURE`
 * **Feature Candidates:**
-  * **Draw Polygon:** Freehand polygon and boundary drawing with turf.js spatial polygon inclusion.
-  * **Radius Search:** Center-point distance radius filtering (`radiusMiles, centerLat, centerLng`).
-  * **Near Me / Current Location:** HTML5 Geolocation device location centering.
-  * **Hide Map:** Consumer preference toggle to view grid only on desktop.
+  * Freehand drawing tools on map canvas.
+  * Point-in-polygon spatial candidate filtering.
+  * Polygon boundary persistence and editing.
 
 ---
 

@@ -77,25 +77,28 @@ Every participant must complete all verification gates before being marked **Lau
 * **Phase 7.3B1 Interactive Map/List Synchronization & Mobile UX:**
   * *Search As I Move Map Engine:* Debounced 400ms spatial bounding (`north, south, east, west`) shared identically between `/idx/v1/search` and `/idx/v1/map`. Moving/zooming the map dynamically filters both the listing cards and map markers within the exact visible viewport.
   * *Map Search Loop Prevention:* Map auto-fits initial results once on page load (`hasInitialMapFit`); user-panned viewport searches strictly maintain user viewport without jumping.
-  * *Search As I Move Overlay:* Compact `Search as I move` checkbox overlay with dynamic `Search this area` button when toggle is unchecked.
+  * *Search As I Move Overlay:* Compact `Search as I move` checkbox overlay with dynamic `Search this area` button when toggle is unchecked (suspended during active Radius search).
   * *Context-Aware Map Popups:* Full marker schema with Beds/Baths/Sqft on residential/rental; Acreage/Subdivision on Lot & Land; Sqft/Acres/Subtype/Zoning on Commercial (zero `0 bd 0 ba` fallbacks).
   * *Bidirectional Map ↔ Card Synchronization:* Card hover raises & glows marker pin (`pin-highlighted`); marker click highlights listing card and smoothly scrolls it into view on desktop.
   * *Mobile / Tablet Segmented Toggle (<= 1024px):* Replaced vertical map stacking with `List | Map` segmented control (defaults to List mode; Map mode resizes Leaflet tiles cleanly via `map.invalidateSize()`).
-  * *Race-Safe Fetching & Lightweight Loaders:* `AbortController` cancellation prevents race condition stale overwrites; non-blocking spinner/overlay maintains map draggability during search.
-  * *Truncation Tracking:* Map query queries `limit + 1` to gracefully detect and display `Too many properties to display. Zoom in to see more.`
+  * *Spatial Search State Engine (Phase 7.3B2A):* Centralized spatial state model (`viewport` vs `radius`), center point coordinates, distance radius in miles, `isNearMe` tracking, and search state serialization.
+  * *Server-Side Equirectangular Distance Filtering:* SQL bounding-box prefilter + parameterized distance math executed directly in D1 SQLite.
+  * *Radius Search Map UI:* Interactive center point placement, distance chips (1, 2, 5, 10, 25 mi), Leaflet circle visualization, one-click `Clear Area` badge and active filter pill.
+  * *Near Me Geolocation:* One-click HTML5 geolocation device location radius search with graceful privacy and permission handling.
+  * *Desktop Hide Map (> 1024px):* Hide Map toggle expands listing grid to 100% full width, persisted in localStorage.
 * **Live Validation Evidence:**
   * Live Public URL: `https://coconutcoastrealtors.org/idx-test/` (HTTP 200 OK)
-  * Live Static UI Build: PASS — `data-ui-build="2026.08.27.7.3b1"`, `CCOR_IDX_UI_BUILD = '2026.08.27.7.3b1'`, `embed.js &v=2026.08.27.7.3b1`
-  * Live Bounded Search & Map: PASS — Viewport bounding box filters accurately across residential, commercial, and land
+  * Live Static UI Build: PASS — `data-ui-build="2026.08.27.7.3b2a"`, `CCOR_IDX_UI_BUILD = '2026.08.27.7.3b2a'`, `embed.js &v=2026.08.27.7.3b2a`
+  * Live Radius & Viewport Search: PASS — Radius Mode (centerLat, centerLng, radiusMiles) filters accurately across residential, commercial, and land
   * Live Marker Schema: PASS — Complete context-aware fields returned from D1 with address suppression enforced
-  * Automated Regression Suite: PASS — 66/66 tests passing (`node --test test/*.test.mjs`)
+  * Automated Regression Suite: PASS — 71/71 tests passing (`node --test test/*.test.mjs`)
   * Real Browser Verification: **BROWSER VERIFICATION PENDING** (Automated Chrome CDP environment resolution failure; Operator Visual Verification required)
 * **Observability & Timing:**
   * Staff Setup Time: ~9 minutes
   * Member Implementation Time: ~2 minutes (HTML snippet paste in WordPress)
-  * Staff Interventions Required: 5 (Identity reconciliation, Phase 7.1 model correction, Phase 7.2 product corrections, Phase 7.3A search parity, Phase 7.3B1 interactive map synchronization)
+  * Staff Interventions Required: 6 (Identity reconciliation, Phase 7.1 model correction, Phase 7.2 product corrections, Phase 7.3A search parity, Phase 7.3B1 interactive map synchronization, Phase 7.3B2A radius search)
   * Support Questions Logged: 0
-* **Final Status:** **ACTIVE PILOT (CCOR IDX Plug-in Phase 7.3B1 Deployed)**
+* **Final Status:** **ACTIVE PILOT (CCOR IDX Plug-in Phase 7.3B2A Deployed)**
 
 ---
 

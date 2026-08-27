@@ -981,27 +981,73 @@ function buildCommonListingFilters(params, site) {
         bindValues.push(q, q, q, likeQ, likeQ, likeQ, likeQ, q.toLowerCase());
     }
 
-    // 17. Geographic Viewport Bounding Box (north, south, east, west)
-    const north = parseFloat(params.get('north'));
-    const south = parseFloat(params.get('south'));
-    const east = parseFloat(params.get('east'));
-    const west = parseFloat(params.get('west'));
+    // 17. Spatial Filtering: Radius Mode vs. Viewport Bounding Box Mode
+    const centerLat = parseFloat(params.get('centerLat'));
+    const centerLng = parseFloat(params.get('centerLng'));
+    const radiusMiles = parseFloat(params.get('radiusMiles'));
 
-    if (!isNaN(north) && !isNaN(south) && north >= -90 && north <= 90 && south >= -90 && south <= 90) {
-        const minLat = Math.min(south, north);
-        const maxLat = Math.max(south, north);
-        whereClauses.push("Latitude IS NOT NULL AND Latitude >= ? AND Latitude <= ?");
-        bindValues.push(minLat, maxLat);
-    }
+    const hasValidRadius = (
+        !isNaN(centerLat) && !isNaN(centerLng) && !isNaN(radiusMiles) &&
+        centerLat >= -90 && centerLat <= 90 &&
+        centerLng >= -180 && centerLng <= 180 &&
+        radiusMiles > 0 && radiusMiles <= 50
+    );
 
-    if (!isNaN(east) && !isNaN(west) && east >= -180 && east <= 180 && west >= -180 && west <= 180) {
-        if (west <= east) {
-            whereClauses.push("Longitude IS NOT NULL AND Longitude >= ? AND Longitude <= ?");
-            bindValues.push(west, east);
+    if (hasValidRadius) {
+        // Radius Mode: Compute geographic bounding box prefilter + parameterized equirectangular distance math
+        const deltaLat = radiusMiles / 69.0;
+        const cosLat = Math.cos(centerLat * Math.PI / 180.0);
+        const cosFactor = 69.0 * cosLat;
+        const deltaLng = cosLat !== 0 ? radiusMiles / Math.abs(cosFactor) : 180.0;
+
+        const latMin = Math.max(-90, centerLat - deltaLat);
+        const latMax = Math.min(90, centerLat + deltaLat);
+        const lngMin = centerLng - deltaLng;
+        const lngMax = centerLng + deltaLng;
+        const radiusSq = radiusMiles * radiusMiles;
+
+        whereClauses.push("Latitude IS NOT NULL AND Longitude IS NOT NULL");
+        whereClauses.push("Latitude >= ? AND Latitude <= ?");
+        bindValues.push(latMin, latMax);
+
+        if (lngMin >= -180 && lngMax <= 180) {
+            whereClauses.push("Longitude >= ? AND Longitude <= ?");
+            bindValues.push(lngMin, lngMax);
         } else {
-            // Anti-meridian boundary
-            whereClauses.push("Longitude IS NOT NULL AND (Longitude >= ? OR Longitude <= ?)");
-            bindValues.push(west, east);
+            // Normalize anti-meridian
+            const normLngMin = ((lngMin + 180) % 360 + 360) % 360 - 180;
+            const normLngMax = ((lngMax + 180) % 360 + 360) % 360 - 180;
+            whereClauses.push("(Longitude >= ? OR Longitude <= ?)");
+            bindValues.push(normLngMin, normLngMax);
+        }
+
+        // Exact distance constraint: ((Latitude - centerLat)*69)^2 + ((Longitude - centerLng)*cosFactor)^2 <= radiusMiles^2
+        whereClauses.push("(((Latitude - ?) * 69.0) * ((Latitude - ?) * 69.0) + ((Longitude - ?) * ?) * ((Longitude - ?) * ?)) <= ?");
+        bindValues.push(centerLat, centerLat, centerLng, cosFactor, centerLng, cosFactor, radiusSq);
+
+    } else {
+        // Viewport Bounding Box Mode (north, south, east, west)
+        const north = parseFloat(params.get('north'));
+        const south = parseFloat(params.get('south'));
+        const east = parseFloat(params.get('east'));
+        const west = parseFloat(params.get('west'));
+
+        if (!isNaN(north) && !isNaN(south) && north >= -90 && north <= 90 && south >= -90 && south <= 90) {
+            const minLat = Math.min(south, north);
+            const maxLat = Math.max(south, north);
+            whereClauses.push("Latitude IS NOT NULL AND Latitude >= ? AND Latitude <= ?");
+            bindValues.push(minLat, maxLat);
+        }
+
+        if (!isNaN(east) && !isNaN(west) && east >= -180 && east <= 180 && west >= -180 && west <= 180) {
+            if (west <= east) {
+                whereClauses.push("Longitude IS NOT NULL AND Longitude >= ? AND Longitude <= ?");
+                bindValues.push(west, east);
+            } else {
+                // Anti-meridian boundary
+                whereClauses.push("Longitude IS NOT NULL AND (Longitude >= ? OR Longitude <= ?)");
+                bindValues.push(west, east);
+            }
         }
     }
 
