@@ -1,0 +1,20 @@
+# wrangler.sneak-consumer.toml
+# Dedicated Configuration for SNEAK IDX Staging Consumer Worker (Buyer Identity & Server Favorites)
+
+name = "sneak-idx-consumer-staging"
+main = "sneak-consumer/worker.js"
+compatibility_date = "2024-01-01"
+
+[observability]
+enabled = true
+head_sampling_rate = 1
+
+[vars]
+SNEAK_ENV = "staging"
+CONSUMER_WORKER_URL = "https://sneak-idx-consumer-staging.bonitaspringsrealtors.workers.dev"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "sneak-idx-staging"
+database_id = "6b91eeca-d65f-434c-a49f-419dff98285f"
+migrations_dir = "migrations"

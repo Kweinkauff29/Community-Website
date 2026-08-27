@@ -83,17 +83,37 @@ graph TD
 
 ---
 
-### Phase 7.3C — Buyer Retention & Client Tools (NEXT PLANNED MAJOR PHASE)
-* **Goal:** Provide consumer login, saved searches, automated email alerts, and lead CRM intelligence for participating REALTORS®.
+### Phase 7.3C1A — Buyer Identity, Passwordless Authentication & Server Favorites (COMPLETED)
+* **Goal:** Deliver site-scoped consumer identity, passwordless magic-link authentication with 2-minute exchange codes, 14-day revocable sessions, server favorites with anonymous union merge, address suppression compliance, and XSS sanitization.
+* **Status:** `COMPLETE / DEPLOYED`
+* **Features Included:**
+  * **Isolated Consumer Worker & Trust Realm (`sneak-consumer/`):** Dedicated worker (`sneak-idx-consumer-staging`) strictly isolated from member/admin realms (`sneak-member/`).
+  * **Site-Scoped Consumer Identity:** `sneak_consumer_users` with `UNIQUE(site_id, email)` ensures buyer accounts on Agent A vs Agent B sites are isolated tenants.
+  * **Passwordless Magic Links & Rate Limiting:** Single-use SHA-256 hashed magic links with 15-minute TTL; generic anti-enumeration responses protect user privacy; IP & email rate limiting defense.
+  * **Open-Redirect & Protocol Protection:** Return URLs strictly verified against active verified hostnames in `sneak_domains` with mandatory HTTPS.
+  * **2-Minute Exchange Code Handoff:** Atomic single-use exchange code in `sneak_consumer_auth_exchanges` prevents exposure of long-lived session tokens in redirect URLs.
+  * **Embed Parent Handoff:** `embed.js` extracts `auth_code` from parent page query, forwards into search iframe, and cleans parent browser URL with `history.replaceState`.
+  * **Server Favorites & Local Anonymous Merge:** `sneak_consumer_favorites` (max 200 items); optimistic heart icon toggles; POST `/api/consumer/favorites/merge` automatically merges anonymous local favorites on sign-in.
+  * **XSS Sanitization & MLS Security:** `escapeHtml` and `sanitizeUrl` guard all dynamic HTML rendering across listing cards, popups, and carousels.
+  * **Deterministic UI Build:** `2026.08.27.7.3c1a` across search UI, embed loader, consumer worker, and test suites.
+
+---
+
+### Phase 7.3C1B — Saved Searches & Restore Search State (NEXT)
+* **Goal:** Provide saved search management, named searches, spatial search restoration, and URL search state deserialization.
 * **Status:** `PLANNED`
-* **Feature Candidates:**
-  * **Consumer Accounts & Passwordless Auth:** Magic link login for property buyers on member websites.
-  * **Saved Searches & Instant Email Alerts:** Automated daily/instant MLS alert emails matching saved search criteria.
-  * **Server-Side Favorites:** Cloud-synced saved properties across mobile and desktop devices.
-  * **Property Comparison Tool:** Side-by-side spec comparison of up to 4 listings.
-  * **Recently Viewed Listings:** Persistent client-side and server-side history.
-  * **Share Listing / Social Share:** Native Web Share API + shortlinks.
-  * **Agent Lead Activity Dashboard:** Live timeline of client views, saved homes, and inquiries in Member Portal.
+
+---
+
+### Phase 7.3C2 — Automated Email Alerts & Agent Activity Dashboard (PLANNED)
+* **Goal:** Automated daily/instant MLS email alerts on new matching inventory, and client activity timelines in REALTOR® Member Portal.
+* **Status:** `PLANNED`
+
+---
+
+### Phase 7.3C3 — Property Comparison, Recently Viewed & Sharing (PLANNED)
+* **Goal:** Side-by-side listing comparison (up to 4 homes), recently viewed history, and social/native sharing.
+* **Status:** `PLANNED`
 
 ---
 

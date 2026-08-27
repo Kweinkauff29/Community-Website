@@ -130,10 +130,24 @@
             widgetPath = `${widgetRoot}?type=open-houses&`;
         }
 
+        // Check for parent page auth exchange code (Phase 7.3C1A)
+        let parentAuthCode = null;
+        try {
+            const currentUrl = new URL(window.location.href);
+            if (currentUrl.searchParams.has('auth_code')) {
+                parentAuthCode = currentUrl.searchParams.get('auth_code');
+                currentUrl.searchParams.delete('auth_code');
+                window.history.replaceState({}, document.title, currentUrl.pathname + (currentUrl.search ? currentUrl.search : '') + currentUrl.hash);
+            }
+        } catch {}
+
         // Construct iframe URL with signed session token and deterministic build version
         const separator = widgetPath.includes('?') ? '&' : '?';
-        const buildVersion = '2026.08.27.7.3b2b';
+        const buildVersion = '2026.08.27.7.3c1a';
         let iframeUrl = `${baseUrl}${widgetPath}${separator}site=${encodeURIComponent(siteKey)}&session=${encodeURIComponent(data.session)}&embed=true&v=${encodeURIComponent(buildVersion)}`;
+        if (parentAuthCode) {
+            iframeUrl += `&auth_code=${encodeURIComponent(parentAuthCode)}`;
+        }
         if (customParams) {
             iframeUrl += `&${customParams}`;
         }

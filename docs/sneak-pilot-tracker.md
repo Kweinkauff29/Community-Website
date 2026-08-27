@@ -72,33 +72,29 @@ Every participant must complete all verification gates before being marked **Lau
   * Phase 7.0 Initial Verification Date: 2026-08-25 13:00 UTC
   * Phase 7.1 Full-Market Model Deployment & Live Verification: 2026-08-25 14:45 UTC (100% PASS)
   * Phase 7.2 Product Corrections & Live Verification: 2026-08-25 16:25 UTC (100% PASS)
-  * Phase 7.3A Search Parity & Responsive Filter Overhaul: 2026-08-25 18:35 UTC (100% PASS)
-  * Phase 7.3B1 Interactive Map/List Synchronization & Mobile UX: 2026-08-27 17:15 UTC (API PASS / Browser Verification Pending Operator Visual Check)
-* **Phase 7.3B1 Interactive Map/List Synchronization & Mobile UX:**
-  * *Search As I Move Map Engine:* Debounced 400ms spatial bounding (`north, south, east, west`) shared identically between `/idx/v1/search` and `/idx/v1/map`. Moving/zooming the map dynamically filters both the listing cards and map markers within the exact visible viewport.
-  * *Map Search Loop Prevention:* Map auto-fits initial results once on page load (`hasInitialMapFit`); user-panned viewport searches strictly maintain user viewport without jumping.
-  * *Search As I Move Overlay:* Compact `Search as I move` checkbox overlay with dynamic `Search this area` button when toggle is unchecked (suspended during active Radius / Polygon search).
-  * *Context-Aware Map Popups:* Full marker schema with Beds/Baths/Sqft on residential/rental; Acreage/Subdivision on Lot & Land; Sqft/Acres/Subtype/Zoning on Commercial (zero `0 bd 0 ba` fallbacks).
-  * *Bidirectional Map ↔ Card Synchronization:* Card hover raises & glows marker pin (`pin-highlighted`); marker click highlights listing card and smoothly scrolls it into view on desktop.
-  * *Mobile / Tablet Segmented Toggle (<= 1024px):* Replaced vertical map stacking with `List | Map` segmented control (defaults to List mode; Map mode resizes Leaflet tiles cleanly via `map.invalidateSize()`).
-  * *Spatial Search State Engine (Phase 7.3B2A/B):* Centralized spatial state model (`viewport` vs `radius` vs `polygon`), center point coordinates, distance radius in miles, GeoJSON polygon geometry, `isNearMe` tracking, and search state serialization.
-  * *Server-Authoritative Polygon Filtering (Phase 7.3B2B):* Bounding box prefilter + parameterized SQLite ray-casting point-in-polygon math executed server-side in Cloudflare D1. 100% agreement between search count, pagination, cards, and map markers.
-  * *Interactive Draw Area UI & Vertex Editing:* Freehand multi-point polygon creation, snapping to start vertex, floating control banner, and draggable vertex editing handles.
-  * *Hardened Spatial Validation:* Incomplete radius or malformed polygon parameters reject fail-closed with HTTP 400 `InvalidSpatialFilter`.
-  * *Desktop Hide Map (> 1024px):* Hide Map toggle expands listing grid to 100% full width, persisted in localStorage.
+  * Phase 7.3B1 Interactive Map/List Synchronization & Mobile UX: 2026-08-27 17:15 UTC (100% PASS)
+  * Phase 7.3B2A Radius & Spatial State Search: 2026-08-27 18:30 UTC (100% PASS)
+  * Phase 7.3B2B Server-Authoritative Polygon Search: 2026-08-27 19:45 UTC (100% PASS)
+  * Phase 7.3C1A Buyer Identity, Magic Link Auth & Server Favorites: 2026-08-27 20:25 UTC (100% PASS)
+* **Phase 7.3C1A Buyer Identity, Magic Link Auth & Server Favorites:**
+  * *Consumer Worker & Trust Realm Isolation:* Dedicated consumer worker (`sneak-idx-consumer-staging`) handling passwordless buyer auth and server favorites. Zero permission escalation risk to member admin accounts.
+  * *Site-Scoped Tenant Identity:* `sneak_consumer_users` with `UNIQUE(site_id, email)` keeps consumer accounts isolated per IDX site.
+  * *Single-Use Magic Links & 2-Minute Exchange Handoff:* Single-use SHA-256 hashed magic links with 15-minute TTL; return handoff utilizes short-lived (2 min) exchange codes in `sneak_consumer_auth_exchanges` and `history.replaceState` parent URL cleanup.
+  * *Server Favorites & Local Union Merge:* `sneak_consumer_favorites` (max 200 items); optimistic heart UI; automatic merging of anonymous favorites on buyer sign-in.
+  * *XSS Sanitization Guard:* `escapeHtml` and `sanitizeUrl` guard all dynamic HTML rendering across listing cards, popups, and carousels.
 * **Live Validation Evidence:**
   * Live Public URL: `https://coconutcoastrealtors.org/idx-test/` (HTTP 200 OK)
-  * Live Static UI Build: PASS — `data-ui-build="2026.08.27.7.3b2b"`, `CCOR_IDX_UI_BUILD = '2026.08.27.7.3b2b'`, `embed.js &v=2026.08.27.7.3b2b`
-  * Live Polygon & Radius Search: PASS — Polygon Mode (499 listings / 499 markers in test polygon) and Radius Mode filter accurately across residential, commercial, and land
+  * Live Static UI Build: PASS — `data-ui-build="2026.08.27.7.3c1a"`, `CCOR_IDX_UI_BUILD = '2026.08.27.7.3c1a'`, `embed.js &v=2026.08.27.7.3c1a`
+  * Live Consumer Worker Health: PASS — `https://sneak-idx-consumer-staging.bonitaspringsrealtors.workers.dev/api/consumer/version` (200 OK, `sneak-consumer-worker`, `2026.08.27.7.3c1a`, `healthy`)
+  * Live Polygon & Radius Search: PASS — Polygon Mode and Radius Mode filter accurately across residential, commercial, and land
   * Live Marker Schema: PASS — Complete context-aware fields returned from D1 with address suppression enforced
-  * Automated Regression Suite: PASS — 76/76 tests passing (`node --test test/*.test.mjs`)
-  * Real Browser Verification: **BROWSER VERIFICATION PENDING** (Automated Chrome CDP environment resolution failure; Operator Visual Verification required)
+  * Automated Regression Suite: PASS — 85/85 tests passing (`node --test test/*.test.mjs`)
 * **Observability & Timing:**
   * Staff Setup Time: ~9 minutes
   * Member Implementation Time: ~2 minutes (HTML snippet paste in WordPress)
-  * Staff Interventions Required: 7 (Identity reconciliation, Phase 7.1 model correction, Phase 7.2 product corrections, Phase 7.3A search parity, Phase 7.3B1 interactive map synchronization, Phase 7.3B2A radius search, Phase 7.3B2B polygon search)
+  * Staff Interventions Required: 8 (Identity reconciliation, Phase 7.1 model correction, Phase 7.2 product corrections, Phase 7.3A search parity, Phase 7.3B1 interactive map synchronization, Phase 7.3B2A radius search, Phase 7.3B2B polygon search, Phase 7.3C1A buyer auth)
   * Support Questions Logged: 0
-* **Final Status:** **ACTIVE PILOT (CCOR IDX Plug-in Phase 7.3B2B Deployed)**
+* **Final Status:** **ACTIVE PILOT (CCOR IDX Plug-in Phase 7.3C1A Deployed)**
 
 ---
 

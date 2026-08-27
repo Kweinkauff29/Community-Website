@@ -1016,14 +1016,16 @@ describe('SNEAK IDX Phase 2.2 Test Suite', () => {
         assert.ok(Array.isArray(data.data));
     });
 
-    test('PHASE 7.3B2B: Frontend build versions are uniformly bumped to 2026.08.27.7.3b2b', () => {
+    test('PHASE 7.3C1A: Frontend build versions are uniformly bumped to 2026.08.27.7.3c1a', () => {
         const searchHtml = fs.readFileSync(path.join(rootDir, 'sneak-idx/search/index.html'), 'utf8');
         const embedJs = fs.readFileSync(path.join(rootDir, 'sneak-idx/embed.js'), 'utf8');
 
-        assert.ok(searchHtml.includes('data-ui-build="2026.08.27.7.3b2b"'), 'search/index.html must have data-ui-build="2026.08.27.7.3b2b"');
-        assert.ok(searchHtml.includes("CCOR_IDX_UI_BUILD = '2026.08.27.7.3b2b'"), "search/index.html must have CCOR_IDX_UI_BUILD = '2026.08.27.7.3b2b'");
-        assert.ok(embedJs.includes("const buildVersion = '2026.08.27.7.3b2b'"), "embed.js must have buildVersion = '2026.08.27.7.3b2b'");
-        assert.ok(searchHtml.includes('id="drawToolBtn"'), 'search/index.html must have #drawToolBtn');
-        assert.ok(searchHtml.includes('id="drawControlsBanner"'), 'search/index.html must have #drawControlsBanner');
+        assert.ok(searchHtml.includes('data-ui-build="2026.08.27.7.3c1a"'), 'search/index.html must have data-ui-build="2026.08.27.7.3c1a"');
+        assert.ok(searchHtml.includes("CCOR_IDX_UI_BUILD = '2026.08.27.7.3c1a'"), "search/index.html must have CCOR_IDX_UI_BUILD = '2026.08.27.7.3c1a'");
+        assert.ok(embedJs.includes("const buildVersion = '2026.08.27.7.3c1a'"), "embed.js must have buildVersion = '2026.08.27.7.3c1a'");
+        assert.ok(searchHtml.includes('id="consumerAuthModal"'), 'search/index.html must have #consumerAuthModal');
+        assert.ok(searchHtml.includes('id="consumerAccountModal"'), 'search/index.html must have #consumerAccountModal');
+        assert.ok(searchHtml.includes('id="consumerAuthBtn"'), 'search/index.html must have #consumerAuthBtn');
+        assert.ok(embedJs.includes('auth_code'), 'embed.js must support auth_code handoff');
     });
 });

@@ -1947,15 +1947,189 @@
         justify-content: center;
         padding: 8px 8px;
         font-size: 0.78rem;
-      }
-      .drawer-container {
-        max-width: 100%;
-      }
+    /* Consumer Auth & Account Modals (Phase 7.3C1A) */
+    .consumer-modal-overlay {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(11, 19, 41, 0.7);
+      backdrop-filter: blur(4px);
+      z-index: 2000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.25s ease;
+    }
+    .consumer-modal-overlay.open {
+      opacity: 1;
+      pointer-events: auto;
+    }
+    .consumer-modal-card {
+      background: #ffffff;
+      border-radius: 16px;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+      width: 100%;
+      max-width: 440px;
+      padding: 28px;
+      position: relative;
+      transform: translateY(12px);
+      transition: transform 0.25s ease;
+    }
+    .consumer-modal-overlay.open .consumer-modal-card {
+      transform: translateY(0);
+    }
+    .consumer-modal-close {
+      position: absolute;
+      top: 16px;
+      right: 16px;
+      background: #f1f5f9;
+      border: none;
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      color: #64748b;
+      font-size: 1rem;
+      transition: all 0.2s;
+    }
+    .consumer-modal-close:hover {
+      background: #e2e8f0;
+      color: #0f172a;
+    }
+    .consumer-modal-title {
+      font-size: 1.35rem;
+      font-weight: 700;
+      color: var(--primary, #1a2a3a);
+      margin: 0 0 6px 0;
+    }
+    .consumer-modal-sub {
+      font-size: 0.88rem;
+      color: #64748b;
+      line-height: 1.45;
+      margin: 0 0 20px 0;
+    }
+    .consumer-form-group {
+      margin-bottom: 16px;
+    }
+    .consumer-form-group label {
+      display: block;
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: #475569;
+      margin-bottom: 6px;
+    }
+    .consumer-input {
+      width: 100%;
+      padding: 12px 14px;
+      border: 1px solid #cbd5e1;
+      border-radius: 8px;
+      font-size: 0.92rem;
+      outline: none;
+      transition: border 0.2s;
+      box-sizing: border-box;
+    }
+    .consumer-input:focus {
+      border-color: var(--accent, #0284c7);
+      box-shadow: 0 0 0 3px var(--accent-light, rgba(2,132,199,0.15));
+    }
+    .consumer-btn-primary {
+      width: 100%;
+      padding: 12px 18px;
+      background: var(--primary, #1a2a3a);
+      color: #ffffff;
+      border: none;
+      border-radius: 8px;
+      font-size: 0.95rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: filter 0.2s;
+    }
+    .consumer-btn-primary:hover {
+      filter: brightness(1.15);
+    }
+    .consumer-btn-secondary {
+      width: 100%;
+      padding: 10px 16px;
+      background: #f8fafc;
+      color: #334155;
+      border: 1px solid #cbd5e1;
+      border-radius: 8px;
+      font-size: 0.88rem;
+      font-weight: 600;
+      cursor: pointer;
+      margin-top: 8px;
+      transition: all 0.2s;
+    }
+    .consumer-btn-secondary:hover {
+      background: #f1f5f9;
+    }
+    .consumer-btn-danger {
+      width: 100%;
+      padding: 8px 14px;
+      background: transparent;
+      color: #ef4444;
+      border: none;
+      font-size: 0.8rem;
+      cursor: pointer;
+      margin-top: 12px;
+      text-decoration: underline;
+    }
+    .consumer-auth-status {
+      margin-top: 14px;
+      padding: 12px;
+      border-radius: 8px;
+      font-size: 0.85rem;
+      line-height: 1.4;
+      display: none;
+    }
+    .consumer-auth-status.success {
+      background: #ecfdf5;
+      border: 1px solid #a7f3d0;
+      color: #065f46;
+      display: block;
+    }
+    .consumer-auth-status.error {
+      background: #fef2f2;
+      border: 1px solid #fecaca;
+      color: #991b1b;
+      display: block;
+    }
+    .consumer-nav-btn {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: #f1f5f9;
+      padding: 6px 12px;
+      border-radius: 18px;
+      font-size: 0.82rem;
+      font-weight: 600;
+      color: var(--primary, #1a2a3a);
+      text-decoration: none;
+      transition: all 0.2s;
+      border: 1px solid #e2e8f0;
+      cursor: pointer;
+    }
+    .consumer-nav-btn:hover {
+      background: #e2e8f0;
+    }
+    .consumer-nav-btn.logged-in {
+      background: rgba(2, 132, 199, 0.08);
+      border-color: rgba(2, 132, 199, 0.25);
+      color: var(--accent, #0284c7);
     }
   </style>
 </head>
 
-<body data-ui-build="2026.08.27.7.3b2b">
+<body data-ui-build="2026.08.27.7.3c1a">
 
   <!-- Loading Overlay -->
   <div class="loading-overlay" id="loadingOverlay" style="display:none">
@@ -1975,6 +2149,9 @@
         <li><a href="#" id="navHome">Homes For Sale</a></li>
         <li><a href="#" id="navOpenHouses">Open Houses</a></li>
         <li><a href="#" id="navContact">Contact</a></li>
+        <li id="consumerAuthNavItem"><a href="javascript:void(0)" id="consumerAuthBtn" class="consumer-nav-btn"><i class="far fa-heart"></i> <span>Sign In</span></a></li>
+        <li id="consumerSavedNavItem" style="display:none"><a href="javascript:void(0)" id="consumerSavedBtn" class="consumer-nav-btn"><i class="fas fa-heart" style="color:var(--hot)"></i> <span>Saved (<span id="consumerFavCount">0</span>)</span></a></li>
+        <li id="consumerUserNavItem" style="display:none"><a href="javascript:void(0)" id="consumerUserBtn" class="consumer-nav-btn logged-in"><i class="fas fa-user-circle"></i> <span id="consumerUserLabel">Account</span></a></li>
       </ul>
     </div>
   </div>
@@ -2445,6 +2622,46 @@
     </div>
   </div>
 
+  <!-- Consumer Auth Modal (Phase 7.3C1A) -->
+  <div class="consumer-modal-overlay" id="consumerAuthModal">
+    <div class="consumer-modal-card">
+      <button class="consumer-modal-close" id="consumerAuthClose">&times;</button>
+      <div class="consumer-modal-title"><i class="fas fa-heart" style="color:var(--hot, #ef4444);margin-right:6px"></i> Save your homes</div>
+      <div class="consumer-modal-sub">Sign in with your email to keep your saved favorites synced across all your devices. No password needed.</div>
+      
+      <form id="consumerAuthForm">
+        <div class="consumer-form-group">
+          <label for="consumerEmailInput">Email Address</label>
+          <input type="email" id="consumerEmailInput" class="consumer-input" placeholder="you@example.com" required autocomplete="email">
+        </div>
+        <button type="submit" class="consumer-btn-primary" id="consumerSubmitBtn">
+          <i class="fas fa-envelope"></i> Email me a sign-in link
+        </button>
+      </form>
+
+      <div class="consumer-auth-status" id="consumerAuthStatus"></div>
+    </div>
+  </div>
+
+  <!-- Consumer Account Modal (Phase 7.3C1A) -->
+  <div class="consumer-modal-overlay" id="consumerAccountModal">
+    <div class="consumer-modal-card">
+      <button class="consumer-modal-close" id="consumerAccountClose">&times;</button>
+      <div class="consumer-modal-title"><i class="fas fa-user-circle" style="color:var(--accent, #0284c7);margin-right:6px"></i> Buyer Account</div>
+      <div class="consumer-modal-sub" id="consumerAccountEmail">Signed in as: ...</div>
+      
+      <button class="consumer-btn-primary" id="consumerOpenSavedBtn" style="margin-bottom:10px;">
+        <i class="fas fa-heart"></i> View Saved Homes (<span id="consumerAccountFavCount">0</span>)
+      </button>
+      <button class="consumer-btn-secondary" id="consumerLogoutBtn">
+        <i class="fas fa-sign-out-alt"></i> Sign Out
+      </button>
+      <button class="consumer-btn-danger" id="consumerDeleteAccountBtn">
+        Delete Account &amp; Saved Homes
+      </button>
+    </div>
+  </div>
+
   <!-- Saved Listings Cart FAB -->
   <button class="cart-fab" id="cartFab" title="Saved Listings">
     <i class="fas fa-heart"></i>
@@ -2467,14 +2684,40 @@
   <!-- CCOR IDX Plug-in Application Logic -->
   <script>
     // Telemetry & Build Identifier
-    const CCOR_IDX_UI_BUILD = '2026.08.27.7.3b2b';
+    const CCOR_IDX_UI_BUILD = '2026.08.27.7.3c1a';
     console.log('[CCOR IDX Plug-in] UI build:', CCOR_IDX_UI_BUILD);
+
+    // XSS Hardening & URL Sanitization Helpers (Phase 7.3C1A)
+    function escapeHtml(str) {
+      if (str === null || str === undefined) return '';
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
+
+    function sanitizeUrl(url) {
+      if (!url || typeof url !== 'string') return '';
+      const clean = url.trim();
+      if (clean.startsWith('https://') || clean.startsWith('http://') || clean.startsWith('/')) {
+        return clean;
+      }
+      return '';
+    }
 
     // URL Configuration & Session Handling
     const urlParams = new URLSearchParams(window.location.search);
     const SITE_KEY = urlParams.get('site') || 'demo-ccor';
     const IS_EMBEDDED = urlParams.get('embed') === 'true';
     
+    // Auth Exchange Code Extraction (Phase 7.3C1A)
+    const initialAuthCode = urlParams.get('auth_code') || '';
+    if (urlParams.has('auth_code')) {
+      urlParams.delete('auth_code');
+    }
+
     let SNEAK_SESSION = urlParams.get('session') || '';
     if (urlParams.has('session')) {
       urlParams.delete('session');
@@ -2490,6 +2733,14 @@
         API_BASE = window.location.origin;
       }
     }
+
+    let CONSUMER_API_BASE = 'https://sneak-idx-consumer-staging.bonitaspringsrealtors.workers.dev';
+    if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+      CONSUMER_API_BASE = 'http://127.0.0.1:8788';
+    }
+
+    let consumerUser = null;
+    let consumerSessionToken = localStorage.getItem('ccor_consumer_session_' + SITE_KEY) || '';
 
     function getAuthHeaders(extraHeaders = {}) {
       const headers = { ...extraHeaders };
@@ -2621,6 +2872,7 @@
       syncToolbarWithCategory();
 
       await loadTenantConfig();
+      await initConsumerAuth(initialAuthCode);
       triggerSearch(false);
     });
 
@@ -3651,9 +3903,9 @@
         card.className = 'listing-card';
         card.id = 'card-' + item.ListingKey;
 
-        const imgUrl = item.PrimaryPhoto || (item.Media && item.Media[0]?.MediaURL) || '';
+        const imgUrl = sanitizeUrl(item.PrimaryPhoto || (item.Media && item.Media[0]?.MediaURL) || '');
         const sc = item.StandardStatus === 'Pending' ? 'pending' : item.StandardStatus === 'Active Under Contract' ? 'auc' : 'active';
-        const sl = item.StandardStatus === 'Active Under Contract' ? 'Under Contract' : item.StandardStatus || 'Active';
+        const sl = escapeHtml(item.StandardStatus === 'Active Under Contract' ? 'Under Contract' : item.StandardStatus || 'Active');
         const isSaved = savedListings.some(s => s.key === item.ListingKey);
 
         const isLand = item.PropertyType === 'Land';
@@ -3663,24 +3915,24 @@
         if (isLand) {
           detailsHtml = `
             <div class="card-details">
-              ${item.LotSizeAcres ? `<span class="card-detail-item"><i class="fas fa-tree"></i> ${item.LotSizeAcres} Acres</span>` : ''}
-              ${item.SubdivisionName ? `<span class="card-detail-item"><i class="fas fa-map-pin"></i> ${item.SubdivisionName}</span>` : ''}
+              ${item.LotSizeAcres ? `<span class="card-detail-item"><i class="fas fa-tree"></i> ${escapeHtml(item.LotSizeAcres)} Acres</span>` : ''}
+              ${item.SubdivisionName ? `<span class="card-detail-item"><i class="fas fa-map-pin"></i> ${escapeHtml(item.SubdivisionName)}</span>` : ''}
             </div>
           `;
         } else if (isComm) {
           detailsHtml = `
             <div class="card-details">
-              ${item.LivingArea ? `<span class="card-detail-item"><i class="fas fa-ruler-combined"></i> ${item.LivingArea.toLocaleString()} sqft</span>` : ''}
-              ${item.LotSizeAcres ? `<span class="card-detail-item"><i class="fas fa-tree"></i> ${item.LotSizeAcres} Acres</span>` : ''}
-              ${item.YearBuilt ? `<span class="card-detail-item"><i class="fas fa-calendar"></i> Built ${item.YearBuilt}</span>` : ''}
+              ${item.LivingArea ? `<span class="card-detail-item"><i class="fas fa-ruler-combined"></i> ${escapeHtml((item.LivingArea).toLocaleString())} sqft</span>` : ''}
+              ${item.LotSizeAcres ? `<span class="card-detail-item"><i class="fas fa-tree"></i> ${escapeHtml(item.LotSizeAcres)} Acres</span>` : ''}
+              ${item.YearBuilt ? `<span class="card-detail-item"><i class="fas fa-calendar"></i> Built ${escapeHtml(item.YearBuilt)}</span>` : ''}
             </div>
           `;
         } else {
           detailsHtml = `
             <div class="card-details">
-              <span class="card-detail-item"><i class="fas fa-bed"></i> ${item.BedroomsTotal || 0} bd</span>
-              <span class="card-detail-item"><i class="fas fa-bath"></i> ${item.BathroomsTotalInteger || 0} ba</span>
-              <span class="card-detail-item"><i class="fas fa-ruler-combined"></i> ${(item.LivingArea || 0).toLocaleString()} sqft</span>
+              <span class="card-detail-item"><i class="fas fa-bed"></i> ${escapeHtml(item.BedroomsTotal || 0)} bd</span>
+              <span class="card-detail-item"><i class="fas fa-bath"></i> ${escapeHtml(item.BathroomsTotalInteger || 0)} ba</span>
+              <span class="card-detail-item"><i class="fas fa-ruler-combined"></i> ${escapeHtml((item.LivingArea || 0).toLocaleString())} sqft</span>
             </div>
           `;
         }
@@ -3688,17 +3940,17 @@
         card.innerHTML = `
           <div class="card-img-wrapper">
             <img src="${imgUrl}" class="card-img" loading="lazy" alt="Property">
-            <div class="price-badge">${fmt.format(item.ListPrice || 0)}</div>
+            <div class="price-badge">${escapeHtml(fmt.format(item.ListPrice || 0))}</div>
             <div class="status-badge-card ${sc}">${sl}</div>
-            <button class="card-save-btn ${isSaved ? 'saved' : ''}" onclick="event.stopPropagation();toggleSave('${item.ListingKey}')" title="Save property"><i class="fas fa-heart"></i></button>
+            <button class="card-save-btn ${isSaved ? 'saved' : ''}" onclick="event.stopPropagation();toggleSave('${escapeHtml(item.ListingKey)}')" title="Save property"><i class="fas fa-heart"></i></button>
           </div>
           <div class="card-content">
-            <div class="card-subtype">${item.PropertySubType || item.PropertyType || ''}</div>
-            <div class="card-address">${item.UnparsedAddress || 'Address Undisclosed'}</div>
+            <div class="card-subtype">${escapeHtml(item.PropertySubType || item.PropertyType || '')}</div>
+            <div class="card-address">${escapeHtml(item.UnparsedAddress || 'Address Undisclosed')}</div>
             ${detailsHtml}
             <div class="card-meta">
-              <div style="font-weight:600;color:var(--primary);"><i class="fas fa-map-marker-alt"></i> ${item.City || ''}</div>
-              <div style="font-size:0.75rem;color:var(--text-muted);">${item.ListOfficeName || ''}</div>
+              <div style="font-weight:600;color:var(--primary);"><i class="fas fa-map-marker-alt"></i> ${escapeHtml(item.City || '')}</div>
+              <div style="font-size:0.75rem;color:var(--text-muted);">${escapeHtml(item.ListOfficeName || '')}</div>
             </div>
           </div>
         `;
@@ -3776,16 +4028,16 @@
           subInfo = parts.join(' • ') || (item.City || 'Florida');
         }
 
-        const photoUrl = item.PrimaryPhoto || '';
+        const photoUrl = sanitizeUrl(item.PrimaryPhoto || '');
         const photoHtml = photoUrl ? `<img src="${photoUrl}" style="width:100%;height:100px;object-fit:cover;border-radius:6px;margin-bottom:8px;" alt="Property">` : '';
 
         m.bindPopup(`
           <div style="width:220px;font-family:sans-serif;line-height:1.3;">
             ${photoHtml}
-            <div style="font-weight:800;font-size:1.05rem;color:#1e293b;">${fmt.format(price)}</div>
-            <div style="font-size:0.8rem;color:#64748b;margin:2px 0 4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${item.UnparsedAddress || 'Address Undisclosed'}</div>
-            <div style="font-size:0.75rem;font-weight:600;color:#2596be;margin-bottom:8px;">${subInfo}</div>
-            <button onclick="openDetailByKey('${item.ListingKey}')" style="width:100%;padding:7px;background:#1a2a3a;color:#fff;border:none;border-radius:6px;cursor:pointer;font-weight:700;font-size:0.8rem;">View Details</button>
+            <div style="font-weight:800;font-size:1.05rem;color:#1e293b;">${escapeHtml(fmt.format(price))}</div>
+            <div style="font-size:0.8rem;color:#64748b;margin:2px 0 4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escapeHtml(item.UnparsedAddress || 'Address Undisclosed')}</div>
+            <div style="font-size:0.75rem;font-weight:600;color:#2596be;margin-bottom:8px;">${escapeHtml(subInfo)}</div>
+            <button onclick="openDetailByKey('${escapeHtml(item.ListingKey)}')" style="width:100%;padding:7px;background:#1a2a3a;color:#fff;border:none;border-radius:6px;cursor:pointer;font-weight:700;font-size:0.8rem;">View Details</button>
           </div>
         `);
 
@@ -3833,16 +4085,16 @@
       recentItems.slice(0, 8).forEach(item => {
         const el = document.createElement('div');
         el.className = 'carousel-card';
-        const imgUrl = item.PrimaryPhoto || (item.Media && item.Media[0]?.MediaURL) || '';
+        const imgUrl = sanitizeUrl(item.PrimaryPhoto || (item.Media && item.Media[0]?.MediaURL) || '');
         
         el.innerHTML = `
           <div class="carousel-img-wrapper">
             <img src="${imgUrl}" class="carousel-img" loading="lazy" alt="Property">
-            <div class="price-badge" style="font-size:0.85rem">${fmt.format(item.ListPrice || 0)}</div>
+            <div class="price-badge" style="font-size:0.85rem">${escapeHtml(fmt.format(item.ListPrice || 0))}</div>
           </div>
           <div class="card-content" style="padding:8px">
-            <div class="card-address" style="font-size:0.78rem">${item.UnparsedAddress || ''}</div>
-            <div class="card-meta" style="margin-top:2px;font-size:0.7rem">${item.City || ''}</div>
+            <div class="card-address" style="font-size:0.78rem">${escapeHtml(item.UnparsedAddress || '')}</div>
+            <div class="card-meta" style="margin-top:2px;font-size:0.7rem">${escapeHtml(item.City || '')}</div>
           </div>
         `;
         el.onclick = () => openDetail(item);
@@ -4156,9 +4408,42 @@
       };
       document.getElementById('cartClear').onclick = () => {
         savedListings = [];
-        localStorage.setItem('savedListings_' + SITE_KEY, JSON.stringify(savedListings));
+        if (!consumerUser) {
+          localStorage.setItem('savedListings_' + SITE_KEY, JSON.stringify(savedListings));
+        }
         updateCartUI();
       };
+
+      // Consumer Authentication & Account Modals (Phase 7.3C1A)
+      const authBtn = document.getElementById('consumerAuthBtn');
+      if (authBtn) authBtn.onclick = openConsumerAuthModal;
+      
+      const authClose = document.getElementById('consumerAuthClose');
+      if (authClose) authClose.onclick = closeConsumerAuthModal;
+      
+      const savedBtn = document.getElementById('consumerSavedBtn');
+      if (savedBtn) savedBtn.onclick = () => document.getElementById('cartPanel').classList.toggle('open');
+      
+      const userBtn = document.getElementById('consumerUserBtn');
+      if (userBtn) userBtn.onclick = openConsumerAccountModal;
+      
+      const accountClose = document.getElementById('consumerAccountClose');
+      if (accountClose) accountClose.onclick = closeConsumerAccountModal;
+      
+      const openSavedBtn = document.getElementById('consumerOpenSavedBtn');
+      if (openSavedBtn) openSavedBtn.onclick = () => {
+        closeConsumerAccountModal();
+        document.getElementById('cartPanel').classList.add('open');
+      };
+      
+      const logoutBtn = document.getElementById('consumerLogoutBtn');
+      if (logoutBtn) logoutBtn.onclick = handleConsumerLogout;
+      
+      const deleteAccountBtn = document.getElementById('consumerDeleteAccountBtn');
+      if (deleteAccountBtn) deleteAccountBtn.onclick = handleConsumerDeleteAccount;
+      
+      const authForm = document.getElementById('consumerAuthForm');
+      if (authForm) authForm.onsubmit = handleConsumerAuthSubmit;
 
       // Close dropdowns on document click
       document.addEventListener('click', (e) => {
@@ -4269,24 +4554,309 @@
       }
     }
 
-    window.toggleSave = function(key) {
-      const idx = savedListings.findIndex(s => s.key === key);
-      if (idx >= 0) {
-        savedListings.splice(idx, 1);
-      } else {
-        const item = allListings.find(l => l.ListingKey === key);
-        if (item) {
-          savedListings.push({
-            key: item.ListingKey,
-            price: item.ListPrice,
-            address: item.UnparsedAddress,
-            photo: item.PrimaryPhoto
+    // --- Consumer Identity & Server Favorites Engine (Phase 7.3C1A) ---
+    async function initConsumerAuth(authCode) {
+      if (authCode) {
+        try {
+          const res = await fetch(`${CONSUMER_API_BASE}/api/consumer/auth/exchange`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ site: SITE_KEY, code: authCode, session: SNEAK_SESSION })
           });
+          if (res.ok) {
+            const data = await res.json();
+            if (data.consumerSession) {
+              consumerSessionToken = data.consumerSession;
+              consumerUser = data.user;
+              localStorage.setItem('ccor_consumer_session_' + SITE_KEY, consumerSessionToken);
+              await mergeAndSyncFavorites();
+              updateConsumerNavUI();
+              return;
+            }
+          }
+        } catch (err) {
+          console.warn('Consumer auth exchange error:', err);
         }
       }
-      localStorage.setItem('savedListings_' + SITE_KEY, JSON.stringify(savedListings));
+
+      if (consumerSessionToken) {
+        try {
+          const res = await fetch(`${CONSUMER_API_BASE}/api/consumer/auth/me?site=${encodeURIComponent(SITE_KEY)}`, {
+            headers: { 'Authorization': 'Bearer ' + consumerSessionToken }
+          });
+          if (res.ok) {
+            const data = await res.json();
+            consumerUser = data.user;
+            await fetchServerFavorites();
+            updateConsumerNavUI();
+            return;
+          } else {
+            consumerSessionToken = '';
+            consumerUser = null;
+            localStorage.removeItem('ccor_consumer_session_' + SITE_KEY);
+          }
+        } catch (err) {
+          console.warn('Consumer session check error:', err);
+        }
+      }
+
+      updateConsumerNavUI();
+      updateCartUI();
+    }
+
+    function openConsumerAuthModal() {
+      const statusEl = document.getElementById('consumerAuthStatus');
+      if (statusEl) {
+        statusEl.className = 'consumer-auth-status';
+        statusEl.textContent = '';
+        statusEl.style.display = 'none';
+      }
+      document.getElementById('consumerAuthModal').classList.add('open');
+      const emailInput = document.getElementById('consumerEmailInput');
+      if (emailInput) setTimeout(() => emailInput.focus(), 50);
+    }
+
+    function closeConsumerAuthModal() {
+      document.getElementById('consumerAuthModal').classList.remove('open');
+    }
+
+    function openConsumerAccountModal() {
+      const accountEmailEl = document.getElementById('consumerAccountEmail');
+      if (accountEmailEl && consumerUser) {
+        accountEmailEl.textContent = `Signed in as: ${consumerUser.email}`;
+      }
+      const countEl = document.getElementById('consumerAccountFavCount');
+      if (countEl) countEl.textContent = savedListings.length;
+      document.getElementById('consumerAccountModal').classList.add('open');
+    }
+
+    function closeConsumerAccountModal() {
+      document.getElementById('consumerAccountModal').classList.remove('open');
+    }
+
+    async function handleConsumerAuthSubmit(e) {
+      e.preventDefault();
+      const email = document.getElementById('consumerEmailInput').value.trim();
+      if (!email) return;
+
+      const submitBtn = document.getElementById('consumerSubmitBtn');
+      const statusEl = document.getElementById('consumerAuthStatus');
+      submitBtn.disabled = true;
+      submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sending link...';
+      statusEl.className = 'consumer-auth-status';
+      statusEl.style.display = 'none';
+
+      // Detect return URL from parent host / window
+      let returnUrl = window.location.href;
+      try {
+        if (IS_EMBEDDED && document.referrer) {
+          returnUrl = document.referrer;
+        }
+      } catch {}
+
+      try {
+        const res = await fetch(`${CONSUMER_API_BASE}/api/consumer/auth/magic-link`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            site: SITE_KEY,
+            email: email,
+            returnUrl: returnUrl,
+            session: SNEAK_SESSION
+          })
+        });
+
+        statusEl.className = 'consumer-auth-status success';
+        statusEl.textContent = 'If an account exists or is eligible, a secure sign-in link has been sent to your email. Please check your inbox.';
+        statusEl.style.display = 'block';
+        document.getElementById('consumerAuthForm').reset();
+      } catch (err) {
+        statusEl.className = 'consumer-auth-status error';
+        statusEl.textContent = 'Unable to send sign-in link. Please check your connection and try again.';
+        statusEl.style.display = 'block';
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = '<i class="fas fa-envelope"></i> Email me a sign-in link';
+      }
+    }
+
+    async function handleConsumerLogout() {
+      if (consumerSessionToken) {
+        try {
+          await fetch(`${CONSUMER_API_BASE}/api/consumer/auth/logout`, {
+            method: 'POST',
+            headers: {
+              'Authorization': 'Bearer ' + consumerSessionToken,
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ site: SITE_KEY })
+          });
+        } catch {}
+      }
+      consumerSessionToken = '';
+      consumerUser = null;
+      localStorage.removeItem('ccor_consumer_session_' + SITE_KEY);
+      closeConsumerAccountModal();
+      savedListings = JSON.parse(localStorage.getItem('savedListings_' + SITE_KEY) || '[]');
+      updateConsumerNavUI();
       updateCartUI();
       renderListings(allListings);
+    }
+
+    async function handleConsumerDeleteAccount() {
+      if (!confirm('Are you sure you want to permanently delete your account and all saved properties? This cannot be undone.')) {
+        return;
+      }
+      if (consumerSessionToken) {
+        try {
+          await fetch(`${CONSUMER_API_BASE}/api/consumer/account?site=${encodeURIComponent(SITE_KEY)}`, {
+            method: 'DELETE',
+            headers: { 'Authorization': 'Bearer ' + consumerSessionToken }
+          });
+        } catch {}
+      }
+      consumerSessionToken = '';
+      consumerUser = null;
+      localStorage.removeItem('ccor_consumer_session_' + SITE_KEY);
+      savedListings = [];
+      localStorage.removeItem('savedListings_' + SITE_KEY);
+      closeConsumerAccountModal();
+      updateConsumerNavUI();
+      updateCartUI();
+      renderListings(allListings);
+      alert('Your account and saved data have been permanently deleted.');
+    }
+
+    function updateConsumerNavUI() {
+      const authNavItem = document.getElementById('consumerAuthNavItem');
+      const savedNavItem = document.getElementById('consumerSavedNavItem');
+      const userNavItem = document.getElementById('consumerUserNavItem');
+      const userLabel = document.getElementById('consumerUserLabel');
+      const favCountEl = document.getElementById('consumerFavCount');
+      const accountFavCountEl = document.getElementById('consumerAccountFavCount');
+
+      const count = savedListings.length;
+      if (favCountEl) favCountEl.textContent = count;
+      if (accountFavCountEl) accountFavCountEl.textContent = count;
+
+      if (consumerUser && consumerSessionToken) {
+        if (authNavItem) authNavItem.style.display = 'none';
+        if (savedNavItem) savedNavItem.style.display = 'inline-block';
+        if (userNavItem) userNavItem.style.display = 'inline-block';
+        if (userLabel) userLabel.textContent = (consumerUser.email || '').split('@')[0] || 'Account';
+        const accountEmailEl = document.getElementById('consumerAccountEmail');
+        if (accountEmailEl) accountEmailEl.textContent = `Signed in as: ${consumerUser.email}`;
+      } else {
+        if (authNavItem) authNavItem.style.display = 'inline-block';
+        if (savedNavItem) savedNavItem.style.display = 'none';
+        if (userNavItem) userNavItem.style.display = 'none';
+      }
+    }
+
+    async function fetchServerFavorites() {
+      if (!consumerSessionToken) return;
+      try {
+        const res = await fetch(`${CONSUMER_API_BASE}/api/consumer/favorites?site=${encodeURIComponent(SITE_KEY)}`, {
+          headers: { 'Authorization': 'Bearer ' + consumerSessionToken }
+        });
+        if (res.ok) {
+          const data = await res.json();
+          if (Array.isArray(data.favorites)) {
+            savedListings = data.favorites.map(f => {
+              if (f.listing) {
+                return {
+                  key: f.listing.ListingKey,
+                  price: f.listing.ListPrice,
+                  address: f.listing.UnparsedAddress,
+                  photo: f.listing.PrimaryPhoto
+                };
+              }
+              return { key: f.listingKey, price: 0, address: 'Unavailable', photo: '' };
+            });
+            updateCartUI();
+            renderListings(allListings);
+          }
+        }
+      } catch (err) {
+        console.warn('Fetch server favorites error:', err);
+      }
+    }
+
+    async function mergeAndSyncFavorites() {
+      if (!consumerSessionToken) return;
+      const localKeys = savedListings.map(s => s.key).filter(Boolean);
+      if (localKeys.length > 0) {
+        try {
+          await fetch(`${CONSUMER_API_BASE}/api/consumer/favorites/merge`, {
+            method: 'POST',
+            headers: {
+              'Authorization': 'Bearer ' + consumerSessionToken,
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ site: SITE_KEY, listingKeys: localKeys })
+          });
+        } catch (err) {
+          console.warn('Merge favorites error:', err);
+        }
+      }
+      await fetchServerFavorites();
+    }
+
+    window.toggleSave = async function(key) {
+      const isSaved = savedListings.some(s => s.key === key);
+      const item = allListings.find(l => l.ListingKey === key);
+
+      // Optimistic UI update
+      if (isSaved) {
+        savedListings = savedListings.filter(s => s.key !== key);
+      } else if (item) {
+        savedListings.push({
+          key: item.ListingKey,
+          price: item.ListPrice,
+          address: item.UnparsedAddress,
+          photo: item.PrimaryPhoto
+        });
+      }
+
+      updateCartUI();
+      renderListings(allListings);
+
+      if (consumerUser && consumerSessionToken) {
+        try {
+          if (isSaved) {
+            const res = await fetch(`${CONSUMER_API_BASE}/api/consumer/favorites/${encodeURIComponent(key)}?site=${encodeURIComponent(SITE_KEY)}`, {
+              method: 'DELETE',
+              headers: { 'Authorization': 'Bearer ' + consumerSessionToken }
+            });
+            if (!res.ok) {
+              console.warn('Failed to delete favorite on server');
+            }
+          } else {
+            const res = await fetch(`${CONSUMER_API_BASE}/api/consumer/favorites`, {
+              method: 'POST',
+              headers: {
+                'Authorization': 'Bearer ' + consumerSessionToken,
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify({ site: SITE_KEY, listingKey: key })
+            });
+            if (!res.ok) {
+              const data = await res.json().catch(() => ({}));
+              if (data.error === 'FavoriteLimitExceeded') {
+                alert('Maximum 200 saved properties limit reached.');
+              }
+              // Rollback
+              savedListings = savedListings.filter(s => s.key !== key);
+              updateCartUI();
+              renderListings(allListings);
+            }
+          }
+        } catch (err) {
+          console.warn('Favorite sync error:', err);
+        }
+      } else {
+        localStorage.setItem('savedListings_' + SITE_KEY, JSON.stringify(savedListings));
+      }
     };
 
     function updateCartUI() {
@@ -4295,6 +4865,11 @@
         badge.textContent = savedListings.length;
         badge.style.display = savedListings.length ? 'flex' : 'none';
       }
+      const favCountEl = document.getElementById('consumerFavCount');
+      if (favCountEl) favCountEl.textContent = savedListings.length;
+      const accountFavCountEl = document.getElementById('consumerAccountFavCount');
+      if (accountFavCountEl) accountFavCountEl.textContent = savedListings.length;
+
       const cartItems = document.getElementById('cartItems');
       if (cartItems) {
         if (!savedListings.length) {
@@ -4306,12 +4881,12 @@
           const row = document.createElement('div');
           row.style.cssText = 'display:flex;align-items:center;gap:8px;padding:6px;border-bottom:1px solid #f1f5f9;cursor:pointer;';
           row.innerHTML = `
-            <img src="${s.photo || ''}" style="width:44px;height:34px;object-fit:cover;border-radius:4px;">
+            <img src="${sanitizeUrl(s.photo || '')}" style="width:44px;height:34px;object-fit:cover;border-radius:4px;">
             <div style="flex:1;overflow:hidden;">
-              <div style="font-weight:700;font-size:0.8rem;color:var(--text);">${fmt.format(s.price || 0)}</div>
-              <div style="font-size:0.72rem;color:var(--text-muted);white-space:nowrap;text-overflow:ellipsis;overflow:hidden;">${s.address || ''}</div>
+              <div style="font-weight:700;font-size:0.8rem;color:var(--text);">${escapeHtml(fmt.format(s.price || 0))}</div>
+              <div style="font-size:0.72rem;color:var(--text-muted);white-space:nowrap;text-overflow:ellipsis;overflow:hidden;">${escapeHtml(s.address || '')}</div>
             </div>
-            <button onclick="event.stopPropagation();toggleSave('${s.key}')" style="border:none;background:transparent;color:#ef4444;cursor:pointer;padding:4px;"><i class="fas fa-trash"></i></button>
+            <button onclick="event.stopPropagation();toggleSave('${escapeHtml(s.key)}')" style="border:none;background:transparent;color:#ef4444;cursor:pointer;padding:4px;"><i class="fas fa-trash"></i></button>
           `;
           row.onclick = () => openDetailByKey(s.key);
           cartItems.appendChild(row);
