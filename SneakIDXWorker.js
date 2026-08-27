@@ -981,72 +981,227 @@ function buildCommonListingFilters(params, site) {
         bindValues.push(q, q, q, likeQ, likeQ, likeQ, likeQ, q.toLowerCase());
     }
 
-    // 17. Spatial Filtering: Radius Mode vs. Viewport Bounding Box Mode
-    const centerLat = parseFloat(params.get('centerLat'));
-    const centerLng = parseFloat(params.get('centerLng'));
-    const radiusMiles = parseFloat(params.get('radiusMiles'));
-
-    const hasValidRadius = (
-        !isNaN(centerLat) && !isNaN(centerLng) && !isNaN(radiusMiles) &&
-        centerLat >= -90 && centerLat <= 90 &&
-        centerLng >= -180 && centerLng <= 180 &&
-        radiusMiles > 0 && radiusMiles <= 50
-    );
-
-    if (hasValidRadius) {
-        // Radius Mode: Compute geographic bounding box prefilter + parameterized equirectangular distance math
-        const deltaLat = radiusMiles / 69.0;
-        const cosLat = Math.cos(centerLat * Math.PI / 180.0);
-        const cosFactor = 69.0 * cosLat;
-        const deltaLng = cosLat !== 0 ? radiusMiles / Math.abs(cosFactor) : 180.0;
-
-        const latMin = Math.max(-90, centerLat - deltaLat);
-        const latMax = Math.min(90, centerLat + deltaLat);
-        const lngMin = centerLng - deltaLng;
-        const lngMax = centerLng + deltaLng;
-        const radiusSq = radiusMiles * radiusMiles;
-
-        whereClauses.push("Latitude IS NOT NULL AND Longitude IS NOT NULL");
-        whereClauses.push("Latitude >= ? AND Latitude <= ?");
-        bindValues.push(latMin, latMax);
-
-        if (lngMin >= -180 && lngMax <= 180) {
-            whereClauses.push("Longitude >= ? AND Longitude <= ?");
-            bindValues.push(lngMin, lngMax);
-        } else {
-            // Normalize anti-meridian
-            const normLngMin = ((lngMin + 180) % 360 + 360) % 360 - 180;
-            const normLngMax = ((lngMax + 180) % 360 + 360) % 360 - 180;
-            whereClauses.push("(Longitude >= ? OR Longitude <= ?)");
-            bindValues.push(normLngMin, normLngMax);
+    // 17. Spatial Filtering: Polygon Mode vs. Radius Mode vs. Viewport Bounding Box Mode
+    const polygonParam = params.get('polygon');
+    if (polygonParam) {
+        let parsedGeo;
+        try {
+            parsedGeo = JSON.parse(polygonParam);
+        } catch (e) {
+            return {
+                valid: false,
+                status: 400,
+                error: 'InvalidSpatialFilter',
+                message: 'Polygon search geometry is malformed JSON.'
+            };
         }
 
-        // Exact distance constraint: ((Latitude - centerLat)*69)^2 + ((Longitude - centerLng)*cosFactor)^2 <= radiusMiles^2
-        whereClauses.push("(((Latitude - ?) * 69.0) * ((Latitude - ?) * 69.0) + ((Longitude - ?) * ?) * ((Longitude - ?) * ?)) <= ?");
-        bindValues.push(centerLat, centerLat, centerLng, cosFactor, centerLng, cosFactor, radiusSq);
+        if (!parsedGeo || parsedGeo.type !== 'Polygon' || !Array.isArray(parsedGeo.coordinates) || parsedGeo.coordinates.length !== 1) {
+            return {
+                valid: false,
+                status: 400,
+                error: 'InvalidSpatialFilter',
+                message: 'Polygon search geometry must be a valid GeoJSON Polygon with a single exterior ring.'
+            };
+        }
+
+        const ring = parsedGeo.coordinates[0];
+        if (!Array.isArray(ring) || ring.length < 3) {
+            return {
+                valid: false,
+                status: 400,
+                error: 'InvalidSpatialFilter',
+                message: 'Polygon exterior ring must contain at least 3 vertices.'
+            };
+        }
+
+        const first = ring[0];
+        const last = ring[ring.length - 1];
+        if (!Array.isArray(first) || !Array.isArray(last) || first.length < 2 || last.length < 2) {
+            return {
+                valid: false,
+                status: 400,
+                error: 'InvalidSpatialFilter',
+                message: 'Polygon coordinates are malformed.'
+            };
+        }
+
+        const isClosed = (first[0] === last[0] && first[1] === last[1]);
+        const uniqueVertices = isClosed ? ring.slice(0, -1) : ring;
+
+        if (uniqueVertices.length < 3) {
+            return {
+                valid: false,
+                status: 400,
+                error: 'InvalidSpatialFilter',
+                message: 'Polygon must have at least 3 unique vertices.'
+            };
+        }
+
+        if (uniqueVertices.length > 40) {
+            return {
+                valid: false,
+                status: 400,
+                error: 'InvalidSpatialFilter',
+                message: 'Polygon vertex count exceeds the maximum limit of 40 vertices.'
+            };
+        }
+
+        let latMin = 90, latMax = -90, lngMin = 180, lngMax = -180;
+        const validatedRing = [];
+
+        for (const pt of uniqueVertices) {
+            if (!Array.isArray(pt) || pt.length < 2) {
+                return {
+                    valid: false,
+                    status: 400,
+                    error: 'InvalidSpatialFilter',
+                    message: 'Polygon point must be [longitude, latitude].'
+                };
+            }
+            const lng = Number(pt[0]);
+            const lat = Number(pt[1]);
+
+            if (isNaN(lng) || isNaN(lat) || !isFinite(lng) || !isFinite(lat) ||
+                lat < -90 || lat > 90 || lng < -180 || lng > 180) {
+                return {
+                    valid: false,
+                    status: 400,
+                    error: 'InvalidSpatialFilter',
+                    message: 'Polygon coordinates must be valid numbers with latitude in [-90, 90] and longitude in [-180, 180].'
+                };
+            }
+
+            latMin = Math.min(latMin, lat);
+            latMax = Math.max(latMax, lat);
+            lngMin = Math.min(lngMin, lng);
+            lngMax = Math.max(lngMax, lng);
+            validatedRing.push([lng, lat]);
+        }
+
+        // Close ring for edge traversal
+        validatedRing.push([validatedRing[0][0], validatedRing[0][1]]);
+
+        // Bounding box prefilter
+        whereClauses.push("Latitude IS NOT NULL AND Longitude IS NOT NULL");
+        whereClauses.push("Latitude >= ? AND Latitude <= ? AND Longitude >= ? AND Longitude <= ?");
+        bindValues.push(latMin, latMax, lngMin, lngMax);
+
+        // Build exact Point-in-Polygon (Ray Casting) SQL expression
+        const edgeClauses = [];
+        for (let i = 0; i < validatedRing.length - 1; i++) {
+            const p1 = validatedRing[i];
+            const p2 = validatedRing[i + 1];
+            const lng1 = p1[0], lat1 = p1[1];
+            const lng2 = p2[0], lat2 = p2[1];
+
+            if (lat1 === lat2) {
+                // Horizontal edge: ray along latitude will not cross
+                continue;
+            }
+
+            const edgeLatMin = Math.min(lat1, lat2);
+            const edgeLatMax = Math.max(lat1, lat2);
+            const slope = (lng2 - lng1) / (lat2 - lat1);
+
+            edgeClauses.push(`CASE WHEN (Latitude >= ? AND Latitude < ? AND Longitude <= (? + (Latitude - ?) * ?)) THEN 1 ELSE 0 END`);
+            bindValues.push(edgeLatMin, edgeLatMax, lng1, lat1, slope);
+        }
+
+        if (edgeClauses.length > 0) {
+            whereClauses.push(`((${edgeClauses.join(' + ')}) % 2) = 1`);
+        } else {
+            return {
+                valid: false,
+                status: 400,
+                error: 'InvalidSpatialFilter',
+                message: 'Polygon is degenerate.'
+            };
+        }
 
     } else {
-        // Viewport Bounding Box Mode (north, south, east, west)
-        const north = parseFloat(params.get('north'));
-        const south = parseFloat(params.get('south'));
-        const east = parseFloat(params.get('east'));
-        const west = parseFloat(params.get('west'));
+        // Radius Mode vs. Viewport Mode
+        const hasAnyRadius = (
+            params.has('centerLat') ||
+            params.has('centerLng') ||
+            params.has('radiusMiles')
+        );
 
-        if (!isNaN(north) && !isNaN(south) && north >= -90 && north <= 90 && south >= -90 && south <= 90) {
-            const minLat = Math.min(south, north);
-            const maxLat = Math.max(south, north);
-            whereClauses.push("Latitude IS NOT NULL AND Latitude >= ? AND Latitude <= ?");
-            bindValues.push(minLat, maxLat);
-        }
+        if (hasAnyRadius) {
+            const centerLat = parseFloat(params.get('centerLat'));
+            const centerLng = parseFloat(params.get('centerLng'));
+            const radiusMiles = parseFloat(params.get('radiusMiles'));
 
-        if (!isNaN(east) && !isNaN(west) && east >= -180 && east <= 180 && west >= -180 && west <= 180) {
-            if (west <= east) {
-                whereClauses.push("Longitude IS NOT NULL AND Longitude >= ? AND Longitude <= ?");
-                bindValues.push(west, east);
+            const isValidRadius = (
+                !isNaN(centerLat) && !isNaN(centerLng) && !isNaN(radiusMiles) &&
+                centerLat >= -90 && centerLat <= 90 &&
+                centerLng >= -180 && centerLng <= 180 &&
+                radiusMiles > 0 && radiusMiles <= 50
+            );
+
+            if (!isValidRadius) {
+                return {
+                    valid: false,
+                    status: 400,
+                    error: 'InvalidSpatialFilter',
+                    message: 'Radius search parameters are incomplete or invalid.'
+                };
+            }
+
+            // Radius Mode: Compute geographic bounding box prefilter + parameterized equirectangular distance math
+            const deltaLat = radiusMiles / 69.0;
+            const cosLat = Math.cos(centerLat * Math.PI / 180.0);
+            const cosFactor = 69.0 * cosLat;
+            const deltaLng = cosLat !== 0 ? radiusMiles / Math.abs(cosFactor) : 180.0;
+
+            const latMin = Math.max(-90, centerLat - deltaLat);
+            const latMax = Math.min(90, centerLat + deltaLat);
+            const lngMin = centerLng - deltaLng;
+            const lngMax = centerLng + deltaLng;
+            const radiusSq = radiusMiles * radiusMiles;
+
+            whereClauses.push("Latitude IS NOT NULL AND Longitude IS NOT NULL");
+            whereClauses.push("Latitude >= ? AND Latitude <= ?");
+            bindValues.push(latMin, latMax);
+
+            if (lngMin >= -180 && lngMax <= 180) {
+                whereClauses.push("Longitude >= ? AND Longitude <= ?");
+                bindValues.push(lngMin, lngMax);
             } else {
-                // Anti-meridian boundary
-                whereClauses.push("Longitude IS NOT NULL AND (Longitude >= ? OR Longitude <= ?)");
-                bindValues.push(west, east);
+                // Normalize anti-meridian
+                const normLngMin = ((lngMin + 180) % 360 + 360) % 360 - 180;
+                const normLngMax = ((lngMax + 180) % 360 + 360) % 360 - 180;
+                whereClauses.push("(Longitude >= ? OR Longitude <= ?)");
+                bindValues.push(normLngMin, normLngMax);
+            }
+
+            // Exact distance constraint: ((Latitude - centerLat)*69)^2 + ((Longitude - centerLng)*cosFactor)^2 <= radiusMiles^2
+            whereClauses.push("(((Latitude - ?) * 69.0) * ((Latitude - ?) * 69.0) + ((Longitude - ?) * ?) * ((Longitude - ?) * ?)) <= ?");
+            bindValues.push(centerLat, centerLat, centerLng, cosFactor, centerLng, cosFactor, radiusSq);
+
+        } else {
+            // Viewport Bounding Box Mode (north, south, east, west)
+            const north = parseFloat(params.get('north'));
+            const south = parseFloat(params.get('south'));
+            const east = parseFloat(params.get('east'));
+            const west = parseFloat(params.get('west'));
+
+            if (!isNaN(north) && !isNaN(south) && north >= -90 && north <= 90 && south >= -90 && south <= 90) {
+                const minLat = Math.min(south, north);
+                const maxLat = Math.max(south, north);
+                whereClauses.push("Latitude IS NOT NULL AND Latitude >= ? AND Latitude <= ?");
+                bindValues.push(minLat, maxLat);
+            }
+
+            if (!isNaN(east) && !isNaN(west) && east >= -180 && east <= 180 && west >= -180 && west <= 180) {
+                if (west <= east) {
+                    whereClauses.push("Longitude IS NOT NULL AND Longitude >= ? AND Longitude <= ?");
+                    bindValues.push(west, east);
+                } else {
+                    // Anti-meridian boundary
+                    whereClauses.push("Longitude IS NOT NULL AND (Longitude >= ? OR Longitude <= ?)");
+                    bindValues.push(west, east);
+                }
             }
         }
     }
@@ -1137,9 +1292,9 @@ async function handleSearch(url, site, env, ctx, allowedOrigin) {
 
     if (!filter.valid) {
         return jsonResponse({
-            error: 'InvalidTenantScope',
-            message: 'Tenant scope is invalid or incomplete. Access denied.'
-        }, 403, allowedOrigin);
+            error: filter.error || 'InvalidTenantScope',
+            message: filter.message || 'Tenant scope is invalid or incomplete. Access denied.'
+        }, filter.status || 403, allowedOrigin);
     }
 
     const page = Math.max(1, parseInt(params.get('page'), 10) || 1);
@@ -1217,9 +1372,9 @@ async function handleMap(url, site, env, ctx, allowedOrigin) {
 
     if (!filter.valid) {
         return jsonResponse({
-            error: 'InvalidTenantScope',
-            message: 'Tenant scope is invalid or incomplete. Access denied.'
-        }, 403, allowedOrigin);
+            error: filter.error || 'InvalidTenantScope',
+            message: filter.message || 'Tenant scope is invalid or incomplete. Access denied.'
+        }, filter.status || 403, allowedOrigin);
     }
 
     const markerLimit = Math.min(2000, Math.max(1, parseInt(params.get('limit'), 10) || 500));

@@ -794,7 +794,7 @@ describe('SNEAK IDX Phase 2.2 Test Suite', () => {
         assert.ok(Array.isArray(data.data));
     });
 
-    test('PHASE 7.3B2A: Invalid radius query (radiusMiles > 50 or negative) fails safely without SQL 500 error', async () => {
+    test('PHASE 7.3B2A: Incomplete or out-of-range radius queries return HTTP 400 InvalidSpatialFilter', async () => {
         const env = {
             SNEAK_ENV: 'staging',
             SNEAK_SIGNING_SECRET: TEST_SIGNING_SECRET,
@@ -812,13 +812,17 @@ describe('SNEAK IDX Phase 2.2 Test Suite', () => {
             `https://sneak.staging/idx/v1/search?site=demo-ccor&session=${session}&centerLat=26.34&centerLng=-81.78&radiusMiles=100`, // radius > 50
             `https://sneak.staging/idx/v1/search?site=demo-ccor&session=${session}&centerLat=26.34&centerLng=-81.78&radiusMiles=-5`,  // negative radius
             `https://sneak.staging/idx/v1/search?site=demo-ccor&session=${session}&centerLat=95.0&centerLng=-81.78&radiusMiles=5`,   // invalid lat
-            `https://sneak.staging/idx/v1/search?site=demo-ccor&session=${session}&centerLat=26.34&centerLng=200.0&radiusMiles=5`    // invalid lng
+            `https://sneak.staging/idx/v1/search?site=demo-ccor&session=${session}&centerLat=26.34&centerLng=200.0&radiusMiles=5`,   // invalid lng
+            `https://sneak.staging/idx/v1/search?site=demo-ccor&session=${session}&centerLat=26.34`,                                 // missing lng and radius
+            `https://sneak.staging/idx/v1/search?site=demo-ccor&session=${session}&centerLat=26.34&centerLng=-81.78`                  // missing radius
         ];
 
         for (const url of testUrls) {
             const req = new Request(url, { method: 'GET' });
             const res = await worker.fetch(req, env);
-            assert.equal(res.status, 200, `Failed safe fallback for ${url}`);
+            assert.equal(res.status, 400, `Expected HTTP 400 for ${url}, got ${res.status}`);
+            const data = await res.json();
+            assert.equal(data.error, 'InvalidSpatialFilter');
         }
     });
 
@@ -847,12 +851,179 @@ describe('SNEAK IDX Phase 2.2 Test Suite', () => {
         }
     });
 
-    test('PHASE 7.3B2A: Frontend build versions are uniformly bumped to 2026.08.27.7.3b2a', () => {
+    // PHASE 7.3B2B TESTS: Server-Authoritative Polygon Search + Drawing State
+    const validTestPolygon = {
+        type: "Polygon",
+        coordinates: [
+            [
+                [-81.82, 26.35],
+                [-81.78, 26.36],
+                [-81.76, 26.32],
+                [-81.81, 26.30],
+                [-81.82, 26.35]
+            ]
+        ]
+    };
+
+    test('PHASE 7.3B2B: Valid polygon query on /idx/v1/search succeeds with GeoJSON polygon', async () => {
+        const env = {
+            SNEAK_ENV: 'staging',
+            SNEAK_SIGNING_SECRET: TEST_SIGNING_SECRET,
+            DB: createMockDB()
+        };
+
+        const bReq = new Request('https://sneak.staging/idx/v1/bootstrap?site=demo-ccor', {
+            method: 'GET',
+            headers: { Origin: 'https://preview.sneakidx.com' }
+        });
+        const bRes = await worker.fetch(bReq, env);
+        const { session } = await bRes.json();
+
+        const polygonParam = encodeURIComponent(JSON.stringify(validTestPolygon));
+        const req = new Request(`https://sneak.staging/idx/v1/search?site=demo-ccor&session=${session}&polygon=${polygonParam}`, {
+            method: 'GET'
+        });
+        const res = await worker.fetch(req, env);
+        assert.equal(res.status, 200);
+        const data = await res.json();
+        assert.ok(Array.isArray(data.data));
+        assert.ok(data.pagination);
+    });
+
+    test('PHASE 7.3B2B: Valid polygon query on /idx/v1/map succeeds with GeoJSON polygon', async () => {
+        const env = {
+            SNEAK_ENV: 'staging',
+            SNEAK_SIGNING_SECRET: TEST_SIGNING_SECRET,
+            DB: createMockDB()
+        };
+
+        const bReq = new Request('https://sneak.staging/idx/v1/bootstrap?site=demo-ccor', {
+            method: 'GET',
+            headers: { Origin: 'https://preview.sneakidx.com' }
+        });
+        const bRes = await worker.fetch(bReq, env);
+        const { session } = await bRes.json();
+
+        const polygonParam = encodeURIComponent(JSON.stringify(validTestPolygon));
+        const req = new Request(`https://sneak.staging/idx/v1/map?site=demo-ccor&session=${session}&polygon=${polygonParam}`, {
+            method: 'GET'
+        });
+        const res = await worker.fetch(req, env);
+        assert.equal(res.status, 200);
+        const data = await res.json();
+        assert.ok(Array.isArray(data.data));
+    });
+
+    test('PHASE 7.3B2B: Malformed or invalid polygon queries return HTTP 400 InvalidSpatialFilter', async () => {
+        const env = {
+            SNEAK_ENV: 'staging',
+            SNEAK_SIGNING_SECRET: TEST_SIGNING_SECRET,
+            DB: createMockDB()
+        };
+
+        const bReq = new Request('https://sneak.staging/idx/v1/bootstrap?site=demo-ccor', {
+            method: 'GET',
+            headers: { Origin: 'https://preview.sneakidx.com' }
+        });
+        const bRes = await worker.fetch(bReq, env);
+        const { session } = await bRes.json();
+
+        // 1. Invalid JSON
+        const invJsonReq = new Request(`https://sneak.staging/idx/v1/search?site=demo-ccor&session=${session}&polygon=not-json`, { method: 'GET' });
+        const invJsonRes = await worker.fetch(invJsonReq, env);
+        assert.equal(invJsonRes.status, 400);
+
+        // 2. Wrong GeoJSON type
+        const wrongType = encodeURIComponent(JSON.stringify({ type: 'Point', coordinates: [-81.8, 26.3] }));
+        const wrongTypeReq = new Request(`https://sneak.staging/idx/v1/search?site=demo-ccor&session=${session}&polygon=${wrongType}`, { method: 'GET' });
+        const wrongTypeRes = await worker.fetch(wrongTypeReq, env);
+        assert.equal(wrongTypeRes.status, 400);
+
+        // 3. Fewer than 3 unique vertices
+        const fewPoints = encodeURIComponent(JSON.stringify({ type: 'Polygon', coordinates: [[[-81.8, 26.3], [-81.7, 26.4], [-81.8, 26.3]]] }));
+        const fewPointsReq = new Request(`https://sneak.staging/idx/v1/search?site=demo-ccor&session=${session}&polygon=${fewPoints}`, { method: 'GET' });
+        const fewPointsRes = await worker.fetch(fewPointsReq, env);
+        assert.equal(fewPointsRes.status, 400);
+
+        // 4. More than 40 vertices limit
+        const excessCoords = [];
+        for (let i = 0; i < 45; i++) {
+            excessCoords.push([-81.8 + i * 0.001, 26.3 + (i % 2) * 0.001]);
+        }
+        excessCoords.push(excessCoords[0]);
+        const excessPolygon = encodeURIComponent(JSON.stringify({ type: 'Polygon', coordinates: [excessCoords] }));
+        const excessReq = new Request(`https://sneak.staging/idx/v1/search?site=demo-ccor&session=${session}&polygon=${excessPolygon}`, { method: 'GET' });
+        const excessRes = await worker.fetch(excessReq, env);
+        assert.equal(excessRes.status, 400);
+
+        // 5. Out of bounds latitude / longitude
+        const outOfBounds = encodeURIComponent(JSON.stringify({
+            type: 'Polygon',
+            coordinates: [[[-81.8, 95.0], [-81.7, 26.3], [-81.9, 26.2], [-81.8, 95.0]]]
+        }));
+        const oobReq = new Request(`https://sneak.staging/idx/v1/search?site=demo-ccor&session=${session}&polygon=${outOfBounds}`, { method: 'GET' });
+        const oobRes = await worker.fetch(oobReq, env);
+        assert.equal(oobRes.status, 400);
+    });
+
+    test('PHASE 7.3B2B: Polygon search functions across all property categories (sale, rental, commercial, land)', async () => {
+        const env = {
+            SNEAK_ENV: 'staging',
+            SNEAK_SIGNING_SECRET: TEST_SIGNING_SECRET,
+            DB: createMockDB()
+        };
+
+        const bReq = new Request('https://sneak.staging/idx/v1/bootstrap?site=demo-ccor', {
+            method: 'GET',
+            headers: { Origin: 'https://preview.sneakidx.com' }
+        });
+        const bRes = await worker.fetch(bReq, env);
+        const { session } = await bRes.json();
+
+        const polygonParam = encodeURIComponent(JSON.stringify(validTestPolygon));
+        for (const cat of ['sale', 'rental', 'commercial', 'land']) {
+            const req = new Request(`https://sneak.staging/idx/v1/search?site=demo-ccor&session=${session}&propertyType=${cat}&polygon=${polygonParam}`, {
+                method: 'GET'
+            });
+            const res = await worker.fetch(req, env);
+            assert.equal(res.status, 200, `Polygon search failed for category ${cat}`);
+            const data = await res.json();
+            assert.ok(Array.isArray(data.data));
+        }
+    });
+
+    test('PHASE 7.3B2B: Polygon search combined with advanced filters (price, waterfront, beds)', async () => {
+        const env = {
+            SNEAK_ENV: 'staging',
+            SNEAK_SIGNING_SECRET: TEST_SIGNING_SECRET,
+            DB: createMockDB()
+        };
+
+        const bReq = new Request('https://sneak.staging/idx/v1/bootstrap?site=demo-ccor', {
+            method: 'GET',
+            headers: { Origin: 'https://preview.sneakidx.com' }
+        });
+        const bRes = await worker.fetch(bReq, env);
+        const { session } = await bRes.json();
+
+        const polygonParam = encodeURIComponent(JSON.stringify(validTestPolygon));
+        const req = new Request(`https://sneak.staging/idx/v1/search?site=demo-ccor&session=${session}&polygon=${polygonParam}&minPrice=300000&maxPrice=1000000&waterfront=1&beds=3`, {
+            method: 'GET'
+        });
+        const res = await worker.fetch(req, env);
+        assert.equal(res.status, 200);
+        const data = await res.json();
+        assert.ok(Array.isArray(data.data));
+    });
+
+    test('PHASE 7.3B2B: Frontend build versions are uniformly bumped to 2026.08.27.7.3b2b', () => {
         const searchHtml = fs.readFileSync(path.join(rootDir, 'sneak-idx/search/index.html'), 'utf8');
         const embedJs = fs.readFileSync(path.join(rootDir, 'sneak-idx/embed.js'), 'utf8');
 
-        assert.ok(searchHtml.includes('data-ui-build="2026.08.27.7.3b2a"'), 'search/index.html must have data-ui-build="2026.08.27.7.3b2a"');
-        assert.ok(searchHtml.includes("CCOR_IDX_UI_BUILD = '2026.08.27.7.3b2a'"), "search/index.html must have CCOR_IDX_UI_BUILD = '2026.08.27.7.3b2a'");
-        assert.ok(embedJs.includes("const buildVersion = '2026.08.27.7.3b2a'"), "embed.js must have buildVersion = '2026.08.27.7.3b2a'");
+        assert.ok(searchHtml.includes('data-ui-build="2026.08.27.7.3b2b"'), 'search/index.html must have data-ui-build="2026.08.27.7.3b2b"');
+        assert.ok(searchHtml.includes("CCOR_IDX_UI_BUILD = '2026.08.27.7.3b2b'"), "search/index.html must have CCOR_IDX_UI_BUILD = '2026.08.27.7.3b2b'");
+        assert.ok(embedJs.includes("const buildVersion = '2026.08.27.7.3b2b'"), "embed.js must have buildVersion = '2026.08.27.7.3b2b'");
+        assert.ok(searchHtml.includes('id="drawToolBtn"'), 'search/index.html must have #drawToolBtn');
+        assert.ok(searchHtml.includes('id="drawControlsBanner"'), 'search/index.html must have #drawControlsBanner');
     });
 });

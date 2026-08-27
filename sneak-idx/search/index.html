@@ -936,6 +936,80 @@
       border-color: #ef4444;
     }
 
+    /* Draw Mode Controls Banner */
+    .draw-controls-banner {
+      pointer-events: auto;
+      background: rgba(15, 23, 42, 0.94);
+      backdrop-filter: blur(10px);
+      color: #fff;
+      padding: 8px 14px;
+      border-radius: 12px;
+      box-shadow: 0 6px 18px rgba(0, 0, 0, 0.25);
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 10px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      animation: fadeInDown 0.2s ease;
+      width: fit-content;
+      max-width: 100%;
+    }
+
+    .draw-controls-banner .draw-hint {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      color: #e2e8f0;
+    }
+
+    .draw-controls-banner .draw-actions {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-left: auto;
+    }
+
+    .draw-btn-finish {
+      background: var(--accent, #2596be);
+      border: none;
+      color: #fff;
+      padding: 5px 12px;
+      border-radius: 8px;
+      font-size: 0.78rem;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      transition: all 0.15s ease;
+    }
+
+    .draw-btn-finish:hover {
+      background: #1d7ba0;
+    }
+
+    .draw-btn-finish:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .draw-btn-cancel {
+      background: rgba(255, 255, 255, 0.15);
+      border: 1px solid rgba(255, 255, 255, 0.25);
+      color: #fff;
+      padding: 5px 10px;
+      border-radius: 8px;
+      font-size: 0.78rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .draw-btn-cancel:hover {
+      background: rgba(255, 255, 255, 0.25);
+    }
+
     /* Radius Selector Panel */
     .radius-selector-panel {
       pointer-events: auto;
@@ -1881,7 +1955,7 @@
   </style>
 </head>
 
-<body data-ui-build="2026.08.27.7.3b2a">
+<body data-ui-build="2026.08.27.7.3b2b">
 
   <!-- Loading Overlay -->
   <div class="loading-overlay" id="loadingOverlay" style="display:none">
@@ -2212,9 +2286,26 @@
             <button class="map-tool-btn" id="nearMeToolBtn" onclick="triggerNearMe()" title="Search near my current location">
               <i class="fas fa-location-arrow"></i> <span>Near Me</span>
             </button>
+            <button class="map-tool-btn" id="drawToolBtn" onclick="toggleDrawArea()" title="Draw a custom search area on the map">
+              <i class="fas fa-draw-polygon"></i> <span id="drawToolLabel">Draw Area</span>
+            </button>
             <button class="map-tool-btn clear-area-btn" id="clearAreaBtn" style="display:none;" onclick="clearSpatialSearch()" title="Clear custom area search">
               <i class="fas fa-times"></i> <span>Clear Area</span>
             </button>
+          </div>
+        </div>
+
+        <!-- Draw Mode Controls Banner -->
+        <div class="draw-controls-banner" id="drawControlsBanner" style="display:none;">
+          <div class="draw-hint" id="drawHintText">
+            <i class="fas fa-pen-nib" style="color:var(--accent,#2596be);"></i>
+            <span id="drawInstructions">Click map to outline your area. (0 points)</span>
+          </div>
+          <div class="draw-actions">
+            <button class="draw-btn-finish" id="finishDrawBtn" disabled onclick="finishDrawing()">
+              <i class="fas fa-check"></i> <span id="finishDrawBtnText">Complete</span>
+            </button>
+            <button class="draw-btn-cancel" onclick="cancelDrawing()">Cancel</button>
           </div>
         </div>
 
@@ -2238,7 +2329,7 @@
 
         <!-- Active Spatial Badge Overlay -->
         <div class="active-spatial-badge" id="activeSpatialBadge" style="display:none;">
-          <i class="fas fa-crosshairs"></i>
+          <i class="fas fa-crosshairs" id="activeSpatialBadgeIcon"></i>
           <span id="activeSpatialBadgeText">Within 5 miles</span>
           <button class="badge-clear-btn" onclick="clearSpatialSearch()">&times;</button>
         </div>
@@ -2376,7 +2467,7 @@
   <!-- CCOR IDX Plug-in Application Logic -->
   <script>
     // Telemetry & Build Identifier
-    const CCOR_IDX_UI_BUILD = '2026.08.27.7.3b2a';
+    const CCOR_IDX_UI_BUILD = '2026.08.27.7.3b2b';
     console.log('[CCOR IDX Plug-in] UI build:', CCOR_IDX_UI_BUILD);
 
     // URL Configuration & Session Handling
@@ -2443,19 +2534,30 @@
     let markerByListingKey = new Map();
     let mobileViewMode = 'list';
 
-    // Spatial Search State Model (Phase 7.3B2A)
+    // Spatial Search State Model (Phase 7.3B2B)
     let spatialState = {
-      mode: null, // null | 'viewport' | 'radius'
+      mode: null, // null | 'viewport' | 'radius' | 'polygon'
       centerLat: null,
       centerLng: null,
       radiusMiles: 5,
       isNearMe: false,
       radiusCircle: null,
-      locationMarker: null
+      locationMarker: null,
+      polygon: null, // GeoJSON Polygon: { type: 'Polygon', coordinates: [[[lng, lat], ...]] }
+      polygonLayer: null // Leaflet polygon layer
     };
     let isSelectingRadiusCenter = false;
     let selectedRadiusMiles = 5;
     let isDesktopMapHidden = localStorage.getItem('ccor_idx_map_visible_' + SITE_KEY) === 'hidden';
+
+    // Polygon Drawing & Editing State
+    let isDrawingPolygon = false;
+    let isEditingPolygon = false;
+    let drawPoints = []; // Array of [lat, lng]
+    let drawMarkers = []; // Array of Leaflet vertex markers
+    let drawPolyline = null; // Leaflet polyline connecting vertices
+    let drawGuideLine = null; // Leaflet polyline to cursor
+    let editVertexMarkers = []; // Array of draggable markers during edit
 
     // Wave-1 / More Filters State
     let drawerState = {
@@ -2548,19 +2650,78 @@
       // Map Event Listeners
       map.on('moveend', onMapMoveEnd);
       map.on('click', onMapClick);
+      map.on('mousemove', onMapMouseMove);
     }
 
-    // --- Spatial Search State Engine (Phase 7.3B2A) ---
+    // --- Spatial Search State Engine (Phase 7.3B2B) ---
+    function clearSpatialLayers() {
+      if (spatialState.radiusCircle) {
+        map.removeLayer(spatialState.radiusCircle);
+        spatialState.radiusCircle = null;
+      }
+      if (spatialState.locationMarker) {
+        map.removeLayer(spatialState.locationMarker);
+        spatialState.locationMarker = null;
+      }
+      if (spatialState.polygonLayer) {
+        map.removeLayer(spatialState.polygonLayer);
+        spatialState.polygonLayer = null;
+      }
+      cleanupDrawLayers();
+      cleanupEditMarkers();
+    }
+
     function setSpatialMode(mode, params = {}) {
       spatialState.mode = mode;
-      
-      if (mode === 'radius') {
+
+      if (mode === 'polygon') {
+        // Clear radius state
+        if (spatialState.radiusCircle) {
+          map.removeLayer(spatialState.radiusCircle);
+          spatialState.radiusCircle = null;
+        }
+        if (spatialState.locationMarker) {
+          map.removeLayer(spatialState.locationMarker);
+          spatialState.locationMarker = null;
+        }
+        spatialState.centerLat = null;
+        spatialState.centerLng = null;
+        spatialState.isNearMe = false;
+        spatialState.polygon = params.polygon;
+
+        // Render Leaflet Polygon
+        if (spatialState.polygonLayer) {
+          map.removeLayer(spatialState.polygonLayer);
+          spatialState.polygonLayer = null;
+        }
+        const ring = spatialState.polygon.coordinates[0];
+        const latLngs = ring.map(c => [c[1], c[0]]);
+        spatialState.polygonLayer = L.polygon(latLngs, {
+          color: 'var(--primary, #1a2a3a)',
+          fillColor: 'var(--accent, #2596be)',
+          fillOpacity: 0.18,
+          weight: 2.5
+        }).addTo(map);
+
+        // Fit map bounds once without triggering search loop
+        suppressViewportSearch = true;
+        map.fitBounds(spatialState.polygonLayer.getBounds().pad(0.08));
+        setTimeout(() => { suppressViewportSearch = false; }, 400);
+
+      } else if (mode === 'radius') {
+        // Clear polygon state
+        if (spatialState.polygonLayer) {
+          map.removeLayer(spatialState.polygonLayer);
+          spatialState.polygonLayer = null;
+        }
+        spatialState.polygon = null;
+
         spatialState.centerLat = params.centerLat;
         spatialState.centerLng = params.centerLng;
         spatialState.radiusMiles = params.radiusMiles || selectedRadiusMiles || 5;
         spatialState.isNearMe = Boolean(params.isNearMe);
 
-        // Render or update Leaflet Circle
+        // Render Leaflet Circle
         if (spatialState.radiusCircle) {
           map.removeLayer(spatialState.radiusCircle);
           spatialState.radiusCircle = null;
@@ -2588,7 +2749,7 @@
           }).addTo(map);
         }
 
-        // Fit map bounds once to the circle without triggering loop
+        // Fit map bounds once without triggering search loop
         suppressViewportSearch = true;
         map.fitBounds(spatialState.radiusCircle.getBounds().pad(0.08));
         setTimeout(() => { suppressViewportSearch = false; }, 400);
@@ -2600,14 +2761,7 @@
     }
 
     function clearSpatialSearch() {
-      if (spatialState.radiusCircle) {
-        map.removeLayer(spatialState.radiusCircle);
-        spatialState.radiusCircle = null;
-      }
-      if (spatialState.locationMarker) {
-        map.removeLayer(spatialState.locationMarker);
-        spatialState.locationMarker = null;
-      }
+      clearSpatialLayers();
       spatialState = {
         mode: null,
         centerLat: null,
@@ -2615,7 +2769,9 @@
         radiusMiles: 5,
         isNearMe: false,
         radiusCircle: null,
-        locationMarker: null
+        locationMarker: null,
+        polygon: null,
+        polygonLayer: null
       };
       isSelectingRadiusCenter = false;
       const mapEl = document.getElementById('map');
@@ -2631,21 +2787,33 @@
       const searchAsIMoveLabel = document.getElementById('searchAsIMoveLabel');
       const clearAreaBtn = document.getElementById('clearAreaBtn');
       const activeSpatialBadge = document.getElementById('activeSpatialBadge');
+      const activeSpatialBadgeIcon = document.getElementById('activeSpatialBadgeIcon');
       const activeSpatialBadgeText = document.getElementById('activeSpatialBadgeText');
       const activeSpatialPill = document.getElementById('activeSpatialPill');
       const spatialPillText = document.getElementById('spatialPillText');
       const radiusToolBtn = document.getElementById('radiusToolBtn');
       const nearMeToolBtn = document.getElementById('nearMeToolBtn');
+      const drawToolBtn = document.getElementById('drawToolBtn');
+      const drawToolLabel = document.getElementById('drawToolLabel');
 
+      const isPolygon = (spatialState.mode === 'polygon' && spatialState.polygon !== null);
       const isRadius = (spatialState.mode === 'radius' && spatialState.centerLat !== null);
+      const isCustomSpatial = isPolygon || isRadius;
 
-      if (searchAsIMoveToggle) searchAsIMoveToggle.disabled = isRadius;
-      if (searchAsIMoveLabel) searchAsIMoveLabel.textContent = isRadius ? 'Radius active' : 'Search as I move';
-      if (clearAreaBtn) clearAreaBtn.style.display = isRadius ? 'inline-flex' : 'none';
-      if (activeSpatialBadge) activeSpatialBadge.style.display = isRadius ? 'flex' : 'none';
-      if (activeSpatialPill) activeSpatialPill.style.display = isRadius ? 'inline-flex' : 'none';
+      if (searchAsIMoveToggle) searchAsIMoveToggle.disabled = isCustomSpatial;
+      if (searchAsIMoveLabel) {
+        searchAsIMoveLabel.textContent = isPolygon ? 'Custom area active' : (isRadius ? 'Radius active' : 'Search as I move');
+      }
+      if (clearAreaBtn) clearAreaBtn.style.display = isCustomSpatial ? 'inline-flex' : 'none';
+      if (activeSpatialBadge) activeSpatialBadge.style.display = isCustomSpatial ? 'flex' : 'none';
+      if (activeSpatialPill) activeSpatialPill.style.display = isCustomSpatial ? 'inline-flex' : 'none';
 
-      if (isRadius) {
+      if (isPolygon) {
+        if (activeSpatialBadgeIcon) activeSpatialBadgeIcon.className = 'fas fa-draw-polygon';
+        if (activeSpatialBadgeText) activeSpatialBadgeText.textContent = 'Custom Area';
+        if (spatialPillText) spatialPillText.textContent = 'Custom Area';
+      } else if (isRadius) {
+        if (activeSpatialBadgeIcon) activeSpatialBadgeIcon.className = 'fas fa-crosshairs';
         const text = spatialState.isNearMe ? `Within ${spatialState.radiusMiles} mi of your location` : `Within ${spatialState.radiusMiles} miles`;
         if (activeSpatialBadgeText) activeSpatialBadgeText.textContent = text;
         if (spatialPillText) spatialPillText.textContent = `Within ${spatialState.radiusMiles} mi`;
@@ -2653,9 +2821,11 @@
 
       if (radiusToolBtn) radiusToolBtn.classList.toggle('active', isRadius && !spatialState.isNearMe);
       if (nearMeToolBtn) nearMeToolBtn.classList.toggle('active', isRadius && spatialState.isNearMe);
+      if (drawToolBtn) drawToolBtn.classList.toggle('active', isPolygon);
+      if (drawToolLabel) drawToolLabel.textContent = isPolygon ? 'Edit Area' : 'Draw Area';
     }
 
-    // --- Search Serialization (Phase 7.3B2A / Ready for Phase 7.3C) ---
+    // --- Search Serialization (Phase 7.3B2B / Ready for Phase 7.3C) ---
     window.serializeSearchState = function() {
       return {
         propertyType: currentPropertyType,
@@ -2673,7 +2843,8 @@
           centerLat: spatialState.centerLat,
           centerLng: spatialState.centerLng,
           radiusMiles: spatialState.radiusMiles,
-          isNearMe: spatialState.isNearMe
+          isNearMe: spatialState.isNearMe,
+          polygon: spatialState.polygon
         }
       };
     };
@@ -2685,12 +2856,182 @@
         document.getElementById('searchInput').value = state.query;
       }
       if (state.filters) drawerState = { ...drawerState, ...state.filters };
-      if (state.spatial && state.spatial.mode === 'radius' && state.spatial.centerLat && state.spatial.centerLng) {
+      if (state.spatial && state.spatial.mode === 'polygon' && state.spatial.polygon) {
+        setSpatialMode('polygon', state.spatial);
+      } else if (state.spatial && state.spatial.mode === 'radius' && state.spatial.centerLat && state.spatial.centerLng) {
         setSpatialMode('radius', state.spatial);
       } else {
         clearSpatialSearch();
       }
     };
+
+    // --- Draw Area & Polygon Controls (Phase 7.3B2B) ---
+    window.toggleDrawArea = function() {
+      if (spatialState.mode === 'polygon' && spatialState.polygon) {
+        if (isEditingPolygon) {
+          finishEditingPolygon();
+        } else {
+          startEditingPolygon();
+        }
+      } else {
+        if (isDrawingPolygon) {
+          cancelDrawing();
+        } else {
+          startDrawingPolygon();
+        }
+      }
+    };
+
+    window.startDrawingPolygon = function() {
+      if (spatialState.mode === 'radius' || spatialState.mode === 'polygon') {
+        clearSpatialLayers();
+      }
+      closeRadiusMenu();
+
+      isDrawingPolygon = true;
+      isEditingPolygon = false;
+      drawPoints = [];
+      drawMarkers = [];
+
+      const mapEl = document.getElementById('map');
+      if (mapEl) mapEl.style.cursor = 'crosshair';
+
+      const banner = document.getElementById('drawControlsBanner');
+      if (banner) banner.style.display = 'flex';
+      const instructions = document.getElementById('drawInstructions');
+      if (instructions) instructions.textContent = 'Click map to place points (0 points). Click 1st point or Complete to finish.';
+      const finishBtn = document.getElementById('finishDrawBtn');
+      if (finishBtn) finishBtn.disabled = true;
+      const finishBtnText = document.getElementById('finishDrawBtnText');
+      if (finishBtnText) finishBtnText.textContent = 'Complete';
+    };
+
+    window.finishDrawing = function() {
+      if (drawPoints.length < 3) return;
+
+      const geoJsonCoords = drawPoints.map(pt => [Number(pt[1].toFixed(6)), Number(pt[0].toFixed(6))]);
+      geoJsonCoords.push([geoJsonCoords[0][0], geoJsonCoords[0][1]]); // Close exterior ring
+
+      const polygonGeo = {
+        type: 'Polygon',
+        coordinates: [geoJsonCoords]
+      };
+
+      cleanupDrawLayers();
+      setSpatialMode('polygon', { polygon: polygonGeo });
+    };
+
+    window.cancelDrawing = function() {
+      cleanupDrawLayers();
+      if (isEditingPolygon) {
+        cleanupEditMarkers();
+      }
+      if (spatialState.mode === 'polygon' && spatialState.polygon) {
+        renderSpatialState();
+      } else {
+        clearSpatialSearch();
+      }
+    };
+
+    function cleanupDrawLayers() {
+      isDrawingPolygon = false;
+      const mapEl = document.getElementById('map');
+      if (mapEl) mapEl.style.cursor = '';
+      if (drawPolyline) {
+        map.removeLayer(drawPolyline);
+        drawPolyline = null;
+      }
+      if (drawGuideLine) {
+        map.removeLayer(drawGuideLine);
+        drawGuideLine = null;
+      }
+      drawMarkers.forEach(m => map.removeLayer(m));
+      drawMarkers = [];
+      drawPoints = [];
+      const banner = document.getElementById('drawControlsBanner');
+      if (banner) banner.style.display = 'none';
+    }
+
+    function startEditingPolygon() {
+      if (!spatialState.polygonLayer || !spatialState.polygon) return;
+      isEditingPolygon = true;
+      cleanupEditMarkers();
+
+      const ring = spatialState.polygon.coordinates[0];
+      const uniqueCoords = ring.slice(0, -1);
+
+      const banner = document.getElementById('drawControlsBanner');
+      if (banner) banner.style.display = 'flex';
+      const instructions = document.getElementById('drawInstructions');
+      if (instructions) instructions.textContent = 'Drag points on the map to adjust your search area.';
+      const finishBtn = document.getElementById('finishDrawBtn');
+      if (finishBtn) finishBtn.disabled = false;
+      const finishBtnText = document.getElementById('finishDrawBtnText');
+      if (finishBtnText) finishBtnText.textContent = 'Save Area';
+
+      const customIcon = L.divIcon({
+        className: 'vertex-drag-handle',
+        html: '<div style="background:#2563eb;width:14px;height:14px;border:2px solid #fff;border-radius:50%;box-shadow:0 2px 6px rgba(0,0,0,0.45);cursor:grab;"></div>',
+        iconSize: [14, 14],
+        iconAnchor: [7, 7]
+      });
+
+      editVertexMarkers = uniqueCoords.map((coord) => {
+        const marker = L.marker([coord[1], coord[0]], {
+          draggable: true,
+          icon: customIcon
+        }).addTo(map);
+
+        marker.on('drag', () => {
+          const latLngs = editVertexMarkers.map(m => m.getLatLng());
+          spatialState.polygonLayer.setLatLngs(latLngs);
+        });
+
+        return marker;
+      });
+    }
+
+    function finishEditingPolygon() {
+      if (!isEditingPolygon || editVertexMarkers.length < 3) {
+        cleanupEditMarkers();
+        return;
+      }
+
+      const updatedCoords = editVertexMarkers.map(m => {
+        const pos = m.getLatLng();
+        return [Number(pos.lng.toFixed(6)), Number(pos.lat.toFixed(6))];
+      });
+      updatedCoords.push([updatedCoords[0][0], updatedCoords[0][1]]); // Close ring
+
+      cleanupEditMarkers();
+
+      spatialState.polygon = {
+        type: 'Polygon',
+        coordinates: [updatedCoords]
+      };
+
+      setSpatialMode('polygon', { polygon: spatialState.polygon });
+    }
+
+    function cleanupEditMarkers() {
+      isEditingPolygon = false;
+      editVertexMarkers.forEach(m => map.removeLayer(m));
+      editVertexMarkers = [];
+      const banner = document.getElementById('drawControlsBanner');
+      if (banner) banner.style.display = 'none';
+    }
+
+    function onMapMouseMove(e) {
+      if (isDrawingPolygon && drawPoints.length > 0) {
+        const lastPt = drawPoints[drawPoints.length - 1];
+        if (drawGuideLine) map.removeLayer(drawGuideLine);
+        drawGuideLine = L.polyline([lastPt, [e.latlng.lat, e.latlng.lng]], {
+          color: 'var(--accent, #2596be)',
+          weight: 1.5,
+          dashArray: '3, 5'
+        }).addTo(map);
+      }
+    }
 
     // --- Radius Search & Near Me Map Controls ---
     window.toggleRadiusMenu = function() {
@@ -2740,6 +3081,61 @@
           radiusMiles: selectedRadiusMiles || 5,
           isNearMe: false
         });
+        return;
+      }
+
+      if (isDrawingPolygon) {
+        const lat = e.latlng.lat;
+        const lng = e.latlng.lng;
+
+        // Check if clicking close to first vertex to close polygon
+        if (drawPoints.length >= 3) {
+          const firstPointPx = map.latLngToContainerPoint([drawPoints[0][0], drawPoints[0][1]]);
+          const curPointPx = map.latLngToContainerPoint(e.latlng);
+          if (firstPointPx.distanceTo(curPointPx) < 22) {
+            finishDrawing();
+            return;
+          }
+        }
+
+        if (drawPoints.length >= 40) {
+          alert('Maximum 40 points reached for custom area.');
+          finishDrawing();
+          return;
+        }
+
+        drawPoints.push([lat, lng]);
+
+        const isFirst = drawPoints.length === 1;
+        const vMarker = L.circleMarker([lat, lng], {
+          radius: isFirst ? 7 : 5,
+          color: isFirst ? '#2563eb' : '#1a2a3a',
+          fillColor: isFirst ? '#60a5fa' : '#ffffff',
+          fillOpacity: 1,
+          weight: 2
+        }).addTo(map);
+
+        if (isFirst) {
+          vMarker.on('click', (ev) => {
+            L.DomEvent.stopPropagation(ev);
+            if (drawPoints.length >= 3) finishDrawing();
+          });
+        }
+        drawMarkers.push(vMarker);
+
+        if (drawPolyline) map.removeLayer(drawPolyline);
+        drawPolyline = L.polyline(drawPoints, {
+          color: 'var(--primary, #1a2a3a)',
+          weight: 2.5,
+          dashArray: '4, 4'
+        }).addTo(map);
+
+        const instructions = document.getElementById('drawInstructions');
+        if (instructions) {
+          instructions.textContent = `Click map to outline area (${drawPoints.length} point${drawPoints.length === 1 ? '' : 's'}). Click first point or Complete to finish.`;
+        }
+        const finishBtn = document.getElementById('finishDrawBtn');
+        if (finishBtn) finishBtn.disabled = (drawPoints.length < 3);
       }
     }
 
@@ -2810,7 +3206,7 @@
 
     function onMapMoveEnd() {
       if (suppressViewportSearch) return;
-      if (spatialState.mode === 'radius') return; // Suspend viewport search when Radius mode is active
+      if (spatialState.mode === 'radius' || spatialState.mode === 'polygon') return; // Suspend viewport search when custom spatial mode is active
 
       userHasMovedMap = true;
       const b = map.getBounds();
@@ -2972,8 +3368,13 @@
       let maxIdx = parseInt(maxSlider.value, 10);
 
       if (minIdx > maxIdx) {
-        if (e && e.target === minSlider) { minSlider.value = maxIdx; minIdx = maxIdx; }
-        else { maxSlider.value = minIdx; maxIdx = minIdx; }
+        if (e && e.target === minSlider) {
+          maxSlider.value = minIdx;
+          maxIdx = minIdx;
+        } else {
+          minSlider.value = maxIdx;
+          minIdx = maxIdx;
+        }
       }
 
       priceMinIdx = minIdx;
@@ -3050,9 +3451,11 @@
       const q = (document.getElementById('searchInput').value || '').trim();
       if (q) p.set('q', q);
 
-      // Spatial Filtering: Radius Mode vs. Viewport Mode (Phase 7.3B2A)
+      // Spatial Filtering: Polygon Mode vs. Radius Mode vs. Viewport Mode (Phase 7.3B2B)
       if (includeSpatial) {
-        if (spatialState.mode === 'radius' && spatialState.centerLat !== null && spatialState.centerLng !== null && spatialState.radiusMiles) {
+        if (spatialState.mode === 'polygon' && spatialState.polygon) {
+          p.set('polygon', JSON.stringify(spatialState.polygon));
+        } else if (spatialState.mode === 'radius' && spatialState.centerLat !== null && spatialState.centerLng !== null && spatialState.radiusMiles) {
           p.set('centerLat', spatialState.centerLat.toFixed(6));
           p.set('centerLng', spatialState.centerLng.toFixed(6));
           p.set('radiusMiles', spatialState.radiusMiles.toString());

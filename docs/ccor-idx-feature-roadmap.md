@@ -55,7 +55,7 @@ graph TD
 
 ---
 
-### Phase 7.3B2A — Radius Search, Near Me, Spatial State & Desktop Hide Map (CURRENT)
+### Phase 7.3B2A — Radius Search, Near Me, Spatial State & Desktop Hide Map
 * **Goal:** Deliver centralized frontend spatial search state, server-side equirectangular distance filtering in D1 SQLite, responsive Leaflet radius visualization, Near Me geolocation, and desktop map toggle.
 * **Status:** `COMPLETE / DEPLOYED`
 * **Features Included:**
@@ -69,19 +69,23 @@ graph TD
 
 ---
 
-### Phase 7.3B2B — Spatial Polygon Drawing (FUTURE)
-* **Goal:** Interactive freehand polygon and boundary drawing with Turf.js spatial polygon inclusion.
-* **Status:** `FUTURE`
-* **Feature Candidates:**
-  * Freehand drawing tools on map canvas.
-  * Point-in-polygon spatial candidate filtering.
-  * Polygon boundary persistence and editing.
+### Phase 7.3B2B — Draw Area / Server-Authoritative Polygon Search (CURRENT)
+* **Goal:** Deliver custom interactive polygon search area drawing, draggable vertex editing, hardened spatial validation with HTTP 400 rejection on malformed spatial parameters, and server-authoritative ray-casting point-in-polygon SQL execution in Cloudflare D1 SQLite.
+* **Status:** `COMPLETE / DEPLOYED`
+* **Features Included:**
+  * **Custom Draw Area Tool & UI:** Interactive map drawing with crosshair cursor, dynamic dashed guide lines, vertex placement with auto-close snapping to start vertex, floating control banner with one-click Complete / Cancel.
+  * **Draggable Vertex Editing:** One-click `Edit Area` turns polygon vertices into draggable handles with live geometry updates, saving to state on completion without premature intermediate queries.
+  * **Server-Authoritative D1 SQL Ray-Casting:** Bounding box prefilter (`Latitude BETWEEN ? AND ? AND Longitude BETWEEN ? AND ?`) + parameterized ray-crossing SQLite modulo expression (`((edge1 + ... + edgeN) % 2) = 1`). Exact search counts, pagination totals, and map markers agree 100%.
+  * **Hardened Spatial Validation:** Explicit HTTP 400 `InvalidSpatialFilter` returned on incomplete radius parameters or malformed GeoJSON geometry; prevents silent search broadening.
+  * **GeoJSON Polygon Serialization:** 5-6 decimal place normalized coordinate storage in `spatialState.polygon`, fully serializable and restorable via `serializeSearchState()` / `applySearchState()`.
+  * **Mutual Exclusivity & Clean Mode Switching:** Drawing a polygon automatically clears radius; selecting radius clears polygon; clearing area returns to standard viewport mode.
+  * **Deterministic UI Build:** `2026.08.27.7.3b2b` across search UI, embed loader, and verification scripts.
 
 ---
 
-### Phase 7.3C — Buyer Retention & Client Tools (PLANNED)
+### Phase 7.3C — Buyer Retention & Client Tools (NEXT PLANNED MAJOR PHASE)
 * **Goal:** Provide consumer login, saved searches, automated email alerts, and lead CRM intelligence for participating REALTORS®.
-* **Status:** `FUTURE`
+* **Status:** `PLANNED`
 * **Feature Candidates:**
   * **Consumer Accounts & Passwordless Auth:** Magic link login for property buyers on member websites.
   * **Saved Searches & Instant Email Alerts:** Automated daily/instant MLS alert emails matching saved search criteria.
