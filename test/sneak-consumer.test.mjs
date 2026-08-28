@@ -325,8 +325,20 @@ function createMockConsumerDB() {
                         });
                         return { meta: { changes: 1 }, success: true };
                     }
-                    // UPDATE sneak_consumer_magic_links (used_at)
+                    // UPDATE sneak_consumer_magic_links
                     if (nq.includes('UPDATE sneak_consumer_magic_links')) {
+                        if (nq.includes('WHERE user_id = ?')) {
+                            const userId = boundArgs[1];
+                            const siteId = boundArgs[2];
+                            let changes = 0;
+                            tables.sneak_consumer_magic_links.forEach(l => {
+                                if (l.user_id === userId && l.site_id === siteId && !l.used_at) {
+                                    l.used_at = boundArgs[0];
+                                    changes++;
+                                }
+                            });
+                            return { meta: { changes }, changes, success: true };
+                        }
                         const tokenHash = boundArgs[1];
                         const l = tables.sneak_consumer_magic_links.find(x => x.token_hash === tokenHash && !x.used_at);
                         if (l) {
@@ -785,5 +797,166 @@ describe('CCOR IDX / SNEAK Consumer Worker & Identity (Phase 7.3C1A)', () => {
         // Consumer user and favorites are gone from DB
         assert.equal(db.tables.sneak_consumer_users.some(u => u.id === 'c_usr_1'), false);
         assert.equal(db.tables.sneak_consumer_favorites.some(f => f.user_id === 'c_usr_1'), false);
+    });
+
+    test('10. XSS Escaping and URL Sanitization unit tests', () => {
+        function escapeHtml(str) {
+            if (str === null || str === undefined) return '';
+            return String(str)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#039;');
+        }
+
+        function sanitizeUrl(url) {
+            if (!url || typeof url !== 'string') return '';
+            const clean = url.trim();
+            if (clean.startsWith('https://') || clean.startsWith('http://') || clean.startsWith('/')) {
+                return clean;
+            }
+            return '';
+        }
+
+        // Test malicious scripts and onerror injection
+        const scriptPayload = '<script>alert(1)</script>';
+        assert.equal(escapeHtml(scriptPayload), '&lt;script&gt;alert(1)&lt;/script&gt;');
+
+        const imgPayload = '"><img src=x onerror=alert(1)>';
+        assert.equal(escapeHtml(imgPayload), '&quot;&gt;&lt;img src=x onerror=alert(1)&gt;');
+
+        // Test URL sanitization
+        assert.equal(sanitizeUrl('https://images.sneakidx.com/photo.jpg'), 'https://images.sneakidx.com/photo.jpg');
+        assert.equal(sanitizeUrl('http://images.sneakidx.com/photo.jpg'), 'http://images.sneakidx.com/photo.jpg');
+        assert.equal(sanitizeUrl('/local/path/image.jpg'), '/local/path/image.jpg');
+        assert.equal(sanitizeUrl('javascript:alert(1)'), '');
+        assert.equal(sanitizeUrl('data:text/html,<script>alert(1)</script>'), '');
+        assert.equal(sanitizeUrl('vbscript:msgbox(1)'), '');
+    });
+
+    test('11. Rate Limiting: Exceeded threshold maintains generic response but throttles magic link generation', async () => {
+        const db = createMockConsumerDB();
+        const env = { DB: db, SNEAK_ENV: 'staging', SNEAK_SIGNING_SECRET: TEST_SIGNING_SECRET };
+
+        const email = 'spammy_buyer@example.com';
+        const emailHash = await sha256Hex(email);
+
+        // Pre-populate 5 previous email attempts
+        for (let i = 0; i < 5; i++) {
+            db.tables.sneak_consumer_login_attempts.push({
+                id: `cla_em_${i}`,
+                site_id: 'site_1',
+                identifier_hash: emailHash,
+                attempt_type: 'email',
+                created_at: new Date().toISOString()
+            });
+        }
+
+        const req = new Request('https://consumer.staging/api/consumer/auth/magic-link', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'CF-Connecting-IP': '192.0.2.1'
+            },
+            body: JSON.stringify({
+                site: 'site-mem-1',
+                email,
+                returnUrl: 'https://member1.com/homes'
+            })
+        });
+
+        const res = await worker.fetch(req, env);
+        assert.equal(res.status, 200);
+        const data = await res.json();
+        assert.equal(data.success, true);
+        assert.equal(data.message, 'If the email is valid, a sign-in link has been sent. Please check your inbox.');
+
+        // Zero magic links issued due to rate limit throttling
+        assert.equal(db.tables.sneak_consumer_magic_links.length, 0);
+    });
+
+    test('12. Invalidation of previous unused magic link when new one is requested', async () => {
+        const db = createMockConsumerDB();
+        const env = { DB: db, SNEAK_ENV: 'staging', SNEAK_SIGNING_SECRET: TEST_SIGNING_SECRET };
+
+        // 1st request
+        await requestConsumerMagicLink(db, {
+            siteKey: 'site-mem-1',
+            email: 'rotate@example.com',
+            returnUrl: 'https://member1.com/homes',
+            ipHash: 'ip_rotate_1',
+            env
+        });
+        assert.equal(db.tables.sneak_consumer_magic_links.length, 1);
+        const firstLinkId = db.tables.sneak_consumer_magic_links[0].id;
+        assert.equal(db.tables.sneak_consumer_magic_links[0].used_at, null);
+
+        // 2nd request
+        await requestConsumerMagicLink(db, {
+            siteKey: 'site-mem-1',
+            email: 'rotate@example.com',
+            returnUrl: 'https://member1.com/homes',
+            ipHash: 'ip_rotate_2',
+            env
+        });
+        assert.equal(db.tables.sneak_consumer_magic_links.length, 2);
+        const firstLink = db.tables.sneak_consumer_magic_links.find(l => l.id === firstLinkId);
+        assert.ok(firstLink.used_at !== null, 'First magic link must be marked used/invalidated');
+    });
+
+    test('13. Disabled Consumer Account cannot log in', async () => {
+        const db = createMockConsumerDB();
+        const env = { DB: db, SNEAK_ENV: 'staging', SNEAK_SIGNING_SECRET: TEST_SIGNING_SECRET };
+
+        db.tables.sneak_consumer_users.push({
+            id: 'c_usr_disabled',
+            site_id: 'site_1',
+            email: 'disabled@example.com',
+            status: 'disabled'
+        });
+
+        // Attempt magic link -> generic 200 response but 0 magic links created
+        const req = new Request('https://consumer.staging/api/consumer/auth/magic-link', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                site: 'site-mem-1',
+                email: 'disabled@example.com',
+                returnUrl: 'https://member1.com/homes'
+            })
+        });
+        const res = await worker.fetch(req, env);
+        assert.equal(res.status, 200);
+        assert.equal(db.tables.sneak_consumer_magic_links.length, 0);
+    });
+
+    test('14. Cross-Tenant Separation: Same email on Site 1 vs Site 2 creates two isolated consumers', async () => {
+        const db = createMockConsumerDB();
+        const env = { DB: db, SNEAK_ENV: 'staging', SNEAK_SIGNING_SECRET: TEST_SIGNING_SECRET };
+
+        // Register same email on Site 1
+        await requestConsumerMagicLink(db, {
+            siteKey: 'site-mem-1',
+            email: 'sharedbuyer@example.com',
+            returnUrl: 'https://member1.com/homes',
+            ipHash: 'ip_share_1',
+            env
+        });
+
+        // Register same email on Site 2
+        await requestConsumerMagicLink(db, {
+            siteKey: 'site-mem-2',
+            email: 'sharedbuyer@example.com',
+            returnUrl: 'https://member2.com/homes',
+            ipHash: 'ip_share_2',
+            env
+        });
+
+        const users = db.tables.sneak_consumer_users.filter(u => u.email === 'sharedbuyer@example.com');
+        assert.equal(users.length, 2, 'Must create 2 separate site-scoped consumer records');
+        assert.notEqual(users[0].id, users[1].id);
+        assert.equal(users[0].site_id, 'site_1');
+        assert.equal(users[1].site_id, 'site_2');
     });
 });

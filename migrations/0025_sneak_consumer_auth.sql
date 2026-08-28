@@ -4,7 +4,7 @@
 
 CREATE TABLE IF NOT EXISTS sneak_consumer_users (
     id TEXT PRIMARY KEY,
-    site_id TEXT NOT NULL REFERENCES sneak_sites(site_id) ON DELETE CASCADE,
+    site_id TEXT NOT NULL REFERENCES sneak_sites(id) ON DELETE CASCADE,
     email TEXT NOT NULL,
     status TEXT NOT NULL DEFAULT 'pending', -- 'pending', 'active', 'disabled'
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
@@ -20,7 +20,7 @@ CREATE INDEX IF NOT EXISTS idx_sneak_consumer_users_email ON sneak_consumer_user
 CREATE TABLE IF NOT EXISTS sneak_consumer_magic_links (
     id TEXT PRIMARY KEY,
     user_id TEXT NOT NULL REFERENCES sneak_consumer_users(id) ON DELETE CASCADE,
-    site_id TEXT NOT NULL REFERENCES sneak_sites(site_id) ON DELETE CASCADE,
+    site_id TEXT NOT NULL REFERENCES sneak_sites(id) ON DELETE CASCADE,
     token_hash TEXT UNIQUE NOT NULL,
     purpose TEXT NOT NULL DEFAULT 'login', -- 'login'
     return_url TEXT NOT NULL,
@@ -35,7 +35,7 @@ CREATE INDEX IF NOT EXISTS idx_sneak_consumer_magic_links_user ON sneak_consumer
 CREATE TABLE IF NOT EXISTS sneak_consumer_sessions (
     id TEXT PRIMARY KEY,
     user_id TEXT NOT NULL REFERENCES sneak_consumer_users(id) ON DELETE CASCADE,
-    site_id TEXT NOT NULL REFERENCES sneak_sites(site_id) ON DELETE CASCADE,
+    site_id TEXT NOT NULL REFERENCES sneak_sites(id) ON DELETE CASCADE,
     token_hash TEXT UNIQUE NOT NULL,
     created_at DATETIME NOT NULL,
     expires_at DATETIME NOT NULL,
@@ -49,7 +49,7 @@ CREATE INDEX IF NOT EXISTS idx_sneak_consumer_sessions_user ON sneak_consumer_se
 CREATE TABLE IF NOT EXISTS sneak_consumer_auth_exchanges (
     id TEXT PRIMARY KEY,
     user_id TEXT NOT NULL REFERENCES sneak_consumer_users(id) ON DELETE CASCADE,
-    site_id TEXT NOT NULL REFERENCES sneak_sites(site_id) ON DELETE CASCADE,
+    site_id TEXT NOT NULL REFERENCES sneak_sites(id) ON DELETE CASCADE,
     code_hash TEXT UNIQUE NOT NULL,
     created_at DATETIME NOT NULL,
     expires_at DATETIME NOT NULL,

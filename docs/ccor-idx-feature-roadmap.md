@@ -152,8 +152,8 @@ graph TD
 | **Zoning** | `Zoning` | `Edm.String` | 55.5% | `AVAILABLE` | Filter & card display for Commercial & Land |
 | **Photo Gallery** | `MediaJSON` (Bridge Media array) | `Edm.String` | 99.4% | `AVAILABLE` | Full multi-photo carousel & thumbnails |
 | **Interactive Map** | `Coordinates` / `Latitude`, `Longitude` | `REAL` | 99.1% | `AVAILABLE` | Clustered Leaflet markers with popups |
-| **Spatial Polygon Search** | N/A (Client-Side Bounding Box) | `GeoJSON` | N/A | `FUTURE` | Planned for Phase 7.3B |
-| **Radius Distance Search** | `Coordinates` Haversine SQL | Math | N/A | `FUTURE` | Planned for Phase 7.3B |
+| **Spatial Polygon Search** | `Coordinates` Ray-Casting SQLite SQL | `GeoJSON` | 99.1% | `AVAILABLE` | Server-authoritative ray-casting polygon filter (Phase 7.3B2B) |
+| **Radius Distance Search** | `Coordinates` Equirectangular D1 SQL | Math | 99.1% | `AVAILABLE` | Server-authoritative distance radius filter (Phase 7.3B2A) |
 | **View Type (Canal/Golf/Water)** | `ViewYN`, `View` | `Collection` | 49.0% / 95.7% | `FEED AUDIT REQUIRED` | Planned for Wave-2 Amenity Filters |
 | **55+ / Senior Community** | `SeniorCommunityYN` | `Edm.Boolean` | 0.2% | `NOT RECOMMENDED` | Unreliable feed coverage (< 1%) |
 | **Virtual Tour Link** | `VirtualTourURLUnbranded` | `Edm.String` | 6.2% | `FUTURE` | Planned for Property Detail modal |

@@ -88,7 +88,7 @@ Every participant must complete all verification gates before being marked **Lau
   * Live Consumer Worker Health: PASS — `https://sneak-idx-consumer-staging.bonitaspringsrealtors.workers.dev/api/consumer/version` (200 OK, `sneak-consumer-worker`, `2026.08.27.7.3c1a`, `healthy`)
   * Live Polygon & Radius Search: PASS — Polygon Mode and Radius Mode filter accurately across residential, commercial, and land
   * Live Marker Schema: PASS — Complete context-aware fields returned from D1 with address suppression enforced
-  * Automated Regression Suite: PASS — 85/85 tests passing (`node --test test/*.test.mjs`)
+  * Automated Regression Suite: PASS — 90/90 tests passing (`node --test test/*.test.mjs`)
 * **Observability & Timing:**
   * Staff Setup Time: ~9 minutes
   * Member Implementation Time: ~2 minutes (HTML snippet paste in WordPress)

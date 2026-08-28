@@ -4,7 +4,7 @@
 
 CREATE TABLE IF NOT EXISTS sneak_consumer_favorites (
     id TEXT PRIMARY KEY,
-    site_id TEXT NOT NULL REFERENCES sneak_sites(site_id) ON DELETE CASCADE,
+    site_id TEXT NOT NULL REFERENCES sneak_sites(id) ON DELETE CASCADE,
     user_id TEXT NOT NULL REFERENCES sneak_consumer_users(id) ON DELETE CASCADE,
     listing_key TEXT NOT NULL,
     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
