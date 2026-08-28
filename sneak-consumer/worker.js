@@ -21,10 +21,14 @@ import {
     handleListFavorites,
     handleAddFavorite,
     handleRemoveFavorite,
-    handleMergeFavorites
+    handleMergeFavorites,
+    handleListSavedSearches,
+    handleCreateSavedSearch,
+    handleUpdateSavedSearch,
+    handleDeleteSavedSearch
 } from './api.js';
 
-const CONSUMER_BUILD = '2026.08.27.7.3c1a';
+const CONSUMER_BUILD = '2026.08.28.7.3c1b';
 
 /**
  * Validates request origin against authorized sites/domains in D1.
@@ -91,8 +95,8 @@ export default {
             const headers = new Headers();
             headers.set('Access-Control-Allow-Origin', allowedOrigin);
             headers.set('Vary', 'Origin');
-            headers.set('Access-Control-Allow-Methods', 'GET, POST, DELETE, OPTIONS');
-            headers.set('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, X-Site-Key, X-SNEAK-Session');
+            headers.set('Access-Control-Allow-Methods', 'GET, POST, PATCH, DELETE, OPTIONS');
+            headers.set('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, X-Site-Key, X-SNEAK-Session, X-Consumer-Session');
             headers.set('Access-Control-Max-Age', '86400');
             return new Response(null, { status: 204, headers });
         }
@@ -136,6 +140,25 @@ export default {
 
             if (url.pathname === '/api/consumer/favorites/merge' && method === 'POST') {
                 return await handleMergeFavorites(req, env, allowedOrigin);
+            }
+
+            // Saved Searches Routes (Phase 7.3C1B)
+            if (url.pathname === '/api/consumer/saved-searches' && method === 'GET') {
+                return await handleListSavedSearches(req, url, env, allowedOrigin);
+            }
+
+            if (url.pathname === '/api/consumer/saved-searches' && method === 'POST') {
+                return await handleCreateSavedSearch(req, env, allowedOrigin);
+            }
+
+            if (url.pathname.startsWith('/api/consumer/saved-searches/') && method === 'PATCH') {
+                const searchId = decodeURIComponent(url.pathname.slice('/api/consumer/saved-searches/'.length));
+                return await handleUpdateSavedSearch(req, searchId, url, env, allowedOrigin);
+            }
+
+            if (url.pathname.startsWith('/api/consumer/saved-searches/') && method === 'DELETE') {
+                const searchId = decodeURIComponent(url.pathname.slice('/api/consumer/saved-searches/'.length));
+                return await handleDeleteSavedSearch(req, searchId, url, env, allowedOrigin);
             }
 
             return jsonResponse({ error: 'NotFound', message: `Route ${method} ${url.pathname} not found.` }, 404, allowedOrigin);

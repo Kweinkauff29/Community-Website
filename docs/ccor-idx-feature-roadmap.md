@@ -97,15 +97,23 @@ graph TD
   * **XSS Sanitization & MLS Security:** `escapeHtml` and `sanitizeUrl` guard all dynamic HTML rendering across listing cards, popups, and carousels.
   * **Deterministic UI Build:** `2026.08.27.7.3c1a` across search UI, embed loader, consumer worker, and test suites.
 
+### Phase 7.3C1B — Embed Layout Stabilization & Saved Searches / State Restore (COMPLETED)
+* **Goal:** Stabilize the embedded search layout into a true app shell, eliminate host website bottom cut-offs, provide responsive parent iframe height scaling, and deliver server-persisted saved searches with duplicate detection and round-trip state restoration.
+* **Status:** `COMPLETE / DEPLOYED`
+* **Features Included:**
+  * **Embed App-Shell Architecture:** Refactored embedded search (`body.is-embedded`) to a CSS flex container (`flex-direction: column; height: 100vh; overflow: hidden;`), consuming all remaining iframe height for map and listings without pushing content beyond iframe boundary into host website footers.
+  * **Parent Iframe Height Stabilization:** Responsive desktop default `clamp(780px, 85vh, 960px)` in `embed.js`, respecting optional `data-height` and `data-fixed-height` attributes.
+  * **Secured PostMessage Resize Channel:** Window source validation (`e.source === iframe.contentWindow`), site key match, height bounds enforcement (400px–3000px), and anti-jitter debouncing (<= 3px filter).
+  * **Saved Searches Schema (`sneak_consumer_saved_searches`):** Cloudflare D1 table with foreign key isolation to `sneak_sites(id)` and `sneak_consumer_users(id)`, compound indexes for rapid user listing and duplicate detection.
+  * **Search State Normalization & Privacy:** Strict validation engine (max 16KB, version 1); converts dynamic GPS Near Me tracking to static coordinate radius centers; validates max 40 polygon vertices.
+  * **Duplicate Detection via SHA-256 (`state_hash`):** Matching search criteria automatically updates search name and timestamp instead of creating duplicate records; enforced 25 saved searches limit per consumer/site.
+  * **Consumer Saved Searches API:** Full REST CRUD endpoints (`GET`, `POST`, `PATCH /:id`, `DELETE /:id`) under `/api/consumer/saved-searches` with tenant isolation.
+  * **UI Integration & Search Restore:** Save Search trigger button in toolbar, modal naming dialog with criteria summary, Saved Searches list modal with View/Rename/Delete, and pending anonymous save intent restoration across magic-link sign-in.
+  * **Deterministic UI Build:** `2026.08.28.7.3c1b` across search UI, embed loader, consumer worker, and test suites.
+
 ---
 
-### Phase 7.3C1B — Saved Searches & Restore Search State (NEXT)
-* **Goal:** Provide saved search management, named searches, spatial search restoration, and URL search state deserialization.
-* **Status:** `PLANNED`
-
----
-
-### Phase 7.3C2 — Automated Email Alerts & Agent Activity Dashboard (PLANNED)
+### Phase 7.3C2 — Automated Email Alerts & Agent Activity Dashboard (NEXT)
 * **Goal:** Automated daily/instant MLS email alerts on new matching inventory, and client activity timelines in REALTOR® Member Portal.
 * **Status:** `PLANNED`
 

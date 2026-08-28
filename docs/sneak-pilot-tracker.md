@@ -76,25 +76,28 @@ Every participant must complete all verification gates before being marked **Lau
   * Phase 7.3B2A Radius & Spatial State Search: 2026-08-27 18:30 UTC (100% PASS)
   * Phase 7.3B2B Server-Authoritative Polygon Search: 2026-08-27 19:45 UTC (100% PASS)
   * Phase 7.3C1A Buyer Identity, Magic Link Auth & Server Favorites: 2026-08-27 20:25 UTC (100% PASS)
-* **Phase 7.3C1A Buyer Identity, Magic Link Auth & Server Favorites:**
-  * *Consumer Worker & Trust Realm Isolation:* Dedicated consumer worker (`sneak-idx-consumer-staging`) handling passwordless buyer auth and server favorites. Zero permission escalation risk to member admin accounts.
-  * *Site-Scoped Tenant Identity:* `sneak_consumer_users` with `UNIQUE(site_id, email)` keeps consumer accounts isolated per IDX site.
-  * *Single-Use Magic Links & 2-Minute Exchange Handoff:* Single-use SHA-256 hashed magic links with 15-minute TTL; return handoff utilizes short-lived (2 min) exchange codes in `sneak_consumer_auth_exchanges` and `history.replaceState` parent URL cleanup.
-  * *Server Favorites & Local Union Merge:* `sneak_consumer_favorites` (max 200 items); optimistic heart UI; automatic merging of anonymous favorites on buyer sign-in.
-  * *XSS Sanitization Guard:* `escapeHtml` and `sanitizeUrl` guard all dynamic HTML rendering across listing cards, popups, and carousels.
+  * Phase 7.3C1B Embed Layout Stabilization & Saved Searches: 2026-08-28 15:10 UTC (100% PASS)
+* **Phase 7.3C1B Embed Layout Stabilization & Saved Searches:**
+  * *Embed App-Shell Architecture:* Refactored `body.is-embedded` to a CSS flex container (`flex-direction: column; height: 100vh; overflow: hidden;`), consuming all remaining iframe height for map and listings without pushing content beyond iframe boundary into host website footers.
+  * *Parent Iframe Height Scaling:* Responsive desktop default `clamp(780px, 85vh, 960px)` in `embed.js` with secure origin window check and anti-jitter debouncing.
+  * *Saved Searches Schema (`sneak_consumer_saved_searches`):* Cloudflare D1 table with foreign key isolation, state versioning, 25-search limits, and SHA-256 duplicate detection.
+  * *Search State Normalization & Privacy:* Strips active GPS Near Me tracking to static coordinate radius centers; validates max 40 polygon vertices.
+  * *Round-Trip State Serialization & Restoration:* Complete criteria gather (`serializeSearchState`) and UI restore (`applySearchState`) across category, pricing, beds/baths, drawer filters, and spatial radius/polygon/viewport layers.
 * **Live Validation Evidence:**
   * Live Public URL: `https://coconutcoastrealtors.org/idx-test/` (HTTP 200 OK)
-  * Live Static UI Build: PASS — `data-ui-build="2026.08.27.7.3c1a"`, `CCOR_IDX_UI_BUILD = '2026.08.27.7.3c1a'`, `embed.js &v=2026.08.27.7.3c1a`
-  * Live Consumer Worker Health: PASS — `https://sneak-idx-consumer-staging.bonitaspringsrealtors.workers.dev/api/consumer/version` (200 OK, `sneak-consumer-worker`, `2026.08.27.7.3c1a`, `healthy`)
+  * Live Static UI Build: PASS — `data-ui-build="2026.08.28.7.3c1b"`, `CCOR_IDX_UI_BUILD = '2026.08.28.7.3c1b'`, `embed.js &v=2026.08.28.7.3c1b`
+  * Live Consumer Worker Health: PASS — `https://sneak-idx-consumer-staging.bonitaspringsrealtors.workers.dev/api/consumer/version` (200 OK, `sneak-consumer-worker`, `2026.08.28.7.3c1b`, `healthy`)
+  * Live Saved Searches REST API: PASS — OPTIONS, GET (401 unauthenticated), POST, PATCH, DELETE verified
   * Live Polygon & Radius Search: PASS — Polygon Mode and Radius Mode filter accurately across residential, commercial, and land
   * Live Marker Schema: PASS — Complete context-aware fields returned from D1 with address suppression enforced
-  * Automated Regression Suite: PASS — 90/90 tests passing (`node --test test/*.test.mjs`)
+  * Automated Regression Suite: PASS — 100/100 tests passing (`node --test test/*.test.mjs`)
+  * Live Automated Verification: PASS — 26/26 live verification assertions passing (`node scripts/verify-phase73c1b-live.mjs`)
 * **Observability & Timing:**
   * Staff Setup Time: ~9 minutes
   * Member Implementation Time: ~2 minutes (HTML snippet paste in WordPress)
-  * Staff Interventions Required: 8 (Identity reconciliation, Phase 7.1 model correction, Phase 7.2 product corrections, Phase 7.3A search parity, Phase 7.3B1 interactive map synchronization, Phase 7.3B2A radius search, Phase 7.3B2B polygon search, Phase 7.3C1A buyer auth)
+  * Staff Interventions Required: 9 (Identity reconciliation, Phase 7.1 model correction, Phase 7.2 product corrections, Phase 7.3A search parity, Phase 7.3B1 interactive map synchronization, Phase 7.3B2A radius search, Phase 7.3B2B polygon search, Phase 7.3C1A buyer auth, Phase 7.3C1B embed layout stabilization & saved searches)
   * Support Questions Logged: 0
-* **Final Status:** **ACTIVE PILOT (CCOR IDX Plug-in Phase 7.3C1A Deployed)**
+* **Final Status:** **ACTIVE PILOT (CCOR IDX Plug-in Phase 7.3C1B Deployed)**
 
 ---
 

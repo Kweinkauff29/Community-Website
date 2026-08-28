@@ -1016,16 +1016,17 @@ describe('SNEAK IDX Phase 2.2 Test Suite', () => {
         assert.ok(Array.isArray(data.data));
     });
 
-    test('PHASE 7.3C1A: Frontend build versions are uniformly bumped to 2026.08.27.7.3c1a', () => {
+    test('PHASE 7.3C1B: Frontend build versions are uniformly bumped to 2026.08.28.7.3c1b and embed layout stabilized', () => {
         const searchHtml = fs.readFileSync(path.join(rootDir, 'sneak-idx/search/index.html'), 'utf8');
         const embedJs = fs.readFileSync(path.join(rootDir, 'sneak-idx/embed.js'), 'utf8');
 
-        assert.ok(searchHtml.includes('data-ui-build="2026.08.27.7.3c1a"'), 'search/index.html must have data-ui-build="2026.08.27.7.3c1a"');
-        assert.ok(searchHtml.includes("CCOR_IDX_UI_BUILD = '2026.08.27.7.3c1a'"), "search/index.html must have CCOR_IDX_UI_BUILD = '2026.08.27.7.3c1a'");
-        assert.ok(embedJs.includes("const buildVersion = '2026.08.27.7.3c1a'"), "embed.js must have buildVersion = '2026.08.27.7.3c1a'");
-        assert.ok(searchHtml.includes('id="consumerAuthModal"'), 'search/index.html must have #consumerAuthModal');
-        assert.ok(searchHtml.includes('id="consumerAccountModal"'), 'search/index.html must have #consumerAccountModal');
-        assert.ok(searchHtml.includes('id="consumerAuthBtn"'), 'search/index.html must have #consumerAuthBtn');
-        assert.ok(embedJs.includes('auth_code'), 'embed.js must support auth_code handoff');
+        assert.ok(searchHtml.includes('data-ui-build="2026.08.28.7.3c1b"'), 'search/index.html must have data-ui-build="2026.08.28.7.3c1b"');
+        assert.ok(searchHtml.includes("CCOR_IDX_UI_BUILD = '2026.08.28.7.3c1b'"), "search/index.html must have CCOR_IDX_UI_BUILD = '2026.08.28.7.3c1b'");
+        assert.ok(embedJs.includes("const buildVersion = '2026.08.28.7.3c1b'"), "embed.js must have buildVersion = '2026.08.28.7.3c1b'");
+        assert.ok(searchHtml.includes('id="saveSearchModal"'), 'search/index.html must have #saveSearchModal');
+        assert.ok(searchHtml.includes('id="savedSearchesModal"'), 'search/index.html must have #savedSearchesModal');
+        assert.ok(searchHtml.includes('id="saveSearchBtn"'), 'search/index.html must have #saveSearchBtn');
+        assert.ok(searchHtml.includes('body.is-embedded'), 'search/index.html must have body.is-embedded app-shell CSS');
+        assert.ok(embedJs.includes('clamp(780px, 85vh, 960px)'), 'embed.js must have responsive desktop default height');
     });
 });

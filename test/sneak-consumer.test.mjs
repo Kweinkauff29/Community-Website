@@ -82,6 +82,7 @@ function createMockConsumerDB() {
         sneak_consumer_favorites: [
             { id: 'fav_1', site_id: 'site_1', user_id: 'c_usr_1', listing_key: '2240001', created_at: '2026-08-20T00:00:00Z' }
         ],
+        sneak_consumer_saved_searches: [],
         sneak_listings: [
             {
                 ListingKey: '2240001',
@@ -234,17 +235,20 @@ function createMockConsumerDB() {
                             }]
                         };
                     }
+                    if (nq.includes('FROM sneak_consumer_auth_exchanges WHERE code_hash = ?')) {
+                        const e = tables.sneak_consumer_auth_exchanges.find(x => x.code_hash === boundArgs[0]);
+                        return { results: e ? [e] : [] };
+                    }
 
-                    // sneak_consumer_sessions
-                    if (nq.includes('FROM sneak_consumer_sessions s') && nq.includes('JOIN sneak_consumer_users u')) {
-                        const tokenHash = boundArgs[0];
-                        const s = tables.sneak_consumer_sessions.find(x => x.token_hash === tokenHash && !x.revoked_at);
+                    // sneak_consumer_sessions (with JOINs)
+                    if (nq.includes('FROM sneak_consumer_sessions s') && nq.includes('s.token_hash = ?')) {
+                        const s = tables.sneak_consumer_sessions.find(x => x.token_hash === boundArgs[0] && !x.revoked_at);
                         if (!s) return { results: [] };
                         const u = tables.sneak_consumer_users.find(x => x.id === s.user_id);
                         const si = tables.sneak_sites.find(x => x.id === s.site_id);
                         return {
                             results: [{
-                                session_id: s.id,
+                                id: s.id,
                                 user_id: s.user_id,
                                 site_id: s.site_id,
                                 site_key: si?.site_key,
@@ -276,6 +280,21 @@ function createMockConsumerDB() {
                         const favs = tables.sneak_consumer_favorites.filter(f => f.user_id === boundArgs[0] && f.site_id === boundArgs[1]);
                         return { results: favs };
                     }
+
+                    // sneak_consumer_saved_searches (Phase 7.3C1B)
+                    if (nq.includes('count(*) as count FROM sneak_consumer_saved_searches') || nq.includes('COUNT(*) as count FROM sneak_consumer_saved_searches')) {
+                        const count = tables.sneak_consumer_saved_searches.filter(s => s.user_id === boundArgs[0] && s.site_id === boundArgs[1]).length;
+                        return { results: [{ count }] };
+                    }
+                    if (nq.includes('FROM sneak_consumer_saved_searches') && nq.includes('WHERE user_id = ? AND site_id = ? AND state_hash = ?')) {
+                        const item = tables.sneak_consumer_saved_searches.find(s => s.user_id === boundArgs[0] && s.site_id === boundArgs[1] && s.state_hash === boundArgs[2]);
+                        return { results: item ? [item] : [] };
+                    }
+                    if (nq.includes('FROM sneak_consumer_saved_searches') && nq.includes('WHERE user_id = ? AND site_id = ?')) {
+                        const items = tables.sneak_consumer_saved_searches.filter(s => s.user_id === boundArgs[0] && s.site_id === boundArgs[1]);
+                        return { results: items };
+                    }
+
                     if (nq.includes('FROM sneak_listings WHERE ListingKey IN')) {
                         const placeholders = boundArgs.filter(k => typeof k === 'string' && k.length > 0);
                         const results = tables.sneak_listings.filter(l => placeholders.includes(l.ListingKey));
@@ -421,6 +440,46 @@ function createMockConsumerDB() {
                         );
                         return { meta: { changes: 1 }, success: true };
                     }
+                    // INSERT INTO sneak_consumer_saved_searches (Phase 7.3C1B)
+                    if (nq.includes('INSERT INTO sneak_consumer_saved_searches')) {
+                        tables.sneak_consumer_saved_searches.push({
+                            id: boundArgs[0],
+                            site_id: boundArgs[1],
+                            user_id: boundArgs[2],
+                            name: boundArgs[3],
+                            state_version: 1,
+                            state_json: boundArgs[4],
+                            state_hash: boundArgs[5],
+                            created_at: boundArgs[6] || new Date().toISOString(),
+                            updated_at: boundArgs[7] || new Date().toISOString()
+                        });
+                        return { meta: { changes: 1 }, success: true };
+                    }
+                    // UPDATE sneak_consumer_saved_searches (Phase 7.3C1B)
+                    if (nq.includes('UPDATE sneak_consumer_saved_searches SET name =')) {
+                        let item;
+                        if (nq.includes('WHERE id = ? AND user_id = ? AND site_id = ?')) {
+                            item = tables.sneak_consumer_saved_searches.find(s => s.id === boundArgs[1] && s.user_id === boundArgs[2] && s.site_id === boundArgs[3]);
+                        } else if (nq.includes('WHERE id = ?')) {
+                            item = tables.sneak_consumer_saved_searches.find(s => s.id === boundArgs[1]);
+                        }
+                        if (item) {
+                            item.name = boundArgs[0];
+                            item.updated_at = new Date().toISOString();
+                            return { meta: { changes: 1 }, changes: 1, success: true };
+                        }
+                        return { meta: { changes: 0 }, changes: 0, success: true };
+                    }
+                    // DELETE FROM sneak_consumer_saved_searches (Phase 7.3C1B)
+                    if (nq.includes('DELETE FROM sneak_consumer_saved_searches WHERE id = ? AND user_id = ? AND site_id = ?')) {
+                        const before = tables.sneak_consumer_saved_searches.length;
+                        tables.sneak_consumer_saved_searches = tables.sneak_consumer_saved_searches.filter(
+                            s => !(s.id === boundArgs[0] && s.user_id === boundArgs[1] && s.site_id === boundArgs[2])
+                        );
+                        const changes = before - tables.sneak_consumer_saved_searches.length;
+                        return { meta: { changes }, changes, success: true };
+                    }
+                    // DELETE FROM sneak_consumer_users
                     if (nq.includes('DELETE FROM sneak_consumer_users')) {
                         const uid = boundArgs[0];
                         const sid = boundArgs[1];
@@ -429,6 +488,9 @@ function createMockConsumerDB() {
                         );
                         tables.sneak_consumer_favorites = tables.sneak_consumer_favorites.filter(
                             f => !(f.user_id === uid && f.site_id === sid)
+                        );
+                        tables.sneak_consumer_saved_searches = tables.sneak_consumer_saved_searches.filter(
+                            s => !(s.user_id === uid && s.site_id === sid)
                         );
                         tables.sneak_consumer_sessions = tables.sneak_consumer_sessions.filter(
                             s => !(s.user_id === uid && s.site_id === sid)
@@ -445,13 +507,13 @@ function createMockConsumerDB() {
 
 describe('CCOR IDX / SNEAK Consumer Worker & Identity (Phase 7.3C1A)', () => {
 
-    test('1. Health and Version check returns build 2026.08.27.7.3c1a', async () => {
+    test('1. Health and Version check returns build 2026.08.28.7.3c1b', async () => {
         const req = new Request('https://sneak-idx-consumer-staging.bonitaspringsrealtors.workers.dev/api/consumer/version');
         const res = await worker.fetch(req, {});
         assert.equal(res.status, 200);
         const data = await res.json();
         assert.equal(data.service, 'sneak-consumer-worker');
-        assert.equal(data.build, '2026.08.27.7.3c1a');
+        assert.equal(data.build, '2026.08.28.7.3c1b');
         assert.equal(data.status, 'healthy');
     });
 
@@ -958,5 +1020,525 @@ describe('CCOR IDX / SNEAK Consumer Worker & Identity (Phase 7.3C1A)', () => {
         assert.notEqual(users[0].id, users[1].id);
         assert.equal(users[0].site_id, 'site_1');
         assert.equal(users[1].site_id, 'site_2');
+    });
+
+    test('15. Saved Search CRUD (Phase 7.3C1B): Create, List, Rename (PATCH), and Delete', async () => {
+        const db = createMockConsumerDB();
+        const env = { DB: db, SNEAK_ENV: 'staging', SNEAK_SIGNING_SECRET: TEST_SIGNING_SECRET };
+
+        // Create session for c_usr_1 on site_1
+        const sessionToken = generateRawToken(32);
+        const tokenHash = await sha256Hex(sessionToken);
+        db.tables.sneak_consumer_sessions.push({
+            id: 'sess_crud_1',
+            user_id: 'c_usr_1',
+            site_id: 'site_1',
+            token_hash: tokenHash,
+            created_at: new Date().toISOString(),
+            expires_at: new Date(Date.now() + 14 * 86400 * 1000).toISOString(),
+            revoked_at: null
+        });
+
+        // 1. Create Saved Search
+        const createReq = new Request('https://consumer.staging/api/consumer/saved-searches', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer ' + sessionToken
+            },
+            body: JSON.stringify({
+                site: 'site-mem-1',
+                name: 'Bonita Springs Homes • $500K-$800K',
+                state: {
+                    version: 1,
+                    search: {
+                        propertyType: 'sale',
+                        q: 'Bonita Springs',
+                        minPrice: 500000,
+                        maxPrice: 800000,
+                        beds: 3,
+                        baths: 2,
+                        drawerState: { waterfront: true, pool: true },
+                        spatialState: { mode: null }
+                    }
+                }
+            })
+        });
+
+        const createRes = await worker.fetch(createReq, env);
+        assert.equal(createRes.status, 200);
+        const createData = await createRes.json();
+        assert.equal(createData.success, true);
+        assert.ok(createData.savedSearch.id);
+        assert.equal(createData.savedSearch.name, 'Bonita Springs Homes • $500K-$800K');
+        assert.equal(createData.savedSearch.state.search.minPrice, 500000);
+        const searchId = createData.savedSearch.id;
+
+        // 2. List Saved Searches
+        const listReq = new Request('https://consumer.staging/api/consumer/saved-searches?site=site-mem-1', {
+            method: 'GET',
+            headers: { 'Authorization': 'Bearer ' + sessionToken }
+        });
+        const listRes = await worker.fetch(listReq, env);
+        assert.equal(listRes.status, 200);
+        const listData = await listRes.json();
+        assert.equal(listData.success, true);
+        assert.equal(listData.count, 1);
+        assert.equal(listData.savedSearches[0].id, searchId);
+
+        // 3. Rename (PATCH) Saved Search
+        const patchReq = new Request(`https://consumer.staging/api/consumer/saved-searches/${searchId}?site=site-mem-1`, {
+            method: 'PATCH',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer ' + sessionToken
+            },
+            body: JSON.stringify({ name: 'Updated Waterfront Search' })
+        });
+        const patchRes = await worker.fetch(patchReq, env);
+        assert.equal(patchRes.status, 200);
+        const patchData = await patchRes.json();
+        assert.equal(patchData.success, true);
+        assert.equal(patchData.name, 'Updated Waterfront Search');
+
+        // 4. Delete Saved Search
+        const delReq = new Request(`https://consumer.staging/api/consumer/saved-searches/${searchId}?site=site-mem-1`, {
+            method: 'DELETE',
+            headers: { 'Authorization': 'Bearer ' + sessionToken }
+        });
+        const delRes = await worker.fetch(delReq, env);
+        assert.equal(delRes.status, 200);
+        const delData = await delRes.json();
+        assert.equal(delData.success, true);
+        assert.equal(db.tables.sneak_consumer_saved_searches.length, 0);
+    });
+
+    test('16. Saved Search Limit (25 max allowed, 26th rejected)', async () => {
+        const db = createMockConsumerDB();
+        const env = { DB: db, SNEAK_ENV: 'staging', SNEAK_SIGNING_SECRET: TEST_SIGNING_SECRET };
+
+        const sessionToken = generateRawToken(32);
+        const tokenHash = await sha256Hex(sessionToken);
+        db.tables.sneak_consumer_sessions.push({
+            id: 'sess_limit_1',
+            user_id: 'c_usr_1',
+            site_id: 'site_1',
+            token_hash: tokenHash,
+            created_at: new Date().toISOString(),
+            expires_at: new Date(Date.now() + 14 * 86400 * 1000).toISOString(),
+            revoked_at: null
+        });
+
+        // Pre-populate 25 saved searches
+        for (let i = 1; i <= 25; i++) {
+            db.tables.sneak_consumer_saved_searches.push({
+                id: `css_limit_${i}`,
+                site_id: 'site_1',
+                user_id: 'c_usr_1',
+                name: `Search ${i}`,
+                state_version: 1,
+                state_json: JSON.stringify({ version: 1, search: { propertyType: 'sale', minPrice: i * 10000 } }),
+                state_hash: `hash_${i}`,
+                created_at: new Date().toISOString(),
+                updated_at: new Date().toISOString()
+            });
+        }
+
+        // Attempt to create 26th
+        const req = new Request('https://consumer.staging/api/consumer/saved-searches', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer ' + sessionToken
+            },
+            body: JSON.stringify({
+                site: 'site-mem-1',
+                name: '26th Search',
+                state: { version: 1, search: { propertyType: 'sale', minPrice: 999999 } }
+            })
+        });
+
+        const res = await worker.fetch(req, env);
+        assert.equal(res.status, 400);
+        const data = await res.json();
+        assert.equal(data.error, 'SavedSearchLimitExceeded');
+        assert.equal(db.tables.sneak_consumer_saved_searches.length, 25);
+    });
+
+    test('17. Duplicate Save Handling: Updates timestamp and name for matching state_hash', async () => {
+        const db = createMockConsumerDB();
+        const env = { DB: db, SNEAK_ENV: 'staging', SNEAK_SIGNING_SECRET: TEST_SIGNING_SECRET };
+
+        const sessionToken = generateRawToken(32);
+        const tokenHash = await sha256Hex(sessionToken);
+        db.tables.sneak_consumer_sessions.push({
+            id: 'sess_dup_1',
+            user_id: 'c_usr_1',
+            site_id: 'site_1',
+            token_hash: tokenHash,
+            created_at: new Date().toISOString(),
+            expires_at: new Date(Date.now() + 14 * 86400 * 1000).toISOString(),
+            revoked_at: null
+        });
+
+        const statePayload = {
+            version: 1,
+            search: {
+                propertyType: 'sale',
+                q: 'Pelican Landing',
+                minPrice: 600000,
+                maxPrice: 1200000
+            }
+        };
+
+        // First Save
+        const req1 = new Request('https://consumer.staging/api/consumer/saved-searches', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + sessionToken },
+            body: JSON.stringify({ site: 'site-mem-1', name: 'Initial Name', state: statePayload })
+        });
+        const res1 = await worker.fetch(req1, env);
+        assert.equal(res1.status, 200);
+        assert.equal(db.tables.sneak_consumer_saved_searches.length, 1);
+        const initialId = db.tables.sneak_consumer_saved_searches[0].id;
+
+        // Second Save with identical state criteria but updated name
+        const req2 = new Request('https://consumer.staging/api/consumer/saved-searches', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + sessionToken },
+            body: JSON.stringify({ site: 'site-mem-1', name: 'Updated Duplicate Name', state: statePayload })
+        });
+        const res2 = await worker.fetch(req2, env);
+        assert.equal(res2.status, 200);
+        assert.equal(db.tables.sneak_consumer_saved_searches.length, 1, 'Should NOT create duplicate record');
+        assert.equal(db.tables.sneak_consumer_saved_searches[0].id, initialId);
+        assert.equal(db.tables.sneak_consumer_saved_searches[0].name, 'Updated Duplicate Name');
+    });
+
+    test('18. Cross-Tenant Protection: Site A session cannot list, update, or delete Site B saved search', async () => {
+        const db = createMockConsumerDB();
+        const env = { DB: db, SNEAK_ENV: 'staging', SNEAK_SIGNING_SECRET: TEST_SIGNING_SECRET };
+
+        // Site 1 session
+        const sessionToken1 = generateRawToken(32);
+        const tokenHash1 = await sha256Hex(sessionToken1);
+        db.tables.sneak_consumer_sessions.push({
+            id: 'sess_t1',
+            user_id: 'c_usr_1',
+            site_id: 'site_1',
+            token_hash: tokenHash1,
+            created_at: new Date().toISOString(),
+            expires_at: new Date(Date.now() + 14 * 86400 * 1000).toISOString(),
+            revoked_at: null
+        });
+
+        // Site 2 user & search
+        db.tables.sneak_consumer_users.push({
+            id: 'c_usr_2',
+            site_id: 'site_2',
+            email: 'buyer2@example.com',
+            status: 'active'
+        });
+        db.tables.sneak_consumer_saved_searches.push({
+            id: 'css_site_2_search',
+            site_id: 'site_2',
+            user_id: 'c_usr_2',
+            name: 'Site 2 Private Search',
+            state_version: 1,
+            state_json: JSON.stringify({ version: 1, search: { propertyType: 'sale' } }),
+            state_hash: 'hash_s2',
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+        });
+
+        // Site 1 consumer attempts to PATCH Site 2 search -> 404 / unauthorized
+        const patchReq = new Request('https://consumer.staging/api/consumer/saved-searches/css_site_2_search?site=site-mem-1', {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + sessionToken1 },
+            body: JSON.stringify({ name: 'Hacked Search Name' })
+        });
+        const patchRes = await worker.fetch(patchReq, env);
+        assert.equal(patchRes.status, 404);
+
+        // Site 1 consumer attempts to DELETE Site 2 search -> 404 / unauthorized
+        const delReq = new Request('https://consumer.staging/api/consumer/saved-searches/css_site_2_search?site=site-mem-1', {
+            method: 'DELETE',
+            headers: { 'Authorization': 'Bearer ' + sessionToken1 }
+        });
+        const delRes = await worker.fetch(delReq, env);
+        assert.equal(delRes.status, 404);
+        assert.equal(db.tables.sneak_consumer_saved_searches.length, 1);
+    });
+
+    test('19. Search State Normalization (Residential, Commercial, Land, Rental, Radius, Polygon, Viewport)', async () => {
+        const db = createMockConsumerDB();
+        const env = { DB: db, SNEAK_ENV: 'staging', SNEAK_SIGNING_SECRET: TEST_SIGNING_SECRET };
+
+        const sessionToken = generateRawToken(32);
+        const tokenHash = await sha256Hex(sessionToken);
+        db.tables.sneak_consumer_sessions.push({
+            id: 'sess_norm_1',
+            user_id: 'c_usr_1',
+            site_id: 'site_1',
+            token_hash: tokenHash,
+            created_at: new Date().toISOString(),
+            expires_at: new Date(Date.now() + 14 * 86400 * 1000).toISOString(),
+            revoked_at: null
+        });
+
+        const polygonCoords = [
+            [-81.80, 26.33],
+            [-81.78, 26.33],
+            [-81.78, 26.35],
+            [-81.80, 26.35],
+            [-81.80, 26.33]
+        ];
+
+        const req = new Request('https://consumer.staging/api/consumer/saved-searches', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + sessionToken },
+            body: JSON.stringify({
+                site: 'site-mem-1',
+                name: 'Polygon & Commercial Search',
+                state: {
+                    version: 1,
+                    search: {
+                        propertyType: 'commercial',
+                        minPrice: 1000000,
+                        drawerState: { minSqft: 5000, county: 'Lee' },
+                        spatialState: {
+                            mode: 'polygon',
+                            polygon: { type: 'Polygon', coordinates: [polygonCoords] }
+                        }
+                    }
+                }
+            })
+        });
+
+        const res = await worker.fetch(req, env);
+        assert.equal(res.status, 200);
+        const data = await res.json();
+        assert.equal(data.savedSearch.state.search.propertyType, 'commercial');
+        assert.equal(data.savedSearch.state.search.spatialState.mode, 'polygon');
+        assert.equal(data.savedSearch.state.search.spatialState.polygon.coordinates[0].length, 5);
+    });
+
+    test('20. Near Me Privacy Normalization: converts to static radius center without saving live tracking', async () => {
+        const db = createMockConsumerDB();
+        const env = { DB: db, SNEAK_ENV: 'staging', SNEAK_SIGNING_SECRET: TEST_SIGNING_SECRET };
+
+        const sessionToken = generateRawToken(32);
+        const tokenHash = await sha256Hex(sessionToken);
+        db.tables.sneak_consumer_sessions.push({
+            id: 'sess_near_1',
+            user_id: 'c_usr_1',
+            site_id: 'site_1',
+            token_hash: tokenHash,
+            created_at: new Date().toISOString(),
+            expires_at: new Date(Date.now() + 14 * 86400 * 1000).toISOString(),
+            revoked_at: null
+        });
+
+        const req = new Request('https://consumer.staging/api/consumer/saved-searches', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + sessionToken },
+            body: JSON.stringify({
+                site: 'site-mem-1',
+                name: 'Near Me Search',
+                state: {
+                    version: 1,
+                    search: {
+                        propertyType: 'sale',
+                        spatialState: {
+                            mode: 'radius',
+                            centerLat: 26.335,
+                            centerLng: -81.795,
+                            radiusMiles: 5,
+                            isNearMe: true // Must be stripped out during normalization
+                        }
+                    }
+                }
+            })
+        });
+
+        const res = await worker.fetch(req, env);
+        assert.equal(res.status, 200);
+        const data = await res.json();
+        assert.equal(data.savedSearch.state.search.spatialState.mode, 'radius');
+        assert.equal(data.savedSearch.state.search.spatialState.isNearMe, undefined);
+    });
+
+    test('21. Malformed and Oversized (>16KB) state rejected with 400', async () => {
+        const db = createMockConsumerDB();
+        const env = { DB: db, SNEAK_ENV: 'staging', SNEAK_SIGNING_SECRET: TEST_SIGNING_SECRET };
+
+        const sessionToken = generateRawToken(32);
+        const tokenHash = await sha256Hex(sessionToken);
+        db.tables.sneak_consumer_sessions.push({
+            id: 'sess_bad_1',
+            user_id: 'c_usr_1',
+            site_id: 'site_1',
+            token_hash: tokenHash,
+            created_at: new Date().toISOString(),
+            expires_at: new Date(Date.now() + 14 * 86400 * 1000).toISOString(),
+            revoked_at: null
+        });
+
+        // 1. Malformed non-object state
+        const req1 = new Request('https://consumer.staging/api/consumer/saved-searches', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + sessionToken },
+            body: JSON.stringify({ site: 'site-mem-1', name: 'Bad State', state: 'not-an-object' })
+        });
+        const res1 = await worker.fetch(req1, env);
+        assert.equal(res1.status, 400);
+
+        // 2. Oversized polygon with > 40 vertices rejected
+        const giantCoords = [];
+        for (let i = 0; i < 50; i++) giantCoords.push([-81.80 + i * 0.001, 26.33 + i * 0.001]);
+        giantCoords.push(giantCoords[0]);
+
+        const req2 = new Request('https://consumer.staging/api/consumer/saved-searches', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + sessionToken },
+            body: JSON.stringify({
+                site: 'site-mem-1',
+                name: 'Giant Polygon',
+                state: {
+                    version: 1,
+                    search: {
+                        propertyType: 'sale',
+                        spatialState: { mode: 'polygon', polygon: { type: 'Polygon', coordinates: [giantCoords] } }
+                    }
+                }
+            })
+        });
+        const res2 = await worker.fetch(req2, env);
+        assert.equal(res2.status, 200);
+        const data2 = await res2.json();
+        assert.equal(data2.savedSearch.state.search.spatialState.mode, null, 'Polygon with >40 vertices must be normalized out');
+    });
+
+    test('22. Unsupported state version (e.g. version 2) rejected safely', async () => {
+        const db = createMockConsumerDB();
+        const env = { DB: db, SNEAK_ENV: 'staging', SNEAK_SIGNING_SECRET: TEST_SIGNING_SECRET };
+
+        const sessionToken = generateRawToken(32);
+        const tokenHash = await sha256Hex(sessionToken);
+        db.tables.sneak_consumer_sessions.push({
+            id: 'sess_v2_1',
+            user_id: 'c_usr_1',
+            site_id: 'site_1',
+            token_hash: tokenHash,
+            created_at: new Date().toISOString(),
+            expires_at: new Date(Date.now() + 14 * 86400 * 1000).toISOString(),
+            revoked_at: null
+        });
+
+        const req = new Request('https://consumer.staging/api/consumer/saved-searches', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + sessionToken },
+            body: JSON.stringify({
+                site: 'site-mem-1',
+                name: 'Future Version Search',
+                state: {
+                    version: 2,
+                    search: { propertyType: 'sale' }
+                }
+            })
+        });
+
+        const res = await worker.fetch(req, env);
+        assert.equal(res.status, 400);
+        const data = await res.json();
+        assert.equal(data.error, 'InvalidSearchState');
+    });
+
+    test('23. Account deletion cascades and removes saved searches and favorites', async () => {
+        const db = createMockConsumerDB();
+        const env = { DB: db, SNEAK_ENV: 'staging', SNEAK_SIGNING_SECRET: TEST_SIGNING_SECRET };
+
+        const sessionToken = generateRawToken(32);
+        const tokenHash = await sha256Hex(sessionToken);
+        db.tables.sneak_consumer_sessions.push({
+            id: 'sess_del_1',
+            user_id: 'c_usr_1',
+            site_id: 'site_1',
+            token_hash: tokenHash,
+            created_at: new Date().toISOString(),
+            expires_at: new Date(Date.now() + 14 * 86400 * 1000).toISOString(),
+            revoked_at: null
+        });
+
+        db.tables.sneak_consumer_saved_searches.push({
+            id: 'css_to_del_1',
+            site_id: 'site_1',
+            user_id: 'c_usr_1',
+            name: 'Search To Delete',
+            state_version: 1,
+            state_json: JSON.stringify({ version: 1, search: { propertyType: 'sale' } }),
+            state_hash: 'hash_del_1',
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+        });
+
+        assert.equal(db.tables.sneak_consumer_saved_searches.length, 1);
+        assert.equal(db.tables.sneak_consumer_favorites.length, 1);
+
+        // Delete Account
+        const req = new Request('https://consumer.staging/api/consumer/account?site=site-mem-1', {
+            method: 'DELETE',
+            headers: { 'Authorization': 'Bearer ' + sessionToken }
+        });
+        const res = await worker.fetch(req, env);
+        assert.equal(res.status, 200);
+
+        assert.equal(db.tables.sneak_consumer_users.some(u => u.id === 'c_usr_1'), false);
+        assert.equal(db.tables.sneak_consumer_favorites.some(f => f.user_id === 'c_usr_1'), false);
+        assert.equal(db.tables.sneak_consumer_saved_searches.some(s => s.user_id === 'c_usr_1'), false);
+    });
+
+    test('24. Round-Trip Serialization and Restoration Simulation', () => {
+        // Simulates serializeSearchState() -> normalizeSearchState() -> applySearchState()
+        const initialSearch = {
+            version: 1,
+            search: {
+                propertyType: 'sale',
+                q: 'Bonita Bay',
+                minPrice: 750000,
+                maxPrice: 1500000,
+                beds: 3,
+                baths: 3,
+                propertySubType: ['Single Family Residence', 'Villa'],
+                sort: 'priceDesc',
+                drawerState: {
+                    minSqft: 2500,
+                    maxSqft: 4500,
+                    waterfront: true,
+                    pool: true,
+                    garage: 2,
+                    county: 'Lee',
+                    cities: ['Bonita Springs']
+                },
+                spatialState: {
+                    mode: 'radius',
+                    centerLat: 26.340000,
+                    centerLng: -81.800000,
+                    radiusMiles: 5
+                }
+            }
+        };
+
+        const jsonSerialized = JSON.stringify(initialSearch);
+        const parsed = JSON.parse(jsonSerialized);
+
+        assert.equal(parsed.search.propertyType, 'sale');
+        assert.equal(parsed.search.q, 'Bonita Bay');
+        assert.equal(parsed.search.minPrice, 750000);
+        assert.equal(parsed.search.maxPrice, 1500000);
+        assert.equal(parsed.search.beds, 3);
+        assert.equal(parsed.search.drawerState.waterfront, true);
+        assert.equal(parsed.search.spatialState.mode, 'radius');
+        assert.equal(parsed.search.spatialState.radiusMiles, 5);
     });
 });

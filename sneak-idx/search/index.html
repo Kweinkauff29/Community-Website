@@ -49,13 +49,24 @@
       font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
     }
 
+    html, body {
+      height: 100%;
+      margin: 0;
+    }
+
     body {
       background-color: var(--bg);
       color: var(--text);
       overflow-x: hidden;
     }
 
-    /* Embedded Mode Overrides */
+    /* Embedded Mode App Shell Overrides (Phase 7.3C1B) */
+    body.is-embedded {
+      height: 100vh;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
     body.is-embedded #top-bar,
     body.is-embedded #descBanner {
       display: none !important;
@@ -63,6 +74,25 @@
     body.is-embedded .filters-container {
       margin-top: 0 !important;
       top: 0 !important;
+      position: relative !important;
+      flex: 0 0 auto;
+      box-shadow: none;
+    }
+    body.is-embedded .carousels-wrapper {
+      flex: 0 0 auto;
+    }
+    body.is-embedded .main-container {
+      flex: 1 1 auto;
+      min-height: 0;
+      height: auto;
+      overflow: hidden;
+    }
+    body.is-embedded .listings-section {
+      height: 100%;
+      overflow-y: auto;
+    }
+    body.is-embedded .map-section {
+      height: 100%;
     }
 
     /* Top Bar */
@@ -2126,10 +2156,124 @@
       border-color: rgba(2, 132, 199, 0.25);
       color: var(--accent, #0284c7);
     }
+
+    /* Save Search Button & Saved Searches UI (Phase 7.3C1B) */
+    .save-search-btn {
+      border: 1px solid #cbd5e1;
+      background: #f8fafc;
+      color: #0369a1;
+      padding: 7px 14px;
+      border-radius: 20px;
+      font-size: 0.82rem;
+      font-weight: 700;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-shrink: 0;
+    }
+    .save-search-btn:hover {
+      background: #e0f2fe;
+      border-color: #7dd3fc;
+      color: #0284c7;
+    }
+    .save-search-summary {
+      background: #f1f5f9;
+      border-radius: 8px;
+      padding: 10px 12px;
+      font-size: 0.82rem;
+      color: #475569;
+      line-height: 1.45;
+      margin-bottom: 16px;
+    }
+    .saved-searches-list {
+      max-height: 380px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin: 14px 0;
+    }
+    .saved-search-card {
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 10px;
+      padding: 12px 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      transition: all 0.2s;
+    }
+    .saved-search-card:hover {
+      border-color: #cbd5e1;
+      background: #fff;
+      box-shadow: var(--shadow-sm);
+    }
+    .saved-search-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+    .saved-search-title {
+      font-weight: 700;
+      font-size: 0.92rem;
+      color: var(--primary, #1a2a3a);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .saved-search-criteria {
+      font-size: 0.78rem;
+      color: #64748b;
+      line-height: 1.4;
+    }
+    .saved-search-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 6px;
+    }
+    .saved-search-btn-action {
+      background: #fff;
+      border: 1px solid #cbd5e1;
+      padding: 5px 12px;
+      border-radius: 6px;
+      font-size: 0.76rem;
+      font-weight: 600;
+      color: #334155;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      transition: all 0.15s;
+    }
+    .saved-search-btn-action:hover {
+      background: #f1f5f9;
+      color: var(--primary);
+    }
+    .saved-search-btn-action.restore-btn {
+      background: var(--primary, #1a2a3a);
+      color: #fff;
+      border-color: var(--primary, #1a2a3a);
+    }
+    .saved-search-btn-action.restore-btn:hover {
+      filter: brightness(1.15);
+    }
+    .saved-search-btn-action.delete-btn {
+      color: #ef4444;
+      margin-left: auto;
+    }
+    .saved-search-btn-action.delete-btn:hover {
+      background: #fee2e2;
+      border-color: #fca5a5;
+    }
   </style>
 </head>
 
-<body data-ui-build="2026.08.27.7.3c1a">
+<body data-ui-build="2026.08.28.7.3c1b">
 
   <!-- Loading Overlay -->
   <div class="loading-overlay" id="loadingOverlay" style="display:none">
@@ -2272,6 +2416,11 @@
 
         <!-- Clear All Button -->
         <button class="clear-filters-btn" id="clearFiltersBtn">Clear All</button>
+
+        <!-- Save Search Button (Phase 7.3C1B) -->
+        <button class="save-search-btn" id="saveSearchBtn" title="Save current search criteria">
+          <i class="fas fa-bookmark"></i> <span>Save Search</span>
+        </button>
 
         <!-- Active Spatial Filter Pill -->
         <div class="active-spatial-pill" id="activeSpatialPill" style="display:none;">
@@ -2626,8 +2775,8 @@
   <div class="consumer-modal-overlay" id="consumerAuthModal">
     <div class="consumer-modal-card">
       <button class="consumer-modal-close" id="consumerAuthClose">&times;</button>
-      <div class="consumer-modal-title"><i class="fas fa-heart" style="color:var(--hot, #ef4444);margin-right:6px"></i> Save your homes</div>
-      <div class="consumer-modal-sub">Sign in with your email to keep your saved favorites synced across all your devices. No password needed.</div>
+      <div class="consumer-modal-title" id="consumerAuthTitle"><i class="fas fa-heart" style="color:var(--hot, #ef4444);margin-right:6px"></i> Save your homes</div>
+      <div class="consumer-modal-sub" id="consumerAuthSub">Sign in with your email to keep your saved favorites synced across all your devices. No password needed.</div>
       
       <form id="consumerAuthForm">
         <div class="consumer-form-group">
@@ -2643,6 +2792,41 @@
     </div>
   </div>
 
+  <!-- Save Search Modal (Phase 7.3C1B) -->
+  <div class="consumer-modal-overlay" id="saveSearchModal">
+    <div class="consumer-modal-card">
+      <button class="consumer-modal-close" id="saveSearchClose">&times;</button>
+      <div class="consumer-modal-title"><i class="fas fa-bookmark" style="color:var(--accent, #0284c7);margin-right:6px"></i> Save this Search</div>
+      <div class="consumer-modal-sub">Save your current search criteria to access it across devices and restore it at any time.</div>
+      
+      <form id="saveSearchForm">
+        <div class="consumer-form-group">
+          <label for="saveSearchNameInput">Search Name</label>
+          <input type="text" id="saveSearchNameInput" class="consumer-input" placeholder="e.g. Bonita Springs • $500K-$800K" required maxlength="80">
+        </div>
+        <div id="saveSearchCriteriaSummary" class="save-search-summary"></div>
+        <button type="submit" class="consumer-btn-primary" id="saveSearchSubmitBtn">
+          <i class="fas fa-check"></i> Save Search
+        </button>
+      </form>
+
+      <div class="consumer-auth-status" id="saveSearchStatus"></div>
+    </div>
+  </div>
+
+  <!-- Saved Searches Modal (Phase 7.3C1B) -->
+  <div class="consumer-modal-overlay" id="savedSearchesModal">
+    <div class="consumer-modal-card" style="max-width:540px;">
+      <button class="consumer-modal-close" id="savedSearchesClose">&times;</button>
+      <div class="consumer-modal-title"><i class="fas fa-bookmark" style="color:var(--accent, #0284c7);margin-right:6px"></i> Saved Searches</div>
+      <div class="consumer-modal-sub">View, restore, rename, or delete your saved property searches.</div>
+      
+      <div id="savedSearchesList" class="saved-searches-list">
+        <div class="cart-empty">No saved searches yet.</div>
+      </div>
+    </div>
+  </div>
+
   <!-- Consumer Account Modal (Phase 7.3C1A) -->
   <div class="consumer-modal-overlay" id="consumerAccountModal">
     <div class="consumer-modal-card">
@@ -2650,14 +2834,17 @@
       <div class="consumer-modal-title"><i class="fas fa-user-circle" style="color:var(--accent, #0284c7);margin-right:6px"></i> Buyer Account</div>
       <div class="consumer-modal-sub" id="consumerAccountEmail">Signed in as: ...</div>
       
-      <button class="consumer-btn-primary" id="consumerOpenSavedBtn" style="margin-bottom:10px;">
+      <button class="consumer-btn-primary" id="consumerOpenSavedBtn" style="margin-bottom:8px;">
         <i class="fas fa-heart"></i> View Saved Homes (<span id="consumerAccountFavCount">0</span>)
+      </button>
+      <button class="consumer-btn-primary" id="consumerOpenSearchesBtn" style="background:#0284c7;margin-bottom:10px;">
+        <i class="fas fa-bookmark"></i> View Saved Searches (<span id="consumerAccountSearchesCount">0</span>)
       </button>
       <button class="consumer-btn-secondary" id="consumerLogoutBtn">
         <i class="fas fa-sign-out-alt"></i> Sign Out
       </button>
       <button class="consumer-btn-danger" id="consumerDeleteAccountBtn">
-        Delete Account &amp; Saved Homes
+        Delete Account &amp; All Data
       </button>
     </div>
   </div>
@@ -2684,7 +2871,7 @@
   <!-- CCOR IDX Plug-in Application Logic -->
   <script>
     // Telemetry & Build Identifier
-    const CCOR_IDX_UI_BUILD = '2026.08.27.7.3c1a';
+    const CCOR_IDX_UI_BUILD = '2026.08.28.7.3c1b';
     console.log('[CCOR IDX Plug-in] UI build:', CCOR_IDX_UI_BUILD);
 
     // XSS Hardening & URL Sanitization Helpers (Phase 7.3C1A)
@@ -4415,6 +4602,7 @@
       };
 
       // Consumer Authentication & Account Modals (Phase 7.3C1A)
+      // Consumer Authentication & Account Modals (Phase 7.3C1A)
       const authBtn = document.getElementById('consumerAuthBtn');
       if (authBtn) authBtn.onclick = openConsumerAuthModal;
       
@@ -4444,6 +4632,29 @@
       
       const authForm = document.getElementById('consumerAuthForm');
       if (authForm) authForm.onsubmit = handleConsumerAuthSubmit;
+
+      // Save Search Button & Modals (Phase 7.3C1B)
+      const saveSearchBtn = document.getElementById('saveSearchBtn');
+      if (saveSearchBtn) saveSearchBtn.onclick = handleSaveSearchClick;
+
+      const saveSearchClose = document.getElementById('saveSearchClose');
+      if (saveSearchClose) saveSearchClose.onclick = closeSaveSearchModal;
+
+      const saveSearchForm = document.getElementById('saveSearchForm');
+      if (saveSearchForm) saveSearchForm.onsubmit = handleSaveSearchSubmit;
+
+      const savedSearchesClose = document.getElementById('savedSearchesClose');
+      if (savedSearchesClose) savedSearchesClose.onclick = closeSavedSearchesModal;
+
+      const openSearchesBtn = document.getElementById('consumerOpenSearchesBtn');
+      if (openSearchesBtn) openSearchesBtn.onclick = openSavedSearchesModal;
+
+      // Invalidate map size on window/viewport resize
+      window.addEventListener('resize', () => {
+        if (map) {
+          setTimeout(() => map.invalidateSize(), 150);
+        }
+      });
 
       // Close dropdowns on document click
       document.addEventListener('click', (e) => {
@@ -4554,7 +4765,9 @@
       }
     }
 
-    // --- Consumer Identity & Server Favorites Engine (Phase 7.3C1A) ---
+    // --- Consumer Identity & Server Favorites Engine (Phase 7.3C1A) & Saved Searches (Phase 7.3C1B) ---
+    let savedSearches = [];
+
     async function initConsumerAuth(authCode) {
       if (authCode) {
         try {
@@ -4570,7 +4783,18 @@
               consumerUser = data.user;
               localStorage.setItem('ccor_consumer_session_' + SITE_KEY, consumerSessionToken);
               await mergeAndSyncFavorites();
+              await fetchSavedSearches();
               updateConsumerNavUI();
+
+              // Check if pending save search intent exists
+              const pendingStateJson = sessionStorage.getItem('ccor_pending_saved_search_' + SITE_KEY);
+              if (pendingStateJson) {
+                try {
+                  const pendingState = JSON.parse(pendingStateJson);
+                  applySearchState(pendingState);
+                  openSaveSearchModal();
+                } catch {}
+              }
               return;
             }
           }
@@ -4588,6 +4812,7 @@
             const data = await res.json();
             consumerUser = data.user;
             await fetchServerFavorites();
+            await fetchSavedSearches();
             updateConsumerNavUI();
             return;
           } else {
@@ -4627,6 +4852,8 @@
       }
       const countEl = document.getElementById('consumerAccountFavCount');
       if (countEl) countEl.textContent = savedListings.length;
+      const searchCountEl = document.getElementById('consumerAccountSearchesCount');
+      if (searchCountEl) searchCountEl.textContent = savedSearches.length;
       document.getElementById('consumerAccountModal').classList.add('open');
     }
 
@@ -4695,7 +4922,9 @@
       }
       consumerSessionToken = '';
       consumerUser = null;
+      savedSearches = [];
       localStorage.removeItem('ccor_consumer_session_' + SITE_KEY);
+      sessionStorage.removeItem('ccor_pending_saved_search_' + SITE_KEY);
       closeConsumerAccountModal();
       savedListings = JSON.parse(localStorage.getItem('savedListings_' + SITE_KEY) || '[]');
       updateConsumerNavUI();
@@ -4704,7 +4933,7 @@
     }
 
     async function handleConsumerDeleteAccount() {
-      if (!confirm('Are you sure you want to permanently delete your account and all saved properties? This cannot be undone.')) {
+      if (!confirm('Are you sure you want to permanently delete your account and all saved properties and searches? This cannot be undone.')) {
         return;
       }
       if (consumerSessionToken) {
@@ -4717,7 +4946,9 @@
       }
       consumerSessionToken = '';
       consumerUser = null;
+      savedSearches = [];
       localStorage.removeItem('ccor_consumer_session_' + SITE_KEY);
+      sessionStorage.removeItem('ccor_pending_saved_search_' + SITE_KEY);
       savedListings = [];
       localStorage.removeItem('savedListings_' + SITE_KEY);
       closeConsumerAccountModal();
@@ -4734,10 +4965,12 @@
       const userLabel = document.getElementById('consumerUserLabel');
       const favCountEl = document.getElementById('consumerFavCount');
       const accountFavCountEl = document.getElementById('consumerAccountFavCount');
+      const accountSearchesCountEl = document.getElementById('consumerAccountSearchesCount');
 
       const count = savedListings.length;
       if (favCountEl) favCountEl.textContent = count;
       if (accountFavCountEl) accountFavCountEl.textContent = count;
+      if (accountSearchesCountEl) accountSearchesCountEl.textContent = savedSearches.length;
 
       if (consumerUser && consumerSessionToken) {
         if (authNavItem) authNavItem.style.display = 'none';
@@ -4801,6 +5034,430 @@
       }
       await fetchServerFavorites();
     }
+
+    // --- Saved Searches & Search-State Restore Engine (Phase 7.3C1B) ---
+    function serializeSearchState() {
+      const q = (document.getElementById('searchInput')?.value || '').trim();
+      const beds = document.querySelector('#bedsGroup .selected')?.dataset.val || '0';
+      const baths = document.querySelector('#bathsGroup .selected')?.dataset.val || '0';
+      const sort = document.querySelector('input[name="sort"]:checked')?.value || 'dateDesc';
+      const primarySubTypes = Array.from(document.querySelectorAll('#subTypePanel input:checked')).map(i => i.value);
+
+      const state = {
+        version: 1,
+        propertyType: currentPropertyType,
+        q: q || null,
+        minPrice: PRICE_STEPS[priceMinIdx] || null,
+        maxPrice: PRICE_STEPS[priceMaxIdx] || null,
+        beds: Number(beds) > 0 ? Number(beds) : null,
+        baths: Number(baths) > 0 ? Number(baths) : null,
+        propertySubType: drawerState.subtypes.length ? drawerState.subtypes : (primarySubTypes.length && primarySubTypes.length < 5 ? primarySubTypes : []),
+        sort: sort,
+        drawerState: { ...drawerState },
+        spatialState: {
+          mode: spatialState.mode,
+          centerLat: spatialState.centerLat,
+          centerLng: spatialState.centerLng,
+          radiusMiles: spatialState.radiusMiles,
+          polygon: spatialState.polygon,
+          viewportBounds: (spatialState.mode === 'viewport' && currentViewportBounds) ? { ...currentViewportBounds } : null
+        }
+      };
+
+      return state;
+    }
+
+    function applySearchState(saved) {
+      if (!saved || typeof saved !== 'object') return;
+      const s = saved.search || saved;
+
+      // 1. Reset everything first
+      resetAllFilters();
+
+      // 2. Property Category
+      if (s.propertyType) {
+        currentPropertyType = s.propertyType;
+        document.querySelectorAll('#propertyTypePills .pill-btn').forEach(b => {
+          b.classList.toggle('active', b.dataset.type === currentPropertyType);
+        });
+        syncToolbarWithCategory();
+      }
+
+      // 3. Search query
+      if (s.q) {
+        document.getElementById('searchInput').value = s.q;
+        document.getElementById('searchClearBtn').style.display = 'block';
+      } else {
+        document.getElementById('searchInput').value = '';
+        document.getElementById('searchClearBtn').style.display = 'none';
+      }
+
+      // 4. Price
+      let minIdx = 0, maxIdx = PRICE_STEPS.length - 1;
+      if (s.minPrice) {
+        const idx = PRICE_STEPS.indexOf(s.minPrice);
+        if (idx !== -1) minIdx = idx;
+      }
+      if (s.maxPrice) {
+        const idx = PRICE_STEPS.indexOf(s.maxPrice);
+        if (idx !== -1) maxIdx = idx;
+      }
+      document.getElementById('priceRangeMin').value = minIdx;
+      document.getElementById('priceRangeMax').value = maxIdx;
+      updatePriceSliderUI();
+
+      // 5. Beds / Baths
+      if (s.beds) {
+        document.querySelectorAll('#bedsGroup .filter-option-btn').forEach(b => {
+          b.classList.toggle('selected', b.dataset.val === String(s.beds));
+        });
+        const bedsBtn = document.getElementById('bedsBtn');
+        if (bedsBtn) {
+          bedsBtn.classList.add('has-value');
+          bedsBtn.innerText = `${s.beds}+ Beds`;
+        }
+      }
+      if (s.baths) {
+        document.querySelectorAll('#bathsGroup .filter-option-btn').forEach(b => {
+          b.classList.toggle('selected', b.dataset.val === String(s.baths));
+        });
+        const bathsBtn = document.getElementById('bathsBtn');
+        if (bathsBtn) {
+          bathsBtn.classList.add('has-value');
+          bathsBtn.innerText = `${s.baths}+ Baths`;
+        }
+      }
+
+      // 6. Subtypes & Drawer State
+      if (s.drawerState && typeof s.drawerState === 'object') {
+        drawerState = { ...drawerState, ...s.drawerState };
+        if (document.getElementById('drawerMinSqft')) document.getElementById('drawerMinSqft').value = drawerState.minSqft || '';
+        if (document.getElementById('drawerMaxSqft')) document.getElementById('drawerMaxSqft').value = drawerState.maxSqft || '';
+        if (document.getElementById('drawerMinAcres')) document.getElementById('drawerMinAcres').value = drawerState.minAcres || '';
+        if (document.getElementById('drawerMaxAcres')) document.getElementById('drawerMaxAcres').value = drawerState.maxAcres || '';
+        if (document.getElementById('drawerMinYear')) document.getElementById('drawerMinYear').value = drawerState.minYear || '';
+        if (document.getElementById('drawerMaxYear')) document.getElementById('drawerMaxYear').value = drawerState.maxYear || '';
+        if (document.getElementById('drawerCounty')) document.getElementById('drawerCounty').value = drawerState.county || '';
+        if (document.getElementById('drawerZip')) document.getElementById('drawerZip').value = drawerState.zip || '';
+        if (document.getElementById('drawerSubdivision')) document.getElementById('drawerSubdivision').value = drawerState.subdivision || '';
+        if (document.getElementById('drawerWaterfront')) document.getElementById('drawerWaterfront').checked = Boolean(drawerState.waterfront);
+        if (document.getElementById('drawerPool')) document.getElementById('drawerPool').checked = Boolean(drawerState.pool);
+        if (document.getElementById('drawerNewConstruction')) document.getElementById('drawerNewConstruction').checked = Boolean(drawerState.newConstruction);
+        if (document.getElementById('drawerOpenHouse')) document.getElementById('drawerOpenHouse').checked = Boolean(drawerState.openHouse);
+        if (document.getElementById('drawerNewListing')) document.getElementById('drawerNewListing').checked = Boolean(drawerState.newListing);
+        if (document.getElementById('drawerPriceReduced')) document.getElementById('drawerPriceReduced').checked = Boolean(drawerState.priceReduced);
+        
+        document.querySelectorAll('#drawerGarageGroup .filter-option-btn').forEach(b => {
+          b.classList.toggle('selected', Number(b.dataset.val) === (drawerState.garage || 0));
+        });
+
+        updateMoreFiltersBadge();
+        renderDrawerSubtypes();
+      }
+
+      // 7. Sort
+      if (s.sort) {
+        const radio = document.querySelector(`input[name="sort"][value="${s.sort}"]`);
+        if (radio) radio.checked = true;
+      }
+
+      // 8. Spatial Mode
+      clearSpatialLayers();
+      if (s.spatialState) {
+        const sp = s.spatialState;
+        if (sp.mode === 'radius' && sp.centerLat && sp.centerLng) {
+          setSpatialMode('radius', {
+            centerLat: sp.centerLat,
+            centerLng: sp.centerLng,
+            radiusMiles: sp.radiusMiles || 5,
+            isNearMe: false
+          });
+          if (spatialState.radiusCircle && map) {
+            suppressViewportSearch = true;
+            map.fitBounds(spatialState.radiusCircle.getBounds(), { padding: [20, 20] });
+            setTimeout(() => { suppressViewportSearch = false; }, 400);
+          }
+        } else if (sp.mode === 'polygon' && sp.polygon) {
+          setSpatialMode('polygon', { polygon: sp.polygon });
+          if (spatialState.polygonLayer && map) {
+            suppressViewportSearch = true;
+            map.fitBounds(spatialState.polygonLayer.getBounds(), { padding: [20, 20] });
+            setTimeout(() => { suppressViewportSearch = false; }, 400);
+          }
+        } else if (sp.mode === 'viewport' && sp.viewportBounds && map) {
+          const vb = sp.viewportBounds;
+          suppressViewportSearch = true;
+          map.fitBounds([[vb.south, vb.west], [vb.north, vb.east]]);
+          setTimeout(() => { suppressViewportSearch = false; }, 400);
+        }
+      }
+
+      // 9. Trigger Search
+      triggerSearch(false);
+    }
+
+    function generateDefaultSearchName() {
+      const parts = [];
+      const q = (document.getElementById('searchInput')?.value || '').trim();
+      if (q) {
+        parts.push(q);
+      } else if (drawerState.subdivision) {
+        parts.push(drawerState.subdivision);
+      } else if (drawerState.cities && drawerState.cities.length) {
+        parts.push(drawerState.cities.join(', '));
+      } else if (spatialState.mode === 'polygon') {
+        parts.push('Custom Area');
+      } else if (spatialState.mode === 'radius') {
+        parts.push(`Within ${spatialState.radiusMiles || 5} mi`);
+      }
+
+      const minP = PRICE_STEPS[priceMinIdx];
+      const maxP = PRICE_STEPS[priceMaxIdx];
+      if (minP && maxP) {
+        parts.push(`${formatPriceStep(minP)}–${formatPriceStep(maxP)}`);
+      } else if (minP) {
+        parts.push(`Over ${formatPriceStep(minP)}`);
+      } else if (maxP) {
+        parts.push(`Under ${formatPriceStep(maxP)}`);
+      }
+
+      const beds = document.querySelector('#bedsGroup .selected')?.dataset.val;
+      if (beds && Number(beds) > 0) {
+        parts.push(`${beds}+ Beds`);
+      }
+
+      if (drawerState.waterfront) parts.push('Waterfront');
+      if (drawerState.pool) parts.push('Pool');
+
+      if (!parts.length) {
+        const catName = currentPropertyType === 'rental' ? 'Rentals' : currentPropertyType === 'commercial' ? 'Commercial' : currentPropertyType === 'land' ? 'Lots & Land' : 'Homes For Sale';
+        parts.push(catName);
+      }
+
+      return parts.slice(0, 3).join(' • ').slice(0, 80);
+    }
+
+    function getSearchSummaryText(s) {
+      if (!s) return '';
+      const search = s.search || s;
+      const parts = [];
+      
+      const cat = search.propertyType === 'rental' ? 'Rental' : search.propertyType === 'commercial' ? 'Commercial' : search.propertyType === 'land' ? 'Land' : 'For Sale';
+      parts.push(cat);
+
+      if (search.q) parts.push(`"${escapeHtml(search.q)}"`);
+      if (search.minPrice && search.maxPrice) parts.push(`${formatPriceStep(search.minPrice)}–${formatPriceStep(search.maxPrice)}`);
+      else if (search.minPrice) parts.push(`>${formatPriceStep(search.minPrice)}`);
+      else if (search.maxPrice) parts.push(`<${formatPriceStep(search.maxPrice)}`);
+
+      if (search.beds) parts.push(`${search.beds}+ bd`);
+      if (search.baths) parts.push(`${search.baths}+ ba`);
+
+      if (search.spatialState?.mode === 'radius') parts.push(`Within ${search.spatialState.radiusMiles} mi`);
+      if (search.spatialState?.mode === 'polygon') parts.push('Custom Area');
+      if (search.drawerState?.waterfront) parts.push('Waterfront');
+      if (search.drawerState?.pool) parts.push('Pool');
+      if (search.drawerState?.subdivision) parts.push(escapeHtml(search.drawerState.subdivision));
+
+      return parts.join(' • ');
+    }
+
+    function handleSaveSearchClick() {
+      if (!consumerUser || !consumerSessionToken) {
+        // Save pending intent in sessionStorage
+        sessionStorage.setItem('ccor_pending_saved_search_' + SITE_KEY, JSON.stringify(serializeSearchState()));
+        
+        // Open Auth Modal with custom copy
+        const titleEl = document.getElementById('consumerAuthTitle');
+        const subEl = document.getElementById('consumerAuthSub');
+        if (titleEl) titleEl.innerHTML = '<i class="fas fa-bookmark" style="color:var(--accent, #0284c7);margin-right:6px"></i> Save this search';
+        if (subEl) subEl.textContent = 'Sign in to save this search and access it on any device.';
+        openConsumerAuthModal();
+        return;
+      }
+
+      openSaveSearchModal();
+    }
+
+    function openSaveSearchModal() {
+      const nameInput = document.getElementById('saveSearchNameInput');
+      const summaryEl = document.getElementById('saveSearchCriteriaSummary');
+      const statusEl = document.getElementById('saveSearchStatus');
+
+      if (nameInput) nameInput.value = generateDefaultSearchName();
+      if (summaryEl) summaryEl.innerHTML = `<strong>Current Criteria:</strong><br>${getSearchSummaryText(serializeSearchState())}`;
+      if (statusEl) {
+        statusEl.className = 'consumer-auth-status';
+        statusEl.style.display = 'none';
+      }
+
+      document.getElementById('saveSearchModal').classList.add('open');
+      if (nameInput) setTimeout(() => nameInput.focus(), 50);
+    }
+
+    function closeSaveSearchModal() {
+      document.getElementById('saveSearchModal').classList.remove('open');
+    }
+
+    async function handleSaveSearchSubmit(e) {
+      e.preventDefault();
+      const name = document.getElementById('saveSearchNameInput').value.trim();
+      if (!name) return;
+
+      const submitBtn = document.getElementById('saveSearchSubmitBtn');
+      const statusEl = document.getElementById('saveSearchStatus');
+      submitBtn.disabled = true;
+      submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
+
+      try {
+        const state = serializeSearchState();
+        const res = await fetch(`${CONSUMER_API_BASE}/api/consumer/saved-searches`, {
+          method: 'POST',
+          headers: {
+            'Authorization': 'Bearer ' + consumerSessionToken,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            site: SITE_KEY,
+            name: name,
+            state: state
+          })
+        });
+
+        const data = await res.json();
+        if (res.ok && data.success) {
+          closeSaveSearchModal();
+          sessionStorage.removeItem('ccor_pending_saved_search_' + SITE_KEY);
+          await fetchSavedSearches();
+          alert('Search saved successfully! You can access it anytime from your Account.');
+        } else {
+          statusEl.className = 'consumer-auth-status error';
+          statusEl.textContent = data.message || 'Unable to save search. Please try again.';
+          statusEl.style.display = 'block';
+        }
+      } catch (err) {
+        statusEl.className = 'consumer-auth-status error';
+        statusEl.textContent = 'An error occurred while saving. Please try again.';
+        statusEl.style.display = 'block';
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = '<i class="fas fa-check"></i> Save Search';
+      }
+    }
+
+    async function fetchSavedSearches() {
+      if (!consumerSessionToken) return;
+      try {
+        const res = await fetch(`${CONSUMER_API_BASE}/api/consumer/saved-searches?site=${encodeURIComponent(SITE_KEY)}`, {
+          headers: { 'Authorization': 'Bearer ' + consumerSessionToken }
+        });
+        if (res.ok) {
+          const data = await res.json();
+          savedSearches = data.savedSearches || [];
+          const countEl = document.getElementById('consumerAccountSearchesCount');
+          if (countEl) countEl.textContent = savedSearches.length;
+          renderSavedSearchesUI();
+        }
+      } catch (err) {
+        console.warn('Fetch saved searches error:', err);
+      }
+    }
+
+    function openSavedSearchesModal() {
+      closeConsumerAccountModal();
+      document.getElementById('savedSearchesModal').classList.add('open');
+      fetchSavedSearches();
+    }
+
+    function closeSavedSearchesModal() {
+      document.getElementById('savedSearchesModal').classList.remove('open');
+    }
+
+    function renderSavedSearchesUI() {
+      const container = document.getElementById('savedSearchesList');
+      if (!container) return;
+
+      if (!savedSearches.length) {
+        container.innerHTML = '<div class="cart-empty">No saved searches yet. Use the "Save Search" button above to save any search criteria.</div>';
+        return;
+      }
+
+      container.innerHTML = '';
+      savedSearches.forEach(s => {
+        const card = document.createElement('div');
+        card.className = 'saved-search-card';
+
+        const updatedDate = s.updatedAt ? new Date(s.updatedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '';
+        const summary = getSearchSummaryText(s.state);
+
+        card.innerHTML = `
+          <div class="saved-search-header">
+            <div class="saved-search-title" title="${escapeHtml(s.name)}"><i class="fas fa-bookmark" style="color:var(--accent,#0284c7);margin-right:6px"></i>${escapeHtml(s.name)}</div>
+            <span style="font-size:0.72rem;color:#94a3b8;white-space:nowrap;">${escapeHtml(updatedDate)}</span>
+          </div>
+          <div class="saved-search-criteria">${summary}</div>
+          <div class="saved-search-actions">
+            <button class="saved-search-btn-action restore-btn" onclick="restoreSavedSearch('${escapeHtml(s.id)}')"><i class="fas fa-search"></i> View Search</button>
+            <button class="saved-search-btn-action" onclick="renameSavedSearch('${escapeHtml(s.id)}', '${escapeHtml(s.name)}')"><i class="fas fa-edit"></i> Rename</button>
+            <button class="saved-search-btn-action delete-btn" onclick="deleteSavedSearch('${escapeHtml(s.id)}')"><i class="fas fa-trash"></i> Delete</button>
+          </div>
+        `;
+        container.appendChild(card);
+      });
+    }
+
+    window.restoreSavedSearch = function(id) {
+      const s = savedSearches.find(x => x.id === id);
+      if (!s || !s.state) return;
+      closeSavedSearchesModal();
+      applySearchState(s.state);
+    };
+
+    window.renameSavedSearch = async function(id, oldName) {
+      const newName = prompt('Enter a new name for this saved search:', oldName);
+      if (!newName || !newName.trim() || newName.trim() === oldName) return;
+
+      try {
+        const res = await fetch(`${CONSUMER_API_BASE}/api/consumer/saved-searches/${encodeURIComponent(id)}?site=${encodeURIComponent(SITE_KEY)}`, {
+          method: 'PATCH',
+          headers: {
+            'Authorization': 'Bearer ' + consumerSessionToken,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ name: newName.trim() })
+        });
+        if (res.ok) {
+          await fetchSavedSearches();
+        } else {
+          alert('Unable to rename saved search. Please try again.');
+        }
+      } catch (err) {
+        alert('An error occurred. Please try again.');
+      }
+    };
+
+    window.deleteSavedSearch = async function(id) {
+      if (!confirm('Are you sure you want to delete this saved search?')) return;
+
+      try {
+        const res = await fetch(`${CONSUMER_API_BASE}/api/consumer/saved-searches/${encodeURIComponent(id)}?site=${encodeURIComponent(SITE_KEY)}`, {
+          method: 'DELETE',
+          headers: {
+            'Authorization': 'Bearer ' + consumerSessionToken
+          }
+        });
+        if (res.ok) {
+          savedSearches = savedSearches.filter(s => s.id !== id);
+          const countEl = document.getElementById('consumerAccountSearchesCount');
+          if (countEl) countEl.textContent = savedSearches.length;
+          renderSavedSearchesUI();
+        } else {
+          alert('Unable to delete saved search. Please try again.');
+        }
+      } catch (err) {
+        alert('An error occurred. Please try again.');
+      }
+    };
 
     window.toggleSave = async function(key) {
       const isSaved = savedListings.some(s => s.key === key);

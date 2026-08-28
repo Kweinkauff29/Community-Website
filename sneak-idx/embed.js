@@ -51,7 +51,7 @@
     }
 
     widgetType = widgetType || 'search';
-    customHeight = customHeight || '850px';
+    let isFixedHeight = currentScript.getAttribute('data-fixed-height') === 'true';
 
     if (!siteKey) {
         console.error('[SNEAK IDX] Missing required "data-site" attribute on embed script or container.');
@@ -143,7 +143,7 @@
 
         // Construct iframe URL with signed session token and deterministic build version
         const separator = widgetPath.includes('?') ? '&' : '?';
-        const buildVersion = '2026.08.27.7.3c1a';
+        const buildVersion = '2026.08.28.7.3c1b';
         let iframeUrl = `${baseUrl}${widgetPath}${separator}site=${encodeURIComponent(siteKey)}&session=${encodeURIComponent(data.session)}&embed=true&v=${encodeURIComponent(buildVersion)}`;
         if (parentAuthCode) {
             iframeUrl += `&auth_code=${encodeURIComponent(parentAuthCode)}`;
@@ -152,22 +152,25 @@
             iframeUrl += `&${customParams}`;
         }
 
-        // Create wrapper container
+        // Create wrapper container (WordPress / Beaver Builder safe)
         const container = document.createElement('div');
         container.className = 'sneak-idx-widget-container';
         container.style.width = '100%';
         container.style.maxWidth = '100%';
         container.style.position = 'relative';
-        container.style.overflow = 'hidden';
         container.style.boxSizing = 'border-box';
+
+        // Responsive iframe sizing suitable for full search application
+        const defaultDesktopHeight = 'clamp(780px, 85vh, 960px)';
+        const initialHeight = customHeight || defaultDesktopHeight;
 
         // Create responsive iframe
         const iframe = document.createElement('iframe');
         iframe.src = iframeUrl;
         iframe.title = `CCOR IDX Real Estate Search (${siteKey})`;
         iframe.style.width = '100%';
-        iframe.style.height = customHeight;
-        iframe.style.minHeight = '500px';
+        iframe.style.height = initialHeight;
+        iframe.style.minHeight = '550px';
         iframe.style.border = 'none';
         iframe.style.display = 'block';
         iframe.style.overflow = 'hidden';
@@ -176,21 +179,28 @@
 
         container.appendChild(iframe);
         mountContainer(container);
+
+        // Optional Secured postMessage listener for adaptive resizing
+        let lastResizeHeight = 0;
+        window.addEventListener('message', function (e) {
+            if (!e.data || e.data.type !== 'SNEAK_RESIZE') return;
+            if (isFixedHeight) return;
+            if (e.data.siteKey !== siteKey) return;
+            if (e.source && e.source !== iframe.contentWindow) return;
+
+            const newHeight = Number(e.data.height);
+            if (!Number.isFinite(newHeight) || newHeight < 400 || newHeight > 3000) return;
+
+            // Debounce small jitter <= 3px
+            if (Math.abs(newHeight - lastResizeHeight) <= 3) return;
+            lastResizeHeight = newHeight;
+
+            iframe.style.height = `${newHeight}px`;
+        });
     })
     .catch(function (err) {
         console.warn('[CCOR IDX Plug-in] Bootstrap failed:', err);
         renderAuthError('Unable to load property search at this time.');
-    });
-
-    // Optional postMessage listener for auto-resizing
-    window.addEventListener('message', function (e) {
-        if (!e.data || e.data.type !== 'SNEAK_RESIZE') return;
-        if (e.data.siteKey === siteKey && e.data.height) {
-            const iframes = document.querySelectorAll(`iframe[src*="site=${siteKey}"]`);
-            iframes.forEach(function (f) {
-                f.style.height = `${e.data.height}px`;
-            });
-        }
     });
 
 })();

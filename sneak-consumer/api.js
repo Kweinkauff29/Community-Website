@@ -36,10 +36,326 @@ export function jsonResponse(data, status = 200, origin = null) {
         headers.set('Vary', 'Origin');
         headers.set('Access-Control-Allow-Credentials', 'true');
     }
-    headers.set('Access-Control-Allow-Methods', 'GET, POST, DELETE, OPTIONS');
-    headers.set('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, X-Site-Key, X-SNEAK-Session');
+    headers.set('Access-Control-Allow-Methods', 'GET, POST, PATCH, DELETE, OPTIONS');
+    headers.set('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, X-Site-Key, X-SNEAK-Session, X-Consumer-Session');
 
     return new Response(JSON.stringify(data), { status, headers });
+}
+
+const SAVED_SEARCHES_LIMIT = 25;
+const MAX_STATE_BYTES = 16384; // 16 KB
+
+/**
+ * Normalizes and validates serialized search state.
+ */
+export function normalizeSearchState(rawState) {
+    if (!rawState || typeof rawState !== 'object') return null;
+
+    const version = Number(rawState.version) || 1;
+    if (version !== 1) return null; // Reject unsupported versions
+
+    const search = rawState.search || rawState;
+    if (!search || typeof search !== 'object') return null;
+
+    const normalized = {
+        propertyType: ['sale', 'rental', 'commercial', 'land'].includes(search.propertyType) ? search.propertyType : 'sale',
+        q: (typeof search.q === 'string' && search.q.trim().length <= 150) ? search.q.trim() : null,
+        minPrice: (typeof search.minPrice === 'number' && search.minPrice > 0) ? search.minPrice : null,
+        maxPrice: (typeof search.maxPrice === 'number' && search.maxPrice > 0) ? search.maxPrice : null,
+        beds: (typeof search.beds === 'number' || (typeof search.beds === 'string' && !isNaN(Number(search.beds)))) ? Number(search.beds) : null,
+        baths: (typeof search.baths === 'number' || (typeof search.baths === 'string' && !isNaN(Number(search.baths)))) ? Number(search.baths) : null,
+        propertySubType: Array.isArray(search.propertySubType) 
+            ? search.propertySubType.filter(s => typeof s === 'string' && s.length <= 60).slice(0, 20)
+            : (typeof search.propertySubType === 'string' && search.propertySubType ? search.propertySubType.split(',').map(s => s.trim()).filter(Boolean).slice(0, 20) : []),
+        sort: ['dateDesc', 'priceDesc', 'priceAsc', 'sqftDesc', 'yearDesc', 'acresDesc'].includes(search.sort) ? search.sort : 'dateDesc',
+        drawerState: {},
+        spatialState: { mode: null }
+    };
+
+    // Normalize Drawer State
+    if (search.drawerState && typeof search.drawerState === 'object') {
+        const d = search.drawerState;
+        normalized.drawerState = {
+            subtypes: Array.isArray(d.subtypes) ? d.subtypes.filter(s => typeof s === 'string').slice(0, 20) : [],
+            minSqft: (typeof d.minSqft === 'number' && d.minSqft > 0) ? d.minSqft : null,
+            maxSqft: (typeof d.maxSqft === 'number' && d.maxSqft > 0) ? d.maxSqft : null,
+            minAcres: (typeof d.minAcres === 'number' && d.minAcres > 0) ? d.minAcres : null,
+            maxAcres: (typeof d.maxAcres === 'number' && d.maxAcres > 0) ? d.maxAcres : null,
+            minYear: (typeof d.minYear === 'number' && d.minYear > 1800) ? d.minYear : null,
+            maxYear: (typeof d.maxYear === 'number' && d.maxYear > 1800) ? d.maxYear : null,
+            county: (typeof d.county === 'string' && d.county.length <= 50) ? d.county.trim() : '',
+            zip: (typeof d.zip === 'string' && d.zip.length <= 10) ? d.zip.trim() : '',
+            subdivision: (typeof d.subdivision === 'string' && d.subdivision.length <= 80) ? d.subdivision.trim() : '',
+            cities: Array.isArray(d.cities) ? d.cities.filter(c => typeof c === 'string').slice(0, 20) : [],
+            waterfront: Boolean(d.waterfront),
+            pool: Boolean(d.pool),
+            garage: (typeof d.garage === 'number' && d.garage >= 0) ? d.garage : 0,
+            newConstruction: Boolean(d.newConstruction),
+            openHouse: Boolean(d.openHouse),
+            newListing: Boolean(d.newListing),
+            priceReduced: Boolean(d.priceReduced)
+        };
+    }
+
+    // Normalize Spatial State
+    if (search.spatialState && typeof search.spatialState === 'object') {
+        const sp = search.spatialState;
+        if (sp.mode === 'radius' && typeof sp.centerLat === 'number' && typeof sp.centerLng === 'number') {
+            normalized.spatialState = {
+                mode: 'radius',
+                centerLat: Number(sp.centerLat.toFixed(6)),
+                centerLng: Number(sp.centerLng.toFixed(6)),
+                radiusMiles: (typeof sp.radiusMiles === 'number' && sp.radiusMiles > 0 && sp.radiusMiles <= 100) ? sp.radiusMiles : 5
+            };
+        } else if (sp.mode === 'polygon' && sp.polygon && Array.isArray(sp.polygon.coordinates) && Array.isArray(sp.polygon.coordinates[0])) {
+            const rawRing = sp.polygon.coordinates[0];
+            if (rawRing.length >= 4 && rawRing.length <= 40) {
+                const cleanCoords = rawRing.map(pt => [Number(Number(pt[0]).toFixed(6)), Number(Number(pt[1]).toFixed(6))]);
+                normalized.spatialState = {
+                    mode: 'polygon',
+                    polygon: {
+                        type: 'Polygon',
+                        coordinates: [cleanCoords]
+                    }
+                };
+            }
+        } else if (sp.mode === 'viewport' && sp.viewportBounds) {
+            normalized.spatialState = {
+                mode: 'viewport',
+                viewportBounds: {
+                    north: Number(Number(sp.viewportBounds.north).toFixed(6)),
+                    south: Number(Number(sp.viewportBounds.south).toFixed(6)),
+                    east: Number(Number(sp.viewportBounds.east).toFixed(6)),
+                    west: Number(Number(sp.viewportBounds.west).toFixed(6))
+                }
+            };
+        }
+    }
+
+    return {
+        version: 1,
+        search: normalized
+    };
+}
+
+/**
+ * GET /api/consumer/saved-searches?site=...
+ */
+export async function handleListSavedSearches(req, url, env, origin) {
+    const rawToken = extractBearerToken(req);
+    const siteKey = url.searchParams.get('site');
+
+    const session = await verifyConsumerSession(env.DB, rawToken, siteKey);
+    if (!session || session.error) {
+        return sessionErrorResponse(session, origin);
+    }
+
+    const rows = await env.DB.prepare(`
+        SELECT id, name, state_version, state_json, created_at, updated_at
+        FROM sneak_consumer_saved_searches
+        WHERE user_id = ? AND site_id = ?
+        ORDER BY updated_at DESC
+        LIMIT ${SAVED_SEARCHES_LIMIT}
+    `).bind(session.userId, session.siteId).all();
+
+    const savedSearches = (rows.results || []).map(r => {
+        let state = null;
+        try {
+            state = JSON.parse(r.state_json);
+        } catch {}
+        return {
+            id: r.id,
+            name: r.name,
+            stateVersion: r.state_version,
+            state: state,
+            createdAt: r.created_at,
+            updatedAt: r.updated_at
+        };
+    });
+
+    return jsonResponse({
+        success: true,
+        count: savedSearches.length,
+        savedSearches
+    }, 200, origin);
+}
+
+/**
+ * POST /api/consumer/saved-searches
+ */
+export async function handleCreateSavedSearch(req, env, origin) {
+    let body;
+    try {
+        body = await req.json();
+    } catch {
+        return jsonResponse({ error: 'InvalidJSON', message: 'Request body must be valid JSON.' }, 400, origin);
+    }
+
+    const { site: siteKey, name, state } = body || {};
+    if (!name || typeof name !== 'string' || !name.trim()) {
+        return jsonResponse({ error: 'MissingName', message: 'Saved search name is required.' }, 400, origin);
+    }
+
+    const cleanName = name.trim().slice(0, 80);
+
+    const normalizedState = normalizeSearchState(state);
+    if (!normalizedState) {
+        return jsonResponse({ error: 'InvalidSearchState', message: 'Invalid or unsupported search state provided.' }, 400, origin);
+    }
+
+    const stateJson = JSON.stringify(normalizedState);
+    if (stateJson.length > MAX_STATE_BYTES) {
+        return jsonResponse({ error: 'PayloadTooLarge', message: 'Search state exceeds maximum allowed size (16 KB).' }, 400, origin);
+    }
+
+    const rawToken = extractBearerToken(req);
+    const session = await verifyConsumerSession(env.DB, rawToken, siteKey);
+    if (!session || session.error) {
+        return sessionErrorResponse(session, origin);
+    }
+
+    const stateHash = await sha256Hex(stateJson);
+
+    // Check if exact same search state already exists for this consumer/site
+    const existing = await env.DB.prepare(`
+        SELECT id, name, state_version, state_json, created_at, updated_at
+        FROM sneak_consumer_saved_searches
+        WHERE user_id = ? AND site_id = ? AND state_hash = ?
+    `).bind(session.userId, session.siteId, stateHash).first();
+
+    if (existing) {
+        // Update name if changed and bump updated_at
+        await env.DB.prepare(`
+            UPDATE sneak_consumer_saved_searches
+            SET name = ?, updated_at = datetime('now')
+            WHERE id = ?
+        `).bind(cleanName, existing.id).run();
+
+        return jsonResponse({
+            success: true,
+            savedSearch: {
+                id: existing.id,
+                name: cleanName,
+                stateVersion: existing.state_version,
+                state: normalizedState,
+                createdAt: existing.created_at,
+                updatedAt: new Date().toISOString()
+            }
+        }, 200, origin);
+    }
+
+    // Check count limit
+    const countRow = await env.DB.prepare(`
+        SELECT count(*) as count FROM sneak_consumer_saved_searches
+        WHERE user_id = ? AND site_id = ?
+    `).bind(session.userId, session.siteId).first();
+
+    if ((countRow?.count || 0) >= SAVED_SEARCHES_LIMIT) {
+        return jsonResponse({
+            error: 'SavedSearchLimitExceeded',
+            message: `You have reached the maximum limit of ${SAVED_SEARCHES_LIMIT} saved searches.`
+        }, 400, origin);
+    }
+
+    const searchId = `css_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
+    const now = new Date().toISOString();
+
+    await env.DB.prepare(`
+        INSERT INTO sneak_consumer_saved_searches (id, site_id, user_id, name, state_version, state_json, state_hash, created_at, updated_at)
+        VALUES (?, ?, ?, ?, 1, ?, ?, ?, ?)
+    `).bind(searchId, session.siteId, session.userId, cleanName, stateJson, stateHash, now, now).run();
+
+    return jsonResponse({
+        success: true,
+        savedSearch: {
+            id: searchId,
+            name: cleanName,
+            stateVersion: 1,
+            state: normalizedState,
+            createdAt: now,
+            updatedAt: now
+        }
+    }, 200, origin);
+}
+
+/**
+ * PATCH /api/consumer/saved-searches/:id?site=...
+ */
+export async function handleUpdateSavedSearch(req, searchId, url, env, origin) {
+    if (!searchId) {
+        return jsonResponse({ error: 'MissingSearchId', message: 'searchId is required.' }, 400, origin);
+    }
+
+    let body;
+    try {
+        body = await req.json();
+    } catch {
+        return jsonResponse({ error: 'InvalidJSON', message: 'Request body must be valid JSON.' }, 400, origin);
+    }
+
+    const { name } = body || {};
+    if (!name || typeof name !== 'string' || !name.trim()) {
+        return jsonResponse({ error: 'MissingName', message: 'Saved search name is required.' }, 400, origin);
+    }
+
+    const cleanName = name.trim().slice(0, 80);
+    const siteKey = url.searchParams.get('site');
+    const rawToken = extractBearerToken(req);
+
+    const session = await verifyConsumerSession(env.DB, rawToken, siteKey);
+    if (!session || session.error) {
+        return sessionErrorResponse(session, origin);
+    }
+
+    const updateRes = await env.DB.prepare(`
+        UPDATE sneak_consumer_saved_searches
+        SET name = ?, updated_at = datetime('now')
+        WHERE id = ? AND user_id = ? AND site_id = ?
+    `).bind(cleanName, searchId, session.userId, session.siteId).run();
+
+    const changes = updateRes?.meta?.changes ?? updateRes?.changes ?? 0;
+    if (changes === 0) {
+        return jsonResponse({ error: 'NotFound', message: 'Saved search not found or unauthorized.' }, 404, origin);
+    }
+
+    return jsonResponse({
+        success: true,
+        id: searchId,
+        name: cleanName
+    }, 200, origin);
+}
+
+/**
+ * DELETE /api/consumer/saved-searches/:id?site=...
+ */
+export async function handleDeleteSavedSearch(req, searchId, url, env, origin) {
+    if (!searchId) {
+        return jsonResponse({ error: 'MissingSearchId', message: 'searchId is required.' }, 400, origin);
+    }
+
+    const siteKey = url.searchParams.get('site');
+    const rawToken = extractBearerToken(req);
+
+    const session = await verifyConsumerSession(env.DB, rawToken, siteKey);
+    if (!session || session.error) {
+        return sessionErrorResponse(session, origin);
+    }
+
+    const delRes = await env.DB.prepare(`
+        DELETE FROM sneak_consumer_saved_searches
+        WHERE id = ? AND user_id = ? AND site_id = ?
+    `).bind(searchId, session.userId, session.siteId).run();
+
+    const changes = delRes?.meta?.changes ?? delRes?.changes ?? 0;
+    if (changes === 0) {
+        return jsonResponse({ error: 'NotFound', message: 'Saved search not found or unauthorized.' }, 404, origin);
+    }
+
+    return jsonResponse({
+        success: true,
+        id: searchId,
+        message: 'Saved search deleted successfully.'
+    }, 200, origin);
 }
 
 function extractBearerToken(req) {
