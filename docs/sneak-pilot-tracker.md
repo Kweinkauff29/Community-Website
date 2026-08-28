@@ -77,27 +77,28 @@ Every participant must complete all verification gates before being marked **Lau
   * Phase 7.3B2B Server-Authoritative Polygon Search: 2026-08-27 19:45 UTC (100% PASS)
   * Phase 7.3C1A Buyer Identity, Magic Link Auth & Server Favorites: 2026-08-27 20:25 UTC (100% PASS)
   * Phase 7.3C1B Embed Layout Stabilization & Saved Searches: 2026-08-28 15:10 UTC (100% PASS)
-* **Phase 7.3C1B Embed Layout Stabilization & Saved Searches:**
-  * *Embed App-Shell Architecture:* Refactored `body.is-embedded` to a CSS flex container (`flex-direction: column; height: 100vh; overflow: hidden;`), consuming all remaining iframe height for map and listings without pushing content beyond iframe boundary into host website footers.
-  * *Parent Iframe Height Scaling:* Responsive desktop default `clamp(780px, 85vh, 960px)` in `embed.js` with secure origin window check and anti-jitter debouncing.
-  * *Saved Searches Schema (`sneak_consumer_saved_searches`):* Cloudflare D1 table with foreign key isolation, state versioning, 25-search limits, and SHA-256 duplicate detection.
-  * *Search State Normalization & Privacy:* Strips active GPS Near Me tracking to static coordinate radius centers; validates max 40 polygon vertices.
-  * *Round-Trip State Serialization & Restoration:* Complete criteria gather (`serializeSearchState`) and UI restore (`applySearchState`) across category, pricing, beds/baths, drawer filters, and spatial radius/polygon/viewport layers.
+  * Phase 7.3C1B.1 Live WordPress Embed Layout Hotfix & Browser QA: 2026-08-28 16:00 UTC (100% PASS)
+* **Phase 7.3C1B.1 Embed Sizing & Layout Hotfix:**
+  * *Deterministic Parent-Controlled Responsive Sizing:* Replaced static clamp / legacy `data-height` locking with `getRecommendedSearchHeight()` in `embed.js` and debounced parent window resize listener, dynamically adapting iframe height across Desktop (~860px–960px), Tablet (~760px), and Mobile (~680px–740px).
+  * *Nested Disclaimer Architecture:* Moved `.footer-disclaimer` inside `.listings-section` beneath `#paginationBar`, freeing 180px of vertical space and ensuring a 620px+ usable Map/List workspace.
+  * *CSS Syntax & Mobile Repair:* Resolved unclosed media query syntax error at line 1979 and ensured mobile list view uses internal container scrolling.
 * **Live Validation Evidence:**
   * Live Public URL: `https://coconutcoastrealtors.org/idx-test/` (HTTP 200 OK)
-  * Live Static UI Build: PASS — `data-ui-build="2026.08.28.7.3c1b"`, `CCOR_IDX_UI_BUILD = '2026.08.28.7.3c1b'`, `embed.js &v=2026.08.28.7.3c1b`
+  * Live Static UI Build: PASS — `data-ui-build="2026.08.28.7.3c1b1"`, `CCOR_IDX_UI_BUILD = '2026.08.28.7.3c1b1'`, `embed.js &v=2026.08.28.7.3c1b1`
   * Live Consumer Worker Health: PASS — `https://sneak-idx-consumer-staging.bonitaspringsrealtors.workers.dev/api/consumer/version` (200 OK, `sneak-consumer-worker`, `2026.08.28.7.3c1b`, `healthy`)
   * Live Saved Searches REST API: PASS — OPTIONS, GET (401 unauthenticated), POST, PATCH, DELETE verified
   * Live Polygon & Radius Search: PASS — Polygon Mode and Radius Mode filter accurately across residential, commercial, and land
   * Live Marker Schema: PASS — Complete context-aware fields returned from D1 with address suppression enforced
-  * Automated Regression Suite: PASS — 100/100 tests passing (`node --test test/*.test.mjs`)
-  * Live Automated Verification: PASS — 26/26 live verification assertions passing (`node scripts/verify-phase73c1b-live.mjs`)
+  * Automated Regression Suite: PASS — 103/103 tests passing (`node --test test/*.test.mjs`)
+  * Live Automated Verification: PASS — 31/31 live verification assertions passing (`node scripts/verify-phase73c1b1-live.mjs`)
+  * Live Browser Visual QA: PASS — Verified across 1440×900, 1920×1080, 1024×768, and 390×844 with zero footer overlap, internal listings scrolling, no outer scrollbars, and seamless map/list responsiveness.
 * **Observability & Timing:**
   * Staff Setup Time: ~9 minutes
   * Member Implementation Time: ~2 minutes (HTML snippet paste in WordPress)
-  * Staff Interventions Required: 9 (Identity reconciliation, Phase 7.1 model correction, Phase 7.2 product corrections, Phase 7.3A search parity, Phase 7.3B1 interactive map synchronization, Phase 7.3B2A radius search, Phase 7.3B2B polygon search, Phase 7.3C1A buyer auth, Phase 7.3C1B embed layout stabilization & saved searches)
+  * Staff Interventions Required: 10 (Identity reconciliation, Phase 7.1 model correction, Phase 7.2 product corrections, Phase 7.3A search parity, Phase 7.3B1 interactive map synchronization, Phase 7.3B2A radius search, Phase 7.3B2B polygon search, Phase 7.3C1A buyer auth, Phase 7.3C1B saved searches, Phase 7.3C1B.1 embed layout hotfix)
   * Support Questions Logged: 0
-* **Final Status:** **ACTIVE PILOT (CCOR IDX Plug-in Phase 7.3C1B Deployed)**
+* **Final Status:** **ACTIVE PILOT (CCOR IDX Plug-in Phase 7.3C1B.1 Deployed & Verified)**
+
 
 ---
 

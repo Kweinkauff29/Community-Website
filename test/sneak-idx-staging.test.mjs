@@ -1016,17 +1016,47 @@ describe('SNEAK IDX Phase 2.2 Test Suite', () => {
         assert.ok(Array.isArray(data.data));
     });
 
-    test('PHASE 7.3C1B: Frontend build versions are uniformly bumped to 2026.08.28.7.3c1b and embed layout stabilized', () => {
+    test('PHASE 7.3C1B.1: Frontend build versions are uniformly bumped to 2026.08.28.7.3c1b1', () => {
         const searchHtml = fs.readFileSync(path.join(rootDir, 'sneak-idx/search/index.html'), 'utf8');
         const embedJs = fs.readFileSync(path.join(rootDir, 'sneak-idx/embed.js'), 'utf8');
 
-        assert.ok(searchHtml.includes('data-ui-build="2026.08.28.7.3c1b"'), 'search/index.html must have data-ui-build="2026.08.28.7.3c1b"');
-        assert.ok(searchHtml.includes("CCOR_IDX_UI_BUILD = '2026.08.28.7.3c1b'"), "search/index.html must have CCOR_IDX_UI_BUILD = '2026.08.28.7.3c1b'");
-        assert.ok(embedJs.includes("const buildVersion = '2026.08.28.7.3c1b'"), "embed.js must have buildVersion = '2026.08.28.7.3c1b'");
+        assert.ok(searchHtml.includes('data-ui-build="2026.08.28.7.3c1b1"'), 'search/index.html must have data-ui-build="2026.08.28.7.3c1b1"');
+        assert.ok(searchHtml.includes("CCOR_IDX_UI_BUILD = '2026.08.28.7.3c1b1'"), "search/index.html must have CCOR_IDX_UI_BUILD = '2026.08.28.7.3c1b1'");
+        assert.ok(embedJs.includes("const buildVersion = '2026.08.28.7.3c1b1'"), "embed.js must have buildVersion = '2026.08.28.7.3c1b1'");
         assert.ok(searchHtml.includes('id="saveSearchModal"'), 'search/index.html must have #saveSearchModal');
         assert.ok(searchHtml.includes('id="savedSearchesModal"'), 'search/index.html must have #savedSearchesModal');
         assert.ok(searchHtml.includes('id="saveSearchBtn"'), 'search/index.html must have #saveSearchBtn');
-        assert.ok(searchHtml.includes('body.is-embedded'), 'search/index.html must have body.is-embedded app-shell CSS');
-        assert.ok(embedJs.includes('clamp(780px, 85vh, 960px)'), 'embed.js must have responsive desktop default height');
+    });
+
+    test('PHASE 7.3C1B.1: Embed loader implements parent-controlled responsive search sizing and resize listeners', () => {
+        const embedJs = fs.readFileSync(path.join(rootDir, 'sneak-idx/embed.js'), 'utf8');
+
+        assert.ok(embedJs.includes('getRecommendedSearchHeight'), 'embed.js must define getRecommendedSearchHeight');
+        assert.ok(embedJs.includes("addEventListener('resize'"), 'embed.js must attach window resize listener');
+        assert.ok(embedJs.includes('sneak-idx-widget-container'), 'embed.js must create safe widget container');
+        assert.ok(embedJs.includes('data-fixed-height'), 'embed.js must parse data-fixed-height');
+    });
+
+    test('PHASE 7.3C1B.1: Search app shell CSS enforces embedded flexbox layout, compact carousels, and internal listings scrolling', () => {
+        const searchHtml = fs.readFileSync(path.join(rootDir, 'sneak-idx/search/index.html'), 'utf8');
+
+        assert.ok(searchHtml.includes('body.is-embedded'), 'search/index.html must have body.is-embedded');
+        assert.ok(searchHtml.includes('body.is-embedded .main-container'), 'search/index.html must configure body.is-embedded .main-container');
+        assert.ok(searchHtml.includes('body.is-embedded .listings-section'), 'search/index.html must configure body.is-embedded .listings-section');
+        assert.ok(searchHtml.includes('overflow-y: auto'), 'listings-section must have overflow-y: auto');
+        // Ensure footer disclaimer is inside listings-section
+        const listingsSecIdx = searchHtml.indexOf('class="listings-section"');
+        const footerIdx = searchHtml.indexOf('class="footer-disclaimer"');
+        assert.ok(listingsSecIdx !== -1 && footerIdx !== -1 && footerIdx > listingsSecIdx, 'footer disclaimer must be nested inside listings-section');
+    });
+
+    test('PHASE 7.3C1B.1: SNEAK_RESIZE message handler retains origin, source, and bounds security validation', () => {
+        const embedJs = fs.readFileSync(path.join(rootDir, 'sneak-idx/embed.js'), 'utf8');
+
+        assert.ok(embedJs.includes("e.data.type !== 'SNEAK_RESIZE'"), 'must validate SNEAK_RESIZE message type');
+        assert.ok(embedJs.includes("e.data.siteKey !== siteKey"), 'must validate siteKey');
+        assert.ok(embedJs.includes("e.source !== iframe.contentWindow"), 'must validate contentWindow source');
+        assert.ok(embedJs.includes("newHeight < 400 || newHeight > 3000"), 'must validate reasonable height bounds');
     });
 });
+

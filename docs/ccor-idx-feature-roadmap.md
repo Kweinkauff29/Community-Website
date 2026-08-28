@@ -111,7 +111,26 @@ graph TD
   * **UI Integration & Search Restore:** Save Search trigger button in toolbar, modal naming dialog with criteria summary, Saved Searches list modal with View/Rename/Delete, and pending anonymous save intent restoration across magic-link sign-in.
   * **Deterministic UI Build:** `2026.08.28.7.3c1b` across search UI, embed loader, consumer worker, and test suites.
 
+#### 7.3C1B.1 Layout Hotfix (COMPLETED)
+* **Exact Regression:** Live WordPress pilot on `/idx-test/` rendered with crushed Map/List workspace, clipped listings, and footer placement anomalies.
+* **Root Cause:**
+  1. *Stale `data-height="850px"` in WordPress snippet:* Overrode modern responsive height because `embed.js` lacked parent window resize listeners and treated legacy `data-height` as an immutable fixed height rather than a compatibility hint.
+  2. *Footer disclaimer consuming app flex space:* `.footer-disclaimer` was placed outside `.main-container` directly under `body`, consuming ~180px of flexbox height inside `body.is-embedded` (which was constrained to 100vh).
+  3. *Unclosed CSS media query syntax error:* Unclosed selector and media query around line 1979 prevented modal and responsive rules from applying properly on desktop.
+  4. *Mobile listings height collapse:* `.main-container.mobile-list-view .listings-section` used `height: auto !important` instead of bounded internal scrolling.
+* **Final Embed Sizing Model:**
+  * **Deterministic Parent-Controlled Responsive Sizing:** `getRecommendedSearchHeight()` dynamically calculates optimal height based on parent viewport:
+    * Desktop (`> 1024px`): `Math.max(860, Math.min(Math.round(viewportHeight * 0.90), 1050))` (~860px–960px).
+    * Tablet (`601px - 1024px`): `Math.max(760, Math.min(Math.round(viewportHeight * 0.88), 920))` (~760px).
+    * Mobile (`<= 600px`): `Math.max(680, Math.min(Math.round(viewportHeight * 0.88), 850))` (~680px–740px).
+  * **Debounced Parent Window Resize:** Window resize listener (150ms debounce) recalculates iframe height continuously across orientation changes and desktop resizing (bypassed only when `data-fixed-height="true"` is explicitly set).
+  * **Nested Disclaimer Stream:** Moved `.footer-disclaimer` inside `.listings-section` beneath `#paginationBar`, freeing 180px of permanent vertical space for a 620px+ usable Map/List workspace.
+  * **Compact Carousel & Syntax Fix:** Refined carousel image height to 100px and repaired all CSS media query blocks.
+* **Tested Viewports:** Desktop (1440×900, 1920×1080), Tablet (1024×768), Mobile (390×844).
+* **Deterministic UI Build:** `2026.08.28.7.3c1b1`.
+
 ---
+
 
 ### Phase 7.3C2 — Automated Email Alerts & Agent Activity Dashboard (NEXT)
 * **Goal:** Automated daily/instant MLS email alerts on new matching inventory, and client activity timelines in REALTOR® Member Portal.

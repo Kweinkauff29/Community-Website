@@ -60,12 +60,14 @@
       overflow-x: hidden;
     }
 
-    /* Embedded Mode App Shell Overrides (Phase 7.3C1B) */
+    /* Embedded Mode App Shell Overrides (Phase 7.3C1B.1) */
     body.is-embedded {
       height: 100vh;
       overflow: hidden;
       display: flex;
       flex-direction: column;
+      margin: 0;
+      padding: 0;
     }
     body.is-embedded #top-bar,
     body.is-embedded #descBanner {
@@ -80,16 +82,28 @@
     }
     body.is-embedded .carousels-wrapper {
       flex: 0 0 auto;
+      padding: 8px 16px;
+    }
+    body.is-embedded .carousel-img-wrapper {
+      height: 100px;
+    }
+    body.is-embedded .carousel-card {
+      width: 180px;
+    }
+    body.is-embedded .mobile-view-toggle-bar {
+      flex: 0 0 auto;
     }
     body.is-embedded .main-container {
       flex: 1 1 auto;
       min-height: 0;
       height: auto;
       overflow: hidden;
+      display: flex;
     }
     body.is-embedded .listings-section {
       height: 100%;
       overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
     }
     body.is-embedded .map-section {
       height: 100%;
@@ -1941,6 +1955,13 @@
         height: auto;
       }
 
+      body.is-embedded .main-container {
+        flex: 1 1 auto;
+        min-height: 0;
+        height: auto;
+        overflow: hidden;
+      }
+
       .main-container.mobile-list-view .map-section {
         display: none !important;
       }
@@ -1948,7 +1969,9 @@
       .main-container.mobile-list-view .listings-section {
         display: flex !important;
         width: 100% !important;
-        height: auto !important;
+        height: 100% !important;
+        overflow-y: auto !important;
+        -webkit-overflow-scrolling: touch;
       }
 
       .main-container.mobile-map-view .listings-section {
@@ -1958,8 +1981,8 @@
       .main-container.mobile-map-view .map-section {
         display: block !important;
         width: 100% !important;
-        height: calc(100vh - 200px) !important;
-        min-height: 480px !important;
+        height: 100% !important;
+        min-height: 400px !important;
       }
     }
 
@@ -1977,6 +2000,9 @@
         justify-content: center;
         padding: 8px 8px;
         font-size: 0.78rem;
+      }
+    }
+
     /* Consumer Auth & Account Modals (Phase 7.3C1A) */
     .consumer-modal-overlay {
       position: fixed;
@@ -2273,7 +2299,7 @@
   </style>
 </head>
 
-<body data-ui-build="2026.08.28.7.3c1b">
+<body data-ui-build="2026.08.28.7.3c1b1">
 
   <!-- Loading Overlay -->
   <div class="loading-overlay" id="loadingOverlay" style="display:none">
@@ -2680,29 +2706,30 @@
         <span class="page-info" id="pageInfo">Page 1 of 1</span>
         <button class="page-btn" id="nextPageBtn">Next <i class="fas fa-chevron-right"></i></button>
       </div>
+
+      <!-- Footer Disclaimer -->
+      <footer class="footer-disclaimer">
+        <p><strong>Real estate listings provided by <span id="disclaimerOrg">Listing Brokerage</span></strong></p>
+        <p>Disclaimer: All information deemed reliable but not guaranteed. All properties are subject to prior sale,
+          change or withdrawal. Neither listing broker(s) or information provider(s) shall be responsible for any typographical
+          errors, misinformation, misprints and shall be held totally harmless. Listing(s) information is provided for
+          consumers personal, non-commercial use and may not be used for any purpose other than to identify prospective
+          properties consumers may be interested in purchasing.</p>
+        <p>Information on this site was last updated <span id="lastUpdatedDate">Loading...</span>. The listing information
+          on this page last changed on <span id="lastChangedDate">Loading...</span>.</p>
+        <p>The data relating to real estate for sale on this website comes in part from the Internet Data Exchange (IDX) program.
+          Real estate listings held by brokerage firms other than <span id="disclaimerBroker">the listing broker</span> may be marked with
+          the Internet Data Exchange logo and detailed information about those properties will include the name of the
+          listing broker(s) when required by the MLS. All rights reserved.</p>
+        
+        <div class="ccor-powered-by" id="poweredByContainer">
+          <span>Powered by</span>
+          <strong>CCOR IDX Plug-in</strong>
+        </div>
+      </footer>
     </div>
   </div>
 
-  <!-- Footer Disclaimer -->
-  <footer class="footer-disclaimer">
-    <p><strong>Real estate listings provided by <span id="disclaimerOrg">Listing Brokerage</span></strong></p>
-    <p>Disclaimer: All information deemed reliable but not guaranteed. All properties are subject to prior sale,
-      change or withdrawal. Neither listing broker(s) or information provider(s) shall be responsible for any typographical
-      errors, misinformation, misprints and shall be held totally harmless. Listing(s) information is provided for
-      consumers personal, non-commercial use and may not be used for any purpose other than to identify prospective
-      properties consumers may be interested in purchasing.</p>
-    <p>Information on this site was last updated <span id="lastUpdatedDate">Loading...</span>. The listing information
-      on this page last changed on <span id="lastChangedDate">Loading...</span>.</p>
-    <p>The data relating to real estate for sale on this website comes in part from the Internet Data Exchange (IDX) program.
-      Real estate listings held by brokerage firms other than <span id="disclaimerBroker">the listing broker</span> may be marked with
-      the Internet Data Exchange logo and detailed information about those properties will include the name of the
-      listing broker(s) when required by the MLS. All rights reserved.</p>
-    
-    <div class="ccor-powered-by" id="poweredByContainer">
-      <span>Powered by</span>
-      <strong>CCOR IDX Plug-in</strong>
-    </div>
-  </footer>
 
   <!-- Property Detail Modal -->
   <div class="detail-overlay" id="detailOverlay">
@@ -2871,7 +2898,7 @@
   <!-- CCOR IDX Plug-in Application Logic -->
   <script>
     // Telemetry & Build Identifier
-    const CCOR_IDX_UI_BUILD = '2026.08.28.7.3c1b';
+    const CCOR_IDX_UI_BUILD = '2026.08.28.7.3c1b1';
     console.log('[CCOR IDX Plug-in] UI build:', CCOR_IDX_UI_BUILD);
 
     // XSS Hardening & URL Sanitization Helpers (Phase 7.3C1A)

@@ -143,7 +143,7 @@
 
         // Construct iframe URL with signed session token and deterministic build version
         const separator = widgetPath.includes('?') ? '&' : '?';
-        const buildVersion = '2026.08.28.7.3c1b';
+        const buildVersion = '2026.08.28.7.3c1b1';
         let iframeUrl = `${baseUrl}${widgetPath}${separator}site=${encodeURIComponent(siteKey)}&session=${encodeURIComponent(data.session)}&embed=true&v=${encodeURIComponent(buildVersion)}`;
         if (parentAuthCode) {
             iframeUrl += `&auth_code=${encodeURIComponent(parentAuthCode)}`;
@@ -160,16 +160,34 @@
         container.style.position = 'relative';
         container.style.boxSizing = 'border-box';
 
-        // Responsive iframe sizing suitable for full search application
-        const defaultDesktopHeight = 'clamp(780px, 85vh, 960px)';
-        const initialHeight = customHeight || defaultDesktopHeight;
+        // Deterministic responsive height computation for search application
+        function getRecommendedSearchHeight(viewportWidth, viewportHeight) {
+            if (viewportWidth <= 600) {
+                // Mobile Viewport (e.g. 390x844)
+                return Math.max(680, Math.min(Math.round(viewportHeight * 0.88), 850));
+            }
+            if (viewportWidth <= 1024) {
+                // Tablet Viewport (e.g. 1024x768)
+                return Math.max(760, Math.min(Math.round(viewportHeight * 0.88), 920));
+            }
+            // Desktop Viewport (e.g. 1440x900, 1920x1080)
+            return Math.max(860, Math.min(Math.round(viewportHeight * 0.90), 1050));
+        }
+
+        let computedHeight = '850px';
+        if (isFixedHeight && customHeight) {
+            computedHeight = customHeight;
+        } else {
+            const initialNumeric = getRecommendedSearchHeight(window.innerWidth || 1440, window.innerHeight || 900);
+            computedHeight = `${initialNumeric}px`;
+        }
 
         // Create responsive iframe
         const iframe = document.createElement('iframe');
         iframe.src = iframeUrl;
         iframe.title = `CCOR IDX Real Estate Search (${siteKey})`;
         iframe.style.width = '100%';
-        iframe.style.height = initialHeight;
+        iframe.style.height = computedHeight;
         iframe.style.minHeight = '550px';
         iframe.style.border = 'none';
         iframe.style.display = 'block';
@@ -179,6 +197,20 @@
 
         container.appendChild(iframe);
         mountContainer(container);
+
+        // Parent window resize listener for non-fixed responsive embed mode
+        if (!isFixedHeight) {
+            let resizeDebounceTimer = null;
+            window.addEventListener('resize', function () {
+                if (resizeDebounceTimer) clearTimeout(resizeDebounceTimer);
+                resizeDebounceTimer = setTimeout(function () {
+                    const w = window.innerWidth || 1440;
+                    const h = window.innerHeight || 900;
+                    const nextH = getRecommendedSearchHeight(w, h);
+                    iframe.style.height = `${nextH}px`;
+                }, 150);
+            });
+        }
 
         // Optional Secured postMessage listener for adaptive resizing
         let lastResizeHeight = 0;
@@ -197,6 +229,7 @@
 
             iframe.style.height = `${newHeight}px`;
         });
+
     })
     .catch(function (err) {
         console.warn('[CCOR IDX Plug-in] Bootstrap failed:', err);
