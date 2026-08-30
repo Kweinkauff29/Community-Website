@@ -132,6 +132,7 @@
 
         // Check for parent page auth exchange code (Phase 7.3C1A)
         let parentAuthCode = null;
+        let deepListingKey = null;
         try {
             const currentUrl = new URL(window.location.href);
             if (currentUrl.searchParams.has('auth_code')) {
@@ -139,14 +140,20 @@
                 currentUrl.searchParams.delete('auth_code');
                 window.history.replaceState({}, document.title, currentUrl.pathname + (currentUrl.search ? currentUrl.search : '') + currentUrl.hash);
             }
+            if (currentUrl.searchParams.has('ccor_listing')) {
+                deepListingKey = currentUrl.searchParams.get('ccor_listing');
+            }
         } catch {}
 
         // Construct iframe URL with signed session token and deterministic build version
         const separator = widgetPath.includes('?') ? '&' : '?';
-        const buildVersion = '2026.08.28.7.3c1b1';
+        const buildVersion = '2026.08.28.7.3c2a';
         let iframeUrl = `${baseUrl}${widgetPath}${separator}site=${encodeURIComponent(siteKey)}&session=${encodeURIComponent(data.session)}&embed=true&v=${encodeURIComponent(buildVersion)}`;
         if (parentAuthCode) {
             iframeUrl += `&auth_code=${encodeURIComponent(parentAuthCode)}`;
+        }
+        if (deepListingKey) {
+            iframeUrl += `&ccor_listing=${encodeURIComponent(deepListingKey)}`;
         }
         if (customParams) {
             iframeUrl += `&${customParams}`;

@@ -2299,7 +2299,7 @@
   </style>
 </head>
 
-<body data-ui-build="2026.08.28.7.3c1b1">
+<body data-ui-build="2026.08.28.7.3c2a">
 
   <!-- Loading Overlay -->
   <div class="loading-overlay" id="loadingOverlay" style="display:none">
@@ -2898,7 +2898,7 @@
   <!-- CCOR IDX Plug-in Application Logic -->
   <script>
     // Telemetry & Build Identifier
-    const CCOR_IDX_UI_BUILD = '2026.08.28.7.3c1b1';
+    const CCOR_IDX_UI_BUILD = '2026.08.28.7.3c2a';
     console.log('[CCOR IDX Plug-in] UI build:', CCOR_IDX_UI_BUILD);
 
     // XSS Hardening & URL Sanitization Helpers (Phase 7.3C1A)
@@ -2930,6 +2930,12 @@
     const initialAuthCode = urlParams.get('auth_code') || '';
     if (urlParams.has('auth_code')) {
       urlParams.delete('auth_code');
+    }
+
+    // Property Deep-Link Parameter (Phase 7.3C2A)
+    const initialDeepListingKey = urlParams.get('ccor_listing') || '';
+    if (urlParams.has('ccor_listing')) {
+      urlParams.delete('ccor_listing');
     }
 
     let SNEAK_SESSION = urlParams.get('session') || '';
@@ -3088,6 +3094,9 @@
       await loadTenantConfig();
       await initConsumerAuth(initialAuthCode);
       triggerSearch(false);
+      if (initialDeepListingKey) {
+        openDetailByKey(initialDeepListingKey);
+      }
     });
 
     function initMap() {
@@ -4419,6 +4428,7 @@
     }
 
     window.openDetailByKey = async function(key) {
+      if (!key) return;
       const item = allListings.find(l => l.ListingKey === key);
       if (item) {
         openDetail(item);
@@ -4430,10 +4440,15 @@
         });
         if (res.ok) {
           const data = await res.json();
-          if (data.data) openDetail(data.data);
+          if (data.data) {
+            openDetail(data.data);
+            return;
+          }
         }
+        alert('This property is no longer available.');
       } catch (err) {
         console.warn('Listing fetch error:', err);
+        alert('This property is no longer available.');
       }
     };
 
@@ -5416,6 +5431,10 @@
 
         const updatedDate = s.updatedAt ? new Date(s.updatedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '';
         const summary = getSearchSummaryText(s.state);
+        const freq = (s.alert && s.alert.frequency) ? s.alert.frequency : 'off';
+        const helperText = freq === 'off' 
+          ? 'No email alerts.' 
+          : (freq === 'asap' ? "We'll email you when new listings match this search." : "We'll send one daily email when new listings match this search.");
 
         card.innerHTML = `
           <div class="saved-search-header">
@@ -5423,7 +5442,19 @@
             <span style="font-size:0.72rem;color:#94a3b8;white-space:nowrap;">${escapeHtml(updatedDate)}</span>
           </div>
           <div class="saved-search-criteria">${summary}</div>
-          <div class="saved-search-actions">
+          <div class="saved-search-alert-row" style="margin-top:10px;padding-top:8px;border-top:1px solid rgba(255,255,255,0.06);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:6px;">
+            <div style="display:flex;align-items:center;gap:6px;font-size:0.75rem;color:#cbd5e1;">
+              <i class="fas fa-bell" style="color:${freq !== 'off' ? '#38bdf8' : '#64748b'}"></i>
+              <span style="font-weight:600;">Email Alerts:</span>
+              <select class="saved-search-alert-select" onchange="updateSavedSearchAlert('${escapeHtml(s.id)}', this.value)" style="background:#1e293b;color:#f8fafc;border:1px solid rgba(255,255,255,0.15);border-radius:4px;padding:3px 6px;font-size:0.75rem;cursor:pointer;">
+                <option value="off" ${freq === 'off' ? 'selected' : ''}>Off</option>
+                <option value="asap" ${freq === 'asap' ? 'selected' : ''}>ASAP</option>
+                <option value="daily" ${freq === 'daily' ? 'selected' : ''}>Daily</option>
+              </select>
+            </div>
+            <div style="font-size:0.7rem;color:#94a3b8;width:100%;">${escapeHtml(helperText)}</div>
+          </div>
+          <div class="saved-search-actions" style="margin-top:10px;">
             <button class="saved-search-btn-action restore-btn" onclick="restoreSavedSearch('${escapeHtml(s.id)}')"><i class="fas fa-search"></i> View Search</button>
             <button class="saved-search-btn-action" onclick="renameSavedSearch('${escapeHtml(s.id)}', '${escapeHtml(s.name)}')"><i class="fas fa-edit"></i> Rename</button>
             <button class="saved-search-btn-action delete-btn" onclick="deleteSavedSearch('${escapeHtml(s.id)}')"><i class="fas fa-trash"></i> Delete</button>
@@ -5432,6 +5463,42 @@
         container.appendChild(card);
       });
     }
+
+    window.updateSavedSearchAlert = async function(id, frequency) {
+      const s = savedSearches.find(x => x.id === id);
+      if (!s) return;
+
+      try {
+        const tz = Intl.DateTimeFormat().resolvedOptions().timeZone || 'America/New_York';
+        const returnUrl = window.location.href;
+        const res = await fetch(`${CONSUMER_API_BASE}/api/consumer/saved-searches/${encodeURIComponent(id)}/alert?site=${encodeURIComponent(SITE_KEY)}`, {
+          method: 'PUT',
+          headers: {
+            'Authorization': 'Bearer ' + consumerSessionToken,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            site: SITE_KEY,
+            frequency,
+            timezone: tz,
+            returnUrl
+          })
+        });
+        if (res.ok) {
+          const data = await res.json();
+          if (data.alert) {
+            s.alert = data.alert;
+            renderSavedSearchesUI();
+          }
+        } else {
+          alert('Unable to update email alerts for this search. Please try again.');
+          renderSavedSearchesUI();
+        }
+      } catch (err) {
+        alert('An error occurred updating alert settings.');
+        renderSavedSearchesUI();
+      }
+    };
 
     window.restoreSavedSearch = function(id) {
       const s = savedSearches.find(x => x.id === id);

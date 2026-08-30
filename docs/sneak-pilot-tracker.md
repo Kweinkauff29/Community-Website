@@ -78,27 +78,29 @@ Every participant must complete all verification gates before being marked **Lau
   * Phase 7.3C1A Buyer Identity, Magic Link Auth & Server Favorites: 2026-08-27 20:25 UTC (100% PASS)
   * Phase 7.3C1B Embed Layout Stabilization & Saved Searches: 2026-08-28 15:10 UTC (100% PASS)
   * Phase 7.3C1B.1 Live WordPress Embed Layout Hotfix & Browser QA: 2026-08-28 16:00 UTC (100% PASS)
-* **Phase 7.3C1B.1 Embed Sizing & Layout Hotfix:**
-  * *Deterministic Parent-Controlled Responsive Sizing:* Replaced static clamp / legacy `data-height` locking with `getRecommendedSearchHeight()` in `embed.js` and debounced parent window resize listener, dynamically adapting iframe height across Desktop (~860px–960px), Tablet (~760px), and Mobile (~680px–740px).
-  * *Nested Disclaimer Architecture:* Moved `.footer-disclaimer` inside `.listings-section` beneath `#paginationBar`, freeing 180px of vertical space and ensuring a 620px+ usable Map/List workspace.
-  * *CSS Syntax & Mobile Repair:* Resolved unclosed media query syntax error at line 1979 and ensured mobile list view uses internal container scrolling.
+  * Phase 7.3C2A Saved Search Email Alert Engine & Delivery Infrastructure: 2026-08-30 21:50 UTC (100% PASS)
+* **Phase 7.3C2A Saved Search Email Alert Engine & Delivery:**
+  * *Dedicated Alert Worker (`sneak-alerts/`):* Scheduled cron (`10,25,40,55 * * * *`) executing outside MLS sync window; isolated D1 database binding with zero Bridge/GrowthZone credentials.
+  * *Query Parity & Anti-Spam Baseline:* Unified SQL WHERE generator (`sneak-shared/idx-query.js`) reuses exact spatial, category, and price filters; new alert activations isolate historical inventory (`enabled_at`) to eliminate retroactive spam.
+  * *Idempotent Match Ledger & Daily Digests:* Persistent match ledger (`sneak_consumer_alert_matches`) prevents duplicate property notifications; time-zone aware calculations (`getLocalTimeInZone`) enforce once-per-local-day daily digests at/after 8:00 AM.
+  * *Context-Aware Email Design & Compliance:* 10-property email cards with context-aware specs (Residential vs Land vs Commercial), address suppression (`InternetAddressDisplayYN = 0`), listing office attribution, and deep links (`?ccor_listing=<ListingKey>`).
+  * *One-Click Signed Unsubscribe:* Tamper-proof HMAC-SHA256 tokens disable alerts statelessly without login barriers.
 * **Live Validation Evidence:**
   * Live Public URL: `https://coconutcoastrealtors.org/idx-test/` (HTTP 200 OK)
-  * Live Static UI Build: PASS — `data-ui-build="2026.08.28.7.3c1b1"`, `CCOR_IDX_UI_BUILD = '2026.08.28.7.3c1b1'`, `embed.js &v=2026.08.28.7.3c1b1`
-  * Live Consumer Worker Health: PASS — `https://sneak-idx-consumer-staging.bonitaspringsrealtors.workers.dev/api/consumer/version` (200 OK, `sneak-consumer-worker`, `2026.08.28.7.3c1b`, `healthy`)
-  * Live Saved Searches REST API: PASS — OPTIONS, GET (401 unauthenticated), POST, PATCH, DELETE verified
-  * Live Polygon & Radius Search: PASS — Polygon Mode and Radius Mode filter accurately across residential, commercial, and land
-  * Live Marker Schema: PASS — Complete context-aware fields returned from D1 with address suppression enforced
-  * Automated Regression Suite: PASS — 103/103 tests passing (`node --test test/*.test.mjs`)
-  * Live Automated Verification: PASS — 31/31 live verification assertions passing (`node scripts/verify-phase73c1b1-live.mjs`)
-  * Live Browser Visual QA: PASS — Verified across 1440×900, 1920×1080, 1024×768, and 390×844 with zero footer overlap, internal listings scrolling, no outer scrollbars, and seamless map/list responsiveness.
+  * Live Static UI Build: PASS — `data-ui-build="2026.08.28.7.3c2a"`, `CCOR_IDX_UI_BUILD = '2026.08.28.7.3c2a'`, `embed.js &v=2026.08.28.7.3c2a`
+  * Live Alert Worker Health: PASS — `https://sneak-idx-alerts-staging.bonitaspringsrealtors.workers.dev/api/alerts/version` (200 OK, `sneak-alerts-worker`, `2026.08.28.7.3c2a`, `healthy`)
+  * Live Consumer Worker Health: PASS — `https://sneak-idx-consumer-staging.bonitaspringsrealtors.workers.dev/api/consumer/version` (200 OK, `sneak-consumer-worker`, `2026.08.28.7.3c2a`, `healthy`)
+  * Live Alert Preferences REST API: PASS — GET/PUT `/api/consumer/saved-searches/:id/alert` verified with 401 unauthenticated protection
+  * Live Unsubscribe Endpoint Security: PASS — Malformed tokens return 400 Bad Request safely with clean HTML
+  * Live Polygon & Radius Search: PASS — Polygon and Radius modes filter accurately across residential, commercial, and land
+  * Automated Regression Suite: PASS — 120/120 tests passing across 8 test suites (`node --test test/*.test.mjs`)
+  * Live Automated Verification: PASS — 25/25 live verification assertions passing (`node scripts/verify-phase73c2a-live.mjs`)
 * **Observability & Timing:**
   * Staff Setup Time: ~9 minutes
   * Member Implementation Time: ~2 minutes (HTML snippet paste in WordPress)
-  * Staff Interventions Required: 10 (Identity reconciliation, Phase 7.1 model correction, Phase 7.2 product corrections, Phase 7.3A search parity, Phase 7.3B1 interactive map synchronization, Phase 7.3B2A radius search, Phase 7.3B2B polygon search, Phase 7.3C1A buyer auth, Phase 7.3C1B saved searches, Phase 7.3C1B.1 embed layout hotfix)
+  * Staff Interventions Required: 11 (Identity reconciliation, Phase 7.1 model correction, Phase 7.2 product corrections, Phase 7.3A search parity, Phase 7.3B1 interactive map synchronization, Phase 7.3B2A radius search, Phase 7.3B2B polygon search, Phase 7.3C1A buyer auth, Phase 7.3C1B saved searches, Phase 7.3C1B.1 embed layout hotfix, Phase 7.3C2A email alert engine)
   * Support Questions Logged: 0
-* **Final Status:** **ACTIVE PILOT (CCOR IDX Plug-in Phase 7.3C1B.1 Deployed & Verified)**
-
+* **Final Status:** **ACTIVE PILOT (CCOR IDX Plug-in Phase 7.3C2A Deployed & Verified)**
 
 ---
 

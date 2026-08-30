@@ -20,7 +20,8 @@ import {
     exchangeAuthCodeForSession,
     verifyConsumerSession,
     revokeConsumerSession,
-    deleteConsumerAccount
+    deleteConsumerAccount,
+    validateReturnUrl
 } from './auth.js';
 
 const FAVORITES_LIMIT = 200;
@@ -151,10 +152,13 @@ export async function handleListSavedSearches(req, url, env, origin) {
     }
 
     const rows = await env.DB.prepare(`
-        SELECT id, name, state_version, state_json, created_at, updated_at
-        FROM sneak_consumer_saved_searches
-        WHERE user_id = ? AND site_id = ?
-        ORDER BY updated_at DESC
+        SELECT 
+            s.id, s.name, s.state_version, s.state_json, s.created_at, s.updated_at,
+            a.id AS alert_id, a.frequency, a.enabled, a.enabled_at, a.timezone, a.return_url
+        FROM sneak_consumer_saved_searches s
+        LEFT JOIN sneak_consumer_search_alerts a ON s.id = a.saved_search_id
+        WHERE s.user_id = ? AND s.site_id = ?
+        ORDER BY s.updated_at DESC
         LIMIT ${SAVED_SEARCHES_LIMIT}
     `).bind(session.userId, session.siteId).all();
 
@@ -168,6 +172,14 @@ export async function handleListSavedSearches(req, url, env, origin) {
             name: r.name,
             stateVersion: r.state_version,
             state: state,
+            alert: {
+                id: r.alert_id || null,
+                frequency: r.frequency || 'off',
+                enabled: Boolean(r.enabled),
+                enabledAt: r.enabled_at || null,
+                timezone: r.timezone || 'America/New_York',
+                returnUrl: r.return_url || null
+            },
             createdAt: r.created_at,
             updatedAt: r.updated_at
         };
@@ -355,6 +367,182 @@ export async function handleDeleteSavedSearch(req, searchId, url, env, origin) {
         success: true,
         id: searchId,
         message: 'Saved search deleted successfully.'
+    }, 200, origin);
+}
+
+/**
+ * Sanitizes return URL for alert preferences, stripping sensitive auth tokens.
+ */
+export async function sanitizeAlertReturnUrl(db, siteId, returnUrlStr, isDev = false) {
+    const validated = await validateReturnUrl(db, siteId, returnUrlStr, isDev);
+    if (!validated) return null;
+    try {
+        const u = new URL(validated);
+        u.searchParams.delete('auth_code');
+        u.searchParams.delete('session');
+        u.searchParams.delete('token');
+        u.searchParams.delete('bearer');
+        u.searchParams.delete('csess');
+        return u.toString();
+    } catch {
+        return validated;
+    }
+}
+
+/**
+ * GET /api/consumer/saved-searches/:id/alert?site=...
+ */
+export async function handleGetSavedSearchAlert(req, searchId, url, env, origin) {
+    if (!searchId) {
+        return jsonResponse({ error: 'MissingSearchId', message: 'searchId is required.' }, 400, origin);
+    }
+    const siteKey = url.searchParams.get('site');
+    const rawToken = extractBearerToken(req);
+
+    const session = await verifyConsumerSession(env.DB, rawToken, siteKey);
+    if (!session || session.error) {
+        return sessionErrorResponse(session, origin);
+    }
+
+    // Verify saved search exists and belongs to user
+    const search = await env.DB.prepare(`
+        SELECT id FROM sneak_consumer_saved_searches
+        WHERE id = ? AND user_id = ? AND site_id = ?
+    `).bind(searchId, session.userId, session.siteId).first();
+
+    if (!search) {
+        return jsonResponse({ error: 'NotFound', message: 'Saved search not found or unauthorized.' }, 404, origin);
+    }
+
+    const alert = await env.DB.prepare(`
+        SELECT id, saved_search_id, frequency, enabled, enabled_at, timezone, return_url, last_checked_at, last_sent_at
+        FROM sneak_consumer_search_alerts
+        WHERE saved_search_id = ? AND user_id = ? AND site_id = ?
+    `).bind(searchId, session.userId, session.siteId).first();
+
+    return jsonResponse({
+        success: true,
+        alert: alert ? {
+            id: alert.id,
+            savedSearchId: alert.saved_search_id,
+            frequency: alert.frequency,
+            enabled: Boolean(alert.enabled),
+            enabledAt: alert.enabled_at,
+            timezone: alert.timezone,
+            returnUrl: alert.return_url,
+            lastCheckedAt: alert.last_checked_at,
+            lastSentAt: alert.last_sent_at
+        } : {
+            savedSearchId: searchId,
+            frequency: 'off',
+            enabled: false,
+            enabledAt: null,
+            timezone: 'America/New_York',
+            returnUrl: null
+        }
+    }, 200, origin);
+}
+
+/**
+ * PUT or POST /api/consumer/saved-searches/:id/alert
+ */
+export async function handleUpdateSavedSearchAlert(req, searchId, url, env, origin) {
+    if (!searchId) {
+        return jsonResponse({ error: 'MissingSearchId', message: 'searchId is required.' }, 400, origin);
+    }
+
+    let body;
+    try {
+        body = await req.json();
+    } catch {
+        return jsonResponse({ error: 'InvalidJSON', message: 'Request body must be valid JSON.' }, 400, origin);
+    }
+
+    const { site: siteKey, frequency, timezone = 'America/New_York', returnUrl } = body || {};
+    const siteKeyParam = siteKey || url.searchParams.get('site');
+    const rawToken = extractBearerToken(req);
+
+    const session = await verifyConsumerSession(env.DB, rawToken, siteKeyParam);
+    if (!session || session.error) {
+        return sessionErrorResponse(session, origin);
+    }
+
+    const validFrequencies = ['off', 'asap', 'daily'];
+    const cleanFreq = (frequency || '').toLowerCase().trim();
+    if (!validFrequencies.includes(cleanFreq)) {
+        return jsonResponse({
+            error: 'InvalidFrequency',
+            message: "Frequency must be one of: 'off', 'asap', 'daily'."
+        }, 400, origin);
+    }
+
+    // Verify saved search exists and belongs to user
+    const search = await env.DB.prepare(`
+        SELECT id, name FROM sneak_consumer_saved_searches
+        WHERE id = ? AND user_id = ? AND site_id = ?
+    `).bind(searchId, session.userId, session.siteId).first();
+
+    if (!search) {
+        return jsonResponse({ error: 'NotFound', message: 'Saved search not found or unauthorized.' }, 404, origin);
+    }
+
+    // Validate returnUrl
+    const isDev = (env?.SNEAK_ENV || 'staging') === 'development';
+    let cleanReturnUrl = null;
+    if (returnUrl) {
+        cleanReturnUrl = await sanitizeAlertReturnUrl(env.DB, session.siteId, returnUrl, isDev);
+        if (!cleanReturnUrl && cleanFreq !== 'off') {
+            return jsonResponse({
+                error: 'InvalidReturnUrl',
+                message: 'returnUrl must be a valid HTTPS URL matching an authorized site domain.'
+            }, 400, origin);
+        }
+    }
+
+    const isEnabled = (cleanFreq !== 'off') ? 1 : 0;
+    const nowIso = new Date().toISOString();
+    const alertId = `calert_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
+
+    // Upsert into sneak_consumer_search_alerts
+    await env.DB.prepare(`
+        INSERT INTO sneak_consumer_search_alerts
+        (id, saved_search_id, site_id, user_id, frequency, enabled, enabled_at, timezone, return_url, created_at, updated_at)
+        VALUES (?, ?, ?, ?, ?, ?, CASE WHEN ? = 1 THEN ? ELSE NULL END, ?, ?, ?, ?)
+        ON CONFLICT(saved_search_id) DO UPDATE SET
+            frequency = excluded.frequency,
+            enabled = excluded.enabled,
+            enabled_at = CASE 
+                WHEN excluded.enabled = 1 AND sneak_consumer_search_alerts.enabled = 0 THEN excluded.enabled_at
+                WHEN excluded.enabled = 1 AND sneak_consumer_search_alerts.enabled = 1 THEN sneak_consumer_search_alerts.enabled_at
+                ELSE NULL 
+            END,
+            timezone = excluded.timezone,
+            return_url = COALESCE(excluded.return_url, sneak_consumer_search_alerts.return_url),
+            updated_at = excluded.updated_at
+    `).bind(
+        alertId, searchId, session.siteId, session.userId, cleanFreq, isEnabled, isEnabled, nowIso,
+        timezone, cleanReturnUrl, nowIso, nowIso
+    ).run();
+
+    const updated = await env.DB.prepare(`
+        SELECT id, saved_search_id, frequency, enabled, enabled_at, timezone, return_url, last_checked_at, last_sent_at
+        FROM sneak_consumer_search_alerts
+        WHERE saved_search_id = ? AND user_id = ? AND site_id = ?
+    `).bind(searchId, session.userId, session.siteId).first();
+
+    return jsonResponse({
+        success: true,
+        alert: {
+            id: updated.id,
+            savedSearchId: updated.saved_search_id,
+            frequency: updated.frequency,
+            enabled: Boolean(updated.enabled),
+            enabledAt: updated.enabled_at,
+            timezone: updated.timezone,
+            returnUrl: updated.return_url,
+            lastCheckedAt: updated.last_checked_at,
+            lastSentAt: updated.last_sent_at
+        }
     }, 200, origin);
 }
 

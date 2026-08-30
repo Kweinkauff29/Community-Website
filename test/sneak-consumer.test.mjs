@@ -83,6 +83,7 @@ function createMockConsumerDB() {
             { id: 'fav_1', site_id: 'site_1', user_id: 'c_usr_1', listing_key: '2240001', created_at: '2026-08-20T00:00:00Z' }
         ],
         sneak_consumer_saved_searches: [],
+        sneak_consumer_search_alerts: [],
         sneak_listings: [
             {
                 ListingKey: '2240001',
@@ -281,18 +282,45 @@ function createMockConsumerDB() {
                         return { results: favs };
                     }
 
-                    // sneak_consumer_saved_searches (Phase 7.3C1B)
+                    // sneak_consumer_saved_searches (Phase 7.3C1B & 7.3C2A)
                     if (nq.includes('count(*) as count FROM sneak_consumer_saved_searches') || nq.includes('COUNT(*) as count FROM sneak_consumer_saved_searches')) {
                         const count = tables.sneak_consumer_saved_searches.filter(s => s.user_id === boundArgs[0] && s.site_id === boundArgs[1]).length;
                         return { results: [{ count }] };
                     }
-                    if (nq.includes('FROM sneak_consumer_saved_searches') && nq.includes('WHERE user_id = ? AND site_id = ? AND state_hash = ?')) {
+                    if (nq.includes('FROM sneak_consumer_saved_searches') && nq.includes('state_hash = ?')) {
                         const item = tables.sneak_consumer_saved_searches.find(s => s.user_id === boundArgs[0] && s.site_id === boundArgs[1] && s.state_hash === boundArgs[2]);
                         return { results: item ? [item] : [] };
                     }
-                    if (nq.includes('FROM sneak_consumer_saved_searches') && nq.includes('WHERE user_id = ? AND site_id = ?')) {
+                    if (nq.includes('FROM sneak_consumer_saved_searches s') && nq.includes('LEFT JOIN sneak_consumer_search_alerts a')) {
+                        const items = tables.sneak_consumer_saved_searches
+                            .filter(s => s.user_id === boundArgs[0] && s.site_id === boundArgs[1])
+                            .map(s => {
+                                const alert = tables.sneak_consumer_search_alerts.find(a => a.saved_search_id === s.id);
+                                return {
+                                    ...s,
+                                    alert_id: alert?.id || null,
+                                    frequency: alert?.frequency || 'off',
+                                    enabled: alert ? alert.enabled : 0,
+                                    enabled_at: alert?.enabled_at || null,
+                                    timezone: alert?.timezone || 'America/New_York',
+                                    return_url: alert?.return_url || null
+                                };
+                            });
+                        return { results: items };
+                    }
+                    if (nq.includes('FROM sneak_consumer_saved_searches') && (nq.includes('WHERE user_id = ? AND site_id = ?') || nq.includes('WHERE s.user_id = ? AND s.site_id = ?'))) {
                         const items = tables.sneak_consumer_saved_searches.filter(s => s.user_id === boundArgs[0] && s.site_id === boundArgs[1]);
                         return { results: items };
+                    }
+                    if (nq.includes('FROM sneak_consumer_saved_searches WHERE id = ? AND user_id = ? AND site_id = ?')) {
+                        const item = tables.sneak_consumer_saved_searches.find(s => s.id === boundArgs[0] && s.user_id === boundArgs[1] && s.site_id === boundArgs[2]);
+                        return { results: item ? [item] : [] };
+                    }
+
+                    // sneak_consumer_search_alerts (Phase 7.3C2A)
+                    if (nq.includes('FROM sneak_consumer_search_alerts WHERE saved_search_id = ? AND user_id = ? AND site_id = ?')) {
+                        const alert = tables.sneak_consumer_search_alerts.find(a => a.saved_search_id === boundArgs[0] && a.user_id === boundArgs[1] && a.site_id === boundArgs[2]);
+                        return { results: alert ? [alert] : [] };
                     }
 
                     if (nq.includes('FROM sneak_listings WHERE ListingKey IN')) {
@@ -476,8 +504,52 @@ function createMockConsumerDB() {
                         tables.sneak_consumer_saved_searches = tables.sneak_consumer_saved_searches.filter(
                             s => !(s.id === boundArgs[0] && s.user_id === boundArgs[1] && s.site_id === boundArgs[2])
                         );
+                        // Cascade delete associated search alert
+                        tables.sneak_consumer_search_alerts = tables.sneak_consumer_search_alerts.filter(
+                            a => !(a.saved_search_id === boundArgs[0] && a.user_id === boundArgs[1] && a.site_id === boundArgs[2])
+                        );
                         const changes = before - tables.sneak_consumer_saved_searches.length;
                         return { meta: { changes }, changes, success: true };
+                    }
+                    // INSERT INTO sneak_consumer_search_alerts (Phase 7.3C2A)
+                    if (nq.includes('INSERT INTO sneak_consumer_search_alerts')) {
+                        const searchId = boundArgs[1];
+                        const siteId = boundArgs[2];
+                        const userId = boundArgs[3];
+                        const frequency = boundArgs[4];
+                        const enabled = boundArgs[5];
+                        const enabledAt = boundArgs[7];
+                        const timezone = boundArgs[8];
+                        const returnUrl = boundArgs[9];
+
+                        const existing = tables.sneak_consumer_search_alerts.find(a => a.saved_search_id === searchId);
+                        if (existing) {
+                            existing.frequency = frequency;
+                            existing.enabled = enabled;
+                            if (enabled === 1 && !existing.enabled) {
+                                existing.enabled_at = new Date().toISOString();
+                            } else if (enabled === 0) {
+                                existing.enabled_at = null;
+                            }
+                            existing.timezone = timezone;
+                            if (returnUrl) existing.return_url = returnUrl;
+                            existing.updated_at = new Date().toISOString();
+                        } else {
+                            tables.sneak_consumer_search_alerts.push({
+                                id: boundArgs[0],
+                                saved_search_id: searchId,
+                                site_id: siteId,
+                                user_id: userId,
+                                frequency,
+                                enabled,
+                                enabled_at: enabled === 1 ? enabledAt : null,
+                                timezone,
+                                return_url: returnUrl,
+                                created_at: new Date().toISOString(),
+                                updated_at: new Date().toISOString()
+                            });
+                        }
+                        return { meta: { changes: 1 }, success: true };
                     }
                     // DELETE FROM sneak_consumer_users
                     if (nq.includes('DELETE FROM sneak_consumer_users')) {
@@ -491,6 +563,9 @@ function createMockConsumerDB() {
                         );
                         tables.sneak_consumer_saved_searches = tables.sneak_consumer_saved_searches.filter(
                             s => !(s.user_id === uid && s.site_id === sid)
+                        );
+                        tables.sneak_consumer_search_alerts = tables.sneak_consumer_search_alerts.filter(
+                            a => !(a.user_id === uid && a.site_id === sid)
                         );
                         tables.sneak_consumer_sessions = tables.sneak_consumer_sessions.filter(
                             s => !(s.user_id === uid && s.site_id === sid)
@@ -507,13 +582,13 @@ function createMockConsumerDB() {
 
 describe('CCOR IDX / SNEAK Consumer Worker & Identity (Phase 7.3C1A)', () => {
 
-    test('1. Health and Version check returns build 2026.08.28.7.3c1b', async () => {
+    test('1. Health and Version check returns build 2026.08.28.7.3c2a', async () => {
         const req = new Request('https://sneak-idx-consumer-staging.bonitaspringsrealtors.workers.dev/api/consumer/version');
         const res = await worker.fetch(req, {});
         assert.equal(res.status, 200);
         const data = await res.json();
         assert.equal(data.service, 'sneak-consumer-worker');
-        assert.equal(data.build, '2026.08.28.7.3c1b');
+        assert.equal(data.build, '2026.08.28.7.3c2a');
         assert.equal(data.status, 'healthy');
     });
 
@@ -1540,5 +1615,170 @@ describe('CCOR IDX / SNEAK Consumer Worker & Identity (Phase 7.3C1A)', () => {
         assert.equal(parsed.search.drawerState.waterfront, true);
         assert.equal(parsed.search.spatialState.mode, 'radius');
         assert.equal(parsed.search.spatialState.radiusMiles, 5);
+    });
+
+    test('25. Alert Preferences API: GET & PUT /api/consumer/saved-searches/:id/alert', async () => {
+        const db = createMockConsumerDB();
+        const env = { DB: db, SNEAK_ENV: 'staging', SNEAK_SIGNING_SECRET: TEST_SIGNING_SECRET };
+
+        const sessionToken = await createSignedIdxSession('site-mem-1');
+        const tokenHash = await sha256Hex(sessionToken);
+        db.tables.sneak_consumer_sessions.push({
+            id: 'csess_1',
+            site_id: 'site_1',
+            user_id: 'c_usr_1',
+            token_hash: tokenHash,
+            expires_at: new Date(Date.now() + 86400000).toISOString()
+        });
+
+        const searchId = 'css_alert_test_1';
+        db.tables.sneak_consumer_saved_searches.push({
+            id: searchId,
+            site_id: 'site_1',
+            user_id: 'c_usr_1',
+            name: 'Alert Preference Test Search',
+            state_version: 1,
+            state_json: JSON.stringify({ version: 1, search: { propertyType: 'sale' } }),
+            state_hash: 'hash_alert_1',
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+        });
+
+        // 1. Initial GET alert preference (defaults to off)
+        const getReq1 = new Request(`https://consumer.staging/api/consumer/saved-searches/${searchId}/alert?site=site-mem-1`, {
+            headers: { 'Authorization': 'Bearer ' + sessionToken }
+        });
+        const getRes1 = await worker.fetch(getReq1, env);
+        assert.equal(getRes1.status, 200);
+        const getData1 = await getRes1.json();
+        assert.equal(getData1.success, true);
+        assert.equal(getData1.alert.frequency, 'off');
+        assert.equal(getData1.alert.enabled, false);
+
+        // 2. PUT alert preference: enable ASAP
+        const putReq1 = new Request(`https://consumer.staging/api/consumer/saved-searches/${searchId}/alert?site=site-mem-1`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer ' + sessionToken
+            },
+            body: JSON.stringify({
+                site: 'site-mem-1',
+                frequency: 'asap',
+                timezone: 'America/New_York',
+                returnUrl: 'https://member1.com/idx-search/'
+            })
+        });
+        const putRes1 = await worker.fetch(putReq1, env);
+        assert.equal(putRes1.status, 200);
+        const putData1 = await putRes1.json();
+        assert.equal(putData1.success, true);
+        assert.equal(putData1.alert.frequency, 'asap');
+        assert.equal(putData1.alert.enabled, true);
+        assert.ok(putData1.alert.enabledAt);
+
+        // 3. PUT alert preference: invalid frequency rejected with 400
+        const badFreqReq = new Request(`https://consumer.staging/api/consumer/saved-searches/${searchId}/alert?site=site-mem-1`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer ' + sessionToken
+            },
+            body: JSON.stringify({
+                site: 'site-mem-1',
+                frequency: 'hourly'
+            })
+        });
+        const badFreqRes = await worker.fetch(badFreqReq, env);
+        assert.equal(badFreqRes.status, 400);
+
+        // 4. PUT alert preference: invalid returnUrl on unverified external domain rejected
+        const badUrlReq = new Request(`https://consumer.staging/api/consumer/saved-searches/${searchId}/alert?site=site-mem-1`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer ' + sessionToken
+            },
+            body: JSON.stringify({
+                site: 'site-mem-1',
+                frequency: 'daily',
+                returnUrl: 'https://evil-phishing.com/steal'
+            })
+        });
+        const badUrlRes = await worker.fetch(badUrlReq, env);
+        assert.equal(badUrlRes.status, 400);
+
+        // 5. PUT alert preference: switch to off
+        const offReq = new Request(`https://consumer.staging/api/consumer/saved-searches/${searchId}/alert?site=site-mem-1`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer ' + sessionToken
+            },
+            body: JSON.stringify({
+                site: 'site-mem-1',
+                frequency: 'off'
+            })
+        });
+        const offRes = await worker.fetch(offReq, env);
+        assert.equal(offRes.status, 200);
+        const offData = await offRes.json();
+        assert.equal(offData.alert.frequency, 'off');
+        assert.equal(offData.alert.enabled, false);
+    });
+
+    test('26. Saved Search deletion cascades and deletes alert preference record', async () => {
+        const db = createMockConsumerDB();
+        const env = { DB: db, SNEAK_ENV: 'staging', SNEAK_SIGNING_SECRET: TEST_SIGNING_SECRET };
+
+        const sessionToken = await createSignedIdxSession('site-mem-1');
+        const tokenHash = await sha256Hex(sessionToken);
+        db.tables.sneak_consumer_sessions.push({
+            id: 'csess_1',
+            site_id: 'site_1',
+            user_id: 'c_usr_1',
+            token_hash: tokenHash,
+            expires_at: new Date(Date.now() + 86400000).toISOString()
+        });
+
+        const searchId = 'css_cascade_test_1';
+        db.tables.sneak_consumer_saved_searches.push({
+            id: searchId,
+            site_id: 'site_1',
+            user_id: 'c_usr_1',
+            name: 'Cascade Test Search',
+            state_version: 1,
+            state_json: JSON.stringify({ version: 1, search: { propertyType: 'sale' } }),
+            state_hash: 'hash_cascade_1',
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+        });
+
+        db.tables.sneak_consumer_search_alerts.push({
+            id: 'calert_cascade_1',
+            saved_search_id: searchId,
+            site_id: 'site_1',
+            user_id: 'c_usr_1',
+            frequency: 'asap',
+            enabled: 1,
+            enabled_at: new Date().toISOString(),
+            timezone: 'America/New_York',
+            return_url: 'https://member1.com/search',
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+        });
+
+        assert.equal(db.tables.sneak_consumer_search_alerts.length, 1);
+
+        // Delete Saved Search
+        const delReq = new Request(`https://consumer.staging/api/consumer/saved-searches/${searchId}?site=site-mem-1`, {
+            method: 'DELETE',
+            headers: { 'Authorization': 'Bearer ' + sessionToken }
+        });
+        const delRes = await worker.fetch(delReq, env);
+        assert.equal(delRes.status, 200);
+
+        assert.equal(db.tables.sneak_consumer_saved_searches.some(s => s.id === searchId), false);
+        assert.equal(db.tables.sneak_consumer_search_alerts.some(a => a.saved_search_id === searchId), false, 'Alert preference must be removed upon saved search deletion');
     });
 });

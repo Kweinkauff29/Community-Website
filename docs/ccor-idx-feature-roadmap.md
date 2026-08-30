@@ -132,8 +132,26 @@ graph TD
 ---
 
 
-### Phase 7.3C2 — Automated Email Alerts & Agent Activity Dashboard (NEXT)
-* **Goal:** Automated daily/instant MLS email alerts on new matching inventory, and client activity timelines in REALTOR® Member Portal.
+### Phase 7.3C2A — Saved Search Email Alert Engine & Delivery Infrastructure (COMPLETED)
+* **Goal:** Deliver scheduled automated email alerts (ASAP and Daily digest) matching saved search criteria with exact query parity, anti-spam baseline isolation, delivery idempotency, context-aware specs, address suppression, deep linking, and one-click tamper-proof unsubscribe.
+* **Status:** `COMPLETE / DEPLOYED`
+* **Features Included:**
+  * **Dedicated Alert Worker (`sneak-alerts/`):** Cloudflare Worker (`sneak-idx-alerts-staging`) running scheduled cron jobs (`10,25,40,55 * * * *`) offset from MLS sync to prevent race conditions.
+  * **Strict Security Boundary:** Zero Bridge token, zero GrowthZone credentials, zero Stripe secrets. Queries inventory directly from Cloudflare D1.
+  * **Shared Query Parity Engine (`sneak-shared/idx-query.js`):** Unified `buildSavedSearchWhereQuery` ensures 100% criteria agreement between public search and alert matching across residential, rental, land, commercial, radius, and polygon modes.
+  * **Baseline Anti-Spam Guarantee:** Alert activation sets `enabled_at = now`; historical inventory matching the search before enablement is strictly excluded to prevent inbox flooding.
+  * **Idempotent Match Ledger (`sneak_consumer_alert_matches`):** `UNIQUE(alert_id, listing_key, event_type)` ensures each new property is alerted at most once per saved search.
+  * **Daily Digest Scheduling:** Timezone-aware date calculations (`getLocalTimeInZone`) send daily digests at/after 8:00 AM local time, strictly once per local calendar day (`last_daily_local_date`).
+  * **Context-Aware Email Cards & Attribution:** Up to 10 property cards per email with beds/baths/sqft for residential/rental, acres/subdivision for land, sqft/acres/subtype/zoning for commercial, mandatory listing brokerage attribution, and `InternetAddressDisplayYN` address suppression.
+  * **Deep Linking (`?ccor_listing=<ListingKey>`):** Embed loader and search app parse listing key, validate tenant session/scope, and open property detail modal with graceful fallback notice if unavailable.
+  * **One-Click Signed Unsubscribe:** Tamper-proof HMAC-SHA256 tokens disable alerts without requiring user login or passwords.
+  * **Delivery Logging & Bounded Retries:** `sneak_consumer_alert_deliveries` tracks provider message IDs, delivery statuses (`sent`, `failed`, `provider_unconfigured`), and error codes.
+  * **Deterministic UI Build:** `2026.08.28.7.3c2a` across alert worker, consumer worker, serving worker, embed loader, and test suites.
+
+---
+
+### Phase 7.3C2B — Agent Client Activity Dashboard (NEXT)
+* **Goal:** Live timeline of client views, saved properties, saved searches, and inquiries in REALTOR® Member Portal.
 * **Status:** `PLANNED`
 
 ---

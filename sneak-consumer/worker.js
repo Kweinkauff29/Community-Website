@@ -25,10 +25,12 @@ import {
     handleListSavedSearches,
     handleCreateSavedSearch,
     handleUpdateSavedSearch,
-    handleDeleteSavedSearch
+    handleDeleteSavedSearch,
+    handleGetSavedSearchAlert,
+    handleUpdateSavedSearchAlert
 } from './api.js';
 
-const CONSUMER_BUILD = '2026.08.28.7.3c1b';
+const CONSUMER_BUILD = '2026.08.28.7.3c2a';
 
 /**
  * Validates request origin against authorized sites/domains in D1.
@@ -95,7 +97,7 @@ export default {
             const headers = new Headers();
             headers.set('Access-Control-Allow-Origin', allowedOrigin);
             headers.set('Vary', 'Origin');
-            headers.set('Access-Control-Allow-Methods', 'GET, POST, PATCH, DELETE, OPTIONS');
+            headers.set('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE, OPTIONS');
             headers.set('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, X-Site-Key, X-SNEAK-Session, X-Consumer-Session');
             headers.set('Access-Control-Max-Age', '86400');
             return new Response(null, { status: 204, headers });
@@ -149,6 +151,19 @@ export default {
 
             if (url.pathname === '/api/consumer/saved-searches' && method === 'POST') {
                 return await handleCreateSavedSearch(req, env, allowedOrigin);
+            }
+
+            // Alert Preferences for Saved Search (Phase 7.3C2A)
+            if (url.pathname.startsWith('/api/consumer/saved-searches/') && url.pathname.endsWith('/alert')) {
+                const parts = url.pathname.split('/');
+                // /api/consumer/saved-searches/:id/alert
+                const searchId = decodeURIComponent(parts[4]);
+                if (method === 'GET') {
+                    return await handleGetSavedSearchAlert(req, searchId, url, env, allowedOrigin);
+                }
+                if (method === 'PUT' || method === 'POST') {
+                    return await handleUpdateSavedSearchAlert(req, searchId, url, env, allowedOrigin);
+                }
             }
 
             if (url.pathname.startsWith('/api/consumer/saved-searches/') && method === 'PATCH') {
