@@ -7,10 +7,14 @@
  * Invariants:
  * - Never log or leak raw Mailjet credentials or bearer tokens.
  * - Fails safely with status 'provider_unconfigured' when secrets are absent in staging/dev.
+ * - provider_unconfigured must NEVER be treated as successful email delivery.
+ * - Unsubscribe tokens require an explicit, cryptographically sufficient signing secret.
+ * - Zero default fallback keys in runtime code.
  * - Unsubscribe tokens grant exclusively alert-disabling capabilities (no auth escalation).
  */
 
 const DEFAULT_FROM = 'CCOR Property Search <no-reply@ccorealtors.org>';
+const MIN_SECRET_LENGTH = 16;
 
 export function bufferToHex(buffer) {
     return Array.from(new Uint8Array(buffer)).map(b => b.toString(16).padStart(2, '0')).join('');
@@ -31,7 +35,10 @@ export function base64UrlDecode(str) {
  * Creates a cryptographically tamper-proof unsubscribe token.
  * Payload: { alertId, userId, siteId, t: timestamp }
  */
-export async function createUnsubscribeToken(alertId, userId, siteId, secret = 'sneak-default-token-secret-fallback-key') {
+export async function createUnsubscribeToken(alertId, userId, siteId, secret) {
+    if (!secret || typeof secret !== 'string' || secret.length < MIN_SECRET_LENGTH) {
+        throw new Error('SigningSecretUnavailable');
+    }
     if (!alertId || !userId || !siteId) return '';
     const payload = JSON.stringify({
         a: alertId,
@@ -59,7 +66,10 @@ export async function createUnsubscribeToken(alertId, userId, siteId, secret = '
 /**
  * Verifies and decodes an unsubscribe token.
  */
-export async function verifyUnsubscribeToken(token, secret = 'sneak-default-token-secret-fallback-key') {
+export async function verifyUnsubscribeToken(token, secret) {
+    if (!secret || typeof secret !== 'string' || secret.length < MIN_SECRET_LENGTH) {
+        throw new Error('SigningSecretUnavailable');
+    }
     if (!token || typeof token !== 'string' || !token.includes('.')) return null;
 
     const [encodedPayload, encodedSig] = token.split('.');
@@ -166,6 +176,7 @@ export async function sendTransactionalEmail(env, { to, subject, html, text }) {
 
             return {
                 success: false,
+                retryable: true,
                 status: 'failed',
                 provider: 'mailjet',
                 errorCode: String(errorCode).slice(0, 100)
@@ -173,6 +184,7 @@ export async function sendTransactionalEmail(env, { to, subject, html, text }) {
         } catch (err) {
             return {
                 success: false,
+                retryable: true,
                 status: 'failed',
                 provider: 'mailjet',
                 errorCode: (err.message || 'NetworkError').slice(0, 100)
@@ -180,11 +192,13 @@ export async function sendTransactionalEmail(env, { to, subject, html, text }) {
         }
     }
 
-    // Fallback: Simulated Delivery in Staging/Dev when credentials are not configured
+    // Fallback: Provider unconfigured when Mailjet credentials are not set
     return {
-        success: true,
+        success: false,
+        retryable: true,
         status: 'provider_unconfigured',
-        provider: 'simulated',
-        providerMessageId: `sim_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`
+        provider: null,
+        providerMessageId: null,
+        error: 'EmailProviderNotConfigured'
     };
 }

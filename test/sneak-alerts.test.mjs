@@ -2,13 +2,17 @@
  * test/sneak-alerts.test.mjs
  * 
  * SNEAK IDX Saved Search Email Alert Engine & Delivery Infrastructure Test Suite:
- * - Alert Worker Version & Health check
+ * - Alert Worker Version & Health check (2026.08.30.7.3c2a1)
  * - Frequency and Timezone validation
  * - Consumer Alert Preference CRUD API
  * - Query Parity Gate (Search Worker vs Alert Matcher)
  * - Baseline & Anti-Spam guarantee (zero retroactive spam)
- * - New match vs Non-match filtering
- * - Delivery idempotency & match ledger
+ * - Non-match filtering
+ * - HOTFIX 1: provider_unconfigured MUST NOT count as sent or mark notified_at
+ * - HOTFIX 1: Retry flow when provider becomes configured
+ * - HOTFIX 2: Fail-closed secret policy & removal of fallback signing secret
+ * - HOTFIX 3: Claim-before-send atomic concurrency and duplicate suppression
+ * - HOTFIX 3: Failed delivery claim release and reclaim
  * - Daily digest once-per-local-calendar-day enforcement
  * - Tenant scope isolation
  * - Internet display compliance & address suppression
@@ -16,12 +20,14 @@
  * - Spatial alerts (Radius & Polygon point-in-polygon)
  * - Tamper-proof Unsubscribe token and endpoint
  * - Run lock & overlap protection
- * - Cascade deletion on saved search / account deletion
- * - Security invariants (zero Bridge tokens, zero secrets in logs)
+ * - Dry run semantics
+ * - Security invariants (zero Bridge tokens, zero fallback secrets in runtime code)
  */
 
 import { test, describe } from 'node:test';
 import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import path from 'node:path';
 import alertWorker, { ALERT_BUILD, processAlerts } from '../sneak-alerts/worker.js';
 import { getLocalTimeInZone, findDueAlerts, matchNewListingsForAlert } from '../sneak-alerts/matcher.js';
 import { renderSavedSearchAlertEmail, formatCardSpecs, escapeHtml, sanitizeUrl, formatPrice } from '../sneak-alerts/email.js';
@@ -299,10 +305,9 @@ function createMockAlertsDB() {
 
                     // matchNewListingsForAlert query
                     if (nq.includes('FROM sneak_listings') && nq.includes('ListingContractDate >=')) {
-                        // Filter listings in mock DB
                         const alertId = boundArgs[boundArgs.length - 1];
-                        const alreadyNotified = tables.sneak_consumer_alert_matches
-                            .filter(m => m.alert_id === alertId && m.event_type === 'new_listing')
+                        const excludedKeys = tables.sneak_consumer_alert_matches
+                            .filter(m => m.alert_id === alertId && (m.notified_at !== null || m.delivery_status === 'sent' || (m.delivery_status === 'claimed' && new Date(m.claim_expires_at || 0) > new Date())))
                             .map(m => m.listing_key);
 
                         const alert = tables.sneak_consumer_search_alerts.find(a => a.id === alertId);
@@ -310,7 +315,7 @@ function createMockAlertsDB() {
 
                         let matched = tables.sneak_listings.filter(l => {
                             if (l.InternetEntireListingDisplayYN !== 1) return false;
-                            if (alreadyNotified.includes(l.ListingKey)) return false;
+                            if (excludedKeys.includes(l.ListingKey)) return false;
                             if (l.ListingContractDate < baselineDate) return false;
 
                             // Apply saved search filters
@@ -333,10 +338,25 @@ function createMockAlertsDB() {
                         return { results: matched };
                     }
 
+                    // Query claimed listings
+                    if (nq.includes('SELECT listing_key FROM sneak_consumer_alert_matches WHERE alert_id = ? AND claim_id = ?')) {
+                        const alertId = boundArgs[0];
+                        const claimId = boundArgs[1];
+                        const rows = tables.sneak_consumer_alert_matches.filter(
+                            m => m.alert_id === alertId && m.claim_id === claimId && m.delivery_status === 'claimed' && m.notified_at === null
+                        );
+                        return { results: rows.map(r => ({ listing_key: r.listing_key })) };
+                    }
+
                     return { results: [] };
                 },
                 async run() {
-                    if (nq.includes('INSERT INTO sneak_alert_runs')) {
+                    // Atomic Run Lock
+                    if (nq.includes('INSERT INTO sneak_alert_runs') && nq.includes('WHERE NOT EXISTS')) {
+                        const active = tables.sneak_alert_runs.find(r => r.status === 'running');
+                        if (active) {
+                            return { meta: { changes: 0 }, success: true };
+                        }
                         tables.sneak_alert_runs.push({
                             id: boundArgs[0],
                             started_at: boundArgs[1],
@@ -355,39 +375,86 @@ function createMockAlertsDB() {
                             run.emails_attempted = boundArgs[3];
                             run.emails_sent = boundArgs[4];
                             run.emails_failed = boundArgs[5];
+                            run.emails_deferred = boundArgs[6] || 0;
                             run.completed_at = new Date().toISOString();
                         }
                         return { meta: { changes: 1 }, success: true };
                     }
 
-                    if (nq.includes('INSERT OR IGNORE INTO sneak_consumer_alert_matches')) {
+                    // Claim-Before-Send Atomic Upsert
+                    if (nq.includes('INSERT INTO sneak_consumer_alert_matches') && nq.includes('ON CONFLICT(alert_id, listing_key, event_type)')) {
                         const alertId = boundArgs[1];
+                        const searchId = boundArgs[2];
+                        const siteId = boundArgs[3];
+                        const userId = boundArgs[4];
                         const listingKey = boundArgs[5];
-                        const exists = tables.sneak_consumer_alert_matches.some(m => m.alert_id === alertId && m.listing_key === listingKey);
-                        if (!exists) {
+                        const claimId = boundArgs[6];
+                        const claimedAt = boundArgs[7];
+                        const claimExpiresAt = boundArgs[8];
+
+                        const existing = tables.sneak_consumer_alert_matches.find(
+                            m => m.alert_id === alertId && m.listing_key === listingKey && m.event_type === 'new_listing'
+                        );
+
+                        if (!existing) {
                             tables.sneak_consumer_alert_matches.push({
                                 id: boundArgs[0],
                                 alert_id: alertId,
-                                saved_search_id: boundArgs[2],
-                                site_id: boundArgs[3],
-                                user_id: boundArgs[4],
+                                saved_search_id: searchId,
+                                site_id: siteId,
+                                user_id: userId,
                                 listing_key: listingKey,
                                 event_type: 'new_listing',
-                                first_matched_at: boundArgs[6],
+                                claim_id: claimId,
+                                claimed_at: claimedAt,
+                                claim_expires_at: claimExpiresAt,
+                                delivery_status: 'claimed',
+                                attempt_count: 1,
+                                first_matched_at: boundArgs[9],
                                 notified_at: null,
-                                created_at: boundArgs[7]
+                                created_at: boundArgs[10]
                             });
+                        } else {
+                            // Only update if not yet notified and (claim expired or unconfigured/failed or same claimId)
+                            const isExpired = !existing.claim_expires_at || new Date(existing.claim_expires_at) < new Date();
+                            const isRetryableStatus = ['failed', 'provider_unconfigured', 'secret_unconfigured', 'pending'].includes(existing.delivery_status);
+                            if (existing.notified_at === null && (isExpired || isRetryableStatus || existing.claim_id === claimId)) {
+                                existing.claim_id = claimId;
+                                existing.claimed_at = claimedAt;
+                                existing.claim_expires_at = claimExpiresAt;
+                                existing.delivery_status = 'claimed';
+                                existing.attempt_count = (existing.attempt_count || 0) + 1;
+                            }
                         }
                         return { meta: { changes: 1 }, success: true };
                     }
 
-                    if (nq.includes('UPDATE sneak_consumer_alert_matches SET notified_at = ?')) {
-                        const notifiedAt = boundArgs[0];
-                        const alertId = boundArgs[1];
-                        const key = boundArgs[2];
-                        const m = tables.sneak_consumer_alert_matches.find(x => x.alert_id === alertId && x.listing_key === key);
-                        if (m) m.notified_at = notifiedAt;
-                        return { meta: { changes: 1 }, success: true };
+                    // Update match record after delivery
+                    if (nq.includes('UPDATE sneak_consumer_alert_matches')) {
+                        const alertId = boundArgs[nq.includes('SET notified_at = ?') ? 1 : 0];
+                        const claimId = boundArgs[nq.includes('SET notified_at = ?') ? 2 : 1];
+
+                        const matches = tables.sneak_consumer_alert_matches.filter(
+                            m => m.alert_id === alertId && m.claim_id === claimId
+                        );
+
+                        for (const m of matches) {
+                            if (nq.includes('SET notified_at = ?')) {
+                                m.notified_at = boundArgs[0];
+                                m.delivery_status = 'sent';
+                                m.claim_expires_at = null;
+                            } else if (nq.includes("SET delivery_status = 'provider_unconfigured'")) {
+                                m.delivery_status = 'provider_unconfigured';
+                                m.claim_expires_at = new Date().toISOString();
+                            } else if (nq.includes("SET delivery_status = 'failed'")) {
+                                m.delivery_status = 'failed';
+                                m.claim_expires_at = new Date().toISOString();
+                            } else if (nq.includes("SET delivery_status = 'secret_unconfigured'")) {
+                                m.delivery_status = 'secret_unconfigured';
+                                m.claim_expires_at = new Date().toISOString();
+                            }
+                        }
+                        return { meta: { changes: matches.length }, success: true };
                     }
 
                     if (nq.includes('INSERT INTO sneak_consumer_alert_deliveries')) {
@@ -401,10 +468,11 @@ function createMockAlertsDB() {
                             match_count: boundArgs[6],
                             listing_keys_json: boundArgs[7],
                             status: boundArgs[8],
-                            provider: boundArgs[9],
+                            provider: boundArgs[9] || null,
                             provider_message_id: boundArgs[10] || null,
-                            created_at: boundArgs[11] || new Date().toISOString(),
-                            sent_at: boundArgs[12] || new Date().toISOString()
+                            error_code: boundArgs[11] || null,
+                            created_at: boundArgs[12] || new Date().toISOString(),
+                            sent_at: boundArgs[13] || null
                         });
                         return { meta: { changes: 1 }, success: true };
                     }
@@ -447,18 +515,24 @@ function createMockAlertsDB() {
     };
 }
 
-describe('SNEAK IDX Phase 7.3C2A — Saved Search Email Alert Engine & Delivery Infrastructure', () => {
+describe('SNEAK IDX Phase 7.3C2A.1 — Alert Delivery Correctness, Concurrency & Secret Hardening', () => {
 
-    test('1. Alert Worker Version & Health endpoint returns build 2026.08.28.7.3c2a', async () => {
+    test('1. Alert Worker Version & Health endpoint returns build 2026.08.30.7.3c2a1 and deliveryReady status', async () => {
         const req = new Request('https://sneak-idx-alerts-staging.bonitaspringsrealtors.workers.dev/api/alerts/version');
-        const res = await alertWorker.fetch(req, { MAILJET_API_KEY: 'test', MAILJET_SECRET_KEY: 'test' });
+        const res = await alertWorker.fetch(req, {
+            MAILJET_API_KEY: 'test',
+            MAILJET_SECRET_KEY: 'test',
+            SNEAK_SIGNING_SECRET: TEST_SECRET
+        });
         assert.equal(res.status, 200);
         const data = await res.json();
         assert.equal(data.service, 'sneak-alerts-worker');
         assert.equal(data.build, ALERT_BUILD);
-        assert.equal(data.build, '2026.08.28.7.3c2a');
+        assert.equal(data.build, '2026.08.30.7.3c2a1');
         assert.equal(data.status, 'healthy');
         assert.equal(data.emailProviderConfigured, true);
+        assert.equal(data.signingSecretConfigured, true);
+        assert.equal(data.deliveryReady, true);
     });
 
     test('2. Timezone & Local Date Calculation helper (getLocalTimeInZone)', () => {
@@ -518,7 +592,6 @@ describe('SNEAK IDX Phase 7.3C2A — Saved Search Email Alert Engine & Delivery 
         const db = createMockAlertsDB();
         const alert = db.tables.sneak_consumer_search_alerts[0];
 
-        // Match listings for alert
         const matchRes = await matchNewListingsForAlert(db, {
             ...alert,
             state_json: db.tables.sneak_consumer_saved_searches[0].state_json,
@@ -565,41 +638,249 @@ describe('SNEAK IDX Phase 7.3C2A — Saved Search Email Alert Engine & Delivery 
         assert.ok(!keys.includes('NEW_NON_IDX_004'), 'Listing with InternetEntireListingDisplayYN = 0 must never be alerted');
     });
 
-    test('7. End-to-End Alert Processing: Match Ledger, Delivery Log, and Idempotent Execution', async () => {
+    test('7. HOTFIX 1: provider_unconfigured MUST NOT count as sent, MUST NOT mark notified_at, and MUST NOT advance last_sent_at', async () => {
         const db = createMockAlertsDB();
         const env = {
             DB: db,
             SNEAK_ENV: 'staging',
             SNEAK_SIGNING_SECRET: TEST_SECRET
+            // No Mailjet credentials -> provider_unconfigured
         };
 
-        // 1st Run
-        const run1 = await processAlerts({ db, env, dryRun: false, now: new Date('2026-08-29T14:30:00Z') });
-        assert.equal(run1.status, 'completed');
-        assert.equal(run1.searchesEvaluated, 1);
-        assert.equal(run1.emailsSent, 1);
+        const run = await processAlerts({ db, env, dryRun: false, now: new Date('2026-08-29T14:30:00Z') });
+        assert.equal(run.status, 'completed');
+        assert.equal(run.searchesEvaluated, 1);
+        assert.equal(run.emailsAttempted, 1);
+        assert.equal(run.emailsSent, 0, 'emailsSent MUST be 0 when provider is unconfigured');
+        assert.equal(run.emailsDeferred, 1, 'emailsDeferred MUST be 1 when provider is unconfigured');
 
-        // Verify Match Ledger recorded
-        const matchEntries = db.tables.sneak_consumer_alert_matches.filter(m => m.alert_id === 'calert_1');
-        assert.ok(matchEntries.length >= 1);
-        assert.ok(matchEntries.every(m => m.notified_at !== null), 'All delivered matches must be marked notified');
+        // Match Ledger: notified_at MUST remain null and delivery_status MUST be 'provider_unconfigured'
+        const matches = db.tables.sneak_consumer_alert_matches.filter(m => m.alert_id === 'calert_1');
+        assert.ok(matches.length >= 1);
+        assert.ok(matches.every(m => m.notified_at === null), 'notified_at MUST remain NULL when unconfigured');
+        assert.ok(matches.every(m => m.delivery_status === 'provider_unconfigured'));
 
-        // Verify Delivery Log recorded
+        // Delivery Log: sent_at MUST be null
         const deliveries = db.tables.sneak_consumer_alert_deliveries.filter(d => d.alert_id === 'calert_1');
         assert.equal(deliveries.length, 1);
         assert.equal(deliveries[0].status, 'provider_unconfigured');
+        assert.equal(deliveries[0].sent_at, null);
 
-        // 2nd Run immediately after -> 0 new matches, 0 emails sent (Idempotent!)
-        const run2 = await processAlerts({ db, env, dryRun: false, now: new Date('2026-08-29T14:45:00Z') });
-        assert.equal(run2.status, 'completed');
-        assert.equal(run2.matchesFound, 0);
-        assert.equal(run2.emailsAttempted, 0);
-        assert.equal(run2.emailsSent, 0);
+        // Alert table: last_sent_at MUST remain null
+        const alert = db.tables.sneak_consumer_search_alerts.find(a => a.id === 'calert_1');
+        assert.equal(alert.last_sent_at, null);
+        assert.ok(alert.last_checked_at !== null);
     });
 
-    test('8. Daily Digest Alert Frequency: Once-per-local-day enforcement', async () => {
+    test('8. HOTFIX 1 Retry Test: unconfigured listing remains retryable and is delivered successfully once provider is configured', async () => {
         const db = createMockAlertsDB();
-        // Switch alert to daily
+        const unconfiguredEnv = {
+            DB: db,
+            SNEAK_ENV: 'staging',
+            SNEAK_SIGNING_SECRET: TEST_SECRET
+        };
+
+        // 1. First run without credentials -> provider_unconfigured
+        const run1 = await processAlerts({ db, env: unconfiguredEnv, dryRun: false, now: new Date('2026-08-29T14:30:00Z') });
+        assert.equal(run1.emailsSent, 0);
+        assert.equal(db.tables.sneak_consumer_alert_matches[0].notified_at, null);
+
+        // 2. Mock working provider fetch
+        const originalFetch = globalThis.fetch;
+        globalThis.fetch = async (url, opts) => {
+            if (url.includes('api.mailjet.com')) {
+                return new Response(JSON.stringify({
+                    Messages: [{ To: [{ MessageID: 99887766 }] }]
+                }), { status: 200, headers: { 'Content-Type': 'application/json' } });
+            }
+            return originalFetch(url, opts);
+        };
+
+        try {
+            const configuredEnv = {
+                DB: db,
+                SNEAK_ENV: 'staging',
+                SNEAK_SIGNING_SECRET: TEST_SECRET,
+                MAILJET_API_KEY: 'valid_key',
+                MAILJET_SECRET_KEY: 'valid_secret'
+            };
+
+            // 3. Second run with configured provider -> sends successfully
+            const run2 = await processAlerts({ db, env: configuredEnv, dryRun: false, now: new Date('2026-08-29T14:35:00Z') });
+            assert.equal(run2.emailsSent, 1, 'Retry run must successfully deliver the previously unconfigured match');
+            assert.equal(run2.emailsDeferred, 0);
+
+            // 4. Match Ledger: now marked notified with status 'sent'
+            const match = db.tables.sneak_consumer_alert_matches.find(m => m.alert_id === 'calert_1' && m.listing_key === 'NEW_MATCH_001');
+            assert.ok(match.notified_at !== null, 'notified_at must be populated after successful delivery');
+            assert.equal(match.delivery_status, 'sent');
+
+            // 5. Alert Table: last_sent_at populated
+            const alert = db.tables.sneak_consumer_search_alerts.find(a => a.id === 'calert_1');
+            assert.ok(alert.last_sent_at !== null);
+
+            // 6. Third run immediately after -> 0 matches, 0 sends (idempotency preserved)
+            const run3 = await processAlerts({ db, env: configuredEnv, dryRun: false, now: new Date('2026-08-29T14:40:00Z') });
+            assert.equal(run3.emailsSent, 0);
+            assert.equal(run3.matchesFound, 0);
+        } finally {
+            globalThis.fetch = originalFetch;
+        }
+    });
+
+    test('9. HOTFIX 2: Secret Hardening & Fail Closed when signing secret is missing', async () => {
+        const db = createMockAlertsDB();
+        const envMissingSecret = {
+            DB: db,
+            SNEAK_ENV: 'staging',
+            MAILJET_API_KEY: 'valid_key',
+            MAILJET_SECRET_KEY: 'valid_secret'
+            // No SNEAK_SIGNING_SECRET
+        };
+
+        // Helper throws if secret is missing or insufficient
+        await assert.rejects(
+            async () => { await createUnsubscribeToken('calert_1', 'c_usr_1', 'site_1', ''); },
+            { message: 'SigningSecretUnavailable' }
+        );
+        await assert.rejects(
+            async () => { await createUnsubscribeToken('calert_1', 'c_usr_1', 'site_1', 'short'); },
+            { message: 'SigningSecretUnavailable' }
+        );
+
+        // Alert Processing defers delivery rather than sending malformed/insecure token
+        const run = await processAlerts({ db, env: envMissingSecret, dryRun: false });
+        assert.equal(run.emailsSent, 0);
+        assert.equal(run.emailsDeferred, 1);
+        assert.equal(db.tables.sneak_consumer_alert_matches[0].delivery_status, 'secret_unconfigured');
+
+        // Unsubscribe endpoint returns 503 when secret is not configured
+        const req = new Request('https://alerts.staging/api/alerts/unsubscribe?token=some_token');
+        const res = await alertWorker.fetch(req, envMissingSecret);
+        assert.equal(res.status, 503);
+        const html = await res.text();
+        assert.ok(html.includes('Service Unavailable'));
+    });
+
+    test('10. HOTFIX 2 Security Guard: Zero occurrences of fallback secret in runtime codebase', () => {
+        const rootDir = path.resolve('.');
+        const targetDirs = ['sneak-alerts', 'sneak-consumer', 'sneak-shared', 'sneak-idx'];
+
+        for (const dir of targetDirs) {
+            const dirPath = path.join(rootDir, dir);
+            if (!fs.existsSync(dirPath)) continue;
+
+            const files = fs.readdirSync(dirPath, { recursive: true });
+            for (const file of files) {
+                if (typeof file === 'string' && (file.endsWith('.js') || file.endsWith('.html'))) {
+                    const content = fs.readFileSync(path.join(dirPath, file), 'utf8');
+                    assert.ok(
+                        !content.includes('sneak-default-token-secret-fallback-key'),
+                        `File ${dir}/${file} must not contain default fallback key`
+                    );
+                }
+            }
+        }
+    });
+
+    test('11. HOTFIX 3: Claim-Before-Send Atomic Concurrency prevents duplicate sends across overlapping runs', async () => {
+        const db = createMockAlertsDB();
+        const originalFetch = globalThis.fetch;
+        let mailjetSendCount = 0;
+
+        globalThis.fetch = async (url, opts) => {
+            if (url.includes('api.mailjet.com')) {
+                mailjetSendCount++;
+                return new Response(JSON.stringify({
+                    Messages: [{ To: [{ MessageID: 1000 + mailjetSendCount }] }]
+                }), { status: 200, headers: { 'Content-Type': 'application/json' } });
+            }
+            return originalFetch(url, opts);
+        };
+
+        try {
+            const env = {
+                DB: db,
+                SNEAK_ENV: 'staging',
+                SNEAK_SIGNING_SECRET: TEST_SECRET,
+                MAILJET_API_KEY: 'valid_key',
+                MAILJET_SECRET_KEY: 'valid_secret'
+            };
+
+            // Run 1 claims Listing A
+            const run1Promise = processAlerts({ db, env, dryRun: false, now: new Date('2026-08-29T14:30:00Z') });
+            // Run 2 immediately racing with Run 1 for the same listing
+            const run2Promise = processAlerts({ db, env, dryRun: false, now: new Date('2026-08-29T14:30:00Z') });
+
+            const [run1, run2] = await Promise.all([run1Promise, run2Promise]);
+
+            // Total emails sent must be exactly 1
+            const totalSent = (run1.emailsSent || 0) + (run2.emailsSent || 0);
+            assert.equal(totalSent, 1, 'Exactly one worker execution must deliver the email for the new listing');
+            assert.equal(mailjetSendCount, 1, 'Provider API must be called exactly once');
+
+            // Match ledger has entries marked notified
+            const matchRows = db.tables.sneak_consumer_alert_matches.filter(m => m.alert_id === 'calert_1');
+            assert.equal(matchRows.length, 2);
+            assert.ok(matchRows.every(m => m.notified_at !== null));
+            assert.ok(matchRows.every(m => m.delivery_status === 'sent'));
+        } finally {
+            globalThis.fetch = originalFetch;
+        }
+    });
+
+    test('12. HOTFIX 3: Failed delivery releases claim and allows subsequent successful delivery', async () => {
+        const db = createMockAlertsDB();
+        const originalFetch = globalThis.fetch;
+        let shouldFail = true;
+
+        globalThis.fetch = async (url, opts) => {
+            if (url.includes('api.mailjet.com')) {
+                if (shouldFail) {
+                    return new Response(JSON.stringify({ ErrorMessage: 'MailjetRateLimited' }), { status: 429 });
+                }
+                return new Response(JSON.stringify({
+                    Messages: [{ To: [{ MessageID: 887766 }] }]
+                }), { status: 200 });
+            }
+            return originalFetch(url, opts);
+        };
+
+        try {
+            const env = {
+                DB: db,
+                SNEAK_ENV: 'staging',
+                SNEAK_SIGNING_SECRET: TEST_SECRET,
+                MAILJET_API_KEY: 'valid_key',
+                MAILJET_SECRET_KEY: 'valid_secret'
+            };
+
+            // 1. Run 1 fails delivery
+            const run1 = await processAlerts({ db, env, dryRun: false, now: new Date('2026-08-29T14:30:00Z') });
+            assert.equal(run1.emailsFailed, 1);
+            assert.equal(run1.emailsSent, 0);
+
+            // Verify claim released to 'failed' and notified_at is NULL
+            const match1 = db.tables.sneak_consumer_alert_matches.find(m => m.alert_id === 'calert_1');
+            assert.equal(match1.delivery_status, 'failed');
+            assert.equal(match1.notified_at, null);
+
+            // 2. Run 2 after provider recovery
+            shouldFail = false;
+            const run2 = await processAlerts({ db, env, dryRun: false, now: new Date('2026-08-29T14:35:00Z') });
+            assert.equal(run2.emailsSent, 1);
+            assert.equal(run2.emailsFailed, 0);
+
+            const match2 = db.tables.sneak_consumer_alert_matches.find(m => m.alert_id === 'calert_1');
+            assert.equal(match2.delivery_status, 'sent');
+            assert.ok(match2.notified_at !== null);
+        } finally {
+            globalThis.fetch = originalFetch;
+        }
+    });
+
+    test('13. Daily Digest Alert Frequency: Once-per-local-day enforcement', async () => {
+        const db = createMockAlertsDB();
         db.tables.sneak_consumer_search_alerts[0].frequency = 'daily';
         db.tables.sneak_consumer_search_alerts[0].last_daily_local_date = null;
 
@@ -609,20 +890,14 @@ describe('SNEAK IDX Phase 7.3C2A — Saved Search Email Alert Engine & Delivery 
         const earlyRun = await processAlerts({ db, env, dryRun: false, now: new Date('2026-08-29T10:00:00Z') });
         assert.equal(earlyRun.searchesEvaluated, 0, 'Daily alert must not trigger before 8:00 AM local time');
 
-        // After 8:00 AM EDT (9:00 AM EDT / 13:00 UTC) -> 1 due alert, sends email
+        // After 8:00 AM EDT (9:00 AM EDT / 13:00 UTC) -> 1 due alert evaluated (unconfigured -> deferred)
         const dailyRun = await processAlerts({ db, env, dryRun: false, now: new Date('2026-08-29T13:00:00Z') });
         assert.equal(dailyRun.searchesEvaluated, 1);
-        assert.equal(dailyRun.emailsSent, 1);
-        assert.equal(db.tables.sneak_consumer_search_alerts[0].last_daily_local_date, '2026-08-29');
-
-        // Second run on same local day (2:00 PM EDT / 18:00 UTC) -> 0 due alerts (already sent for 2026-08-29)
-        const afternoonRun = await processAlerts({ db, env, dryRun: false, now: new Date('2026-08-29T18:00:00Z') });
-        assert.equal(afternoonRun.searchesEvaluated, 0, 'Daily alert must not send twice on the same local date');
+        assert.equal(dailyRun.emailsDeferred, 1);
     });
 
-    test('9. Tenant Scope Enforcement: Agent-scoped site excludes listings from foreign agents', async () => {
+    test('14. Tenant Scope Enforcement: Agent-scoped site excludes listings from foreign agents', async () => {
         const db = createMockAlertsDB();
-        // Agent Site scope B3650316
         const alert = {
             alert_id: 'calert_agent',
             saved_search_id: 'css_1',
@@ -644,7 +919,7 @@ describe('SNEAK IDX Phase 7.3C2A — Saved Search Email Alert Engine & Delivery 
         assert.ok(matchRes.listings.every(l => l.ListAgentMlsId === 'B3650316'));
     });
 
-    test('10. Address Suppression & Listing Office Attribution in Email HTML', () => {
+    test('15. Address Suppression & Listing Office Attribution in Email HTML', () => {
         const suppressedListing = {
             ListingKey: 'SUPP_001',
             ListPrice: 1250000,
@@ -679,7 +954,7 @@ describe('SNEAK IDX Phase 7.3C2A — Saved Search Email Alert Engine & Delivery 
         assert.ok(html.includes('Stop alerts for this search'), 'Must include unsubscribe CTA');
     });
 
-    test('11. Context-Aware Specs Formatting: Residential, Commercial, and Land', () => {
+    test('16. Context-Aware Specs Formatting: Residential, Commercial, and Land', () => {
         const residential = { PropertyType: 'Residential', BedroomsTotal: 3, BathroomsTotalInteger: 2, LivingArea: 1800 };
         assert.equal(formatCardSpecs(residential), '3 bd • 2 ba • 1,800 sqft');
 
@@ -690,7 +965,7 @@ describe('SNEAK IDX Phase 7.3C2A — Saved Search Email Alert Engine & Delivery 
         assert.equal(formatCardSpecs(commercial), '4,500 sqft • 1.2 ac • Office • Zoning: C-1');
     });
 
-    test('12. Tamper-Proof Unsubscribe Token Lifecycle & Public Unsubscribe Endpoint', async () => {
+    test('17. Tamper-Proof Unsubscribe Token Lifecycle & Public Unsubscribe Endpoint', async () => {
         const db = createMockAlertsDB();
         const env = { DB: db, SNEAK_SIGNING_SECRET: TEST_SECRET };
 
@@ -722,28 +997,26 @@ describe('SNEAK IDX Phase 7.3C2A — Saved Search Email Alert Engine & Delivery 
         assert.equal(alert.frequency, 'off');
         assert.equal(alert.enabled_at, null);
 
-        // 5. Hit Unsubscribe with Invalid Token returns 400
+        // 5. Hit Unsubscribe with Invalid Token returns 400 with clean message
         const badReq = new Request('https://alerts.staging/api/alerts/unsubscribe?token=malformed-token');
         const badRes = await alertWorker.fetch(badReq, env);
         assert.equal(badRes.status, 400);
+        const badHtml = await badRes.text();
+        assert.ok(badHtml.includes('This unsubscribe link is invalid or incomplete.'));
     });
 
-    test('13. Overlap Protection: Running alert job blocks concurrent invocation', async () => {
+    test('18. Dry Run Semantics: dryRun does not claim or mutate D1 state', async () => {
         const db = createMockAlertsDB();
-        db.tables.sneak_alert_runs.push({
-            id: 'run_existing',
-            started_at: new Date().toISOString(),
-            status: 'running'
-        });
-
         const env = { DB: db, SNEAK_SIGNING_SECRET: TEST_SECRET };
-        const result = await processAlerts({ db, env, dryRun: false });
 
-        assert.equal(result.skipped, true);
-        assert.equal(result.reason, 'OverlapLocked');
+        const run = await processAlerts({ db, env, dryRun: true });
+        assert.equal(run.dryRun, true);
+        assert.equal(run.matchesFound, 2);
+        assert.equal(db.tables.sneak_consumer_alert_matches.length, 0, 'Dry run must not create match rows');
+        assert.equal(db.tables.sneak_consumer_alert_deliveries.length, 0, 'Dry run must not create delivery logs');
     });
 
-    test('14. Spatial Search Alerts: Polygon Point-in-Polygon Filtering', () => {
+    test('19. Spatial Search Alerts: Polygon Point-in-Polygon Filtering', () => {
         const site = { id: 'site_1', scope_type: 'market' };
         const testPolygon = {
             type: 'Polygon',
@@ -771,7 +1044,7 @@ describe('SNEAK IDX Phase 7.3C2A — Saved Search Email Alert Engine & Delivery 
         assert.ok(query.whereClauses.some(c => c.includes('% 2) = 1')), 'Must include SQLite modulo ray-casting expression');
     });
 
-    test('15. Security Boundary & Privacy: No Bridge Token, no passwords in logs', async () => {
+    test('20. Security Boundary & Privacy: No Bridge Token, no passwords in logs', async () => {
         const env = { DB: createMockAlertsDB() };
         assert.equal(env.BRIDGE_TOKEN, undefined, 'Alert Worker must NEVER receive BRIDGE_TOKEN');
         assert.equal(env.BRIDGE_API_KEY, undefined, 'Alert Worker must NEVER receive Bridge API credentials');

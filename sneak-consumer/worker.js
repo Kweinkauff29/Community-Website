@@ -30,7 +30,7 @@ import {
     handleUpdateSavedSearchAlert
 } from './api.js';
 
-const CONSUMER_BUILD = '2026.08.28.7.3c2a';
+const CONSUMER_BUILD = '2026.08.30.7.3c2a1';
 
 /**
  * Validates request origin against authorized sites/domains in D1.

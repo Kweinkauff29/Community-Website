@@ -148,6 +148,16 @@ graph TD
   * **Delivery Logging & Bounded Retries:** `sneak_consumer_alert_deliveries` tracks provider message IDs, delivery statuses (`sent`, `failed`, `provider_unconfigured`), and error codes.
   * **Deterministic UI Build:** `2026.08.28.7.3c2a` across alert worker, consumer worker, serving worker, embed loader, and test suites.
 
+#### 7.3C2A.1 Alert Delivery Correctness, Concurrency & Secret Hardening Hotfix (COMPLETED)
+* **Goal:** Enforce fail-closed secret handling, eliminate all hardcoded fallback signing secrets, make alert delivery concurrency-safe via atomic claim-before-send semantics, and fix delivery status accounting so `provider_unconfigured` never marks listings as permanently notified.
+* **Status:** `COMPLETE / DEPLOYED`
+* **Features & Correctness Hardening:**
+  * **HOTFIX 1 — provider_unconfigured Semantics:** When Mailjet credentials are absent or unconfigured in staging/dev, transactional email provider returns `{ success: false, retryable: true, status: 'provider_unconfigured' }`. Worker records delivery row with `status = 'provider_unconfigured'` and `sent_at = NULL`, leaves candidate listings retryable without setting `notified_at` or advancing `last_sent_at`, and tallies `emailsDeferred += 1` (`emailsSent = 0`).
+  * **HOTFIX 2 — Removal of Fallback Signing Secrets:** Completely removed `'sneak-default-token-secret-fallback-key'` from all runtime code. Tokens require `SNEAK_ALERT_UNSUBSCRIBE_SECRET` or `SNEAK_SIGNING_SECRET` (>= 16 chars). Worker fails closed with delivery deferral and returns HTTP 503 on unsubscribe route when secrets are missing.
+  * **HOTFIX 3 — Atomic Claim-Before-Send Idempotency:** Implemented atomic listing claiming in `sneak_consumer_alert_matches` with `claim_id`, `claimed_at`, `claim_expires_at` (10 mins), and `delivery_status = 'claimed'`. Only candidate listings claimed by the current execution run are included in alert delivery. Concurrent executions competing for the same listings produce exactly 1 delivered email with zero duplicate sends.
+  * **D1 Migration 0029:** Added `claim_id`, `claimed_at`, `claim_expires_at`, `delivery_status`, `attempt_count` columns and index `idx_sneak_consumer_alert_matches_claim` to `sneak_consumer_alert_matches`, plus `emails_deferred` to `sneak_alert_runs`.
+  * **Deterministic UI & Worker Build:** `2026.08.30.7.3c2a1` across alert worker, consumer worker, embed loader, search UI, and test suites.
+
 ---
 
 ### Phase 7.3C2B — Agent Client Activity Dashboard (NEXT)

@@ -149,10 +149,15 @@ export async function matchNewListingsForAlert(db, alertRecord) {
     )`);
     bindValues.push(baselineDate, baselineTimestamp, baselineTimestamp);
 
-    // Anti-replay: exclude listings already matched for this alert
+    // Anti-replay: exclude listings already notified, delivered, or actively claimed by an ongoing unexpired run
     whereClauses.push(`ListingKey NOT IN (
         SELECT listing_key FROM sneak_consumer_alert_matches 
         WHERE alert_id = ? AND event_type = 'new_listing'
+          AND (
+              notified_at IS NOT NULL 
+              OR delivery_status = 'sent'
+              OR (delivery_status = 'claimed' AND claim_expires_at > datetime('now'))
+          )
     )`);
     bindValues.push(alertRecord.alert_id);
 
