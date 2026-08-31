@@ -28,6 +28,9 @@ const FAVORITES_LIMIT = 200;
 const COMPARE_LIMIT = 4;
 const RECENTLY_VIEWED_LIMIT = 20;
 const RECENTLY_VIEWED_CANDIDATE_LIMIT = 40;
+const SHARED_LISTS_LIMIT = 10;
+const SHARED_LIST_ITEMS_LIMIT = 25;
+const SHARED_LIST_NAME_LIMIT = 80;
 
 export function jsonResponse(data, status = 200, origin = null) {
     const headers = new Headers();
@@ -1525,6 +1528,361 @@ export async function handleMergeCompare(req, env, origin) {
         merged: mergedCount,
         compare
     }, 200, origin);
+}
+
+/* ===========================================================================
+   Consumer Shared Property Lists (Phase 7.3C3B)
+   ========================================================================== */
+
+export function normalizeSharedListName(name) {
+    if (typeof name !== 'string') return null;
+    const cleanName = name.trim();
+    if (!cleanName || cleanName.length > SHARED_LIST_NAME_LIMIT) return null;
+    return cleanName;
+}
+
+/** Generates a 192-bit unlisted public capability identifier. */
+export function generatePublicSharedListSlug() {
+    const bytes = new Uint8Array(24);
+    crypto.getRandomValues(bytes);
+    return Array.from(bytes, byte => byte.toString(16).padStart(2, '0')).join('');
+}
+
+function toSharedListOwnerSummary(row) {
+    return {
+        id: row.id,
+        name: row.name,
+        shareEnabled: Boolean(row.share_enabled),
+        publicSlug: row.share_enabled ? (row.public_slug || null) : null,
+        itemCount: Number(row.item_count || 0),
+        createdAt: row.created_at,
+        updatedAt: row.updated_at
+    };
+}
+
+async function resolveSharedListOwnerContext(req, siteKey, env) {
+    const rawToken = extractBearerToken(req);
+    const session = await verifyConsumerSession(env.DB, rawToken, siteKey);
+    if (!session || session.error) return { errorResponse: sessionErrorResponse(session, null) };
+    const site = await resolveSiteScope(env.DB, siteKey);
+    if (!site || site.site_id !== session.siteId) {
+        return { errorResponse: jsonResponse({ error: 'SiteNotFound', message: 'Site is inactive or not found.' }, 404) };
+    }
+    return { session, site };
+}
+
+async function getOwnedSharedList(db, listId, session) {
+    return await db.prepare(`
+        SELECT l.id, l.name, l.share_enabled, l.public_slug, l.created_at, l.updated_at,
+               (SELECT COUNT(*) FROM sneak_consumer_shared_list_items i WHERE i.list_id = l.id) AS item_count
+        FROM sneak_consumer_shared_lists l
+        WHERE l.id = ? AND l.user_id = ? AND l.site_id = ?
+    `).bind(listId, session.userId, session.siteId).first();
+}
+
+function sharedListNotFound(origin) {
+    return jsonResponse({ error: 'NotFound', message: 'Property list not found or unavailable.' }, 404, origin);
+}
+
+/** GET /api/consumer/shared-lists?site=... */
+export async function handleListSharedLists(req, url, env, origin) {
+    const siteKey = url.searchParams.get('site');
+    const context = await resolveSharedListOwnerContext(req, siteKey, env);
+    if (context.errorResponse) {
+        const data = await context.errorResponse.json();
+        return jsonResponse(data, context.errorResponse.status, origin);
+    }
+
+    const rows = await env.DB.prepare(`
+        SELECT l.id, l.name, l.share_enabled, l.public_slug, l.created_at, l.updated_at,
+               (SELECT COUNT(*) FROM sneak_consumer_shared_list_items i WHERE i.list_id = l.id) AS item_count
+        FROM sneak_consumer_shared_lists l
+        WHERE l.user_id = ? AND l.site_id = ?
+        ORDER BY l.updated_at DESC, l.id DESC
+        LIMIT ${SHARED_LISTS_LIMIT}
+    `).bind(context.session.userId, context.session.siteId).all();
+
+    const sharedLists = (rows.results || []).map(toSharedListOwnerSummary);
+    return jsonResponse({ success: true, count: sharedLists.length, limit: SHARED_LISTS_LIMIT, sharedLists }, 200, origin);
+}
+
+/** POST /api/consumer/shared-lists */
+export async function handleCreateSharedList(req, env, origin) {
+    let body;
+    try {
+        body = await req.json();
+    } catch {
+        return jsonResponse({ error: 'InvalidJSON', message: 'Request body must be valid JSON.' }, 400, origin);
+    }
+
+    const siteKey = body?.site;
+    const cleanName = normalizeSharedListName(body?.name);
+    if (!cleanName) {
+        return jsonResponse({ error: 'InvalidName', message: `List name must be between 1 and ${SHARED_LIST_NAME_LIMIT} characters.` }, 400, origin);
+    }
+    if (body?.listingKeys !== undefined && !Array.isArray(body.listingKeys)) {
+        return jsonResponse({ error: 'InvalidListingKeys', message: 'listingKeys must be an array.' }, 400, origin);
+    }
+
+    const context = await resolveSharedListOwnerContext(req, siteKey, env);
+    if (context.errorResponse) {
+        const data = await context.errorResponse.json();
+        return jsonResponse(data, context.errorResponse.status, origin);
+    }
+
+    const countRow = await env.DB.prepare(`
+        SELECT COUNT(*) AS count FROM sneak_consumer_shared_lists
+        WHERE user_id = ? AND site_id = ?
+    `).bind(context.session.userId, context.session.siteId).first();
+    if (Number(countRow?.count || 0) >= SHARED_LISTS_LIMIT) {
+        return jsonResponse({ error: 'SharedListLimitExceeded', message: `You can create up to ${SHARED_LISTS_LIMIT} property lists.` }, 400, origin);
+    }
+
+    const listingKeys = [...new Set((body.listingKeys || [])
+        .filter(key => typeof key === 'string' && key.trim())
+        .map(key => key.trim().slice(0, 50)))];
+    if (listingKeys.length > SHARED_LIST_ITEMS_LIMIT) {
+        return jsonResponse({ error: 'SharedListItemLimitExceeded', message: `A property list can contain up to ${SHARED_LIST_ITEMS_LIMIT} properties.` }, 400, origin);
+    }
+    if (listingKeys.length) {
+        const eligible = await fetchCurrentListingSummaries(env.DB, context.site, listingKeys, SHARED_LIST_ITEMS_LIMIT);
+        if (eligible.length !== listingKeys.length) {
+            return jsonResponse({ error: 'ListingNotFound', message: 'One or more properties are unavailable or outside this site scope.' }, 404, origin);
+        }
+    }
+
+    const listId = `clist_${crypto.randomUUID()}`;
+    const now = new Date().toISOString();
+    const statements = [env.DB.prepare(`
+        INSERT INTO sneak_consumer_shared_lists
+        (id, site_id, user_id, name, share_enabled, public_slug, created_at, updated_at)
+        VALUES (?, ?, ?, ?, 0, NULL, ?, ?)
+    `).bind(listId, context.session.siteId, context.session.userId, cleanName, now, now)];
+    listingKeys.forEach((listingKey, index) => {
+        statements.push(env.DB.prepare(`
+            INSERT INTO sneak_consumer_shared_list_items
+            (id, list_id, listing_key, sort_order, created_at)
+            VALUES (?, ?, ?, ?, ?)
+        `).bind(`clitem_${crypto.randomUUID()}`, listId, listingKey, index, now));
+    });
+
+    try {
+        if (typeof env.DB.batch === 'function') await env.DB.batch(statements);
+        else for (const statement of statements) await statement.run();
+    } catch (error) {
+        if (String(error?.message || '').includes('shared_list_limit_exceeded')) {
+            return jsonResponse({ error: 'SharedListLimitExceeded', message: `You can create up to ${SHARED_LISTS_LIMIT} property lists.` }, 400, origin);
+        }
+        throw error;
+    }
+
+    const created = await getOwnedSharedList(env.DB, listId, context.session);
+    return jsonResponse({ success: true, sharedList: toSharedListOwnerSummary(created) }, 201, origin);
+}
+
+/** GET /api/consumer/shared-lists/:id?site=... */
+export async function handleGetSharedList(req, listId, url, env, origin) {
+    const context = await resolveSharedListOwnerContext(req, url.searchParams.get('site'), env);
+    if (context.errorResponse) {
+        const data = await context.errorResponse.json();
+        return jsonResponse(data, context.errorResponse.status, origin);
+    }
+    const list = await getOwnedSharedList(env.DB, listId, context.session);
+    if (!list) return sharedListNotFound(origin);
+
+    const itemRows = await env.DB.prepare(`
+        SELECT id, listing_key, sort_order, created_at
+        FROM sneak_consumer_shared_list_items
+        WHERE list_id = ?
+        ORDER BY sort_order ASC, created_at ASC, id ASC
+        LIMIT ${SHARED_LIST_ITEMS_LIMIT}
+    `).bind(listId).all();
+    const itemReferences = itemRows.results || [];
+    const summaries = await fetchCurrentListingSummaries(
+        env.DB,
+        context.site,
+        itemReferences.map(item => item.listing_key),
+        SHARED_LIST_ITEMS_LIMIT
+    );
+    const summaryByKey = new Map(summaries.map(listing => [listing.ListingKey, listing]));
+    const items = itemReferences.map(item => ({
+        id: item.id,
+        listingKey: item.listing_key,
+        sortOrder: item.sort_order,
+        addedAt: item.created_at,
+        unavailable: !summaryByKey.has(item.listing_key),
+        listing: summaryByKey.get(item.listing_key) || null
+    }));
+
+    return jsonResponse({ success: true, sharedList: { ...toSharedListOwnerSummary(list), items } }, 200, origin);
+}
+
+/** PATCH /api/consumer/shared-lists/:id?site=... */
+export async function handleUpdateSharedList(req, listId, url, env, origin) {
+    let body;
+    try {
+        body = await req.json();
+    } catch {
+        return jsonResponse({ error: 'InvalidJSON', message: 'Request body must be valid JSON.' }, 400, origin);
+    }
+    const cleanName = normalizeSharedListName(body?.name);
+    if (!cleanName) {
+        return jsonResponse({ error: 'InvalidName', message: `List name must be between 1 and ${SHARED_LIST_NAME_LIMIT} characters.` }, 400, origin);
+    }
+    const context = await resolveSharedListOwnerContext(req, url.searchParams.get('site'), env);
+    if (context.errorResponse) {
+        const data = await context.errorResponse.json();
+        return jsonResponse(data, context.errorResponse.status, origin);
+    }
+    const result = await env.DB.prepare(`
+        UPDATE sneak_consumer_shared_lists SET name = ?, updated_at = datetime('now')
+        WHERE id = ? AND user_id = ? AND site_id = ?
+    `).bind(cleanName, listId, context.session.userId, context.session.siteId).run();
+    if (Number(result?.meta?.changes ?? result?.changes ?? 0) === 0) return sharedListNotFound(origin);
+    const updated = await getOwnedSharedList(env.DB, listId, context.session);
+    return jsonResponse({ success: true, sharedList: toSharedListOwnerSummary(updated) }, 200, origin);
+}
+
+/** DELETE /api/consumer/shared-lists/:id?site=... */
+export async function handleDeleteSharedList(req, listId, url, env, origin) {
+    const context = await resolveSharedListOwnerContext(req, url.searchParams.get('site'), env);
+    if (context.errorResponse) {
+        const data = await context.errorResponse.json();
+        return jsonResponse(data, context.errorResponse.status, origin);
+    }
+    const result = await env.DB.prepare(`
+        DELETE FROM sneak_consumer_shared_lists
+        WHERE id = ? AND user_id = ? AND site_id = ?
+    `).bind(listId, context.session.userId, context.session.siteId).run();
+    if (Number(result?.meta?.changes ?? result?.changes ?? 0) === 0) return sharedListNotFound(origin);
+    return jsonResponse({ success: true, id: listId }, 200, origin);
+}
+
+/** POST /api/consumer/shared-lists/:id/items */
+export async function handleAddSharedListItem(req, listId, env, origin) {
+    let body;
+    try {
+        body = await req.json();
+    } catch {
+        return jsonResponse({ error: 'InvalidJSON', message: 'Request body must be valid JSON.' }, 400, origin);
+    }
+    const siteKey = body?.site;
+    const cleanKey = typeof body?.listingKey === 'string' ? body.listingKey.trim().slice(0, 50) : '';
+    if (!cleanKey) return jsonResponse({ error: 'MissingListingKey', message: 'listingKey is required.' }, 400, origin);
+
+    const context = await resolveSharedListOwnerContext(req, siteKey, env);
+    if (context.errorResponse) {
+        const data = await context.errorResponse.json();
+        return jsonResponse(data, context.errorResponse.status, origin);
+    }
+    const list = await getOwnedSharedList(env.DB, listId, context.session);
+    if (!list) return sharedListNotFound(origin);
+
+    const eligible = await fetchCurrentListingSummaries(env.DB, context.site, [cleanKey], 1);
+    if (!eligible.length) {
+        return jsonResponse({ error: 'ListingNotFound', message: 'Property is unavailable or outside this site scope.' }, 404, origin);
+    }
+
+    const existing = await env.DB.prepare(`
+        SELECT id FROM sneak_consumer_shared_list_items WHERE list_id = ? AND listing_key = ?
+    `).bind(listId, cleanKey).first();
+    if (existing) {
+        return jsonResponse({ success: true, idempotent: true, listingKey: cleanKey, count: Number(list.item_count || 0) }, 200, origin);
+    }
+    if (Number(list.item_count || 0) >= SHARED_LIST_ITEMS_LIMIT) {
+        return jsonResponse({ error: 'SharedListItemLimitExceeded', message: `A property list can contain up to ${SHARED_LIST_ITEMS_LIMIT} properties.` }, 400, origin);
+    }
+
+    const orderRow = await env.DB.prepare(`
+        SELECT COALESCE(MAX(sort_order), -1) + 1 AS next_order
+        FROM sneak_consumer_shared_list_items WHERE list_id = ?
+    `).bind(listId).first();
+    try {
+        await env.DB.prepare(`
+            INSERT OR IGNORE INTO sneak_consumer_shared_list_items
+            (id, list_id, listing_key, sort_order, created_at)
+            VALUES (?, ?, ?, ?, datetime('now'))
+        `).bind(`clitem_${crypto.randomUUID()}`, listId, cleanKey, Number(orderRow?.next_order || 0)).run();
+    } catch (error) {
+        if (String(error?.message || '').includes('shared_list_item_limit_exceeded')) {
+            return jsonResponse({ error: 'SharedListItemLimitExceeded', message: `A property list can contain up to ${SHARED_LIST_ITEMS_LIMIT} properties.` }, 400, origin);
+        }
+        throw error;
+    }
+    return jsonResponse({ success: true, idempotent: false, listingKey: cleanKey, count: Number(list.item_count || 0) + 1 }, 200, origin);
+}
+
+/** DELETE /api/consumer/shared-lists/:id/items/:listingKey?site=... */
+export async function handleRemoveSharedListItem(req, listId, listingKey, url, env, origin) {
+    const context = await resolveSharedListOwnerContext(req, url.searchParams.get('site'), env);
+    if (context.errorResponse) {
+        const data = await context.errorResponse.json();
+        return jsonResponse(data, context.errorResponse.status, origin);
+    }
+    const list = await getOwnedSharedList(env.DB, listId, context.session);
+    if (!list) return sharedListNotFound(origin);
+    const cleanKey = String(listingKey || '').trim().slice(0, 50);
+    await env.DB.prepare(`
+        DELETE FROM sneak_consumer_shared_list_items WHERE list_id = ? AND listing_key = ?
+    `).bind(listId, cleanKey).run();
+    return jsonResponse({ success: true, listingKey: cleanKey }, 200, origin);
+}
+
+/** POST /api/consumer/shared-lists/:id/share */
+export async function handleEnableSharedListShare(req, listId, env, origin) {
+    let body;
+    try {
+        body = await req.json();
+    } catch {
+        return jsonResponse({ error: 'InvalidJSON', message: 'Request body must be valid JSON.' }, 400, origin);
+    }
+    const context = await resolveSharedListOwnerContext(req, body?.site, env);
+    if (context.errorResponse) {
+        const data = await context.errorResponse.json();
+        return jsonResponse(data, context.errorResponse.status, origin);
+    }
+    const list = await getOwnedSharedList(env.DB, listId, context.session);
+    if (!list) return sharedListNotFound(origin);
+    if (list.share_enabled && list.public_slug) {
+        return jsonResponse({ success: true, sharedList: toSharedListOwnerSummary(list) }, 200, origin);
+    }
+
+    let enabled = null;
+    for (let attempt = 0; attempt < 3 && !enabled; attempt++) {
+        const slug = generatePublicSharedListSlug();
+        try {
+            const result = await env.DB.prepare(`
+                UPDATE sneak_consumer_shared_lists
+                SET share_enabled = 1, public_slug = ?, updated_at = datetime('now')
+                WHERE id = ? AND user_id = ? AND site_id = ? AND share_enabled = 0
+            `).bind(slug, listId, context.session.userId, context.session.siteId).run();
+            if (Number(result?.meta?.changes ?? result?.changes ?? 0) > 0) enabled = slug;
+        } catch (error) {
+            if (!String(error?.message || '').toLowerCase().includes('unique')) throw error;
+        }
+    }
+    const updated = await getOwnedSharedList(env.DB, listId, context.session);
+    if (!updated?.share_enabled || !updated?.public_slug) {
+        return jsonResponse({ error: 'ShareEnableFailed', message: 'Unable to enable sharing. Please try again.' }, 500, origin);
+    }
+    return jsonResponse({ success: true, sharedList: toSharedListOwnerSummary(updated) }, 200, origin);
+}
+
+/** DELETE /api/consumer/shared-lists/:id/share?site=... */
+export async function handleDisableSharedListShare(req, listId, url, env, origin) {
+    const context = await resolveSharedListOwnerContext(req, url.searchParams.get('site'), env);
+    if (context.errorResponse) {
+        const data = await context.errorResponse.json();
+        return jsonResponse(data, context.errorResponse.status, origin);
+    }
+    const result = await env.DB.prepare(`
+        UPDATE sneak_consumer_shared_lists
+        SET share_enabled = 0, public_slug = NULL, updated_at = datetime('now')
+        WHERE id = ? AND user_id = ? AND site_id = ?
+    `).bind(listId, context.session.userId, context.session.siteId).run();
+    if (Number(result?.meta?.changes ?? result?.changes ?? 0) === 0) return sharedListNotFound(origin);
+    const updated = await getOwnedSharedList(env.DB, listId, context.session);
+    return jsonResponse({ success: true, sharedList: toSharedListOwnerSummary(updated) }, 200, origin);
 }
 
 /**

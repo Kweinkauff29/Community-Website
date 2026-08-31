@@ -18,7 +18,7 @@ import {
     buildCommonListingFilters
 } from './sneak-shared/idx-query.js';
 
-export const SNEAK_IDX_BUILD = '2026.08.31.7.3c3a1';
+export const SNEAK_IDX_BUILD = '2026.08.31.7.3c3b';
 
 export default {
     async fetch(req, env, ctx) {
@@ -92,7 +92,7 @@ export default {
         try {
             // --- ROUTE: GET /idx/v1/config ---
             if (url.pathname === '/idx/v1/config' && req.method === 'GET') {
-                return await handleGetConfig(site, branding, env, allowedOrigin);
+                return await handleGetConfig(url, site, branding, env, allowedOrigin);
             }
 
             // --- ROUTE: GET /idx/v1/search ---
@@ -108,6 +108,12 @@ export default {
             // --- ROUTE: GET /idx/v1/listings/summary?keys=key1,key2 ---
             if (url.pathname === '/idx/v1/listings/summary' && req.method === 'GET') {
                 return await handleListingSummaries(url, site, env, allowedOrigin);
+            }
+
+            // --- ROUTE: GET /idx/v1/shared-list/:publicSlug ---
+            const sharedListMatch = url.pathname.match(/^\/idx\/v1\/shared-list\/([^/]+)$/);
+            if (sharedListMatch && req.method === 'GET') {
+                return await handlePublicSharedList(decodeURIComponent(sharedListMatch[1]), site, env, allowedOrigin);
             }
 
             // --- ROUTE: GET /idx/v1/listing/:listingKey/media ---
@@ -294,6 +300,73 @@ function isAccountEntitled(accountStatus, entitlementStatus, graceUntil, now = n
     return false; // suspended, canceled
 }
 
+const SENSITIVE_SHARE_QUERY_PARAMS = new Set([
+    'auth_code',
+    'session',
+    'consumer_session',
+    'consumersession',
+    'member_session',
+    'token',
+    'access_token',
+    'bearer',
+    'authorization',
+    'bootstrap',
+    'bootstrap_token',
+    'magic_token',
+    'magic_link_token',
+    'csess',
+    'ccor_listing',
+    'ccor_list'
+]);
+
+/**
+ * Validates a frontend-supplied host-page candidate against active verified
+ * tenant domains, then removes every authentication and stale deep-link value.
+ * The candidate is never trusted solely because it came from embed.js.
+ */
+export async function sanitizeMemberShareBaseUrl(db, siteId, candidate, isDev = false) {
+    if (!db || !siteId || typeof candidate !== 'string' || !candidate || candidate.length > 2048) return null;
+    let parsed;
+    try {
+        parsed = new URL(candidate);
+    } catch {
+        return null;
+    }
+    if (parsed.username || parsed.password) return null;
+
+    const hostname = parsed.hostname.toLowerCase();
+    const isLocal = hostname === 'localhost' || hostname === '127.0.0.1' || hostname === '::1';
+    if (isLocal) {
+        if (!isDev || (parsed.protocol !== 'http:' && parsed.protocol !== 'https:')) return null;
+    } else if (parsed.protocol !== 'https:') {
+        return null;
+    }
+
+    if (!isLocal) {
+        const domains = await db.prepare(`
+            SELECT domain FROM sneak_domains
+            WHERE site_id = ? AND status = 'active' AND verified = 1
+        `).bind(siteId).all();
+        const authorized = (domains.results || []).some(row => {
+            const domain = String(row.domain || '').toLowerCase().trim();
+            if (!domain || domain === '*') return false;
+            if (domain === hostname) return true;
+            if (domain.startsWith('*.')) {
+                const root = domain.slice(2);
+                return hostname === root || hostname.endsWith('.' + root);
+            }
+            return false;
+        });
+        if (!authorized) return null;
+    }
+
+    for (const key of [...parsed.searchParams.keys()]) {
+        if (SENSITIVE_SHARE_QUERY_PARAMS.has(key.toLowerCase())) parsed.searchParams.delete(key);
+    }
+    parsed.hash = '';
+    return parsed.toString();
+}
+
 /**
  * GET /idx/v1/bootstrap?site=SITE_KEY
  * Called directly by embed.js on the embedding member webpage.
@@ -422,12 +495,20 @@ async function handleBootstrap(req, url, env) {
 
     const sessionToken = await signSessionToken(tokenPayload, secret);
 
+    const hostPageUrl = await sanitizeMemberShareBaseUrl(
+        env.DB,
+        siteRecord.site_id,
+        url.searchParams.get('hostPageUrl') || '',
+        isDev
+    );
+
     return jsonResponse({
         success: true,
         session: sessionToken,
         expiresIn: 1200,
         siteKey: siteRecord.site_key,
-        searchUrl: `/search/?site=${encodeURIComponent(siteRecord.site_key)}`
+        searchUrl: `/search/?site=${encodeURIComponent(siteRecord.site_key)}`,
+        hostPageUrl
     }, 200, effectiveOrigin);
 }
 
@@ -683,7 +764,7 @@ async function handleStaticWithCSP(req, siteKey, env) {
 /**
  * GET /idx/v1/config?site=abc123
  */
-async function handleGetConfig(site, branding, env, allowedOrigin) {
+async function handleGetConfig(url, site, branding, env, allowedOrigin) {
     const rawWidgets = await env.DB.prepare(`
         SELECT widget_type, config_json, enabled 
         FROM sneak_widget_configs 
@@ -707,6 +788,13 @@ async function handleGetConfig(site, branding, env, allowedOrigin) {
         try { customBranding = JSON.parse(branding.branding_config); } catch {}
     }
 
+    const shareBaseUrl = await sanitizeMemberShareBaseUrl(
+        env.DB,
+        site.site_id,
+        url.searchParams.get('hostPageUrl') || '',
+        (env.SNEAK_ENV || 'staging').toLowerCase() === 'development'
+    );
+
     const configPayload = {
         siteKey: site.site_key,
         siteName: site.site_name,
@@ -719,6 +807,7 @@ async function handleGetConfig(site, branding, env, allowedOrigin) {
         phone: branding.phone || '',
         email: branding.email || '',
         websiteUrl: branding.website_url || '',
+        shareBaseUrl,
         displayScope: site.scope_type || 'market',
         participantAgentMlsId: site.default_agent_mls_id || site.scope_value || null,
         featuredListingsScope: 'agent',
@@ -935,6 +1024,80 @@ export async function handleListingSummaries(url, site, env, allowedOrigin) {
 
     const data = listingKeys.map(key => eligibleByKey.get(key)).filter(Boolean);
     return jsonResponse({ data, count: data.length, limit: 20 }, 200, allowedOrigin, 'private, max-age=0, no-store');
+}
+
+function publicSharedListUnavailable(allowedOrigin) {
+    return jsonResponse({
+        error: 'SharedListUnavailable',
+        message: 'This shared list is no longer available.'
+    }, 404, allowedOrigin, 'private, max-age=0, no-store');
+}
+
+/**
+ * GET /idx/v1/shared-list/:slug?site=...
+ * Anonymous-capable, signed-bootstrap public read. The slug is an unlisted,
+ * revocable capability identifier; tenant scope remains authoritative.
+ */
+export async function handlePublicSharedList(publicSlug, site, env, allowedOrigin) {
+    const slug = String(publicSlug || '').trim();
+    if (!/^[a-f0-9]{48}$/i.test(slug)) return publicSharedListUnavailable(allowedOrigin);
+
+    const list = await env.DB.prepare(`
+        SELECT id, name
+        FROM sneak_consumer_shared_lists
+        WHERE public_slug = ? AND site_id = ? AND share_enabled = 1
+        LIMIT 1
+    `).bind(slug, site.site_id).first();
+    if (!list) return publicSharedListUnavailable(allowedOrigin);
+
+    const itemRows = await env.DB.prepare(`
+        SELECT listing_key, sort_order
+        FROM sneak_consumer_shared_list_items
+        WHERE list_id = ?
+        ORDER BY sort_order ASC, created_at ASC, id ASC
+        LIMIT 25
+    `).bind(list.id).all();
+    const items = itemRows.results || [];
+    const listingKeys = items.map(item => item.listing_key).filter(Boolean);
+    const scope = buildTenantListingScope(site);
+    if (!scope.valid) return publicSharedListUnavailable(allowedOrigin);
+
+    const eligibleByKey = new Map();
+    if (listingKeys.length) {
+        const placeholders = listingKeys.map(() => '?').join(',');
+        const rows = await env.DB.prepare(`
+            SELECT
+                ListingKey, ListingId, ListPrice, OriginalListPrice, StandardStatus,
+                PropertyType, PropertySubType, BedroomsTotal, BathroomsTotalInteger,
+                LivingArea, LotSizeAcres, YearBuilt, City, StateOrProvince, PostalCode,
+                CountyOrParish, UnparsedAddress, PrimaryPhoto, ListOfficeName,
+                SubdivisionName, WaterfrontYN, PoolPrivateYN, GarageSpaces,
+                NewConstructionYN, Zoning, ListingContractDate,
+                InternetEntireListingDisplayYN, InternetAddressDisplayYN
+            FROM sneak_listings
+            WHERE ListingKey IN (${placeholders})
+              AND InternetEntireListingDisplayYN = 1
+              AND StandardStatus IN ('Active', 'Active Under Contract', 'Pending')
+              AND ${scope.clause}
+        `).bind(...listingKeys, ...scope.binds).all();
+        for (const row of rows.results || []) {
+            if (!isListingIdxEligible(row)) continue;
+            const current = applyListingDisplayControls(row);
+            eligibleByKey.set(current.ListingKey, current);
+        }
+    }
+
+    const properties = listingKeys.map(key => eligibleByKey.get(key)).filter(Boolean);
+    return jsonResponse({
+        name: list.name,
+        site: {
+            displayName: site.display_name || site.site_name || 'Real Estate Search',
+            brokerage: site.brokerage || '',
+            logoUrl: site.logo_url || ''
+        },
+        count: properties.length,
+        properties
+    }, 200, allowedOrigin, 'private, max-age=0, no-store');
 }
 
 /**

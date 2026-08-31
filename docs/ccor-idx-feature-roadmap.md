@@ -212,9 +212,20 @@ graph TD
   * **Browser Acceptance:** Actual Chromium QA passed at 1440x900, 1024x768, and 390x844, plus independent authenticated browser contexts for server-persisted Compare and Recently Viewed and anonymous network/storage privacy inspection.
   * **Deterministic Corrective Build:** `2026.08.31.7.3c3a1` across affected consumer, member, and serving workers, embed loader, search UI, verification, and tests. Alert runtime remains unchanged.
 
-### Phase 7.3C3B — Sharing & Public Lists (PLANNED)
-* **Goal:** Add explicitly user-controlled sharing and public-list capabilities after C3A sign-off.
-* **Status:** `PLANNED / NOT STARTED`
+### Phase 7.3C3B — Safe Property Sharing + Consumer Shareable Property Lists (COMPLETE)
+* **Goal:** Add explicit consumer-controlled sharing without weakening privacy, tenant isolation, or IDX display rules.
+* **Status:** `COMPLETE / DEPLOYED / AUTOMATED, LIVE API, AND INDEPENDENT-RECIPIENT BROWSER QA PASS`
+* **Features Included:**
+  * **Individual Property Sharing:** Listing detail and public-list cards use the native Web Share API when supported. Desktop/browser fallback first attempts the Clipboard API and then exposes a selectable manual-copy field. Payloads contain a human-readable address/price title, short description, and member-domain `ccor_listing` URL.
+  * **Safe Member URLs:** `embed.js` forwards an untrusted host-page candidate for Serving Worker validation. Only active verified tenant domains are accepted, HTTPS is mandatory outside development, fragments are removed, and auth/session/bootstrap/magic/bearer tokens plus stale `ccor_listing` and `ccor_list` values are stripped before one intended deep-link value is appended. Normal sharing never exposes a `workers.dev` iframe URL.
+  * **Private Shared Lists:** Migration `0033_sneak_consumer_shared_lists.sql` stores list and listing-reference rows only, with cascading site/user/list foreign keys, unique items, indexes, and database-backed concurrency guards. Limits are 10 lists per consumer/site, 25 properties per list, and 80 characters per list name.
+  * **Owner Management:** Authenticated Consumer Worker APIs support create, list, rename, delete, add/remove item, enable sharing, and disable sharing. Adding is idempotent and validates current listing existence, tenant scope, Internet display permission, and available status. Lists are private by default.
+  * **Unlisted Capability Model:** Enabling sharing creates a 48-hex-character slug from 192 bits of Web Crypto randomness. The capability is tenant-bound and discloses no consumer identity. Disabling sharing immediately sets the slug to `NULL`; re-enabling creates a new slug, so previously distributed links remain revoked.
+  * **Current-State Public Read:** `GET /idx/v1/shared-list/:slug` runs through the signed Serving Worker bootstrap, resolves only current D1 MLS rows, enforces tenant/status/display/address controls, and returns current price, status, contextual summary fields, and listing-office attribution. Missing, malformed, wrong-site, disabled, and deleted capabilities share the same generic unavailable response. No Bridge call occurs in the serving path.
+  * **Consumer UI Integration:** Shared Lists appears after Saved Homes, Saved Searches, and Recently Viewed in the buyer account. Add to List is available from detail, Saved Homes, and Recently Viewed; Compare can be saved as a private list. Public lists use the existing card/detail design across Residential, Rental, Land, and Commercial and remain closeable within the REALTOR® member site.
+  * **Privacy:** Anonymous recipients need no consumer account. Public reads create no consumer event, client record, fingerprint, share analytics, or third-party tracking. Public payloads contain no consumer email/ID/session, saved state, activity, or other lists. Views are marked `noindex, nofollow`, and no shared-list events were added to the REALTOR® activity timeline.
+  * **Acceptance:** Migration 0033 is applied remotely; Serving and Consumer Workers are deployed. Automated regression passes 188/188 across 11 suites, live verification passes 12/12, and actual Chromium acceptance passes 14/14 across 1440×900, 1024×768, and 390×844. Browser A created and shared the list; an independent anonymous Browser B opened current properties without login or Consumer POSTs; Browser A revoked it; Browser B refreshed the old URL and received the generic unavailable view.
+  * **Deterministic Build:** `2026.08.31.7.3c3b` for affected Serving Worker, Consumer Worker, embed loader, and search UI. Member and Alert runtimes remain intentionally unchanged.
 
 ---
 

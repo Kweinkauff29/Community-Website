@@ -100,8 +100,33 @@
         mountContainer(errContainer);
     }
 
-    // Bootstrap authorization from member host
-    const bootstrapUrl = `${baseUrl}/idx/v1/bootstrap?site=${encodeURIComponent(siteKey)}`;
+    // Bootstrap authorization from the member host. The current page is
+    // supplied as an untrusted candidate and revalidated by the Serving Worker
+    // before it can ever become a share-link base.
+    function scrubHostPageCandidate(rawUrl) {
+        try {
+            const parsed = new URL(rawUrl);
+            const sensitive = new Set([
+                'auth_code', 'session', 'consumer_session', 'consumersession',
+                'member_session', 'token', 'access_token', 'bearer',
+                'authorization', 'bootstrap', 'bootstrap_token', 'magic_token',
+                'magic_link_token', 'csess', 'ccor_listing', 'ccor_list'
+            ]);
+            Array.from(parsed.searchParams.keys()).forEach(function (key) {
+                if (sensitive.has(key.toLowerCase())) parsed.searchParams.delete(key);
+            });
+            parsed.hash = '';
+            return parsed.toString();
+        } catch {
+            return '';
+        }
+    }
+
+    const safeHostCandidate = scrubHostPageCandidate(window.location.href);
+    let bootstrapUrl = `${baseUrl}/idx/v1/bootstrap?site=${encodeURIComponent(siteKey)}`;
+    if (safeHostCandidate) {
+        bootstrapUrl += `&hostPageUrl=${encodeURIComponent(safeHostCandidate)}`;
+    }
 
     fetch(bootstrapUrl, {
         method: 'GET',
@@ -133,6 +158,7 @@
         // Check for parent page auth exchange code (Phase 7.3C1A)
         let parentAuthCode = null;
         let deepListingKey = null;
+        let deepListSlug = null;
         try {
             const currentUrl = new URL(window.location.href);
             if (currentUrl.searchParams.has('auth_code')) {
@@ -143,17 +169,26 @@
             if (currentUrl.searchParams.has('ccor_listing')) {
                 deepListingKey = currentUrl.searchParams.get('ccor_listing');
             }
+            if (currentUrl.searchParams.has('ccor_list')) {
+                deepListSlug = currentUrl.searchParams.get('ccor_list');
+            }
         } catch {}
 
         // Construct iframe URL with signed session token and deterministic build version
         const separator = widgetPath.includes('?') ? '&' : '?';
-        const buildVersion = '2026.08.31.7.3c3a1';
+        const buildVersion = '2026.08.31.7.3c3b';
         let iframeUrl = `${baseUrl}${widgetPath}${separator}site=${encodeURIComponent(siteKey)}&session=${encodeURIComponent(data.session)}&embed=true&v=${encodeURIComponent(buildVersion)}`;
+        if (data.hostPageUrl) {
+            iframeUrl += `&host_page=${encodeURIComponent(data.hostPageUrl)}`;
+        }
         if (parentAuthCode) {
             iframeUrl += `&auth_code=${encodeURIComponent(parentAuthCode)}`;
         }
         if (deepListingKey) {
             iframeUrl += `&ccor_listing=${encodeURIComponent(deepListingKey)}`;
+        }
+        if (deepListSlug) {
+            iframeUrl += `&ccor_list=${encodeURIComponent(deepListSlug)}`;
         }
         if (customParams) {
             iframeUrl += `&${customParams}`;

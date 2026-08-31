@@ -82,6 +82,7 @@ Every participant must complete all verification gates before being marked **Lau
   * Phase 7.3C2A.1 Alert Delivery Correctness, Concurrency & Secret Hardening Hotfix: 2026-08-30 23:00 UTC (100% PASS)
   * Phase 7.3C2B Agent Client Activity Dashboard & Buyer Timeline: 2026-08-31 (COMPLETE; authenticated desktop/tablet/mobile browser QA pass)
   * Phase 7.3C3A.1 Recently Viewed Retention, Migration Safety & Browser Sign-Off: 2026-08-31 (COMPLETE; deployed and all acceptance gates pass)
+  * Phase 7.3C3B Safe Property Sharing + Consumer Shareable Property Lists: 2026-08-31 (COMPLETE; deployed, independent anonymous recipient and revocation browser QA pass)
 * **Phase 7.3C2B Agent Client Activity Dashboard & Authenticated Buyer Timeline:**
   * *Privacy-Preserving Activity Ledger:* D1 table `sneak_consumer_activity_events` (migration 0030) records authenticated buyer events (`listing_view`, `favorite_*`, `saved_search_*`, `alert_*`, `inquiry_submitted`). Zero anonymous tracking, zero fingerprinting, zero geolocation tracking.
   * *Consumer Ingestion Protection:* `POST /api/consumer/activity` enforces authentication, strict browser allowlist (`listing_view`, `inquiry_submitted`), 30-minute deduplication on listing views, lead email match verification, and 120 events/hr rate limiting.
@@ -109,12 +110,25 @@ Every participant must complete all verification gates before being marked **Lau
   * *Anonymous Privacy Browser QA:* PASS — no anonymous consumer request or activity POST, site-scoped recent keys/timestamps only, compare listing keys/order only, no full listing records, and no history upload after login.
   * *Required C3A Browser QA:* **PASS** — actual Chromium QA at 1440×900, 1024×768, and 390×844 covered card/detail Compare, two/three/four columns, fifth rejection, tray/remove/clear, all four property contexts, Recently Viewed 20-item cleanup, listing detail, favorites, Saved Search prompt, map, responsive readability, and unobstructed controls. The mobile flex-basis issue found during QA was fixed and rerun without app/host overflow or page errors.
   * *Build:* `2026.08.31.7.3c3a1`.
+* **Phase 7.3C3B Safe Property Sharing + Consumer Shareable Property Lists:**
+  * *Property Share:* Listing detail and public-list cards support native Web Share with a member-domain `ccor_listing` URL. The fallback uses Clipboard API when permitted and a selectable manual-copy field when iframe permissions block clipboard writes.
+  * *URL Safety:* The Serving Worker validates the host page against active verified tenant domains, requires HTTPS outside development, removes fragments, auth/session/bootstrap/magic/bearer values, and stale deep links, then returns the only base URL the iframe may use for sharing.
+  * *Private Lists & Limits:* Remote migration `0033_sneak_consumer_shared_lists.sql` is applied. D1 stores listing references only and enforces 10 lists per consumer/site, 25 items per list, 80-character names, uniqueness, and cascading deletion. Lists remain private until the owner explicitly enables sharing.
+  * *Capability & Revocation:* Public slugs contain 192 bits of cryptographic randomness, are unlisted and tenant-bound, and expose no owner identity. Disabling sharing immediately revokes and clears the old slug; re-enabling rotates to a new slug.
+  * *Current MLS & Privacy:* Public reads use only current `sneak_listings` state with site scope, available status, Internet display and address suppression, plus current listing-office attribution. Anonymous reads create no Consumer account, activity event, fingerprint, share analytics, or third-party tracking and are marked `noindex, nofollow`.
+  * *Consumer Integrations:* Buyer account Shared Lists supports create, rename, view, remove, delete, enable, copy, and disable. Add to List works from detail, Saved Homes, and Recently Viewed; Compare saves to a private list.
+  * *Automated Regression:* PASS — 188/188 tests across 11 suites.
+  * *Live Endpoint Verification:* PASS — 12/12 covering affected builds, Consumer owner-route protection, C3A protections, signed pilot bootstrap, host URL sanitization, current listing summaries, generic public capability failure, assets/embed, Member health, Alert state, and pilot availability.
+  * *Required Browser QA:* PASS — actual Chromium at 1440×900, 1024×768, and 390×844 covered property sharing, manual-copy fallback, owner management, Saved Homes/Recently Viewed/Compare integration, contextual public list, listing detail, responsive controls, and zero IDX modal clipping/overflow. A modal stack-order defect found during live QA was fixed, regression-tested, redeployed, and rerun.
+  * *Independent Recipient & Revocation:* PASS — authenticated Browser A enabled sharing; independent anonymous Browser B loaded current properties without login, identity disclosure, or any Consumer Worker POST; after Browser A disabled sharing, Browser B refreshed the original URL and received the generic unavailable state.
+  * *Alert Delivery State:* Mailjet configured: NO; signing secret configured: NO; delivery ready: NO; real email delivery: NOT VERIFIED / NOT ATTEMPTED. C3B has no email-service dependency and did not modify alert secrets.
+  * *Build:* `2026.08.31.7.3c3b` for affected Serving/Consumer/embed/search surfaces.
 * **Observability & Timing:**
   * Staff Setup Time: ~9 minutes
   * Member Implementation Time: ~2 minutes (HTML snippet paste in WordPress)
-  * Staff Interventions Required: 14 (Identity reconciliation, Phase 7.1 model correction, Phase 7.2 product corrections, Phase 7.3A search parity, Phase 7.3B1 interactive map synchronization, Phase 7.3B2A radius search, Phase 7.3B2B polygon search, Phase 7.3C1A buyer auth, Phase 7.3C1B saved searches, Phase 7.3C1B.1 embed layout hotfix, Phase 7.3C2A email alert engine, Phase 7.3C2A.1 delivery hardening, Phase 7.3C2B client activity dashboard, Phase 7.3C3A.1 corrective sign-off)
+  * Staff Interventions Required: 15 (Identity reconciliation, Phase 7.1 model correction, Phase 7.2 product corrections, Phase 7.3A search parity, Phase 7.3B1 interactive map synchronization, Phase 7.3B2A radius search, Phase 7.3B2B polygon search, Phase 7.3C1A buyer auth, Phase 7.3C1B saved searches, Phase 7.3C1B.1 embed layout hotfix, Phase 7.3C2A email alert engine, Phase 7.3C2A.1 delivery hardening, Phase 7.3C2B client activity dashboard, Phase 7.3C3A.1 corrective sign-off, Phase 7.3C3B safe sharing/public lists)
   * Support Questions Logged: 0
-* **Final Status:** **ACTIVE PILOT (Phase 7.3C2B and 7.3C3A.1 complete; automated, live API, and mandatory browser QA pass)**
+* **Final Status:** **ACTIVE PILOT (Phase 7.3C2B, 7.3C3A.1, and 7.3C3B complete; automated, live API, independent-recipient revocation, and mandatory browser QA pass)**
 
 ---
 

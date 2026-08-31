@@ -33,10 +33,19 @@ import {
     handleListCompare,
     handleAddCompare,
     handleRemoveCompare,
-    handleMergeCompare
+    handleMergeCompare,
+    handleListSharedLists,
+    handleCreateSharedList,
+    handleGetSharedList,
+    handleUpdateSharedList,
+    handleDeleteSharedList,
+    handleAddSharedListItem,
+    handleRemoveSharedListItem,
+    handleEnableSharedListShare,
+    handleDisableSharedListShare
 } from './api.js';
 
-const CONSUMER_BUILD = '2026.08.31.7.3c3a1';
+const CONSUMER_BUILD = '2026.08.31.7.3c3b';
 
 /**
  * Validates request origin against authorized sites/domains in D1.
@@ -207,6 +216,44 @@ export default {
             if (url.pathname.startsWith('/api/consumer/compare/') && method === 'DELETE') {
                 const listingKey = decodeURIComponent(url.pathname.slice('/api/consumer/compare/'.length));
                 return await handleRemoveCompare(req, listingKey, url, env, allowedOrigin);
+            }
+
+            // Private-by-default Shared Property Lists (Phase 7.3C3B)
+            if (url.pathname === '/api/consumer/shared-lists' && method === 'GET') {
+                return await handleListSharedLists(req, url, env, allowedOrigin);
+            }
+
+            if (url.pathname === '/api/consumer/shared-lists' && method === 'POST') {
+                return await handleCreateSharedList(req, env, allowedOrigin);
+            }
+
+            const sharedListMatch = url.pathname.match(/^\/api\/consumer\/shared-lists\/([^/]+)(?:\/(items|share)(?:\/([^/]+))?)?$/);
+            if (sharedListMatch) {
+                const listId = decodeURIComponent(sharedListMatch[1]);
+                const subresource = sharedListMatch[2] || '';
+                const itemKey = sharedListMatch[3] ? decodeURIComponent(sharedListMatch[3]) : '';
+
+                if (!subresource && method === 'GET') {
+                    return await handleGetSharedList(req, listId, url, env, allowedOrigin);
+                }
+                if (!subresource && method === 'PATCH') {
+                    return await handleUpdateSharedList(req, listId, url, env, allowedOrigin);
+                }
+                if (!subresource && method === 'DELETE') {
+                    return await handleDeleteSharedList(req, listId, url, env, allowedOrigin);
+                }
+                if (subresource === 'items' && !itemKey && method === 'POST') {
+                    return await handleAddSharedListItem(req, listId, env, allowedOrigin);
+                }
+                if (subresource === 'items' && itemKey && method === 'DELETE') {
+                    return await handleRemoveSharedListItem(req, listId, itemKey, url, env, allowedOrigin);
+                }
+                if (subresource === 'share' && method === 'POST') {
+                    return await handleEnableSharedListShare(req, listId, env, allowedOrigin);
+                }
+                if (subresource === 'share' && method === 'DELETE') {
+                    return await handleDisableSharedListShare(req, listId, url, env, allowedOrigin);
+                }
             }
 
             return jsonResponse({ error: 'NotFound', message: `Route ${method} ${url.pathname} not found.` }, 404, allowedOrigin);

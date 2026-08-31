@@ -2014,7 +2014,7 @@
       top: 0; left: 0; right: 0; bottom: 0;
       background: rgba(11, 19, 41, 0.7);
       backdrop-filter: blur(4px);
-      z-index: 2000;
+      z-index: 12000;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -2501,6 +2501,116 @@
     .compare-property-kind { display: inline-block; margin-top: 5px; padding: 2px 6px; border-radius: 999px; background: #e0f2fe; color: #075985; font-size: 0.66rem; font-weight: 800; }
     .compare-cell-empty { color: #94a3b8; }
 
+    /* Safe Property Sharing + Shared Lists (Phase 7.3C3B) */
+    .detail-consumer-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin: 2px 0 16px;
+    }
+    .detail-consumer-actions .detail-compare-btn { margin: 0; }
+    .detail-list-btn, .detail-share-btn, .compare-save-list-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 7px;
+      border-radius: 8px;
+      padding: 10px 14px;
+      font-weight: 800;
+      cursor: pointer;
+    }
+    .detail-list-btn, .compare-save-list-btn { border: 1px solid #7c3aed; background: #f5f3ff; color: #6d28d9; }
+    .detail-share-btn { border: 1px solid #0284c7; background: #f0f9ff; color: #0369a1; }
+    .detail-share-btn.share-success { background: #dcfce7; border-color: #16a34a; color: #166534; }
+    .compare-modal-actions { display: flex; align-items: center; gap: 8px; }
+    .compare-save-list-btn { padding: 8px 11px; }
+    .shared-lists-modal-card {
+      max-width: 680px;
+      max-height: calc(100vh - 32px);
+      overflow-y: auto;
+    }
+    .shared-list-create-form {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      align-items: center;
+      gap: 8px;
+      margin: 14px 0;
+    }
+    .shared-list-create-form .consumer-btn-primary { width: auto; margin: 0; white-space: nowrap; }
+    .shared-lists-owner-list, .add-to-list-choices { display: grid; gap: 10px; margin-top: 12px; }
+    .shared-list-owner-card {
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 13px;
+      background: #f8fafc;
+    }
+    .shared-list-owner-head { display: flex; justify-content: space-between; gap: 12px; align-items: flex-start; }
+    .shared-list-owner-name { color: var(--primary); font-size: 0.98rem; font-weight: 850; overflow-wrap: anywhere; }
+    .shared-list-owner-meta { color: var(--text-muted); font-size: 0.72rem; margin-top: 2px; }
+    .shared-list-private-badge, .shared-list-public-badge {
+      flex: 0 0 auto;
+      border-radius: 999px;
+      padding: 3px 8px;
+      font-size: 0.66rem;
+      font-weight: 850;
+    }
+    .shared-list-private-badge { background: #e2e8f0; color: #475569; }
+    .shared-list-public-badge { background: #dcfce7; color: #166534; }
+    .shared-list-owner-actions { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+    .shared-list-owner-actions button, .add-to-list-choice {
+      border: 1px solid #cbd5e1;
+      border-radius: 7px;
+      background: #fff;
+      color: #334155;
+      padding: 7px 9px;
+      font-size: 0.73rem;
+      font-weight: 800;
+      cursor: pointer;
+    }
+    .shared-list-owner-actions button.primary { border-color: #7c3aed; color: #6d28d9; background: #f5f3ff; }
+    .shared-list-owner-actions button.danger { border-color: #fecaca; color: #b91c1c; background: #fef2f2; }
+    .shared-list-items { display: grid; gap: 7px; margin-top: 10px; }
+    .shared-list-item-row { display: grid; grid-template-columns: 54px minmax(0, 1fr) auto; align-items: center; gap: 8px; border-top: 1px solid #e2e8f0; padding-top: 8px; }
+    .shared-list-item-row img { width: 54px; height: 42px; border-radius: 6px; object-fit: cover; background: #e2e8f0; }
+    .shared-list-item-copy { min-width: 0; }
+    .shared-list-item-copy strong, .shared-list-item-copy span { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .shared-list-item-copy strong { color: var(--primary); font-size: 0.78rem; }
+    .shared-list-item-copy span { color: var(--text-muted); font-size: 0.7rem; }
+    .shared-list-item-remove { border: 0; background: transparent; color: #dc2626; cursor: pointer; padding: 6px; }
+    .add-to-list-choice { width: 100%; text-align: left; padding: 10px 12px; }
+    .recent-card { position: relative; }
+    .recent-add-list-btn {
+      position: absolute;
+      right: 5px;
+      bottom: 5px;
+      width: 27px;
+      height: 27px;
+      border: 1px solid #ddd6fe;
+      border-radius: 7px;
+      background: #f5f3ff;
+      color: #6d28d9;
+      cursor: pointer;
+    }
+    .cart-add-list-btn { border: 0; background: transparent; color: #7c3aed; cursor: pointer; padding: 4px; }
+    .public-shared-list-overlay { z-index: 11000; }
+    .public-shared-list-card {
+      max-width: 1080px;
+      max-height: calc(100vh - 32px);
+      overflow-y: auto;
+    }
+    .public-shared-list-brand { color: #64748b; font-size: 0.76rem; font-weight: 750; margin-bottom: 4px; padding-right: 40px; }
+    .public-shared-list-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 13px; margin-top: 16px; }
+    .public-list-property-card { border: 1px solid var(--border); border-radius: 12px; overflow: hidden; background: #fff; box-shadow: 0 3px 10px rgba(15,23,42,0.08); }
+    .public-list-property-card img { width: 100%; height: 135px; object-fit: cover; background: #e2e8f0; }
+    .public-list-property-body { padding: 11px; }
+    .public-list-property-price { color: var(--primary); font-size: 1rem; font-weight: 850; }
+    .public-list-property-address { color: #475569; font-size: 0.76rem; min-height: 34px; margin-top: 2px; }
+    .public-list-property-context { color: #64748b; font-size: 0.72rem; line-height: 1.4; margin: 7px 0; min-height: 32px; }
+    .public-list-property-office { color: #94a3b8; font-size: 0.65rem; min-height: 28px; }
+    .public-list-property-actions { display: grid; grid-template-columns: 1fr auto; gap: 7px; margin-top: 9px; }
+    .public-list-property-actions button { border: 1px solid #cbd5e1; border-radius: 7px; padding: 8px; background: #fff; color: #334155; font-weight: 800; cursor: pointer; }
+    .public-list-property-actions button:first-child { background: var(--primary); border-color: var(--primary); color: #fff; }
+
     @media (max-width: 768px) {
       #recentlyViewedNavBtn span { display: none; }
       .recently-viewed-section { padding: 0 10px; margin-top: 10px; }
@@ -2527,11 +2637,24 @@
       .compare-property-head img { height: 92px; }
       .card-compare-btn { padding: 6px; }
       .card-compare-btn span { display: none; }
+      .detail-consumer-actions { display: grid; grid-template-columns: 1fr 1fr; }
+      .detail-consumer-actions button { width: 100%; padding: 9px 8px; }
+      .detail-share-btn { grid-column: 1 / -1; }
+      .compare-modal-actions { align-items: flex-start; }
+      .compare-save-list-btn { font-size: 0.7rem; padding: 7px; }
+      .shared-list-create-form { grid-template-columns: 1fr; }
+      .shared-list-create-form .consumer-btn-primary { width: 100%; }
+      .shared-lists-modal-card, .public-shared-list-card { max-height: 100vh; border-radius: 0; padding: 22px 14px; }
+      .public-shared-list-overlay { padding: 0; }
+      .public-shared-list-grid { grid-template-columns: 1fr; }
+      .public-list-property-card { display: grid; grid-template-columns: 108px minmax(0, 1fr); }
+      .public-list-property-card img { width: 108px; height: 100%; min-height: 180px; }
+      .public-list-property-body { min-width: 0; }
     }
   </style>
 </head>
 
-<body data-ui-build="2026.08.31.7.3c3a1">
+<body data-ui-build="2026.08.31.7.3c3b">
 
   <!-- Loading Overlay -->
   <div class="loading-overlay" id="loadingOverlay" style="display:none">
@@ -2993,7 +3116,11 @@
         <div class="detail-addr" id="detailAddr"></div>
         <div class="detail-badges" id="detailBadges"></div>
         <div class="detail-stats" id="detailStats"></div>
-        <button class="detail-compare-btn" id="detailCompareBtn" type="button"><i class="fas fa-columns"></i> Add to Compare</button>
+        <div class="detail-consumer-actions" aria-label="Property actions">
+          <button class="detail-compare-btn" id="detailCompareBtn" type="button"><i class="fas fa-columns"></i> Add to Compare</button>
+          <button class="detail-list-btn" id="detailAddToListBtn" type="button"><i class="fas fa-list"></i> Add to List</button>
+          <button class="detail-share-btn" id="detailShareBtn" type="button"><i class="fas fa-share-alt"></i> Share</button>
+        </div>
         <div class="detail-description" id="detailDesc"></div>
 
         <!-- Area B: Site Owner CTA (Ursula Weinkauff / Local Real Estate LLC) -->
@@ -3035,7 +3162,10 @@
           <h2 id="compareModalTitle">Property Comparison</h2>
           <p>Current listing information, compared in context.</p>
         </div>
-        <button class="compare-modal-close" id="compareModalClose" type="button" aria-label="Close comparison">&times;</button>
+        <div class="compare-modal-actions">
+          <button class="compare-save-list-btn" id="compareSaveListBtn" type="button"><i class="fas fa-list"></i> Save as List</button>
+          <button class="compare-modal-close" id="compareModalClose" type="button" aria-label="Close comparison">&times;</button>
+        </div>
       </div>
       <div class="compare-table-scroll" id="compareTableContainer"></div>
     </div>
@@ -3137,12 +3267,70 @@
       <button class="consumer-btn-primary" id="consumerOpenSearchesBtn" style="background:#0284c7;margin-bottom:10px;">
         <i class="fas fa-bookmark"></i> View Saved Searches (<span id="consumerAccountSearchesCount">0</span>)
       </button>
+      <button class="consumer-btn-primary" id="consumerOpenRecentBtn" style="background:#475569;margin-bottom:10px;">
+        <i class="far fa-clock"></i> Recently Viewed (<span id="consumerAccountRecentCount">0</span>)
+      </button>
+      <button class="consumer-btn-primary" id="consumerOpenSharedListsBtn" style="background:#7c3aed;margin-bottom:10px;">
+        <i class="fas fa-list"></i> Shared Lists (<span id="consumerAccountSharedListsCount">0</span>)
+      </button>
       <button class="consumer-btn-secondary" id="consumerLogoutBtn">
         <i class="fas fa-sign-out-alt"></i> Sign Out
       </button>
       <button class="consumer-btn-danger" id="consumerDeleteAccountBtn">
         Delete Account &amp; All Data
       </button>
+    </div>
+  </div>
+
+  <!-- Shared Lists owner management (Phase 7.3C3B) -->
+  <div class="consumer-modal-overlay" id="sharedListsModal" role="dialog" aria-modal="true" aria-labelledby="sharedListsTitle">
+    <div class="consumer-modal-card shared-lists-modal-card">
+      <button class="consumer-modal-close" id="sharedListsClose" type="button">&times;</button>
+      <div class="consumer-modal-title" id="sharedListsTitle"><i class="fas fa-list" style="color:#7c3aed;margin-right:6px"></i> Shared Lists</div>
+      <div class="consumer-modal-sub">Lists are private until you explicitly enable an unlisted share link.</div>
+      <form id="sharedListCreateForm" class="shared-list-create-form">
+        <input type="text" id="sharedListNameInput" class="consumer-input" maxlength="80" required placeholder="List name, e.g. Weekend Favorites">
+        <button type="submit" class="consumer-btn-primary"><i class="fas fa-plus"></i> Create List</button>
+      </form>
+      <div class="consumer-auth-status" id="sharedListsStatus"></div>
+      <div id="sharedListsOwnerList" class="shared-lists-owner-list"></div>
+    </div>
+  </div>
+
+  <!-- Choose a private list for one or more properties -->
+  <div class="consumer-modal-overlay" id="addToListModal" role="dialog" aria-modal="true" aria-labelledby="addToListTitle">
+    <div class="consumer-modal-card">
+      <button class="consumer-modal-close" id="addToListClose" type="button">&times;</button>
+      <div class="consumer-modal-title" id="addToListTitle"><i class="fas fa-list" style="color:#7c3aed;margin-right:6px"></i> Add to List</div>
+      <div class="consumer-modal-sub">Choose an existing private list or create a new one.</div>
+      <div id="addToListChoices" class="add-to-list-choices"></div>
+      <form id="addToListCreateForm" class="shared-list-create-form">
+        <input type="text" id="addToListNameInput" class="consumer-input" maxlength="80" required placeholder="New private list name">
+        <button type="submit" class="consumer-btn-primary">Create &amp; Add</button>
+      </form>
+      <div class="consumer-auth-status" id="addToListStatus"></div>
+    </div>
+  </div>
+
+  <!-- Manual copy fallback when Clipboard API is unavailable -->
+  <div class="consumer-modal-overlay" id="manualShareModal" role="dialog" aria-modal="true" aria-labelledby="manualShareTitle">
+    <div class="consumer-modal-card">
+      <button class="consumer-modal-close" id="manualShareClose" type="button">&times;</button>
+      <div class="consumer-modal-title" id="manualShareTitle"><i class="fas fa-link" style="color:#0284c7;margin-right:6px"></i> Copy Link</div>
+      <div class="consumer-modal-sub">Select and copy this member-site link.</div>
+      <input type="text" id="manualShareInput" class="consumer-input" readonly aria-label="Share link">
+      <button type="button" class="consumer-btn-primary" id="manualShareSelectBtn">Select Link</button>
+    </div>
+  </div>
+
+  <!-- Anonymous-capable current-state public shared-list view -->
+  <div class="consumer-modal-overlay public-shared-list-overlay" id="publicSharedListModal" role="dialog" aria-modal="true" aria-labelledby="publicSharedListTitle">
+    <div class="consumer-modal-card public-shared-list-card">
+      <button class="consumer-modal-close" id="publicSharedListClose" type="button">&times;</button>
+      <div class="public-shared-list-brand" id="publicSharedListBrand"></div>
+      <div class="consumer-modal-title" id="publicSharedListTitle">Shared Property List</div>
+      <div class="consumer-modal-sub" id="publicSharedListSub">Current available properties from this REALTOR®.</div>
+      <div id="publicSharedListGrid" class="public-shared-list-grid"></div>
     </div>
   </div>
 
@@ -3168,7 +3356,7 @@
   <!-- CCOR IDX Plug-in Application Logic -->
   <script>
     // Telemetry & Build Identifier
-    const CCOR_IDX_UI_BUILD = '2026.08.31.7.3c3a1';
+    const CCOR_IDX_UI_BUILD = '2026.08.31.7.3c3b';
     console.log('[CCOR IDX Plug-in] UI build:', CCOR_IDX_UI_BUILD);
 
     // XSS Hardening & URL Sanitization Helpers (Phase 7.3C1A)
@@ -3208,6 +3396,12 @@
       urlParams.delete('ccor_listing');
     }
 
+    // Public shared-list deep link and server-validated member host page.
+    const initialSharedListSlug = urlParams.get('ccor_list') || '';
+    if (urlParams.has('ccor_list')) urlParams.delete('ccor_list');
+    const initialHostPageCandidate = urlParams.get('host_page') || '';
+    if (urlParams.has('host_page')) urlParams.delete('host_page');
+
     let SNEAK_SESSION = urlParams.get('session') || '';
     if (urlParams.has('session')) {
       urlParams.delete('session');
@@ -3239,6 +3433,9 @@
     let compareKeys = readLocalCompareKeys();
     let compareListings = [];
     let recentlyViewedEntries = [];
+    let sharedLists = [];
+    let activeSharedList = null;
+    let pendingListKeys = [];
 
     function getAuthHeaders(extraHeaders = {}) {
       const headers = { ...extraHeaders };
@@ -3415,6 +3612,9 @@
       await loadCompareState();
       await loadRecentlyViewed();
       triggerSearch(false);
+      if (initialSharedListSlug) {
+        await openPublicSharedList(initialSharedListSlug);
+      }
       if (initialDeepListingKey) {
         openDetailByKey(initialDeepListingKey);
       }
@@ -4055,7 +4255,9 @@
 
     async function loadTenantConfig() {
       try {
-        const res = await fetch(`${API_BASE}/idx/v1/config?site=${encodeURIComponent(SITE_KEY)}`, {
+        const params = new URLSearchParams({ site: SITE_KEY });
+        if (initialHostPageCandidate) params.set('hostPageUrl', initialHostPageCandidate);
+        const res = await fetch(`${API_BASE}/idx/v1/config?${params.toString()}`, {
           headers: getAuthHeaders()
         });
         if (res.ok) {
@@ -5078,15 +5280,17 @@
       track.innerHTML = recentlyViewedEntries.map(entry => {
         const listing = entry.listing;
         const viewed = entry.viewedAt ? new Date(entry.viewedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : '';
-        return `<button class="recent-card" type="button" onclick="openDetailByKey('${escapeHtml(entry.key)}')">
+        return `<div class="recent-card" role="button" tabindex="0" onclick="openDetailByKey('${escapeHtml(entry.key)}')" onkeydown="if(event.key==='Enter'){openDetailByKey('${escapeHtml(entry.key)}')}">
           ${listing?.PrimaryPhoto ? `<img src="${sanitizeUrl(listing.PrimaryPhoto)}" alt="">` : '<span></span>'}
           <span style="min-width:0">
             <span class="recent-card-price">${escapeHtml(fmt.format(listing?.ListPrice || 0))}</span>
             <span class="recent-card-address" style="display:block">${escapeHtml(listing?.UnparsedAddress || 'Address Undisclosed')}</span>
             <span class="recent-card-meta" style="display:block">${escapeHtml([listing?.City, viewed].filter(Boolean).join(' · '))}</span>
           </span>
-        </button>`;
+          <button class="recent-add-list-btn" type="button" onclick="event.stopPropagation();openAddToListModal(['${escapeHtml(entry.key)}'])" aria-label="Add property to list"><i class="fas fa-list"></i></button>
+        </div>`;
       }).join('');
+      updateSharedListCounts();
     }
 
     function clearAnonymousRecentlyViewed() {
@@ -5094,6 +5298,533 @@
       recentlyViewedEntries = [];
       localStorage.setItem(RECENT_STORAGE_KEY, '[]');
       renderRecentlyViewed();
+    }
+
+    // --- Safe Property Sharing + Shared Lists (Phase 7.3C3B) ---
+    const SHARE_SENSITIVE_PARAMS = new Set([
+      'auth_code', 'session', 'consumer_session', 'consumersession',
+      'member_session', 'token', 'access_token', 'bearer', 'authorization',
+      'bootstrap', 'bootstrap_token', 'magic_token', 'magic_link_token',
+      'csess', 'ccor_listing', 'ccor_list'
+    ]);
+
+    function buildMemberDeepLink(parameter, value) {
+      if (parameter !== 'ccor_listing' && parameter !== 'ccor_list') return null;
+      if (!value || !tenantConfig?.shareBaseUrl) return null;
+      try {
+        const url = new URL(tenantConfig.shareBaseUrl);
+        if (url.username || url.password) return null;
+        const isLocal = url.hostname === 'localhost' || url.hostname === '127.0.0.1';
+        if ((!isLocal && url.protocol !== 'https:') || url.hostname.endsWith('.workers.dev')) return null;
+        Array.from(url.searchParams.keys()).forEach(key => {
+          if (SHARE_SENSITIVE_PARAMS.has(key.toLowerCase())) url.searchParams.delete(key);
+        });
+        url.hash = '';
+        url.searchParams.set(parameter, String(value).slice(0, 128));
+        return url.toString();
+      } catch {
+        return null;
+      }
+    }
+
+    function openManualShareFallback(url) {
+      const input = document.getElementById('manualShareInput');
+      input.value = url;
+      document.getElementById('manualShareModal').classList.add('open');
+      setTimeout(() => { input.focus(); input.select(); }, 50);
+    }
+
+    async function copyShareText(url) {
+      if (navigator.clipboard?.writeText) {
+        try {
+          await navigator.clipboard.writeText(url);
+          return 'copied';
+        } catch {}
+      }
+      openManualShareFallback(url);
+      return 'manual';
+    }
+
+    function showShareButtonFeedback(button, label) {
+      if (!button) return;
+      const original = button.innerHTML;
+      button.classList.add('share-success');
+      button.textContent = label;
+      setTimeout(() => {
+        button.classList.remove('share-success');
+        button.innerHTML = original;
+      }, 1600);
+    }
+
+    async function shareListing(listing, sourceButton = null) {
+      if (!listing?.ListingKey) return;
+      const url = buildMemberDeepLink('ccor_listing', listing.ListingKey);
+      if (!url) {
+        alert('A safe member-site share link is unavailable for this page.');
+        return;
+      }
+      const address = listing.UnparsedAddress || 'Address Undisclosed';
+      const payload = {
+        title: `${address} — ${fmt.format(listing.ListPrice || 0)}`,
+        text: 'View this property',
+        url
+      };
+      if (typeof navigator.share === 'function') {
+        try {
+          await navigator.share(payload);
+          return;
+        } catch (error) {
+          if (error?.name === 'AbortError') return;
+        }
+      }
+      const result = await copyShareText(url);
+      if (result === 'copied') showShareButtonFeedback(sourceButton, 'Link copied');
+    }
+
+    function consumerApiHeaders() {
+      return {
+        'Authorization': 'Bearer ' + consumerSessionToken,
+        'Content-Type': 'application/json'
+      };
+    }
+
+    function setSharedListStatus(elementId, message, isError = false) {
+      const status = document.getElementById(elementId);
+      if (!status) return;
+      status.className = `consumer-auth-status ${isError ? 'error' : 'success'}`;
+      status.textContent = message;
+      status.style.display = message ? 'block' : 'none';
+    }
+
+    async function fetchSharedLists() {
+      if (!consumerUser || !consumerSessionToken) {
+        sharedLists = [];
+        updateSharedListCounts();
+        return [];
+      }
+      try {
+        const res = await fetch(`${CONSUMER_API_BASE}/api/consumer/shared-lists?site=${encodeURIComponent(SITE_KEY)}`, {
+          headers: { 'Authorization': 'Bearer ' + consumerSessionToken }
+        });
+        if (!res.ok) return sharedLists;
+        const data = await res.json();
+        sharedLists = Array.isArray(data.sharedLists) ? data.sharedLists : [];
+        updateSharedListCounts();
+      } catch (error) {
+        console.warn('Shared lists fetch error:', error);
+      }
+      return sharedLists;
+    }
+
+    function updateSharedListCounts() {
+      const count = sharedLists.length;
+      const accountCount = document.getElementById('consumerAccountSharedListsCount');
+      if (accountCount) accountCount.textContent = count;
+      const recentCount = document.getElementById('consumerAccountRecentCount');
+      if (recentCount) recentCount.textContent = recentlyViewedEntries.length;
+    }
+
+    async function createSharedList(name, listingKeys = []) {
+      const res = await fetch(`${CONSUMER_API_BASE}/api/consumer/shared-lists`, {
+        method: 'POST',
+        headers: consumerApiHeaders(),
+        body: JSON.stringify({ site: SITE_KEY, name, listingKeys })
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.message || 'Unable to create the property list.');
+      await fetchSharedLists();
+      return data.sharedList;
+    }
+
+    async function openSharedListsModal() {
+      if (!consumerUser || !consumerSessionToken) {
+        openConsumerAuthModalForListAction([], 'manage');
+        return;
+      }
+      closeConsumerAccountModal();
+      document.getElementById('sharedListsModal').classList.add('open');
+      setSharedListStatus('sharedListsStatus', '');
+      await fetchSharedLists();
+      renderSharedListOwners();
+    }
+
+    function closeSharedListsModal() {
+      document.getElementById('sharedListsModal').classList.remove('open');
+    }
+
+    function renderSharedListOwners() {
+      const root = document.getElementById('sharedListsOwnerList');
+      root.replaceChildren();
+      if (!sharedLists.length) {
+        const empty = document.createElement('div');
+        empty.className = 'cart-empty';
+        empty.textContent = 'No property lists yet. Create a private list above.';
+        root.appendChild(empty);
+        return;
+      }
+
+      sharedLists.forEach(list => {
+        const card = document.createElement('section');
+        card.className = 'shared-list-owner-card';
+        card.dataset.listId = list.id;
+
+        const head = document.createElement('div');
+        head.className = 'shared-list-owner-head';
+        const copy = document.createElement('div');
+        const name = document.createElement('div');
+        name.className = 'shared-list-owner-name';
+        name.textContent = list.name;
+        const meta = document.createElement('div');
+        meta.className = 'shared-list-owner-meta';
+        meta.textContent = `${list.itemCount || 0} of 25 properties`;
+        copy.append(name, meta);
+        const badge = document.createElement('span');
+        badge.className = list.shareEnabled ? 'shared-list-public-badge' : 'shared-list-private-badge';
+        badge.textContent = list.shareEnabled ? 'Unlisted link on' : 'Private';
+        head.append(copy, badge);
+
+        const actions = document.createElement('div');
+        actions.className = 'shared-list-owner-actions';
+        const action = (label, handler, className = '') => {
+          const button = document.createElement('button');
+          button.type = 'button';
+          button.className = className;
+          button.textContent = label;
+          button.onclick = handler;
+          actions.appendChild(button);
+        };
+        action('View Properties', () => loadSharedListOwnerDetail(list.id), 'primary');
+        action('Rename', () => renameSharedList(list));
+        if (list.shareEnabled && list.publicSlug) {
+          action('Copy Share Link', event => copySharedListLink(list, event.currentTarget), 'primary');
+          action('Disable Sharing', () => disableSharedListShare(list), 'danger');
+        } else {
+          action('Enable Sharing', () => enableSharedListShare(list), 'primary');
+        }
+        action('Delete', () => deleteSharedList(list), 'danger');
+        const items = document.createElement('div');
+        items.className = 'shared-list-items';
+        items.id = `shared-list-items-${list.id}`;
+        card.append(head, actions, items);
+        root.appendChild(card);
+      });
+    }
+
+    async function loadSharedListOwnerDetail(listId) {
+      const target = document.getElementById(`shared-list-items-${listId}`);
+      if (!target) return;
+      target.textContent = 'Loading current properties…';
+      try {
+        const res = await fetch(`${CONSUMER_API_BASE}/api/consumer/shared-lists/${encodeURIComponent(listId)}?site=${encodeURIComponent(SITE_KEY)}`, {
+          headers: { 'Authorization': 'Bearer ' + consumerSessionToken }
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(data.message || 'Unable to load this list.');
+        target.replaceChildren();
+        const items = data.sharedList?.items || [];
+        if (!items.length) {
+          target.textContent = 'This list has no properties yet.';
+          return;
+        }
+        items.forEach(item => {
+          const row = document.createElement('div');
+          row.className = 'shared-list-item-row';
+          const image = document.createElement('img');
+          image.alt = '';
+          if (item.listing?.PrimaryPhoto) image.src = sanitizeUrl(item.listing.PrimaryPhoto);
+          const itemCopy = document.createElement('div');
+          itemCopy.className = 'shared-list-item-copy';
+          const price = document.createElement('strong');
+          price.textContent = item.unavailable ? 'Property no longer available' : fmt.format(item.listing?.ListPrice || 0);
+          const address = document.createElement('span');
+          address.textContent = item.unavailable ? 'Current property details are unavailable.' : (item.listing?.UnparsedAddress || 'Address Undisclosed');
+          itemCopy.append(price, address);
+          const remove = document.createElement('button');
+          remove.type = 'button';
+          remove.className = 'shared-list-item-remove';
+          remove.setAttribute('aria-label', 'Remove property from list');
+          remove.innerHTML = '<i class="fas fa-trash"></i>';
+          remove.onclick = () => removeSharedListItem(listId, item.listingKey);
+          row.append(image, itemCopy, remove);
+          if (!item.unavailable) row.onclick = event => { if (!event.target.closest('button')) openDetailByKey(item.listingKey); };
+          target.appendChild(row);
+        });
+      } catch (error) {
+        target.textContent = error.message;
+      }
+    }
+
+    async function renameSharedList(list) {
+      const nextName = prompt('Rename property list:', list.name);
+      if (nextName === null) return;
+      try {
+        const res = await fetch(`${CONSUMER_API_BASE}/api/consumer/shared-lists/${encodeURIComponent(list.id)}?site=${encodeURIComponent(SITE_KEY)}`, {
+          method: 'PATCH', headers: consumerApiHeaders(), body: JSON.stringify({ name: nextName })
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(data.message || 'Unable to rename this list.');
+        await fetchSharedLists();
+        renderSharedListOwners();
+      } catch (error) { setSharedListStatus('sharedListsStatus', error.message, true); }
+    }
+
+    async function deleteSharedList(list) {
+      if (!confirm(`Delete “${list.name}”? Saved Homes, Compare, and history will not be changed.`)) return;
+      try {
+        const res = await fetch(`${CONSUMER_API_BASE}/api/consumer/shared-lists/${encodeURIComponent(list.id)}?site=${encodeURIComponent(SITE_KEY)}`, {
+          method: 'DELETE', headers: { 'Authorization': 'Bearer ' + consumerSessionToken }
+        });
+        if (!res.ok) throw new Error('Unable to delete this list.');
+        await fetchSharedLists();
+        renderSharedListOwners();
+      } catch (error) { setSharedListStatus('sharedListsStatus', error.message, true); }
+    }
+
+    async function enableSharedListShare(list) {
+      try {
+        const res = await fetch(`${CONSUMER_API_BASE}/api/consumer/shared-lists/${encodeURIComponent(list.id)}/share`, {
+          method: 'POST', headers: consumerApiHeaders(), body: JSON.stringify({ site: SITE_KEY })
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(data.message || 'Unable to enable sharing.');
+        await fetchSharedLists();
+        renderSharedListOwners();
+        setSharedListStatus('sharedListsStatus', 'Sharing enabled. Anyone with the unlisted link can view current available properties.');
+      } catch (error) { setSharedListStatus('sharedListsStatus', error.message, true); }
+    }
+
+    async function disableSharedListShare(list) {
+      if (!confirm('Disable sharing? The existing public link will stop working immediately.')) return;
+      try {
+        const res = await fetch(`${CONSUMER_API_BASE}/api/consumer/shared-lists/${encodeURIComponent(list.id)}/share?site=${encodeURIComponent(SITE_KEY)}`, {
+          method: 'DELETE', headers: { 'Authorization': 'Bearer ' + consumerSessionToken }
+        });
+        if (!res.ok) throw new Error('Unable to disable sharing.');
+        await fetchSharedLists();
+        renderSharedListOwners();
+        setSharedListStatus('sharedListsStatus', 'Sharing disabled. The old link is revoked. Re-enabling will create a new link.');
+      } catch (error) { setSharedListStatus('sharedListsStatus', error.message, true); }
+    }
+
+    async function copySharedListLink(list, button) {
+      const url = buildMemberDeepLink('ccor_list', list.publicSlug);
+      if (!url) {
+        setSharedListStatus('sharedListsStatus', 'A safe member-site share link is unavailable for this page.', true);
+        return;
+      }
+      const result = await copyShareText(url);
+      if (result === 'copied') showShareButtonFeedback(button, 'Link copied');
+    }
+
+    async function removeSharedListItem(listId, listingKey) {
+      try {
+        const res = await fetch(`${CONSUMER_API_BASE}/api/consumer/shared-lists/${encodeURIComponent(listId)}/items/${encodeURIComponent(listingKey)}?site=${encodeURIComponent(SITE_KEY)}`, {
+          method: 'DELETE', headers: { 'Authorization': 'Bearer ' + consumerSessionToken }
+        });
+        if (!res.ok) throw new Error('Unable to remove this property.');
+        await fetchSharedLists();
+        renderSharedListOwners();
+        await loadSharedListOwnerDetail(listId);
+      } catch (error) { setSharedListStatus('sharedListsStatus', error.message, true); }
+    }
+
+    function openConsumerAuthModalForListAction(keys, type = 'add') {
+      sessionStorage.setItem('ccor_pending_list_action_' + SITE_KEY, JSON.stringify({ type, keys: (keys || []).slice(0, 25) }));
+      const title = document.getElementById('consumerAuthTitle');
+      const sub = document.getElementById('consumerAuthSub');
+      if (title) title.textContent = 'Sign in to use property lists';
+      if (sub) sub.textContent = 'Your lists are private by default and sync securely across your devices.';
+      openConsumerAuthModal();
+    }
+
+    async function openAddToListModal(keys) {
+      const cleanKeys = [...new Set((keys || []).filter(Boolean))].slice(0, 25);
+      if (!cleanKeys.length) return;
+      if (!consumerUser || !consumerSessionToken) {
+        openConsumerAuthModalForListAction(cleanKeys, 'add');
+        return;
+      }
+      pendingListKeys = cleanKeys;
+      await fetchSharedLists();
+      const choices = document.getElementById('addToListChoices');
+      choices.replaceChildren();
+      sharedLists.forEach(list => {
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className = 'add-to-list-choice';
+        button.textContent = `${list.name} — ${list.itemCount || 0} properties`;
+        button.onclick = () => addPendingKeysToList(list.id);
+        choices.appendChild(button);
+      });
+      if (!sharedLists.length) {
+        const empty = document.createElement('div');
+        empty.className = 'cart-empty';
+        empty.textContent = 'Create your first private list below.';
+        choices.appendChild(empty);
+      }
+      setSharedListStatus('addToListStatus', '');
+      document.getElementById('addToListModal').classList.add('open');
+    }
+
+    async function addPendingKeysToList(listId) {
+      try {
+        for (const listingKey of pendingListKeys) {
+          const res = await fetch(`${CONSUMER_API_BASE}/api/consumer/shared-lists/${encodeURIComponent(listId)}/items`, {
+            method: 'POST', headers: consumerApiHeaders(), body: JSON.stringify({ site: SITE_KEY, listingKey })
+          });
+          const data = await res.json().catch(() => ({}));
+          if (!res.ok) throw new Error(data.message || 'Unable to add a property to this list.');
+        }
+        document.getElementById('addToListModal').classList.remove('open');
+        await fetchSharedLists();
+        setSharedListStatus('sharedListsStatus', 'Property added to your private list.');
+      } catch (error) { setSharedListStatus('addToListStatus', error.message, true); }
+    }
+
+    async function resumePendingListAction() {
+      const key = 'ccor_pending_list_action_' + SITE_KEY;
+      const raw = sessionStorage.getItem(key);
+      if (!raw) return;
+      sessionStorage.removeItem(key);
+      try {
+        const pending = JSON.parse(raw);
+        if (pending.type === 'compare') {
+          await saveCompareAsPrivateList(pending.keys || []);
+        } else if (pending.type === 'manage') {
+          await openSharedListsModal();
+        } else {
+          await openAddToListModal(pending.keys || []);
+        }
+      } catch {}
+    }
+
+    async function saveCompareAsPrivateList(keys = compareKeys) {
+      const cleanKeys = [...new Set((keys || []).filter(Boolean))].slice(0, 25);
+      if (cleanKeys.length < 2) return;
+      if (!consumerUser || !consumerSessionToken) {
+        openConsumerAuthModalForListAction(cleanKeys, 'compare');
+        return;
+      }
+      const name = prompt('Name this private property list:', 'Compared Properties');
+      if (name === null) return;
+      try {
+        await createSharedList(name, cleanKeys);
+        closeCompareModal();
+        await openSharedListsModal();
+        setSharedListStatus('sharedListsStatus', 'Comparison saved as a private list. Enable sharing only when you are ready.');
+      } catch (error) { alert(error.message); }
+    }
+
+    async function openPublicSharedList(slug) {
+      const modal = document.getElementById('publicSharedListModal');
+      const title = document.getElementById('publicSharedListTitle');
+      const sub = document.getElementById('publicSharedListSub');
+      const brand = document.getElementById('publicSharedListBrand');
+      const grid = document.getElementById('publicSharedListGrid');
+      modal.classList.add('open');
+      title.textContent = 'Shared Property List';
+      sub.textContent = 'Loading current available properties…';
+      brand.textContent = tenantConfig?.displayName || '';
+      grid.replaceChildren();
+
+      let robots = document.querySelector('meta[name="robots"]');
+      if (!robots) {
+        robots = document.createElement('meta');
+        robots.name = 'robots';
+        document.head.appendChild(robots);
+      }
+      robots.content = 'noindex, nofollow';
+
+      try {
+        const res = await fetch(`${API_BASE}/idx/v1/shared-list/${encodeURIComponent(String(slug).slice(0, 128))}?site=${encodeURIComponent(SITE_KEY)}`, {
+          headers: getAuthHeaders()
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error('This shared list is no longer available.');
+        activeSharedList = data;
+        title.textContent = data.name || 'Shared Property List';
+        brand.textContent = [data.site?.displayName, data.site?.brokerage].filter(Boolean).join(' · ');
+        sub.textContent = `${data.count || 0} current available ${Number(data.count) === 1 ? 'property' : 'properties'}. This is an unlisted view-only link.`;
+        renderPublicSharedListProperties(data.properties || []);
+      } catch (error) {
+        activeSharedList = null;
+        title.textContent = 'Shared Property List';
+        sub.textContent = 'This shared list is no longer available.';
+        const empty = document.createElement('div');
+        empty.className = 'cart-empty';
+        empty.textContent = 'The link may have been disabled, deleted, or may not belong to this website.';
+        grid.appendChild(empty);
+      }
+    }
+
+    function publicListingContext(listing) {
+      const category = getCompareCategory(listing);
+      const parts = [];
+      if (category === 'land') {
+        if (listing.LotSizeAcres) parts.push(`${listing.LotSizeAcres} acres`);
+        if (listing.SubdivisionName) parts.push(listing.SubdivisionName);
+      } else if (category === 'commercial') {
+        if (listing.PropertySubType) parts.push(listing.PropertySubType);
+        if (listing.LivingArea) parts.push(`${Number(listing.LivingArea).toLocaleString()} sq ft`);
+        if (listing.LotSizeAcres) parts.push(`${listing.LotSizeAcres} acres`);
+        if (listing.Zoning) parts.push(`Zoning ${listing.Zoning}`);
+      } else {
+        if (listing.BedroomsTotal) parts.push(`${listing.BedroomsTotal} bd`);
+        if (listing.BathroomsTotalInteger) parts.push(`${listing.BathroomsTotalInteger} ba`);
+        if (listing.LivingArea) parts.push(`${Number(listing.LivingArea).toLocaleString()} sq ft`);
+      }
+      return parts.join(' · ') || (listing.PropertySubType || listing.PropertyType || 'Property');
+    }
+
+    function renderPublicSharedListProperties(properties) {
+      const grid = document.getElementById('publicSharedListGrid');
+      grid.replaceChildren();
+      if (!properties.length) {
+        const empty = document.createElement('div');
+        empty.className = 'cart-empty';
+        empty.textContent = 'No properties in this list are currently available.';
+        grid.appendChild(empty);
+        return;
+      }
+      properties.forEach(listing => {
+        const card = document.createElement('article');
+        card.className = 'public-list-property-card';
+        const image = document.createElement('img');
+        image.alt = 'Property';
+        if (listing.PrimaryPhoto) image.src = sanitizeUrl(listing.PrimaryPhoto);
+        const body = document.createElement('div');
+        body.className = 'public-list-property-body';
+        const price = document.createElement('div');
+        price.className = 'public-list-property-price';
+        price.textContent = fmt.format(listing.ListPrice || 0);
+        const address = document.createElement('div');
+        address.className = 'public-list-property-address';
+        address.textContent = listing.UnparsedAddress || 'Address Undisclosed';
+        const context = document.createElement('div');
+        context.className = 'public-list-property-context';
+        context.textContent = publicListingContext(listing);
+        const office = document.createElement('div');
+        office.className = 'public-list-property-office';
+        office.textContent = listing.ListOfficeName ? `Listed by ${listing.ListOfficeName}` : 'Listing brokerage attribution available in property details.';
+        const actions = document.createElement('div');
+        actions.className = 'public-list-property-actions';
+        const details = document.createElement('button');
+        details.type = 'button';
+        details.textContent = 'View Details';
+        details.onclick = () => {
+          document.getElementById('publicSharedListModal').classList.remove('open');
+          openDetailByKey(listing.ListingKey);
+        };
+        const share = document.createElement('button');
+        share.type = 'button';
+        share.setAttribute('aria-label', 'Share property');
+        share.innerHTML = '<i class="fas fa-share-alt"></i>';
+        share.onclick = () => shareListing(listing, share);
+        actions.append(details, share);
+        body.append(price, address, context, office, actions);
+        card.append(image, body);
+        grid.appendChild(card);
+      });
     }
 
     // --- Event Listeners Setup ---
@@ -5309,6 +6040,16 @@
         closeConsumerAccountModal();
         document.getElementById('cartPanel').classList.add('open');
       };
+
+      const openRecentBtn = document.getElementById('consumerOpenRecentBtn');
+      if (openRecentBtn) openRecentBtn.onclick = () => {
+        closeConsumerAccountModal();
+        const section = document.getElementById('recentlyViewedSection');
+        if (section && recentlyViewedEntries.length) section.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      };
+
+      const openSharedListsBtn = document.getElementById('consumerOpenSharedListsBtn');
+      if (openSharedListsBtn) openSharedListsBtn.onclick = openSharedListsModal;
       
       const logoutBtn = document.getElementById('consumerLogoutBtn');
       if (logoutBtn) logoutBtn.onclick = handleConsumerLogout;
@@ -5351,8 +6092,53 @@
       if (compareOpenBtn) compareOpenBtn.onclick = openCompareModal;
       const compareCloseBtn = document.getElementById('compareModalClose');
       if (compareCloseBtn) compareCloseBtn.onclick = closeCompareModal;
+      const compareSaveListBtn = document.getElementById('compareSaveListBtn');
+      if (compareSaveListBtn) compareSaveListBtn.onclick = () => saveCompareAsPrivateList();
       const compareModal = document.getElementById('compareModal');
       if (compareModal) compareModal.onclick = event => { if (event.target === compareModal) closeCompareModal(); };
+      const detailAddToListBtn = document.getElementById('detailAddToListBtn');
+      if (detailAddToListBtn) detailAddToListBtn.onclick = () => currentDetail?.ListingKey && openAddToListModal([currentDetail.ListingKey]);
+      const detailShareBtn = document.getElementById('detailShareBtn');
+      if (detailShareBtn) detailShareBtn.onclick = () => currentDetail && shareListing(currentDetail, detailShareBtn);
+
+      const sharedListsClose = document.getElementById('sharedListsClose');
+      if (sharedListsClose) sharedListsClose.onclick = closeSharedListsModal;
+      const sharedListCreateForm = document.getElementById('sharedListCreateForm');
+      if (sharedListCreateForm) sharedListCreateForm.onsubmit = async event => {
+        event.preventDefault();
+        const input = document.getElementById('sharedListNameInput');
+        try {
+          await createSharedList(input.value, []);
+          input.value = '';
+          renderSharedListOwners();
+          setSharedListStatus('sharedListsStatus', 'Private list created.');
+        } catch (error) { setSharedListStatus('sharedListsStatus', error.message, true); }
+      };
+
+      const addToListClose = document.getElementById('addToListClose');
+      if (addToListClose) addToListClose.onclick = () => document.getElementById('addToListModal').classList.remove('open');
+      const addToListCreateForm = document.getElementById('addToListCreateForm');
+      if (addToListCreateForm) addToListCreateForm.onsubmit = async event => {
+        event.preventDefault();
+        const input = document.getElementById('addToListNameInput');
+        try {
+          await createSharedList(input.value, pendingListKeys);
+          input.value = '';
+          document.getElementById('addToListModal').classList.remove('open');
+          setSharedListStatus('sharedListsStatus', 'Private list created with the selected properties.');
+        } catch (error) { setSharedListStatus('addToListStatus', error.message, true); }
+      };
+
+      const manualShareClose = document.getElementById('manualShareClose');
+      if (manualShareClose) manualShareClose.onclick = () => document.getElementById('manualShareModal').classList.remove('open');
+      const manualShareSelectBtn = document.getElementById('manualShareSelectBtn');
+      if (manualShareSelectBtn) manualShareSelectBtn.onclick = () => {
+        const input = document.getElementById('manualShareInput');
+        input.focus();
+        input.select();
+      };
+      const publicSharedListClose = document.getElementById('publicSharedListClose');
+      if (publicSharedListClose) publicSharedListClose.onclick = () => document.getElementById('publicSharedListModal').classList.remove('open');
       document.addEventListener('keydown', event => { if (event.key === 'Escape') closeCompareModal(); });
 
       // Invalidate map size on window/viewport resize
@@ -5512,6 +6298,7 @@
               await mergeAndSyncFavorites();
               await mergeAndSyncCompare();
               await fetchSavedSearches();
+              await fetchSharedLists();
               updateConsumerNavUI();
 
               // Check if pending save search intent exists
@@ -5523,6 +6310,7 @@
                   openSaveSearchModal();
                 } catch {}
               }
+              await resumePendingListAction();
               return;
             }
           }
@@ -5542,7 +6330,9 @@
             await fetchServerFavorites();
             await mergeAndSyncCompare();
             await fetchSavedSearches();
+            await fetchSharedLists();
             updateConsumerNavUI();
+            await resumePendingListAction();
             return;
           } else {
             consumerSessionToken = '';
@@ -5559,6 +6349,12 @@
     }
 
     function openConsumerAuthModal() {
+      if (!sessionStorage.getItem('ccor_pending_list_action_' + SITE_KEY)) {
+        const title = document.getElementById('consumerAuthTitle');
+        const sub = document.getElementById('consumerAuthSub');
+        if (title) title.innerHTML = '<i class="fas fa-heart" style="color:var(--hot, #ef4444);margin-right:6px"></i> Save your homes';
+        if (sub) sub.textContent = 'Sign in with your email to keep your saved favorites synced across all your devices. No password needed.';
+      }
       const statusEl = document.getElementById('consumerAuthStatus');
       if (statusEl) {
         statusEl.className = 'consumer-auth-status';
@@ -5583,6 +6379,7 @@
       if (countEl) countEl.textContent = savedListings.length;
       const searchCountEl = document.getElementById('consumerAccountSearchesCount');
       if (searchCountEl) searchCountEl.textContent = savedSearches.length;
+      updateSharedListCounts();
       document.getElementById('consumerAccountModal').classList.add('open');
     }
 
@@ -5652,8 +6449,10 @@
       consumerSessionToken = '';
       consumerUser = null;
       savedSearches = [];
+      sharedLists = [];
       localStorage.removeItem('ccor_consumer_session_' + SITE_KEY);
       sessionStorage.removeItem('ccor_pending_saved_search_' + SITE_KEY);
+      sessionStorage.removeItem('ccor_pending_list_action_' + SITE_KEY);
       closeConsumerAccountModal();
       savedListings = JSON.parse(localStorage.getItem('savedListings_' + SITE_KEY) || '[]');
       updateConsumerNavUI();
@@ -5678,8 +6477,10 @@
       consumerSessionToken = '';
       consumerUser = null;
       savedSearches = [];
+      sharedLists = [];
       localStorage.removeItem('ccor_consumer_session_' + SITE_KEY);
       sessionStorage.removeItem('ccor_pending_saved_search_' + SITE_KEY);
+      sessionStorage.removeItem('ccor_pending_list_action_' + SITE_KEY);
       savedListings = [];
       localStorage.removeItem('savedListings_' + SITE_KEY);
       compareKeys = [];
@@ -5704,11 +6505,15 @@
       const favCountEl = document.getElementById('consumerFavCount');
       const accountFavCountEl = document.getElementById('consumerAccountFavCount');
       const accountSearchesCountEl = document.getElementById('consumerAccountSearchesCount');
+      const accountSharedListsCountEl = document.getElementById('consumerAccountSharedListsCount');
+      const accountRecentCountEl = document.getElementById('consumerAccountRecentCount');
 
       const count = savedListings.length;
       if (favCountEl) favCountEl.textContent = count;
       if (accountFavCountEl) accountFavCountEl.textContent = count;
       if (accountSearchesCountEl) accountSearchesCountEl.textContent = savedSearches.length;
+      if (accountSharedListsCountEl) accountSharedListsCountEl.textContent = sharedLists.length;
+      if (accountRecentCountEl) accountRecentCountEl.textContent = recentlyViewedEntries.length;
 
       if (consumerUser && consumerSessionToken) {
         if (authNavItem) authNavItem.style.display = 'none';
@@ -6333,6 +7138,7 @@
               <div style="font-weight:700;font-size:0.8rem;color:var(--text);">${escapeHtml(fmt.format(s.price || 0))}</div>
               <div style="font-size:0.72rem;color:var(--text-muted);white-space:nowrap;text-overflow:ellipsis;overflow:hidden;">${escapeHtml(s.address || '')}</div>
             </div>
+            <button class="cart-add-list-btn" onclick="event.stopPropagation();openAddToListModal(['${escapeHtml(s.key)}'])" title="Add to List" aria-label="Add property to list"><i class="fas fa-list"></i></button>
             <button onclick="event.stopPropagation();toggleSave('${escapeHtml(s.key)}')" style="border:none;background:transparent;color:#ef4444;cursor:pointer;padding:4px;"><i class="fas fa-trash"></i></button>
           `;
           row.onclick = () => openDetailByKey(s.key);
