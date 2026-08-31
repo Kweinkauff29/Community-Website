@@ -46,6 +46,72 @@ export function jsonResponse(data, status = 200, origin = null) {
 const SAVED_SEARCHES_LIMIT = 25;
 const MAX_STATE_BYTES = 16384; // 16 KB
 
+export const ALLOWED_ACTIVITY_TYPES = [
+    'listing_view',
+    'favorite_added',
+    'favorite_removed',
+    'saved_search_created',
+    'saved_search_updated',
+    'saved_search_deleted',
+    'alert_enabled',
+    'alert_frequency_changed',
+    'alert_disabled',
+    'inquiry_submitted'
+];
+
+/**
+ * Logs an authenticated buyer activity event into sneak_consumer_activity_events
+ * and updates sneak_consumer_users.last_activity_at.
+ * 
+ * Invariants:
+ * - Fails safely without disrupting the primary business mutation.
+ * - Max 2 KB metadata JSON payload.
+ * - Deduplication support via dedupe_key.
+ */
+export async function recordConsumerActivity(db, {
+    siteId,
+    userId,
+    eventType,
+    listingKey = null,
+    savedSearchId = null,
+    leadId = null,
+    metadata = null,
+    dedupeKey = null,
+    now = new Date()
+}) {
+    if (!siteId || !userId || !eventType || !ALLOWED_ACTIVITY_TYPES.includes(eventType)) {
+        return { success: false, error: 'InvalidActivityEvent' };
+    }
+
+    const eventId = `cact_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
+    const nowIso = (now instanceof Date ? now : new Date(now)).toISOString();
+    const metadataJson = metadata ? JSON.stringify(metadata).slice(0, 2048) : null;
+
+    try {
+        await db.prepare(`
+            INSERT OR IGNORE INTO sneak_consumer_activity_events
+            (id, site_id, user_id, event_type, listing_key, saved_search_id, lead_id, metadata_json, dedupe_key, created_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        `).bind(
+            eventId, siteId, userId, eventType,
+            listingKey || null, savedSearchId || null, leadId || null,
+            metadataJson, dedupeKey || null, nowIso
+        ).run();
+
+        // Bump last_activity_at on sneak_consumer_users
+        await db.prepare(`
+            UPDATE sneak_consumer_users
+            SET last_activity_at = ?, updated_at = ?
+            WHERE id = ?
+        `).bind(nowIso, nowIso, userId).run();
+
+        return { success: true, eventId };
+    } catch (err) {
+        console.warn('[CONSUMER ACTIVITY RECORD ERROR]', err.message);
+        return { success: false, error: err.message };
+    }
+}
+
 /**
  * Normalizes and validates serialized search state.
  */
@@ -277,6 +343,15 @@ export async function handleCreateSavedSearch(req, env, origin) {
         VALUES (?, ?, ?, ?, 1, ?, ?, ?, ?)
     `).bind(searchId, session.siteId, session.userId, cleanName, stateJson, stateHash, now, now).run();
 
+    // Server Activity Log: saved_search_created
+    await recordConsumerActivity(env.DB, {
+        siteId: session.siteId,
+        userId: session.userId,
+        eventType: 'saved_search_created',
+        savedSearchId: searchId,
+        metadata: { name: cleanName }
+    });
+
     return jsonResponse({
         success: true,
         savedSearch: {
@@ -330,6 +405,15 @@ export async function handleUpdateSavedSearch(req, searchId, url, env, origin) {
         return jsonResponse({ error: 'NotFound', message: 'Saved search not found or unauthorized.' }, 404, origin);
     }
 
+    // Server Activity Log: saved_search_updated
+    await recordConsumerActivity(env.DB, {
+        siteId: session.siteId,
+        userId: session.userId,
+        eventType: 'saved_search_updated',
+        savedSearchId: searchId,
+        metadata: { name: cleanName }
+    });
+
     return jsonResponse({
         success: true,
         id: searchId,
@@ -353,6 +437,12 @@ export async function handleDeleteSavedSearch(req, searchId, url, env, origin) {
         return sessionErrorResponse(session, origin);
     }
 
+    // Fetch existing search name before deletion for historical timeline label
+    const existingSearch = await env.DB.prepare(`
+        SELECT name FROM sneak_consumer_saved_searches
+        WHERE id = ? AND user_id = ? AND site_id = ?
+    `).bind(searchId, session.userId, session.siteId).first();
+
     const delRes = await env.DB.prepare(`
         DELETE FROM sneak_consumer_saved_searches
         WHERE id = ? AND user_id = ? AND site_id = ?
@@ -362,6 +452,15 @@ export async function handleDeleteSavedSearch(req, searchId, url, env, origin) {
     if (changes === 0) {
         return jsonResponse({ error: 'NotFound', message: 'Saved search not found or unauthorized.' }, 404, origin);
     }
+
+    // Server Activity Log: saved_search_deleted
+    await recordConsumerActivity(env.DB, {
+        siteId: session.siteId,
+        userId: session.userId,
+        eventType: 'saved_search_deleted',
+        savedSearchId: searchId,
+        metadata: { name: existingSearch?.name || 'Saved Search' }
+    });
 
     return jsonResponse({
         success: true,
@@ -499,6 +598,13 @@ export async function handleUpdateSavedSearchAlert(req, searchId, url, env, orig
         }
     }
 
+    // Check previous alert frequency before upsert to determine meaningful change
+    const oldAlert = await env.DB.prepare(`
+        SELECT frequency, enabled FROM sneak_consumer_search_alerts
+        WHERE saved_search_id = ? AND user_id = ? AND site_id = ?
+    `).bind(searchId, session.userId, session.siteId).first();
+    const oldFreq = oldAlert ? (oldAlert.enabled ? oldAlert.frequency : 'off') : 'off';
+
     const isEnabled = (cleanFreq !== 'off') ? 1 : 0;
     const nowIso = new Date().toISOString();
     const alertId = `calert_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
@@ -523,6 +629,33 @@ export async function handleUpdateSavedSearchAlert(req, searchId, url, env, orig
         alertId, searchId, session.siteId, session.userId, cleanFreq, isEnabled, isEnabled, nowIso,
         timezone, cleanReturnUrl, nowIso, nowIso
     ).run();
+
+    // Server Activity Log for Alert Preference Transition
+    const newFreq = cleanFreq;
+    if (oldFreq === 'off' && (newFreq === 'asap' || newFreq === 'daily')) {
+        await recordConsumerActivity(env.DB, {
+            siteId: session.siteId,
+            userId: session.userId,
+            eventType: 'alert_enabled',
+            savedSearchId: searchId,
+            metadata: { frequency: newFreq }
+        });
+    } else if ((oldFreq === 'asap' || oldFreq === 'daily') && (newFreq === 'asap' || newFreq === 'daily') && oldFreq !== newFreq) {
+        await recordConsumerActivity(env.DB, {
+            siteId: session.siteId,
+            userId: session.userId,
+            eventType: 'alert_frequency_changed',
+            savedSearchId: searchId,
+            metadata: { frequency: newFreq }
+        });
+    } else if ((oldFreq === 'asap' || oldFreq === 'daily') && newFreq === 'off') {
+        await recordConsumerActivity(env.DB, {
+            siteId: session.siteId,
+            userId: session.userId,
+            eventType: 'alert_disabled',
+            savedSearchId: searchId
+        });
+    }
 
     const updated = await env.DB.prepare(`
         SELECT id, saved_search_id, frequency, enabled, enabled_at, timezone, return_url, last_checked_at, last_sent_at
@@ -903,10 +1036,21 @@ export async function handleAddFavorite(req, env, origin) {
 
     // 3. Insert favorite (idempotent via INSERT OR IGNORE)
     const favId = `cfav_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
-    await env.DB.prepare(`
+    const insertRes = await env.DB.prepare(`
         INSERT OR IGNORE INTO sneak_consumer_favorites (id, site_id, user_id, listing_key, created_at)
         VALUES (?, ?, ?, ?, datetime('now'))
     `).bind(favId, session.siteId, session.userId, listingKey).run();
+
+    const changes = insertRes?.meta?.changes ?? insertRes?.changes ?? 0;
+    if (changes > 0) {
+        // Server Activity Log: favorite_added
+        await recordConsumerActivity(env.DB, {
+            siteId: session.siteId,
+            userId: session.userId,
+            eventType: 'favorite_added',
+            listingKey
+        });
+    }
 
     const updatedCount = await env.DB.prepare(`
         SELECT count(*) as count FROM sneak_consumer_favorites
@@ -936,10 +1080,21 @@ export async function handleRemoveFavorite(req, listingKey, url, env, origin) {
         return sessionErrorResponse(session, origin);
     }
 
-    await env.DB.prepare(`
+    const delRes = await env.DB.prepare(`
         DELETE FROM sneak_consumer_favorites
         WHERE user_id = ? AND site_id = ? AND listing_key = ?
     `).bind(session.userId, session.siteId, listingKey).run();
+
+    const changes = delRes?.meta?.changes ?? delRes?.changes ?? 0;
+    if (changes > 0) {
+        // Server Activity Log: favorite_removed
+        await recordConsumerActivity(env.DB, {
+            siteId: session.siteId,
+            userId: session.userId,
+            eventType: 'favorite_removed',
+            listingKey
+        });
+    }
 
     const updatedCount = await env.DB.prepare(`
         SELECT count(*) as count FROM sneak_consumer_favorites
@@ -999,10 +1154,20 @@ export async function handleMergeFavorites(req, env, origin) {
 
     for (const key of toInsert) {
         const favId = `cfav_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
-        await env.DB.prepare(`
+        const res = await env.DB.prepare(`
             INSERT OR IGNORE INTO sneak_consumer_favorites (id, site_id, user_id, listing_key, created_at)
             VALUES (?, ?, ?, ?, datetime('now'))
         `).bind(favId, session.siteId, session.userId, key).run();
+
+        const changes = res?.meta?.changes ?? res?.changes ?? 0;
+        if (changes > 0) {
+            await recordConsumerActivity(env.DB, {
+                siteId: session.siteId,
+                userId: session.userId,
+                eventType: 'favorite_added',
+                listingKey: key
+            });
+        }
     }
 
     const finalCount = await env.DB.prepare(`
@@ -1015,4 +1180,158 @@ export async function handleMergeFavorites(req, env, origin) {
         count: finalCount?.count || 0,
         merged: toInsert.length
     }, 200, origin);
+}
+
+/**
+ * POST /api/consumer/activity
+ * Browser-reported activity endpoint for authenticated buyers (listing_view, inquiry_submitted).
+ * 
+ * Invariants:
+ * - Session authentication required.
+ * - Rate limit: 120 browser events / consumer / site / hour.
+ * - Allowed types: strictly 'listing_view' and 'inquiry_submitted'.
+ * - 30-minute deduplication window for listing views.
+ * - Server verification of listing scope and display compliance.
+ * - Server verification of inquiry ownership by matching site and normalized email.
+ */
+export async function handleReportActivity(req, env, origin) {
+    let body;
+    try {
+        body = await req.json();
+    } catch {
+        return jsonResponse({ error: 'InvalidJSON', message: 'Request body must be valid JSON.' }, 400, origin);
+    }
+
+    const { site: siteKey, type, listingKey, leadId } = body || {};
+    const siteKeyParam = siteKey || new URL(req.url).searchParams.get('site');
+    const rawToken = extractBearerToken(req);
+
+    const session = await verifyConsumerSession(env.DB, rawToken, siteKeyParam);
+    if (!session || session.error) {
+        return sessionErrorResponse(session, origin);
+    }
+
+    // Rate Limit: 120 browser-originated events per consumer per site per hour
+    try {
+        const rateRow = await env.DB.prepare(`
+            SELECT count(*) as count FROM sneak_consumer_activity_events
+            WHERE user_id = ? AND site_id = ? AND event_type IN ('listing_view', 'inquiry_submitted')
+              AND created_at > datetime('now', '-1 hour')
+        `).bind(session.userId, session.siteId).first();
+
+        if ((rateRow?.count || 0) >= 120) {
+            return jsonResponse({
+                error: 'RateLimitExceeded',
+                message: 'Activity reporting rate limit exceeded (max 120 events/hour).'
+            }, 429, origin);
+        }
+    } catch {}
+
+    // Allowlist check: Only listing_view and inquiry_submitted allowed from browser
+    if (type !== 'listing_view' && type !== 'inquiry_submitted') {
+        return jsonResponse({
+            error: 'InvalidEventType',
+            message: 'Browser reporting is only permitted for listing_view and inquiry_submitted.'
+        }, 400, origin);
+    }
+
+    // Handle listing_view
+    if (type === 'listing_view') {
+        if (!listingKey || typeof listingKey !== 'string') {
+            return jsonResponse({ error: 'MissingListingKey', message: 'listingKey is required for listing_view.' }, 400, origin);
+        }
+
+        const cleanListingKey = listingKey.trim().slice(0, 50);
+
+        const site = await resolveSiteScope(env.DB, siteKeyParam || session.siteKey);
+        if (!site) {
+            return jsonResponse({ error: 'SiteNotFound', message: 'Site not found.' }, 404, origin);
+        }
+
+        let scopeClause = '';
+        const bindings = [cleanListingKey];
+        if (site.scope_type === 'agent' && site.scope_value) {
+            scopeClause = ' AND (ListAgentMlsId = ? OR ListAgentKey = ?)';
+            bindings.push(site.scope_value, site.scope_value);
+        } else if (site.scope_type === 'office' && site.scope_value) {
+            scopeClause = ' AND (ListOfficeMlsId = ? OR ListOfficeKey = ?)';
+            bindings.push(site.scope_value, site.scope_value);
+        }
+
+        const listing = await env.DB.prepare(`
+            SELECT ListingKey FROM sneak_listings
+            WHERE ListingKey = ?
+              AND (InternetEntireListingDisplayYN = 1 OR InternetEntireListingDisplayYN IS NULL)
+              ${scopeClause}
+        `).bind(...bindings).first();
+
+        if (!listing) {
+            return jsonResponse({
+                error: 'InvalidListingKey',
+                message: 'Listing does not exist, is display-disabled, or is outside site scope.'
+            }, 404, origin);
+        }
+
+        // Server-derived 30-minute dedupe bucket
+        const bucket = Math.floor(Date.now() / (30 * 60 * 1000));
+        const dedupeKey = `listing_view:${session.userId}:${session.siteId}:${cleanListingKey}:${bucket}`;
+
+        const result = await recordConsumerActivity(env.DB, {
+            siteId: session.siteId,
+            userId: session.userId,
+            eventType: 'listing_view',
+            listingKey: cleanListingKey,
+            dedupeKey
+        });
+
+        return jsonResponse({ success: true, recorded: result.success }, 200, origin);
+    }
+
+    // Handle inquiry_submitted
+    if (type === 'inquiry_submitted') {
+        if (!leadId || typeof leadId !== 'string') {
+            return jsonResponse({ error: 'MissingLeadId', message: 'leadId is required for inquiry_submitted.' }, 400, origin);
+        }
+
+        const cleanLeadId = leadId.trim();
+        const lead = await env.DB.prepare(`
+            SELECT id, site_id, email, listing_key FROM sneak_leads WHERE id = ?
+        `).bind(cleanLeadId).first();
+
+        if (!lead) {
+            return jsonResponse({ error: 'LeadNotFound', message: 'Inquiry record not found.' }, 404, origin);
+        }
+
+        if (lead.site_id !== session.siteId) {
+            return jsonResponse({ error: 'UnauthorizedLead', message: 'Inquiry belongs to another site.' }, 403, origin);
+        }
+
+        const consumerUser = await env.DB.prepare(`
+            SELECT email FROM sneak_consumer_users WHERE id = ?
+        `).bind(session.userId).first();
+
+        const consumerEmail = (consumerUser?.email || '').toLowerCase().trim();
+        const leadEmail = (lead.email || '').toLowerCase().trim();
+
+        if (!consumerEmail || consumerEmail !== leadEmail) {
+            return jsonResponse({
+                error: 'EmailMismatch',
+                message: 'Inquiry email does not match authenticated consumer email.'
+            }, 403, origin);
+        }
+
+        const dedupeKey = `inquiry_submitted:${session.userId}:${session.siteId}:${cleanLeadId}`;
+        const result = await recordConsumerActivity(env.DB, {
+            siteId: session.siteId,
+            userId: session.userId,
+            eventType: 'inquiry_submitted',
+            listingKey: listingKey ? String(listingKey).trim() : lead.listing_key,
+            leadId: lead.id,
+            dedupeKey
+        });
+
+        return jsonResponse({ success: true, recorded: result.success }, 200, origin);
+    }
+
+    return jsonResponse({ error: 'BadRequest', message: 'Invalid activity request.' }, 400, origin);
 }

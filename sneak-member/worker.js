@@ -26,7 +26,10 @@ import {
     handleUpdateMemberWidget,
     handleGetMemberEmbed,
     handleGetMemberLeads,
-    handleGetMemberBilling
+    handleGetMemberBilling,
+    handleListMemberClients,
+    handleGetMemberClientDetail,
+    handleGetMemberClientActivity
 } from './api.js';
 
 const SECURITY_HEADERS = {
@@ -64,6 +67,7 @@ export default {
             return json({
                 status: 'healthy',
                 worker: 'sneak-idx-member-staging',
+                build: '2026.08.30.7.3c2b',
                 timestamp: new Date().toISOString()
             });
         }
@@ -192,6 +196,21 @@ export default {
 
             if (path === '/api/member/leads' && method === 'GET') {
                 return handleGetMemberLeads(env.DB, memberContext);
+            }
+
+            // Clients & Authenticated Buyer Activity (Phase 7.3C2B)
+            if (path === '/api/member/clients' && method === 'GET') {
+                return handleListMemberClients(env.DB, memberContext, url);
+            }
+
+            const clientActMatch = path.match(/^\/api\/member\/clients\/([^/]+)\/activity$/);
+            if (clientActMatch && method === 'GET') {
+                return handleGetMemberClientActivity(env.DB, memberContext, clientActMatch[1], url);
+            }
+
+            const clientMatch = path.match(/^\/api\/member\/clients\/([^/]+)$/);
+            if (clientMatch && method === 'GET') {
+                return handleGetMemberClientDetail(env.DB, memberContext, clientMatch[1]);
             }
 
             if (path === '/api/member/billing' && method === 'GET') {

@@ -160,13 +160,43 @@ graph TD
 
 ---
 
-### Phase 7.3C2B — Agent Client Activity Dashboard (NEXT)
-* **Goal:** Live timeline of client views, saved properties, saved searches, and inquiries in REALTOR® Member Portal.
-* **Status:** `PLANNED`
+### Phase 7.3C2B — Agent Client Activity Dashboard & Authenticated Buyer Activity Timeline (COMPLETED)
+* **Goal:** Deliver a dedicated Clients area in the REALTOR® Member Portal allowing the REALTOR® to view authenticated buyers using their CCOR IDX site, inspect longitudinal buyer activity timelines, and review saved homes, searches, and inquiries with strict tenant isolation and MLS display controls.
+* **Status:** `COMPLETE / DEPLOYED`
+* **Features Included:**
+  * **Privacy & Controlled Telemetry Ledger (`sneak_consumer_activity_events`):**
+    * D1 Migration `0030_sneak_consumer_activity.sql` creates high-throughput activity ledger with compound indexes and adds `last_activity_at` to `sneak_consumer_users`.
+    * **Zero Anonymous Telemetry Invariant:** Anonymous browsing is never tracked. Strictly captures authenticated buyer actions under controlled vocabulary (`listing_view`, `favorite_added`, `favorite_removed`, `saved_search_created`, `saved_search_updated`, `saved_search_deleted`, `alert_enabled`, `alert_frequency_changed`, `alert_disabled`, `inquiry_submitted`).
+    * Zero visitor fingerprinting, zero IP profiles, zero scroll/pan tracking, zero GPS coordinates. Metadata JSON capped at 2KB.
+  * **Consumer Activity Ingestion API (`POST /api/consumer/activity`):**
+    * Authenticated session required (HTTP 401 on missing/invalid token).
+    * Restrictive browser allowlist: Only `listing_view` and `inquiry_submitted` accepted from frontend.
+    * 30-minute deterministic deduplication window on `listing_view` via `dedupe_key`.
+    * Listing validation: Verifies property exists, is display eligible (`InternetEntireListingDisplayYN = 1`), and matches site tenant scope.
+    * Inquiry validation: Verifies `leadId` belongs to site and matches normalized consumer email.
+    * Rate limiting: 120 browser-reported events per hour per consumer session.
+  * **Server-Side Mutation Logging:**
+    * Favorites CRUD automatically records `favorite_added` and `favorite_removed`.
+    * Saved searches CRUD records `saved_search_created`, `saved_search_updated`, `saved_search_deleted` (preserving search name in metadata).
+    * Search alert preference transitions record `alert_enabled`, `alert_frequency_changed`, `alert_disabled`.
+  * **Serving Worker & Frontend IDX Activity Capture:**
+    * `sneak-idx/search/index.html` fires non-blocking `keepalive: true` `listing_view` on detail modal open when consumer is signed in.
+    * Authenticated lead form submission automatically logs `inquiry_submitted` with `leadId`.
+  * **Member Worker APIs (`sneak-member/api.js`):**
+    * `GET /api/member/clients`: Paginated buyer roster with search by email, sorting (`recently_active`, `newest`, `saved_homes`, `saved_searches`), and aggregated counters.
+    * `GET /api/member/clients/:id`: Full client profile, saved homes (with address suppression and off-market unavailability flags), saved searches with alert frequencies, and inquiries.
+    * `GET /api/member/clients/:id/activity`: Paginated chronological activity timeline with resolved safe listing metadata.
+    * `GET /api/member/overview`: Updated with `clientsCount`, `activeClients7dCount`, `savedHomesCount`, `savedSearchesCount`.
+    * **Strict Tenant Isolation:** All queries strictly join `sneak_sites` filtered by `memberContext.account_id`. Foreign client lookups return HTTP 404 with zero enumeration. Same email across two member sites represents two distinct, isolated client records.
+  * **Member Portal UI (`sneak-member/ui.js`):**
+    * Modern dark-mode dashboard with Clients navigation tab, 4 live KPI summary cards, responsive client list table, search bar, sort dropdown, and empty states.
+    * Modal Client Detail view with quick summary, Saved Homes grid, Saved Searches/Alerts list, Inquiries list, and interactive Activity Timeline with human-friendly event badges and timestamps.
+    * Responsive at desktop (1440x900), tablet (1024x768), and mobile (390x844).
+  * **Deterministic UI & Worker Build:** `2026.08.30.7.3c2b` across alert worker, consumer worker, member worker, serving worker, embed loader, search UI, and test suites.
 
 ---
 
-### Phase 7.3C3 — Property Comparison, Recently Viewed & Sharing (PLANNED)
+### Phase 7.3C3 — Property Comparison, Recently Viewed & Sharing (NEXT)
 * **Goal:** Side-by-side listing comparison (up to 4 homes), recently viewed history, and social/native sharing.
 * **Status:** `PLANNED`
 

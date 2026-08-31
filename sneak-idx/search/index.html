@@ -2299,7 +2299,7 @@
   </style>
 </head>
 
-<body data-ui-build="2026.08.30.7.3c2a1">
+<body data-ui-build="2026.08.30.7.3c2b">
 
   <!-- Loading Overlay -->
   <div class="loading-overlay" id="loadingOverlay" style="display:none">
@@ -2898,7 +2898,7 @@
   <!-- CCOR IDX Plug-in Application Logic -->
   <script>
     // Telemetry & Build Identifier
-    const CCOR_IDX_UI_BUILD = '2026.08.30.7.3c2a1';
+    const CCOR_IDX_UI_BUILD = '2026.08.30.7.3c2b';
     console.log('[CCOR IDX Plug-in] UI build:', CCOR_IDX_UI_BUILD);
 
     // XSS Hardening & URL Sanitization Helpers (Phase 7.3C1A)
@@ -4350,6 +4350,24 @@
       detailIdx = 0;
       currentMediaUrls = item.PrimaryPhoto ? [item.PrimaryPhoto] : [];
 
+      // Non-blocking Activity Ingestion: listing_view for authenticated buyers
+      if (consumerSessionToken && item?.ListingKey) {
+        fetch(`${CONSUMER_API_BASE}/api/consumer/activity`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer ' + consumerSessionToken,
+            'X-Site-Key': SITE_KEY
+          },
+          body: JSON.stringify({
+            site: SITE_KEY,
+            type: 'listing_view',
+            listingKey: item.ListingKey
+          }),
+          keepalive: true
+        }).catch(() => {});
+      }
+
       const modal = document.getElementById('detailOverlay');
       modal.style.display = 'flex';
 
@@ -4792,10 +4810,31 @@
           body: JSON.stringify(payload)
         });
 
+        const resData = await res.json().catch(() => ({}));
+
         if (res.ok) {
           alert('Thank you! Your inquiry has been sent to ' + (tenantConfig?.displayName || 'the agent') + '.');
           document.getElementById('contactOverlay').style.display = 'none';
           document.getElementById('contactForm').reset();
+
+          // Non-blocking Activity Ingestion: inquiry_submitted for authenticated buyers
+          if (consumerSessionToken && resData?.leadId) {
+            fetch(`${CONSUMER_API_BASE}/api/consumer/activity`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer ' + consumerSessionToken,
+                'X-Site-Key': SITE_KEY
+              },
+              body: JSON.stringify({
+                site: SITE_KEY,
+                type: 'inquiry_submitted',
+                listingKey: currentDetail?.ListingKey || null,
+                leadId: resData.leadId
+              }),
+              keepalive: true
+            }).catch(() => {});
+          }
         } else {
           alert('Unable to submit inquiry. Please try again.');
         }

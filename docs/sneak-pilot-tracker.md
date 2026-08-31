@@ -80,25 +80,27 @@ Every participant must complete all verification gates before being marked **Lau
   * Phase 7.3C1B.1 Live WordPress Embed Layout Hotfix & Browser QA: 2026-08-28 16:00 UTC (100% PASS)
   * Phase 7.3C2A Saved Search Email Alert Engine & Delivery Infrastructure: 2026-08-30 21:50 UTC (100% PASS)
   * Phase 7.3C2A.1 Alert Delivery Correctness, Concurrency & Secret Hardening Hotfix: 2026-08-30 23:00 UTC (100% PASS)
-* **Phase 7.3C2A.1 Alert Delivery Correctness, Concurrency & Secret Hardening:**
-  * *Provider Status Correction:* `provider_unconfigured` returns `{ success: false, retryable: true, status: 'provider_unconfigured' }`, logs delivery with `sent_at = NULL`, leaves candidate listings retryable without setting `notified_at` or advancing `last_sent_at`.
-  * *Secret Hardening:* Zero fallback keys in runtime codebase; fails closed with 503 for unsubscribe and deferred delivery if `SNEAK_SIGNING_SECRET` is missing.
-  * *Atomic Claim-Before-Send:* Candidate matches claimed atomically with `claim_id` and 10-minute expiry; guarantees exactly 1 email delivery across concurrent runs.
-  * *Migration 0029:* Applied `0029_sneak_alert_delivery_hardening.sql` to remote D1 `sneak-idx-staging`.
+  * Phase 7.3C2B Agent Client Activity Dashboard & Buyer Timeline: 2026-08-31 09:30 UTC (100% PASS)
+* **Phase 7.3C2B Agent Client Activity Dashboard & Authenticated Buyer Timeline:**
+  * *Privacy-Preserving Activity Ledger:* D1 table `sneak_consumer_activity_events` (migration 0030) records authenticated buyer events (`listing_view`, `favorite_*`, `saved_search_*`, `alert_*`, `inquiry_submitted`). Zero anonymous tracking, zero fingerprinting, zero geolocation tracking.
+  * *Consumer Ingestion Protection:* `POST /api/consumer/activity` enforces authentication, strict browser allowlist (`listing_view`, `inquiry_submitted`), 30-minute deduplication on listing views, lead email match verification, and 120 events/hr rate limiting.
+  * *Member Portal Clients Roster & Timeline:* REALTOR® Member Portal features full Clients navigation tab, 4 live aggregate KPI summary cards, email search filter, multi-criteria sorting, and responsive Client Detail modal with interactive longitudinal activity timeline, saved homes (with display controls), saved searches, and inquiries.
+  * *Strict Tenant Isolation:* All member client and timeline queries strictly scoped by authenticated `account_id`; cross-account lookups return 404 with zero enumeration.
 * **Live Validation Evidence:**
   * Live Public URL: `https://coconutcoastrealtors.org/idx-test/` (HTTP 200 OK)
-  * Live Static UI Build: PASS — `data-ui-build="2026.08.30.7.3c2a1"`, `CCOR_IDX_UI_BUILD = '2026.08.30.7.3c2a1'`, `embed.js &v=2026.08.30.7.3c2a1`
-  * Live Alert Worker Health: PASS — `https://sneak-idx-alerts-staging.bonitaspringsrealtors.workers.dev/api/alerts/version` (200 OK, `sneak-alerts-worker`, `2026.08.30.7.3c2a1`, `healthy`, `emailProviderConfigured: false`, `signingSecretConfigured: false`, `deliveryReady: false`)
-  * Live Consumer Worker Health: PASS — `https://sneak-idx-consumer-staging.bonitaspringsrealtors.workers.dev/api/consumer/version` (200 OK, `sneak-consumer-worker`, `2026.08.30.7.3c2a1`, `healthy`)
-  * Live Unsubscribe Endpoint Security: PASS — Missing token returns 400 Bad Request; malformed token returns 400 or 503 Service Unavailable safely with clean HTML
-  * Automated Regression Suite: PASS — 125/125 tests passing across 8 test suites (`node --test test/*.test.mjs`)
-  * Live Automated Verification: PASS — 7/7 live verification assertions passing (`node scripts/verify-phase73c2a1-live.mjs`)
+  * Live Static UI Build: PASS — `data-ui-build="2026.08.30.7.3c2b"`, `CCOR_IDX_UI_BUILD = '2026.08.30.7.3c2b'`, `embed.js &v=2026.08.30.7.3c2b`
+  * Live Alert Worker Health: PASS — `https://sneak-idx-alerts-staging.bonitaspringsrealtors.workers.dev/api/alerts/version` (200 OK, `sneak-alerts-worker`, `2026.08.30.7.3c2b`, `healthy`, `deliveryReady: false`)
+  * Live Consumer Worker Health: PASS — `https://sneak-idx-consumer-staging.bonitaspringsrealtors.workers.dev/api/consumer/version` (200 OK, `sneak-consumer-worker`, `2026.08.30.7.3c2b`, `healthy`)
+  * Live Member Worker Health: PASS — `https://sneak-idx-member-staging.bonitaspringsrealtors.workers.dev/health` (200 OK, `sneak-idx-member-staging`, `2026.08.30.7.3c2b`, `healthy`)
+  * Live Member Worker Clients Route Security: PASS — `https://sneak-idx-member-staging.bonitaspringsrealtors.workers.dev/api/member/clients` (401 Unauthorized for unauthenticated requests)
+  * Automated Regression Suite: PASS — 133/133 tests passing across 9 test suites (`node --test test/*.test.mjs`)
+  * Live Automated Verification: PASS — 8/8 live verification assertions passing (`node scripts/verify-phase73c2b-live.mjs`)
 * **Observability & Timing:**
   * Staff Setup Time: ~9 minutes
   * Member Implementation Time: ~2 minutes (HTML snippet paste in WordPress)
-  * Staff Interventions Required: 12 (Identity reconciliation, Phase 7.1 model correction, Phase 7.2 product corrections, Phase 7.3A search parity, Phase 7.3B1 interactive map synchronization, Phase 7.3B2A radius search, Phase 7.3B2B polygon search, Phase 7.3C1A buyer auth, Phase 7.3C1B saved searches, Phase 7.3C1B.1 embed layout hotfix, Phase 7.3C2A email alert engine, Phase 7.3C2A.1 delivery hardening)
+  * Staff Interventions Required: 13 (Identity reconciliation, Phase 7.1 model correction, Phase 7.2 product corrections, Phase 7.3A search parity, Phase 7.3B1 interactive map synchronization, Phase 7.3B2A radius search, Phase 7.3B2B polygon search, Phase 7.3C1A buyer auth, Phase 7.3C1B saved searches, Phase 7.3C1B.1 embed layout hotfix, Phase 7.3C2A email alert engine, Phase 7.3C2A.1 delivery hardening, Phase 7.3C2B client activity dashboard)
   * Support Questions Logged: 0
-* **Final Status:** **ACTIVE PILOT (CCOR IDX Plug-in Phase 7.3C2A.1 Deployed & Verified)**
+* **Final Status:** **ACTIVE PILOT (CCOR IDX Plug-in Phase 7.3C2B Deployed & Verified)**
 
 ---
 

@@ -74,6 +74,35 @@ export async function handleMemberOverview(db, memberContext) {
         WHERE s.account_id = ?
     `).bind(account_id).first();
 
+    const clientsCountRow = await db.prepare(`
+        SELECT count(*) as count
+        FROM sneak_consumer_users u
+        JOIN sneak_sites s ON u.site_id = s.id
+        WHERE s.account_id = ?
+    `).bind(account_id).first();
+
+    const activeClients7dRow = await db.prepare(`
+        SELECT count(*) as count
+        FROM sneak_consumer_users u
+        JOIN sneak_sites s ON u.site_id = s.id
+        WHERE s.account_id = ?
+          AND (u.last_activity_at > datetime('now', '-7 days') OR u.last_login_at > datetime('now', '-7 days'))
+    `).bind(account_id).first();
+
+    const savedHomesCountRow = await db.prepare(`
+        SELECT count(*) as count
+        FROM sneak_consumer_favorites f
+        JOIN sneak_sites s ON f.site_id = s.id
+        WHERE s.account_id = ?
+    `).bind(account_id).first();
+
+    const savedSearchesCountRow = await db.prepare(`
+        SELECT count(*) as count
+        FROM sneak_consumer_saved_searches ss
+        JOIN sneak_sites s ON ss.site_id = s.id
+        WHERE s.account_id = ?
+    `).bind(account_id).first();
+
     return json({
         account: {
             id: account_id,
@@ -94,7 +123,11 @@ export async function handleMemberOverview(db, memberContext) {
             activeListings: listingsCount?.count || 0,
             futureOpenHouses: openHousesCount?.count || 0
         },
-        leadsCount: leadsCount?.count || 0
+        leadsCount: leadsCount?.count || 0,
+        clientsCount: clientsCountRow?.count || 0,
+        activeClients7dCount: activeClients7dRow?.count || 0,
+        savedHomesCount: savedHomesCountRow?.count || 0,
+        savedSearchesCount: savedSearchesCountRow?.count || 0
     });
 }
 
@@ -605,6 +638,403 @@ export async function handleRemoveMemberDomain(db, memberContext, env) {
     await logMemberAudit(db, user_id, account_id, 'REMOVE_CUSTOM_DOMAIN', 'domain_binding', binding.id, `Removed custom domain ${binding.hostname}`);
 
     return json(result);
+}
+
+/**
+ * ============================================================================
+ * SNEAK MEMBER CLIENTS & ENGAGEMENT ACTIVITY API (Phase 7.3C2B)
+ * ============================================================================
+ */
+
+/**
+ * GET /api/member/clients?search=...&sort=...&page=...&limit=...
+ * Returns paginated list of authenticated buyers across all sites owned by member's account.
+ */
+export async function handleListMemberClients(db, memberContext, url) {
+    const { account_id } = memberContext;
+
+    // 1. Resolve all sites belonging to authenticated account
+    const sitesRes = await db.prepare("SELECT id, site_name, site_key, scope_type, scope_value FROM sneak_sites WHERE account_id = ?").bind(account_id).all();
+    const sites = sitesRes.results || [];
+    if (sites.length === 0) {
+        return json({ success: true, clients: [], total: 0, page: 1, limit: 25, totalPages: 0 });
+    }
+
+    const siteMap = new Map(sites.map(s => [s.id, s]));
+    const siteIds = sites.map(s => s.id);
+    const placeholders = siteIds.map(() => '?').join(',');
+
+    // 2. Parse query parameters
+    const search = (url.searchParams.get('search') || '').trim().slice(0, 100);
+    const sort = url.searchParams.get('sort') || 'recently_active';
+    const page = Math.max(1, parseInt(url.searchParams.get('page'), 10) || 1);
+    const limit = Math.min(100, Math.max(1, parseInt(url.searchParams.get('limit'), 10) || 25));
+    const offset = (page - 1) * limit;
+
+    // 3. Sorting SQL expression
+    let orderBySql = 'ORDER BY COALESCE(u.last_activity_at, u.last_login_at, u.updated_at, u.created_at) DESC';
+    if (sort === 'newest') {
+        orderBySql = 'ORDER BY u.created_at DESC';
+    } else if (sort === 'saved_homes') {
+        orderBySql = 'ORDER BY favorite_count DESC, u.created_at DESC';
+    } else if (sort === 'saved_searches') {
+        orderBySql = 'ORDER BY saved_search_count DESC, u.created_at DESC';
+    }
+
+    // 4. Count query
+    let countSql = `SELECT count(*) as total FROM sneak_consumer_users u WHERE u.site_id IN (${placeholders})`;
+    const countBinds = [...siteIds];
+    if (search) {
+        countSql += ` AND LOWER(u.email) LIKE ?`;
+        countBinds.push(`%${search.toLowerCase()}%`);
+    }
+
+    const countRow = await db.prepare(countSql).bind(...countBinds).first();
+    const total = countRow?.total || 0;
+    const totalPages = Math.ceil(total / limit);
+
+    if (total === 0) {
+        return json({ success: true, clients: [], total: 0, page, limit, totalPages: 0 });
+    }
+
+    // 5. Select clients with aggregate engagement counts
+    let querySql = `
+        SELECT 
+            u.id, u.site_id, u.email, u.status, u.created_at, u.last_login_at, u.last_activity_at,
+            (SELECT count(*) FROM sneak_consumer_favorites f WHERE f.user_id = u.id AND f.site_id = u.site_id) as favorite_count,
+            (SELECT count(*) FROM sneak_consumer_saved_searches s WHERE s.user_id = u.id AND s.site_id = u.site_id) as saved_search_count,
+            (SELECT count(*) FROM sneak_consumer_search_alerts a WHERE a.user_id = u.id AND a.site_id = u.site_id AND a.enabled = 1) as alert_count,
+            (SELECT count(*) FROM sneak_leads l WHERE l.site_id = u.site_id AND LOWER(l.email) = LOWER(u.email)) as inquiry_count
+        FROM sneak_consumer_users u
+        WHERE u.site_id IN (${placeholders})
+    `;
+    const queryBinds = [...siteIds];
+
+    if (search) {
+        querySql += ` AND LOWER(u.email) LIKE ?`;
+        queryBinds.push(`%${search.toLowerCase()}%`);
+    }
+
+    querySql += ` ${orderBySql} LIMIT ? OFFSET ?`;
+    queryBinds.push(limit, offset);
+
+    const rowsRes = await db.prepare(querySql).bind(...queryBinds).all();
+    const clients = (rowsRes.results || []).map(r => {
+        const site = siteMap.get(r.site_id);
+        return {
+            id: r.id,
+            siteId: r.site_id,
+            siteName: site?.site_name || 'Website',
+            email: r.email,
+            status: r.status,
+            createdAt: r.created_at,
+            lastLoginAt: r.last_login_at || null,
+            lastActivityAt: r.last_activity_at || r.last_login_at || r.created_at,
+            savedHomesCount: Number(r.favorite_count) || 0,
+            savedSearchesCount: Number(r.saved_search_count) || 0,
+            alertsCount: Number(r.alert_count) || 0,
+            inquiriesCount: Number(r.inquiry_count) || 0
+        };
+    });
+
+    return json({
+        success: true,
+        clients,
+        total,
+        page,
+        limit,
+        totalPages
+    });
+}
+
+/**
+ * GET /api/member/clients/:consumerId
+ * Returns rich client profile, saved homes, saved searches, and recent inquiries.
+ */
+export async function handleGetMemberClientDetail(db, memberContext, consumerId) {
+    const { account_id } = memberContext;
+
+    // Strict Tenant Isolation: Verify client belongs to a site owned by member's account
+    const userRow = await db.prepare(`
+        SELECT u.id, u.site_id, u.email, u.status, u.created_at, u.activated_at, u.last_login_at, u.last_activity_at,
+               s.site_name, s.site_key, s.scope_type, s.scope_value
+        FROM sneak_consumer_users u
+        JOIN sneak_sites s ON u.site_id = s.id
+        WHERE u.id = ? AND s.account_id = ?
+    `).bind(consumerId, account_id).first();
+
+    if (!userRow) {
+        return error('Client not found or unauthorized', 404, 'NotFound');
+    }
+
+    // 1. Current Engagement Counts
+    const favCountRow = await db.prepare(`SELECT count(*) as c FROM sneak_consumer_favorites WHERE user_id = ? AND site_id = ?`).bind(userRow.id, userRow.site_id).first();
+    const searchCountRow = await db.prepare(`SELECT count(*) as c FROM sneak_consumer_saved_searches WHERE user_id = ? AND site_id = ?`).bind(userRow.id, userRow.site_id).first();
+    const alertCountRow = await db.prepare(`SELECT count(*) as c FROM sneak_consumer_search_alerts WHERE user_id = ? AND site_id = ? AND enabled = 1`).bind(userRow.id, userRow.site_id).first();
+    const inquiryCountRow = await db.prepare(`SELECT count(*) as c FROM sneak_leads WHERE site_id = ? AND LOWER(email) = LOWER(?)`).bind(userRow.site_id, userRow.email).first();
+
+    // 2. Fetch Saved Homes (Favorites) with Display Control Enforcement
+    const favRows = await db.prepare(`
+        SELECT listing_key, created_at FROM sneak_consumer_favorites
+        WHERE user_id = ? AND site_id = ?
+        ORDER BY created_at DESC
+        LIMIT 50
+    `).bind(userRow.id, userRow.site_id).all();
+
+    const keys = (favRows.results || []).map(f => f.listing_key);
+    const listingMap = new Map();
+
+    if (keys.length > 0) {
+        let scopeClause = '';
+        const bindings = [];
+
+        if (userRow.scope_type === 'agent' && userRow.scope_value) {
+            scopeClause = ' AND (ListAgentMlsId = ? OR ListAgentKey = ?)';
+            bindings.push(userRow.scope_value, userRow.scope_value);
+        } else if (userRow.scope_type === 'office' && userRow.scope_value) {
+            scopeClause = ' AND (ListOfficeMlsId = ? OR ListOfficeKey = ?)';
+            bindings.push(userRow.scope_value, userRow.scope_value);
+        }
+
+        for (let i = 0; i < keys.length; i += 50) {
+            const chunk = keys.slice(i, i + 50);
+            const placeholders = chunk.map(() => '?').join(',');
+            const res = await db.prepare(`
+                SELECT 
+                    ListingKey, ListPrice, StandardStatus, PropertyType, PropertySubType,
+                    BedroomsTotal, BathroomsTotalInteger, LivingArea, LotSizeAcres,
+                    City, PostalCode, UnparsedAddress, PrimaryPhoto,
+                    InternetEntireListingDisplayYN, InternetAddressDisplayYN
+                FROM sneak_listings
+                WHERE ListingKey IN (${placeholders})
+                  AND (InternetEntireListingDisplayYN = 1 OR InternetEntireListingDisplayYN IS NULL)
+                  ${scopeClause}
+            `).bind(...chunk, ...bindings).all();
+
+            for (const row of res.results || []) {
+                listingMap.set(row.ListingKey, row);
+            }
+        }
+    }
+
+    const savedHomes = (favRows.results || []).map(f => {
+        const listing = listingMap.get(f.listing_key);
+        if (!listing) {
+            return {
+                listingKey: f.listing_key,
+                createdAt: f.created_at,
+                unavailable: true
+            };
+        }
+
+        const isAddressSuppressed = (listing.InternetAddressDisplayYN === 0);
+        return {
+            listingKey: listing.ListingKey,
+            createdAt: f.created_at,
+            unavailable: false,
+            price: listing.ListPrice,
+            address: isAddressSuppressed ? 'Address Undisclosed' : (listing.UnparsedAddress || 'Address Undisclosed'),
+            city: listing.City || '',
+            postalCode: listing.PostalCode || '',
+            propertyType: listing.PropertyType || 'Residential',
+            propertySubType: listing.PropertySubType || '',
+            bedrooms: listing.BedroomsTotal || null,
+            bathrooms: listing.BathroomsTotalInteger || null,
+            livingArea: listing.LivingArea || null,
+            status: listing.StandardStatus || 'Active',
+            primaryPhoto: listing.PrimaryPhoto || null
+        };
+    });
+
+    // 3. Fetch Saved Searches & Alerts
+    const searchRows = await db.prepare(`
+        SELECT 
+            s.id, s.name, s.created_at, s.updated_at,
+            a.frequency, a.enabled, a.enabled_at
+        FROM sneak_consumer_saved_searches s
+        LEFT JOIN sneak_consumer_search_alerts a ON s.id = a.saved_search_id
+        WHERE s.user_id = ? AND s.site_id = ?
+        ORDER BY s.updated_at DESC
+        LIMIT 25
+    `).bind(userRow.id, userRow.site_id).all();
+
+    const savedSearches = (searchRows.results || []).map(s => ({
+        id: s.id,
+        name: s.name,
+        alertFrequency: s.frequency || 'off',
+        alertEnabled: Boolean(s.enabled),
+        enabledAt: s.enabled_at || null,
+        createdAt: s.created_at,
+        updatedAt: s.updated_at
+    }));
+
+    // 4. Fetch Associated Inquiries
+    const leadRows = await db.prepare(`
+        SELECT id, listing_key, lead_type, name, email, phone, message, created_at
+        FROM sneak_leads
+        WHERE site_id = ? AND LOWER(email) = LOWER(?)
+        ORDER BY created_at DESC
+        LIMIT 20
+    `).bind(userRow.site_id, userRow.email).all();
+
+    const inquiries = (leadRows.results || []).map(l => ({
+        id: l.id,
+        listingKey: l.listing_key || null,
+        leadType: l.lead_type || 'property_inquiry',
+        name: l.name || '',
+        email: l.email || '',
+        phone: l.phone || null,
+        message: l.message || '',
+        createdAt: l.created_at
+    }));
+
+    return json({
+        success: true,
+        client: {
+            id: userRow.id,
+            siteId: userRow.site_id,
+            siteName: userRow.site_name,
+            email: userRow.email,
+            status: userRow.status,
+            createdAt: userRow.created_at,
+            activatedAt: userRow.activated_at || null,
+            lastLoginAt: userRow.last_login_at || null,
+            lastActivityAt: userRow.last_activity_at || userRow.last_login_at || userRow.created_at
+        },
+        engagement: {
+            savedHomesCount: favCountRow?.c || 0,
+            savedSearchesCount: searchCountRow?.c || 0,
+            alertsCount: alertCountRow?.c || 0,
+            inquiriesCount: inquiryCountRow?.c || 0
+        },
+        savedHomes,
+        savedSearches,
+        inquiries
+    });
+}
+
+/**
+ * GET /api/member/clients/:consumerId/activity?page=...&limit=...
+ * Returns verified longitudinal buyer activity timeline.
+ */
+export async function handleGetMemberClientActivity(db, memberContext, consumerId, url) {
+    const { account_id } = memberContext;
+
+    // Strict Tenant Isolation
+    const userRow = await db.prepare(`
+        SELECT u.id, u.site_id, u.email, s.scope_type, s.scope_value
+        FROM sneak_consumer_users u
+        JOIN sneak_sites s ON u.site_id = s.id
+        WHERE u.id = ? AND s.account_id = ?
+    `).bind(consumerId, account_id).first();
+
+    if (!userRow) {
+        return error('Client not found or unauthorized', 404, 'NotFound');
+    }
+
+    const page = Math.max(1, parseInt(url.searchParams.get('page'), 10) || 1);
+    const limit = Math.min(100, Math.max(1, parseInt(url.searchParams.get('limit'), 10) || 50));
+    const offset = (page - 1) * limit;
+
+    const countRow = await db.prepare(`
+        SELECT count(*) as total FROM sneak_consumer_activity_events
+        WHERE user_id = ? AND site_id = ?
+    `).bind(userRow.id, userRow.site_id).first();
+
+    const total = countRow?.total || 0;
+    const totalPages = Math.ceil(total / limit);
+
+    if (total === 0) {
+        return json({ success: true, events: [], total: 0, page, limit, totalPages: 0 });
+    }
+
+    const eventsRes = await db.prepare(`
+        SELECT id, event_type, listing_key, saved_search_id, lead_id, metadata_json, created_at
+        FROM sneak_consumer_activity_events
+        WHERE user_id = ? AND site_id = ?
+        ORDER BY created_at DESC
+        LIMIT ? OFFSET ?
+    `).bind(userRow.id, userRow.site_id, limit, offset).all();
+
+    const rawEvents = eventsRes.results || [];
+
+    // Collect listing keys to resolve safe display data
+    const listingKeys = [...new Set(rawEvents.map(e => e.listing_key).filter(Boolean))];
+    const listingMap = new Map();
+
+    if (listingKeys.length > 0) {
+        let scopeClause = '';
+        const bindings = [];
+
+        if (userRow.scope_type === 'agent' && userRow.scope_value) {
+            scopeClause = ' AND (ListAgentMlsId = ? OR ListAgentKey = ?)';
+            bindings.push(userRow.scope_value, userRow.scope_value);
+        } else if (userRow.scope_type === 'office' && userRow.scope_value) {
+            scopeClause = ' AND (ListOfficeMlsId = ? OR ListOfficeKey = ?)';
+            bindings.push(userRow.scope_value, userRow.scope_value);
+        }
+
+        for (let i = 0; i < listingKeys.length; i += 50) {
+            const chunk = listingKeys.slice(i, i + 50);
+            const placeholders = chunk.map(() => '?').join(',');
+            const res = await db.prepare(`
+                SELECT 
+                    ListingKey, ListPrice, City, UnparsedAddress, PrimaryPhoto,
+                    InternetEntireListingDisplayYN, InternetAddressDisplayYN
+                FROM sneak_listings
+                WHERE ListingKey IN (${placeholders})
+                  AND (InternetEntireListingDisplayYN = 1 OR InternetEntireListingDisplayYN IS NULL)
+                  ${scopeClause}
+            `).bind(...chunk, ...bindings).all();
+
+            for (const row of res.results || []) {
+                listingMap.set(row.ListingKey, row);
+            }
+        }
+    }
+
+    const events = rawEvents.map(e => {
+        let metadata = null;
+        try {
+            metadata = e.metadata_json ? JSON.parse(e.metadata_json) : null;
+        } catch {}
+
+        let listing = null;
+        if (e.listing_key) {
+            const l = listingMap.get(e.listing_key);
+            if (l) {
+                const isAddressSuppressed = (l.InternetAddressDisplayYN === 0);
+                listing = {
+                    listingKey: l.ListingKey,
+                    price: l.ListPrice,
+                    address: isAddressSuppressed ? 'Address Undisclosed' : (l.UnparsedAddress || 'Address Undisclosed'),
+                    city: l.City || '',
+                    primaryPhoto: l.PrimaryPhoto || null
+                };
+            }
+        }
+
+        return {
+            id: e.id,
+            type: e.event_type,
+            createdAt: e.created_at,
+            listingKey: e.listing_key || null,
+            listing,
+            savedSearchId: e.saved_search_id || null,
+            searchName: metadata?.name || null,
+            leadId: e.lead_id || null,
+            metadata: metadata ? { frequency: metadata.frequency, name: metadata.name } : null
+        };
+    });
+
+    return json({
+        success: true,
+        events,
+        total,
+        page,
+        limit,
+        totalPages
+    });
 }
 
 

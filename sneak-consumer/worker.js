@@ -27,10 +27,11 @@ import {
     handleUpdateSavedSearch,
     handleDeleteSavedSearch,
     handleGetSavedSearchAlert,
-    handleUpdateSavedSearchAlert
+    handleUpdateSavedSearchAlert,
+    handleReportActivity
 } from './api.js';
 
-const CONSUMER_BUILD = '2026.08.30.7.3c2a1';
+const CONSUMER_BUILD = '2026.08.30.7.3c2b';
 
 /**
  * Validates request origin against authorized sites/domains in D1.
@@ -174,6 +175,11 @@ export default {
             if (url.pathname.startsWith('/api/consumer/saved-searches/') && method === 'DELETE') {
                 const searchId = decodeURIComponent(url.pathname.slice('/api/consumer/saved-searches/'.length));
                 return await handleDeleteSavedSearch(req, searchId, url, env, allowedOrigin);
+            }
+
+            // Activity Ingestion Route (Phase 7.3C2B)
+            if (url.pathname === '/api/consumer/activity' && method === 'POST') {
+                return await handleReportActivity(req, env, allowedOrigin);
             }
 
             return jsonResponse({ error: 'NotFound', message: `Route ${method} ${url.pathname} not found.` }, 404, allowedOrigin);

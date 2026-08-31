@@ -18,7 +18,7 @@ import { findDueAlerts, matchNewListingsForAlert } from './matcher.js';
 import { renderSavedSearchAlertEmail, escapeHtml } from './email.js';
 import { sendTransactionalEmail, createUnsubscribeToken, verifyUnsubscribeToken } from '../sneak-shared/email-provider.js';
 
-export const ALERT_BUILD = '2026.08.30.7.3c2a1';
+export const ALERT_BUILD = '2026.08.30.7.3c2b';
 
 export function jsonResponse(data, status = 200, origin = null) {
     const headers = new Headers();
@@ -37,6 +37,23 @@ export function jsonResponse(data, status = 200, origin = null) {
  * Core alert processing engine executed by scheduled cron or test dry-runs.
  */
 export async function processAlerts({ db, env, dryRun = false, now = new Date() }) {
+    const signingSecret = env?.SNEAK_ALERT_UNSUBSCRIBE_SECRET || env?.SNEAK_SIGNING_SECRET;
+    const providerReady = Boolean(env?.MAILJET_API_KEY && env?.MAILJET_SECRET_KEY);
+    const signingReady = Boolean(signingSecret && typeof signingSecret === 'string' && signingSecret.length >= 16);
+    const deliveryReady = providerReady && signingReady;
+
+    // Delivery-Not-Ready Short Circuit (Phase 7.3C2A.1 Stabilization):
+    // If delivery credentials are not ready and this is not an explicit dry-run,
+    // exit safely before discovering due alerts or matching to avoid unnecessary D1 churn.
+    if (!deliveryReady && !dryRun) {
+        console.log('[ALERT WORKER] Delivery infrastructure not configured. Short-circuiting scheduled run.');
+        return {
+            skipped: true,
+            reason: 'DeliveryNotConfigured',
+            deliveryReady: false
+        };
+    }
+
     const runId = `arun_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
     const nowIso = (now instanceof Date ? now : new Date(now)).toISOString();
 
@@ -48,6 +65,7 @@ export async function processAlerts({ db, env, dryRun = false, now = new Date() 
         matchesFound: 0,
         emailsAttempted: 0,
         emailsSent: 0,
+        emailsWouldSend: 0,
         emailsFailed: 0,
         emailsDeferred: 0,
         dryRun
@@ -80,7 +98,6 @@ export async function processAlerts({ db, env, dryRun = false, now = new Date() 
         stats.searchesEvaluated = dueAlerts.length;
 
         const alertsWorkerUrl = env?.ALERTS_WORKER_URL || 'https://sneak-idx-alerts-staging.bonitaspringsrealtors.workers.dev';
-        const signingSecret = env?.SNEAK_ALERT_UNSUBSCRIBE_SECRET || env?.SNEAK_SIGNING_SECRET;
 
         for (const alert of dueAlerts) {
             // 3. Match candidate listings
@@ -104,7 +121,7 @@ export async function processAlerts({ db, env, dryRun = false, now = new Date() 
 
             if (dryRun) {
                 stats.emailsAttempted++;
-                stats.emailsSent++;
+                stats.emailsWouldSend++;
                 continue;
             }
 

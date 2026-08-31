@@ -517,7 +517,7 @@ function createMockAlertsDB() {
 
 describe('SNEAK IDX Phase 7.3C2A.1 — Alert Delivery Correctness, Concurrency & Secret Hardening', () => {
 
-    test('1. Alert Worker Version & Health endpoint returns build 2026.08.30.7.3c2a1 and deliveryReady status', async () => {
+    test('1. Alert Worker Version & Health endpoint returns build 2026.08.30.7.3c2b and deliveryReady status', async () => {
         const req = new Request('https://sneak-idx-alerts-staging.bonitaspringsrealtors.workers.dev/api/alerts/version');
         const res = await alertWorker.fetch(req, {
             MAILJET_API_KEY: 'test',
@@ -528,7 +528,7 @@ describe('SNEAK IDX Phase 7.3C2A.1 — Alert Delivery Correctness, Concurrency &
         const data = await res.json();
         assert.equal(data.service, 'sneak-alerts-worker');
         assert.equal(data.build, ALERT_BUILD);
-        assert.equal(data.build, '2026.08.30.7.3c2a1');
+        assert.equal(data.build, '2026.08.30.7.3c2b');
         assert.equal(data.status, 'healthy');
         assert.equal(data.emailProviderConfigured, true);
         assert.equal(data.signingSecretConfigured, true);
@@ -643,71 +643,88 @@ describe('SNEAK IDX Phase 7.3C2A.1 — Alert Delivery Correctness, Concurrency &
         const env = {
             DB: db,
             SNEAK_ENV: 'staging',
-            SNEAK_SIGNING_SECRET: TEST_SECRET
-            // No Mailjet credentials -> provider_unconfigured
+            SNEAK_SIGNING_SECRET: TEST_SECRET,
+            MAILJET_API_KEY: 'test_key',
+            MAILJET_SECRET_KEY: 'test_secret'
         };
 
-        const run = await processAlerts({ db, env, dryRun: false, now: new Date('2026-08-29T14:30:00Z') });
-        assert.equal(run.status, 'completed');
-        assert.equal(run.searchesEvaluated, 1);
-        assert.equal(run.emailsAttempted, 1);
-        assert.equal(run.emailsSent, 0, 'emailsSent MUST be 0 when provider is unconfigured');
-        assert.equal(run.emailsDeferred, 1, 'emailsDeferred MUST be 1 when provider is unconfigured');
-
-        // Match Ledger: notified_at MUST remain null and delivery_status MUST be 'provider_unconfigured'
-        const matches = db.tables.sneak_consumer_alert_matches.filter(m => m.alert_id === 'calert_1');
-        assert.ok(matches.length >= 1);
-        assert.ok(matches.every(m => m.notified_at === null), 'notified_at MUST remain NULL when unconfigured');
-        assert.ok(matches.every(m => m.delivery_status === 'provider_unconfigured'));
-
-        // Delivery Log: sent_at MUST be null
-        const deliveries = db.tables.sneak_consumer_alert_deliveries.filter(d => d.alert_id === 'calert_1');
-        assert.equal(deliveries.length, 1);
-        assert.equal(deliveries[0].status, 'provider_unconfigured');
-        assert.equal(deliveries[0].sent_at, null);
-
-        // Alert table: last_sent_at MUST remain null
-        const alert = db.tables.sneak_consumer_search_alerts.find(a => a.id === 'calert_1');
-        assert.equal(alert.last_sent_at, null);
-        assert.ok(alert.last_checked_at !== null);
-    });
-
-    test('8. HOTFIX 1 Retry Test: unconfigured listing remains retryable and is delivered successfully once provider is configured', async () => {
-        const db = createMockAlertsDB();
-        const unconfiguredEnv = {
-            DB: db,
-            SNEAK_ENV: 'staging',
-            SNEAK_SIGNING_SECRET: TEST_SECRET
-        };
-
-        // 1. First run without credentials -> provider_unconfigured
-        const run1 = await processAlerts({ db, env: unconfiguredEnv, dryRun: false, now: new Date('2026-08-29T14:30:00Z') });
-        assert.equal(run1.emailsSent, 0);
-        assert.equal(db.tables.sneak_consumer_alert_matches[0].notified_at, null);
-
-        // 2. Mock working provider fetch
+        // Mock fetch to simulate Mailjet credentials being rejected or unconfigured at provider level
         const originalFetch = globalThis.fetch;
         globalThis.fetch = async (url, opts) => {
             if (url.includes('api.mailjet.com')) {
                 return new Response(JSON.stringify({
-                    Messages: [{ To: [{ MessageID: 99887766 }] }]
-                }), { status: 200, headers: { 'Content-Type': 'application/json' } });
+                    ErrorCode: 'ProviderUnconfigured',
+                    ErrorMessage: 'Account credentials invalid'
+                }), { status: 401, headers: { 'Content-Type': 'application/json' } });
             }
             return originalFetch(url, opts);
         };
 
         try {
-            const configuredEnv = {
-                DB: db,
-                SNEAK_ENV: 'staging',
-                SNEAK_SIGNING_SECRET: TEST_SECRET,
-                MAILJET_API_KEY: 'valid_key',
-                MAILJET_SECRET_KEY: 'valid_secret'
+            const run = await processAlerts({ db, env, dryRun: false, now: new Date('2026-08-29T14:30:00Z') });
+            assert.equal(run.status, 'completed');
+            assert.equal(run.searchesEvaluated, 1);
+            assert.equal(run.emailsAttempted, 1);
+            assert.equal(run.emailsSent, 0, 'emailsSent MUST be 0 when provider delivery fails/unconfigured');
+            assert.equal(run.emailsFailed, 1);
+
+            // Match Ledger: notified_at MUST remain null and delivery_status MUST be 'failed'
+            const matches = db.tables.sneak_consumer_alert_matches.filter(m => m.alert_id === 'calert_1');
+            assert.ok(matches.length >= 1);
+            assert.ok(matches.every(m => m.notified_at === null), 'notified_at MUST remain NULL when unconfigured');
+
+            // Delivery Log: sent_at MUST be null
+            const deliveries = db.tables.sneak_consumer_alert_deliveries.filter(d => d.alert_id === 'calert_1');
+            assert.equal(deliveries.length, 1);
+            assert.equal(deliveries[0].status, 'failed');
+            assert.equal(deliveries[0].sent_at, null);
+
+            // Alert table: last_sent_at MUST remain null
+            const alert = db.tables.sneak_consumer_search_alerts.find(a => a.id === 'calert_1');
+            assert.equal(alert.last_sent_at, null);
+            assert.ok(alert.last_checked_at !== null);
+        } finally {
+            globalThis.fetch = originalFetch;
+        }
+    });
+
+    test('8. HOTFIX 1 Retry Test: failed/unconfigured listing remains retryable and is delivered successfully once provider is working', async () => {
+        const db = createMockAlertsDB();
+        const env = {
+            DB: db,
+            SNEAK_ENV: 'staging',
+            SNEAK_SIGNING_SECRET: TEST_SECRET,
+            MAILJET_API_KEY: 'test_key',
+            MAILJET_SECRET_KEY: 'test_secret'
+        };
+
+        // 1. First run with provider failing -> delivery failed
+        const originalFetch = globalThis.fetch;
+        globalThis.fetch = async (url, opts) => {
+            if (url.includes('api.mailjet.com')) {
+                return new Response(JSON.stringify({ ErrorCode: 'TemporaryFailure' }), { status: 500, headers: { 'Content-Type': 'application/json' } });
+            }
+            return originalFetch(url, opts);
+        };
+
+        try {
+            const run1 = await processAlerts({ db, env, dryRun: false, now: new Date('2026-08-29T14:30:00Z') });
+            assert.equal(run1.emailsSent, 0);
+            assert.equal(db.tables.sneak_consumer_alert_matches[0].notified_at, null);
+
+            // 2. Mock working provider fetch
+            globalThis.fetch = async (url, opts) => {
+                if (url.includes('api.mailjet.com')) {
+                    return new Response(JSON.stringify({
+                        Messages: [{ To: [{ MessageID: 99887766 }] }]
+                    }), { status: 200, headers: { 'Content-Type': 'application/json' } });
+                }
+                return originalFetch(url, opts);
             };
 
-            // 3. Second run with configured provider -> sends successfully
-            const run2 = await processAlerts({ db, env: configuredEnv, dryRun: false, now: new Date('2026-08-29T14:35:00Z') });
-            assert.equal(run2.emailsSent, 1, 'Retry run must successfully deliver the previously unconfigured match');
+            // 3. Second run with working provider -> sends successfully
+            const run2 = await processAlerts({ db, env, dryRun: false, now: new Date('2026-08-29T14:35:00Z') });
+            assert.equal(run2.emailsSent, 1, 'Retry run must successfully deliver the previously failed match');
             assert.equal(run2.emailsDeferred, 0);
 
             // 4. Match Ledger: now marked notified with status 'sent'
@@ -720,7 +737,7 @@ describe('SNEAK IDX Phase 7.3C2A.1 — Alert Delivery Correctness, Concurrency &
             assert.ok(alert.last_sent_at !== null);
 
             // 6. Third run immediately after -> 0 matches, 0 sends (idempotency preserved)
-            const run3 = await processAlerts({ db, env: configuredEnv, dryRun: false, now: new Date('2026-08-29T14:40:00Z') });
+            const run3 = await processAlerts({ db, env, dryRun: false, now: new Date('2026-08-29T14:40:00Z') });
             assert.equal(run3.emailsSent, 0);
             assert.equal(run3.matchesFound, 0);
         } finally {
@@ -748,11 +765,11 @@ describe('SNEAK IDX Phase 7.3C2A.1 — Alert Delivery Correctness, Concurrency &
             { message: 'SigningSecretUnavailable' }
         );
 
-        // Alert Processing defers delivery rather than sending malformed/insecure token
+        // Alert Processing short-circuits when signing secret is missing (delivery not ready)
         const run = await processAlerts({ db, env: envMissingSecret, dryRun: false });
-        assert.equal(run.emailsSent, 0);
-        assert.equal(run.emailsDeferred, 1);
-        assert.equal(db.tables.sneak_consumer_alert_matches[0].delivery_status, 'secret_unconfigured');
+        assert.equal(run.skipped, true);
+        assert.equal(run.reason, 'DeliveryNotConfigured');
+        assert.equal(run.deliveryReady, false);
 
         // Unsubscribe endpoint returns 503 when secret is not configured
         const req = new Request('https://alerts.staging/api/alerts/unsubscribe?token=some_token');
@@ -884,16 +901,34 @@ describe('SNEAK IDX Phase 7.3C2A.1 — Alert Delivery Correctness, Concurrency &
         db.tables.sneak_consumer_search_alerts[0].frequency = 'daily';
         db.tables.sneak_consumer_search_alerts[0].last_daily_local_date = null;
 
-        const env = { DB: db, SNEAK_ENV: 'staging', SNEAK_SIGNING_SECRET: TEST_SECRET };
+        const env = {
+            DB: db,
+            SNEAK_ENV: 'staging',
+            SNEAK_SIGNING_SECRET: TEST_SECRET,
+            MAILJET_API_KEY: 'test_key',
+            MAILJET_SECRET_KEY: 'test_secret'
+        };
 
-        // Before 8:00 AM EDT (6:00 AM EDT / 10:00 UTC) -> 0 due alerts
-        const earlyRun = await processAlerts({ db, env, dryRun: false, now: new Date('2026-08-29T10:00:00Z') });
-        assert.equal(earlyRun.searchesEvaluated, 0, 'Daily alert must not trigger before 8:00 AM local time');
+        const originalFetch = globalThis.fetch;
+        globalThis.fetch = async (url, opts) => {
+            if (url.includes('api.mailjet.com')) {
+                return new Response(JSON.stringify({ Messages: [{ To: [{ MessageID: 12345 }] }] }), { status: 200, headers: { 'Content-Type': 'application/json' } });
+            }
+            return originalFetch(url, opts);
+        };
 
-        // After 8:00 AM EDT (9:00 AM EDT / 13:00 UTC) -> 1 due alert evaluated (unconfigured -> deferred)
-        const dailyRun = await processAlerts({ db, env, dryRun: false, now: new Date('2026-08-29T13:00:00Z') });
-        assert.equal(dailyRun.searchesEvaluated, 1);
-        assert.equal(dailyRun.emailsDeferred, 1);
+        try {
+            // Before 8:00 AM EDT (6:00 AM EDT / 10:00 UTC) -> 0 due alerts
+            const earlyRun = await processAlerts({ db, env, dryRun: false, now: new Date('2026-08-29T10:00:00Z') });
+            assert.equal(earlyRun.searchesEvaluated, 0, 'Daily alert must not trigger before 8:00 AM local time');
+
+            // After 8:00 AM EDT (9:00 AM EDT / 13:00 UTC) -> 1 due alert evaluated & sent
+            const dailyRun = await processAlerts({ db, env, dryRun: false, now: new Date('2026-08-29T13:00:00Z') });
+            assert.equal(dailyRun.searchesEvaluated, 1);
+            assert.equal(dailyRun.emailsSent, 1);
+        } finally {
+            globalThis.fetch = originalFetch;
+        }
     });
 
     test('14. Tenant Scope Enforcement: Agent-scoped site excludes listings from foreign agents', async () => {
@@ -1005,15 +1040,29 @@ describe('SNEAK IDX Phase 7.3C2A.1 — Alert Delivery Correctness, Concurrency &
         assert.ok(badHtml.includes('This unsubscribe link is invalid or incomplete.'));
     });
 
-    test('18. Dry Run Semantics: dryRun does not claim or mutate D1 state', async () => {
+    test('18. Dry Run Semantics: dryRun does not claim or mutate D1 state, emailsSent=0, emailsWouldSend=1', async () => {
         const db = createMockAlertsDB();
         const env = { DB: db, SNEAK_SIGNING_SECRET: TEST_SECRET };
 
         const run = await processAlerts({ db, env, dryRun: true });
         assert.equal(run.dryRun, true);
         assert.equal(run.matchesFound, 2);
+        assert.equal(run.emailsSent, 0, 'Dry run must NEVER report emailsSent > 0');
+        assert.equal(run.emailsWouldSend, 1, 'Dry run must report emailsWouldSend for hypothetical count');
         assert.equal(db.tables.sneak_consumer_alert_matches.length, 0, 'Dry run must not create match rows');
         assert.equal(db.tables.sneak_consumer_alert_deliveries.length, 0, 'Dry run must not create delivery logs');
+    });
+
+    test('21. Delivery-Not-Ready Short Circuit: Scheduled run exits immediately when unconfigured', async () => {
+        const db = createMockAlertsDB();
+        // Missing Mailjet credentials or signing secret
+        const env = { DB: db };
+
+        const run = await processAlerts({ db, env, dryRun: false });
+        assert.equal(run.skipped, true);
+        assert.equal(run.reason, 'DeliveryNotConfigured');
+        assert.equal(run.deliveryReady, false);
+        assert.equal(db.tables.sneak_alert_runs.length, 0, 'Short circuit must not create alert run lock');
     });
 
     test('19. Spatial Search Alerts: Polygon Point-in-Polygon Filtering', () => {

@@ -1,7 +1,14 @@
 /**
  * sneak-member/ui.js
  * 
- * Single-Page Application for SNEAK Member Self-Service Portal.
+ * Single-Page Application for SNEAK Member Self-Service Portal:
+ * - Overview KPI Dashboard
+ * - Clients & Authenticated Buyer Activity Timeline (Phase 7.3C2B)
+ * - Website & Custom Domain Provisioning
+ * - Custom Branding & Color Palette
+ * - Widget Config & HTML Embed Snippets
+ * - Captured Inquiries & Leads
+ * - GrowthZone Billing Alignment
  */
 
 export function renderMemberUI() {
@@ -31,11 +38,13 @@ export function renderMemberUI() {
             --success: #10b981;
             --warning: #f59e0b;
             --danger: #ef4444;
+            --purple: #8b5cf6;
+            --radius-sm: 6px;
             --radius-md: 8px;
             --radius-lg: 12px;
             --radius-full: 9999px;
             --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.2), 0 4px 6px -2px rgba(0, 0, 0, 0.1);
         }
 
         * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -61,6 +70,7 @@ export function renderMemberUI() {
             border-right: 1px solid var(--border-subtle);
             display: flex;
             flex-direction: column;
+            flex-shrink: 0;
         }
         .sidebar-header {
             padding: 24px 20px;
@@ -78,7 +88,7 @@ export function renderMemberUI() {
             font-size: 0.75rem;
             letter-spacing: 0.05em;
         }
-        .sidebar-nav { padding: 16px 12px; display: flex; flex-direction: column; gap: 4px; flex: 1; }
+        .sidebar-nav { padding: 16px 12px; display: flex; flex-direction: column; gap: 4px; flex: 1; overflow-y: auto; }
         .nav-item {
             display: flex;
             align-items: center;
@@ -91,11 +101,12 @@ export function renderMemberUI() {
             font-size: 0.9rem;
             transition: all 0.15s ease;
             cursor: pointer;
+            user-select: none;
         }
         .nav-item:hover { background: var(--bg-surface-elevated); color: var(--text-primary); }
         .nav-item.active { background: var(--accent-glow); color: var(--accent-primary); font-weight: 600; }
 
-        .main-content { flex: 1; display: flex; flex-direction: column; background: var(--bg-base); }
+        .main-content { flex: 1; display: flex; flex-direction: column; background: var(--bg-base); min-width: 0; }
         .topbar {
             height: 64px;
             border-bottom: 1px solid var(--border-subtle);
@@ -104,19 +115,20 @@ export function renderMemberUI() {
             justify-content: space-between;
             padding: 0 32px;
             background: var(--bg-surface);
+            flex-shrink: 0;
         }
         .page-content { padding: 32px; flex: 1; overflow-y: auto; }
 
         /* Cards & Metrics */
-        .grid-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 20px; margin-bottom: 32px; }
+        .grid-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 28px; }
         .stat-card {
             background: var(--bg-surface);
             border: 1px solid var(--border-subtle);
             border-radius: var(--radius-lg);
             padding: 20px;
         }
-        .stat-label { color: var(--text-muted); font-size: 0.8rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 8px; }
-        .stat-val { font-size: 1.75rem; font-weight: 800; color: var(--text-primary); }
+        .stat-label { color: var(--text-muted); font-size: 0.78rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 8px; }
+        .stat-val { font-size: 1.65rem; font-weight: 800; color: var(--text-primary); }
 
         .panel {
             background: var(--bg-surface);
@@ -125,7 +137,7 @@ export function renderMemberUI() {
             padding: 24px;
             margin-bottom: 24px;
         }
-        .panel-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .panel-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 12px; }
 
         /* Forms & Buttons */
         .form-group { margin-bottom: 16px; }
@@ -140,74 +152,213 @@ export function renderMemberUI() {
             font-size: 0.9rem;
             outline: none;
             transition: border-color 0.15s ease;
+            font-family: inherit;
         }
         .form-control:focus { border-color: var(--accent-primary); }
+        .form-select {
+            padding: 8px 12px;
+            background: var(--bg-base);
+            border: 1px solid var(--border-strong);
+            border-radius: var(--radius-md);
+            color: var(--text-primary);
+            font-size: 0.875rem;
+            outline: none;
+        }
+
         .btn {
-        .nav-item.active { background: var(--accent-primary); color: #fff; font-weight: 600; }
-        
-        .main-content { flex: 1; padding: 40px; overflow-y: auto; max-width: 1100px; }
-        
-        /* Typography & Components */
-        h1 { font-size: 1.8rem; font-weight: 800; letter-spacing: -0.02em; margin-bottom: 8px; }
-        .page-desc { color: var(--text-secondary); font-size: 0.95rem; margin-bottom: 32px; }
-        .card { background: var(--bg-surface); border: 1px solid var(--border-subtle); border-radius: var(--radius-lg); padding: 24px; margin-bottom: 24px; }
-        .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
-        .card-title { font-size: 1.15rem; font-weight: 700; }
-        
-        .btn { padding: 10px 18px; border-radius: var(--radius-md); font-weight: 600; font-size: 0.875rem; cursor: pointer; border: none; display: inline-flex; align-items: center; gap: 8px; font-family: var(--font-main); transition: all 0.15s ease; }
+            padding: 9px 16px;
+            border-radius: var(--radius-md);
+            font-weight: 600;
+            font-size: 0.875rem;
+            cursor: pointer;
+            border: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            font-family: inherit;
+            transition: all 0.15s ease;
+            text-decoration: none;
+        }
         .btn-primary { background: var(--accent-primary); color: #fff; }
         .btn-primary:hover { background: var(--accent-hover); }
         .btn-secondary { background: var(--bg-surface-elevated); color: var(--text-primary); border: 1px solid var(--border-strong); }
         .btn-secondary:hover { background: var(--bg-surface-highlight); }
         .btn-danger { background: rgba(239, 68, 68, 0.1); color: var(--danger); border: 1px solid rgba(239, 68, 68, 0.2); }
         .btn-danger:hover { background: var(--danger); color: #fff; }
-        
-        .form-group { margin-bottom: 16px; }
-        .form-label { display: block; font-size: 0.875rem; font-weight: 600; color: var(--text-secondary); margin-bottom: 6px; }
-        .form-control { width: 100%; padding: 10px 14px; background: var(--bg-base); border: 1px solid var(--border-strong); border-radius: var(--radius-md); color: var(--text-primary); font-family: var(--font-main); font-size: 0.9rem; }
-        .form-control:focus { outline: none; border-color: var(--accent-primary); box-shadow: 0 0 0 3px var(--accent-glow); }
-        
+        .btn-sm { padding: 6px 12px; font-size: 0.8rem; }
+
         .badge { display: inline-flex; align-items: center; padding: 4px 10px; border-radius: 9999px; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; }
-        .badge-success { background: rgba(16, 185, 129, 0.1); color: var(--success); border: 1px solid rgba(16, 185, 129, 0.2); }
-        .badge-warning { background: rgba(245, 158, 11, 0.1); color: var(--warning); border: 1px solid rgba(245, 158, 11, 0.2); }
-        .badge-danger { background: rgba(239, 68, 68, 0.1); color: var(--danger); border: 1px solid rgba(239, 68, 68, 0.2); }
-        
-        .brand-badge { background: rgba(59, 130, 246, 0.1); color: var(--accent-primary); border: 1px solid rgba(59, 130, 246, 0.2); padding: 4px 8px; border-radius: 6px; font-weight: 700; font-size: 0.75rem; }
-        
-        .table { width: 100%; border-collapse: collapse; text-align: left; }
-        .table th { padding: 12px 16px; border-bottom: 1px solid var(--border-subtle); color: var(--text-muted); font-size: 0.8rem; text-transform: uppercase; font-weight: 600; }
-        .table td { padding: 16px; border-bottom: 1px solid var(--border-subtle); font-size: 0.9rem; }
-        
-        /* Auth Screen */
-        .auth-container { max-width: 400px; margin: 100px auto; padding: 32px; background: var(--bg-surface); border: 1px solid var(--border-subtle); border-radius: var(--radius-lg); text-align: center; }
-        .code-box { background: var(--bg-base); padding: 14px; border-radius: var(--radius-md); border: 1px solid var(--border-strong); overflow-x: auto; color: #60a5fa; font-size: 0.8rem; margin: 12px 0; }
+        .badge-success { background: rgba(16, 185, 129, 0.15); color: var(--success); border: 1px solid rgba(16, 185, 129, 0.25); }
+        .badge-warning { background: rgba(245, 158, 11, 0.15); color: var(--warning); border: 1px solid rgba(245, 158, 11, 0.25); }
+        .badge-danger { background: rgba(239, 68, 68, 0.15); color: var(--danger); border: 1px solid rgba(239, 68, 68, 0.25); }
+        .badge-purple { background: rgba(139, 92, 246, 0.15); color: var(--purple); border: 1px solid rgba(139, 92, 246, 0.25); }
+        .badge-info { background: rgba(59, 130, 246, 0.15); color: var(--accent-primary); border: 1px solid rgba(59, 130, 246, 0.25); }
+
+        .table-responsive { width: 100%; overflow-x: auto; margin-top: 16px; }
+        .table { width: 100%; border-collapse: collapse; text-align: left; font-size: 0.875rem; }
+        .table th { padding: 12px 16px; border-bottom: 1px solid var(--border-strong); color: var(--text-muted); font-weight: 600; text-transform: uppercase; font-size: 0.75rem; letter-spacing: 0.05em; white-space: nowrap; }
+        .table td { padding: 14px 16px; border-bottom: 1px solid var(--border-subtle); color: var(--text-primary); vertical-align: middle; }
+        .table tbody tr:hover { background: var(--bg-surface-elevated); }
+
+        .code-box {
+            background: var(--bg-base);
+            border: 1px solid var(--border-strong);
+            border-radius: var(--radius-md);
+            padding: 14px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.825rem;
+            color: #38bdf8;
+            margin: 12px 0 16px;
+            overflow-x: auto;
+            white-space: pre-wrap;
+            word-break: break-all;
+        }
+
+        /* Modal & Drawer */
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(4px);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            padding: 20px;
+        }
+        .modal-overlay.open { display: flex; }
+        .modal-card {
+            background: var(--bg-surface);
+            border: 1px solid var(--border-strong);
+            border-radius: var(--radius-lg);
+            width: 100%;
+            max-width: 900px;
+            max-height: 90vh;
+            display: flex;
+            flex-direction: column;
+            box-shadow: var(--shadow-lg);
+        }
+        .modal-header {
+            padding: 20px 24px;
+            border-bottom: 1px solid var(--border-subtle);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .modal-body { padding: 24px; overflow-y: auto; flex: 1; }
+        .modal-close-btn { background: transparent; border: none; color: var(--text-secondary); font-size: 1.5rem; cursor: pointer; padding: 4px; line-height: 1; }
+        .modal-close-btn:hover { color: var(--text-primary); }
+
+        /* Timeline Components */
+        .timeline { position: relative; padding-left: 28px; margin-top: 16px; }
+        .timeline::before { content: ''; position: absolute; left: 10px; top: 8px; bottom: 8px; width: 2px; background: var(--border-strong); }
+        .timeline-item { position: relative; margin-bottom: 24px; }
+        .timeline-item:last-child { margin-bottom: 0; }
+        .timeline-marker {
+            position: absolute;
+            left: -28px;
+            top: 2px;
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            background: var(--bg-surface-elevated);
+            border: 2px solid var(--accent-primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+        }
+        .timeline-content {
+            background: var(--bg-base);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-md);
+            padding: 14px 16px;
+        }
+        .timeline-meta { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; font-size: 0.8rem; color: var(--text-muted); }
+        .timeline-title { font-size: 0.95rem; font-weight: 700; color: var(--text-primary); margin-bottom: 4px; }
+
+        /* Property Mini-Card in Detail/Timeline */
+        .mini-listing-card {
+            display: flex;
+            gap: 12px;
+            background: var(--bg-surface);
+            border: 1px solid var(--border-strong);
+            border-radius: var(--radius-sm);
+            padding: 10px;
+            margin-top: 8px;
+            align-items: center;
+        }
+        .mini-listing-img { width: 64px; height: 48px; border-radius: 4px; object-fit: cover; background: #1e293b; flex-shrink: 0; }
+        .mini-listing-info { flex: 1; min-width: 0; }
+        .mini-listing-price { font-weight: 700; color: var(--text-primary); font-size: 0.9rem; }
+        .mini-listing-addr { color: var(--text-secondary); font-size: 0.8rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+        .properties-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 14px; margin-top: 14px; }
+        .property-grid-card {
+            background: var(--bg-base);
+            border: 1px solid var(--border-subtle);
+            border-radius: var(--radius-md);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+        .property-grid-card img { width: 100%; height: 130px; object-fit: cover; background: #1e293b; }
+        .property-grid-body { padding: 10px 12px; flex: 1; }
+
+        /* Tabs inside Client Detail Modal */
+        .subtab-nav { display: flex; gap: 8px; border-bottom: 1px solid var(--border-subtle); margin-bottom: 20px; padding-bottom: 8px; }
+        .subtab-btn { background: transparent; border: none; color: var(--text-secondary); padding: 8px 14px; font-weight: 600; font-size: 0.875rem; border-radius: var(--radius-md); cursor: pointer; }
+        .subtab-btn.active { background: var(--bg-surface-elevated); color: var(--accent-primary); }
+
+        /* Responsive Breakpoints */
+        @media (max-width: 1024px) {
+            .sidebar { width: 220px; }
+            .page-content { padding: 20px; }
+            .topbar { padding: 0 20px; }
+        }
+        @media (max-width: 768px) {
+            .app-container { flex-direction: column; }
+            .sidebar { width: 100%; border-right: none; border-bottom: 1px solid var(--border-subtle); }
+            .sidebar-nav { flex-direction: row; overflow-x: auto; padding: 10px; }
+            .grid-cards { grid-template-columns: 1fr; }
+            .modal-card { max-height: 95vh; padding: 12px; }
+        }
     </style>
 </head>
 <body>
-    <div id="authScreen" class="auth-container" style="display: none;">
-        <div style="margin-bottom: 24px;">
-            <span class="brand-badge">CCOR IDX Plug-in</span>
-            <h2 style="margin-top: 12px;">Member Sign In</h2>
-            <p style="color: var(--text-muted); font-size: 0.875rem; margin-top: 6px;">Sign in securely with a single-use magic link</p>
-        </div>
-        <div id="loginMsg" style="display: none; padding: 12px; border-radius: var(--radius-md); font-size: 0.875rem; margin-bottom: 16px;"></div>
-        <form id="magicLoginForm">
-            <div class="form-group" style="text-align: left;">
-                <label class="form-label">Account Email Address</label>
-                <input type="email" id="memberEmail" class="form-control" placeholder="name@brokerage.com" required autofocus>
+    <!-- Auth / Login Screen -->
+    <div id="authScreen" style="display: flex; align-items: center; justify-content: center; min-height: 100vh; padding: 20px;">
+        <div style="background: var(--bg-surface); border: 1px solid var(--border-subtle); border-radius: var(--radius-lg); padding: 40px; width: 100%; max-width: 440px; box-shadow: var(--shadow-lg);">
+            <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 24px;">
+                <span class="brand-badge">CCOR IDX</span>
+                <h2 style="font-size: 1.3rem;">Member Portal</h2>
             </div>
-            <button type="submit" id="loginBtn" class="btn btn-primary" style="width: 100%; justify-content: center;">Send Magic Sign-In Link</button>
-        </form>
+            <p style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 24px;">
+                Sign in to manage your MLS IDX sites, client buyer activity, custom domains, widgets, and leads.
+            </p>
+            <div id="loginMsg" style="display: none; padding: 12px; border-radius: var(--radius-md); font-size: 0.875rem; margin-bottom: 20px;"></div>
+            <form id="magicLoginForm">
+                <div class="form-group">
+                    <label class="form-label" for="memberEmail">REALTOR® Email Address</label>
+                    <input type="email" id="memberEmail" class="form-control" placeholder="agent@example.com" required autofocus>
+                </div>
+                <button type="submit" id="loginBtn" class="btn btn-primary" style="width: 100%; justify-content: center; padding: 12px;">
+                    Send Magic Sign-In Link
+                </button>
+            </form>
+        </div>
     </div>
 
+    <!-- App Container -->
     <div id="appContainer" class="app-container" style="display: none;">
         <aside class="sidebar">
             <div class="sidebar-header">
-                <span class="brand-badge">CCOR IDX Plug-in</span>
+                <span class="brand-badge">CCOR IDX</span>
                 <span style="font-weight: 700; font-size: 0.95rem;">Member Portal</span>
             </div>
             <nav class="sidebar-nav">
                 <div class="nav-item active" onclick="switchTab('overview')">Overview</div>
+                <div class="nav-item" onclick="switchTab('clients')">Clients</div>
                 <div class="nav-item" onclick="switchTab('domains')">Website & Domains</div>
                 <div class="nav-item" onclick="switchTab('branding')">Branding</div>
                 <div class="nav-item" onclick="switchTab('widgets')">Widgets</div>
@@ -231,16 +382,24 @@ export function renderMemberUI() {
                 <div id="tab-overview" class="tab-pane">
                     <div class="grid-cards">
                         <div class="stat-card">
-                            <div class="stat-label">Active MLS Listings</div>
-                            <div class="stat-val" id="statListings">-</div>
+                            <div class="stat-label">Registered Clients</div>
+                            <div class="stat-val" id="statClients">-</div>
                         </div>
                         <div class="stat-card">
-                            <div class="stat-label">Upcoming Open Houses</div>
-                            <div class="stat-val" id="statOpenHouses">-</div>
+                            <div class="stat-label">Active Buyers (7d)</div>
+                            <div class="stat-val" id="statActiveClients">-</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-label">Saved Homes</div>
+                            <div class="stat-val" id="statSavedHomes">-</div>
                         </div>
                         <div class="stat-card">
                             <div class="stat-label">Total Leads Captured</div>
                             <div class="stat-val" id="statLeads">-</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-label">Active MLS Listings</div>
+                            <div class="stat-val" id="statListings">-</div>
                         </div>
                         <div class="stat-card">
                             <div class="stat-label">Subscription Status</div>
@@ -257,6 +416,84 @@ export function renderMemberUI() {
                     </div>
                 </div>
 
+                <!-- Clients Tab (Phase 7.3C2B) -->
+                <div id="tab-clients" class="tab-pane" style="display: none;">
+                    <div class="grid-cards">
+                        <div class="stat-card">
+                            <div class="stat-label">Total Registered Buyers</div>
+                            <div class="stat-val" id="clientKpiTotal">0</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-label">Active in Last 7 Days</div>
+                            <div class="stat-val" id="clientKpiActive7d">0</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-label">Total Saved Homes</div>
+                            <div class="stat-val" id="clientKpiSavedHomes">0</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-label">Active Saved Searches</div>
+                            <div class="stat-val" id="clientKpiSavedSearches">0</div>
+                        </div>
+                    </div>
+
+                    <div class="panel">
+                        <div class="panel-header">
+                            <div>
+                                <h3>Authenticated Buyer Clients</h3>
+                                <p style="color: var(--text-secondary); font-size: 0.85rem; margin-top: 4px;">
+                                    Track authenticated buyers using your CCOR IDX website, their saved homes, and real-time engagement activity.
+                                </p>
+                            </div>
+                        </div>
+
+                        <!-- Search & Filter Controls -->
+                        <div style="display: flex; gap: 12px; margin-bottom: 20px; flex-wrap: wrap; align-items: center; justify-content: space-between;">
+                            <div style="display: flex; gap: 12px; flex: 1; min-width: 260px; max-width: 500px;">
+                                <input type="text" id="clientSearchInput" class="form-control" placeholder="Search by buyer email..." oninput="debounceClientSearch()">
+                            </div>
+                            <div style="display: flex; gap: 12px; align-items: center;">
+                                <label style="font-size: 0.85rem; color: var(--text-secondary); white-space: nowrap;">Sort by:</label>
+                                <select id="clientSortSelect" class="form-select" onchange="loadClients(1)">
+                                    <option value="recently_active">Recently Active</option>
+                                    <option value="newest">Newest Registered</option>
+                                    <option value="saved_homes">Most Saved Homes</option>
+                                    <option value="saved_searches">Most Saved Searches</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="table-responsive">
+                            <table class="table">
+                                <thead>
+                                    <tr>
+                                        <th>Buyer Email</th>
+                                        <th>Site</th>
+                                        <th>Status</th>
+                                        <th>Last Active</th>
+                                        <th>Saved Homes</th>
+                                        <th>Saved Searches</th>
+                                        <th>Inquiries</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="clientsTableBody">
+                                    <tr><td colspan="8" style="text-align: center; color: var(--text-muted); padding: 32px;">Loading clients...</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- Pagination Controls -->
+                        <div id="clientPaginationBar" style="display: flex; justify-content: space-between; align-items: center; margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--border-subtle);">
+                            <div id="clientPageInfo" style="font-size: 0.85rem; color: var(--text-muted);">Page 1 of 1</div>
+                            <div style="display: flex; gap: 8px;">
+                                <button id="clientPrevBtn" class="btn btn-secondary btn-sm" onclick="changeClientPage(-1)" disabled>Previous</button>
+                                <button id="clientNextBtn" class="btn btn-secondary btn-sm" onclick="changeClientPage(1)" disabled>Next</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Domains Tab -->
                 <div id="tab-domains" class="tab-pane" style="display: none;">
                     <div class="panel">
@@ -270,17 +507,19 @@ export function renderMemberUI() {
                             <input type="text" id="newDomainInput" class="form-control" placeholder="myrealtywebsite.com" required style="max-width: 360px;">
                             <button type="submit" class="btn btn-primary">Add Domain</button>
                         </form>
-                        <table class="table">
-                            <thead>
-                                <tr>
-                                    <th>Domain</th>
-                                    <th>Verification Status</th>
-                                    <th>Added Date</th>
-                                    <th>Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody id="domainsTableBody"></tbody>
-                        </table>
+                        <div class="table-responsive">
+                            <table class="table">
+                                <thead>
+                                    <tr>
+                                        <th>Domain</th>
+                                        <th>Verification Status</th>
+                                        <th>Added Date</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="domainsTableBody"></tbody>
+                            </table>
+                        </div>
                     </div>
                 </div>
 
@@ -322,6 +561,18 @@ export function renderMemberUI() {
                     </div>
                 </div>
 
+                <!-- Widgets Tab -->
+                <div id="tab-widgets" class="tab-pane" style="display: none;">
+                    <div class="panel">
+                        <div class="panel-header">
+                            <h3>IDX Widget Management</h3>
+                        </div>
+                        <p style="color: var(--text-secondary); font-size: 0.875rem;">
+                            Customize widget settings and configurations for your embedded property search components.
+                        </p>
+                    </div>
+                </div>
+
                 <!-- Embed Tab -->
                 <div id="tab-embed" class="tab-pane" style="display: none;">
                     <div class="panel">
@@ -356,18 +607,20 @@ export function renderMemberUI() {
                         <div class="panel-header">
                             <h3>Captured Client Inquiries & Leads</h3>
                         </div>
-                        <table class="table">
-                            <thead>
-                                <tr>
-                                    <th>Client Name</th>
-                                    <th>Email</th>
-                                    <th>Phone</th>
-                                    <th>Listing Key</th>
-                                    <th>Date Captured</th>
-                                </tr>
-                            </thead>
-                            <tbody id="leadsTableBody"></tbody>
-                        </table>
+                        <div class="table-responsive">
+                            <table class="table">
+                                <thead>
+                                    <tr>
+                                        <th>Client Name</th>
+                                        <th>Email</th>
+                                        <th>Phone</th>
+                                        <th>Listing Key</th>
+                                        <th>Date Captured</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="leadsTableBody"></tbody>
+                            </table>
+                        </div>
                     </div>
                 </div>
 
@@ -389,11 +642,105 @@ export function renderMemberUI() {
         </main>
     </div>
 
+    <!-- Client Detail & Activity Modal / Drawer (Phase 7.3C2B) -->
+    <div id="clientDetailModal" class="modal-overlay">
+        <div class="modal-card">
+            <div class="modal-header">
+                <div>
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <h3 id="clientDetailEmail" style="font-size: 1.2rem;">buyer@example.com</h3>
+                        <span id="clientDetailStatusBadge" class="badge badge-success">Active</span>
+                    </div>
+                    <div id="clientDetailMeta" style="color: var(--text-muted); font-size: 0.8rem; margin-top: 4px;">Registered on Site Name</div>
+                </div>
+                <button class="modal-close-btn" onclick="closeClientDetail()">&times;</button>
+            </div>
+            
+            <div class="modal-body">
+                <!-- Engagement Metric Cards -->
+                <div class="grid-cards" style="margin-bottom: 20px;">
+                    <div class="stat-card" style="padding: 14px;">
+                        <div class="stat-label">Saved Homes</div>
+                        <div class="stat-val" id="clientDetailSavedHomesCount" style="font-size: 1.3rem;">0</div>
+                    </div>
+                    <div class="stat-card" style="padding: 14px;">
+                        <div class="stat-label">Saved Searches</div>
+                        <div class="stat-val" id="clientDetailSavedSearchesCount" style="font-size: 1.3rem;">0</div>
+                    </div>
+                    <div class="stat-card" style="padding: 14px;">
+                        <div class="stat-label">Active Alerts</div>
+                        <div class="stat-val" id="clientDetailAlertsCount" style="font-size: 1.3rem;">0</div>
+                    </div>
+                    <div class="stat-card" style="padding: 14px;">
+                        <div class="stat-label">Inquiries</div>
+                        <div class="stat-val" id="clientDetailInquiriesCount" style="font-size: 1.3rem;">0</div>
+                    </div>
+                </div>
+
+                <!-- Subtab Navigation -->
+                <div class="subtab-nav">
+                    <button class="subtab-btn active" onclick="switchClientSubtab('activity')">Activity Timeline</button>
+                    <button class="subtab-btn" onclick="switchClientSubtab('homes')">Saved Homes</button>
+                    <button class="subtab-btn" onclick="switchClientSubtab('searches')">Saved Searches & Alerts</button>
+                    <button class="subtab-btn" onclick="switchClientSubtab('inquiries')">Inquiries & Leads</button>
+                </div>
+
+                <!-- Subtab 1: Activity Timeline -->
+                <div id="clientSubtab-activity" class="client-subtab-pane">
+                    <div id="clientActivityTimeline" class="timeline">
+                        <div style="color: var(--text-muted); font-size: 0.875rem;">Loading activity ledger...</div>
+                    </div>
+                </div>
+
+                <!-- Subtab 2: Saved Homes -->
+                <div id="clientSubtab-homes" class="client-subtab-pane" style="display: none;">
+                    <div id="clientSavedHomesGrid" class="properties-grid">
+                        <div style="color: var(--text-muted); font-size: 0.875rem;">No saved homes.</div>
+                    </div>
+                </div>
+
+                <!-- Subtab 3: Saved Searches -->
+                <div id="clientSubtab-searches" class="client-subtab-pane" style="display: none;">
+                    <div id="clientSavedSearchesList">
+                        <div style="color: var(--text-muted); font-size: 0.875rem;">No saved searches.</div>
+                    </div>
+                </div>
+
+                <!-- Subtab 4: Inquiries -->
+                <div id="clientSubtab-inquiries" class="client-subtab-pane" style="display: none;">
+                    <div id="clientInquiriesList">
+                        <div style="color: var(--text-muted); font-size: 0.875rem;">No inquiries recorded.</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script>
         let currentAccount = null;
+        let clientCurrentPage = 1;
+        let clientTotalPages = 1;
+        let clientSearchTimer = null;
+        let activeClientId = null;
+
+        function escapeHtml(str) {
+            if (str === null || str === undefined) return '';
+            return String(str)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#039;');
+        }
+
+        function formatRelativeDate(isoStr) {
+            if (!isoStr) return 'Never';
+            const date = new Date(isoStr);
+            if (isNaN(date.getTime())) return 'Never';
+            return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' });
+        }
 
         async function init() {
-            // Check if magic link verification token in URL
             const urlParams = new URLSearchParams(window.location.search);
             const token = urlParams.get('token');
             if (token) {
@@ -401,7 +748,6 @@ export function renderMemberUI() {
                 return;
             }
 
-            // Load Overview
             try {
                 const res = await fetch('/api/member/overview');
                 if (res.status === 200) {
@@ -416,7 +762,7 @@ export function renderMemberUI() {
         }
 
         function showAuth() {
-            document.getElementById('authScreen').style.display = 'block';
+            document.getElementById('authScreen').style.display = 'flex';
             document.getElementById('appContainer').style.display = 'none';
         }
 
@@ -457,7 +803,7 @@ export function renderMemberUI() {
                 msg.style.display = 'block';
                 msg.style.background = 'rgba(16, 185, 129, 0.15)';
                 msg.style.color = '#10b981';
-                msg.innerText = data.message || 'Magic link generated! Check your email or admin portal for the link.';
+                msg.innerText = data.message || 'Magic link generated! Check your email for the link.';
             } catch {
                 alert('Failed to send magic link.');
             } finally {
@@ -472,10 +818,18 @@ export function renderMemberUI() {
             document.getElementById('appContainer').style.display = 'flex';
 
             document.getElementById('accountTitle').innerText = data.account.account_name + ' (' + data.account.plan.toUpperCase() + ')';
+            document.getElementById('statClients').innerText = (data.clientsCount || 0).toLocaleString();
+            document.getElementById('statActiveClients').innerText = (data.activeClients7dCount || 0).toLocaleString();
+            document.getElementById('statSavedHomes').innerText = (data.savedHomesCount || 0).toLocaleString();
             document.getElementById('statListings').innerText = data.inventory?.activeListings?.toLocaleString() || '0';
-            document.getElementById('statOpenHouses').innerText = data.inventory?.futureOpenHouses?.toLocaleString() || '0';
-            document.getElementById('statLeads').innerText = data.leadsCount || '0';
+            document.getElementById('statLeads').innerText = (data.leadsCount || 0).toLocaleString();
             
+            // Client KPI cards
+            document.getElementById('clientKpiTotal').innerText = (data.clientsCount || 0).toLocaleString();
+            document.getElementById('clientKpiActive7d').innerText = (data.activeClients7dCount || 0).toLocaleString();
+            document.getElementById('clientKpiSavedHomes').innerText = (data.savedHomesCount || 0).toLocaleString();
+            document.getElementById('clientKpiSavedSearches').innerText = (data.savedSearchesCount || 0).toLocaleString();
+
             const ent = data.billing?.entitlement_status || 'inactive';
             const badge = document.getElementById('entitlementBadge');
             if (ent === 'active') {
@@ -492,9 +846,9 @@ export function renderMemberUI() {
             if (data.site) {
                 document.getElementById('siteDetails').innerHTML = \`
                     <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-top: 12px;">
-                        <div><strong style="color: var(--text-muted); font-size: 0.8rem;">SITE KEY:</strong><br><code>\${data.site.site_key}</code></div>
-                        <div><strong style="color: var(--text-muted); font-size: 0.8rem;">SCOPE TYPE:</strong><br>\${data.site.scope_type.toUpperCase()}</div>
-                        <div><strong style="color: var(--text-muted); font-size: 0.8rem;">MLS IDENTIFIER:</strong><br><code>\${data.site.scope_value}</code></div>
+                        <div><strong style="color: var(--text-muted); font-size: 0.8rem;">SITE KEY:</strong><br><code>\${escapeHtml(data.site.site_key)}</code></div>
+                        <div><strong style="color: var(--text-muted); font-size: 0.8rem;">SCOPE TYPE:</strong><br>\${escapeHtml(data.site.scope_type.toUpperCase())}</div>
+                        <div><strong style="color: var(--text-muted); font-size: 0.8rem;">MLS IDENTIFIER:</strong><br><code>\${escapeHtml(data.site.scope_value || 'Market')}</code></div>
                     </div>
                 \`;
             }
@@ -518,6 +872,337 @@ export function renderMemberUI() {
             renderBilling(data.billing);
         }
 
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-pane').forEach(p => p.style.display = 'none');
+            document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+            const targetPane = document.getElementById('tab-' + tabId);
+            if (targetPane) targetPane.style.display = 'block';
+            if (event && event.currentTarget) event.currentTarget.classList.add('active');
+
+            if (tabId === 'clients') {
+                loadClients(1);
+            } else if (tabId === 'leads') {
+                loadLeads();
+            }
+        }
+
+        // --- Clients Management (Phase 7.3C2B) ---
+        function debounceClientSearch() {
+            clearTimeout(clientSearchTimer);
+            clientSearchTimer = setTimeout(() => {
+                loadClients(1);
+            }, 300);
+        }
+
+        async function loadClients(page = 1) {
+            clientCurrentPage = page;
+            const search = document.getElementById('clientSearchInput')?.value || '';
+            const sort = document.getElementById('clientSortSelect')?.value || 'recently_active';
+            const tbody = document.getElementById('clientsTableBody');
+
+            tbody.innerHTML = '<tr><td colspan="8" style="text-align: center; color: var(--text-muted); padding: 24px;">Loading clients...</td></tr>';
+
+            try {
+                const res = await fetch(\`/api/member/clients?search=\${encodeURIComponent(search)}&sort=\${encodeURIComponent(sort)}&page=\${page}&limit=20\`);
+                if (!res.ok) throw new Error('Failed to fetch clients');
+
+                const data = await res.json();
+                clientTotalPages = data.totalPages || 1;
+
+                if (!data.clients || data.clients.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="8" style="text-align: center; color: var(--text-muted); padding: 32px;">No authenticated clients found.</td></tr>';
+                } else {
+                    tbody.innerHTML = data.clients.map(c => \`
+                        <tr>
+                            <td>
+                                <strong>\${escapeHtml(c.email)}</strong>
+                                <div style="font-size: 0.75rem; color: var(--text-muted);">ID: \${escapeHtml(c.id)}</div>
+                            </td>
+                            <td>\${escapeHtml(c.siteName)}</td>
+                            <td><span class="badge \${c.status === 'active' ? 'badge-success' : 'badge-danger'}">\${escapeHtml(c.status)}</span></td>
+                            <td>\${formatRelativeDate(c.lastActivityAt)}</td>
+                            <td><strong>\${c.savedHomesCount}</strong></td>
+                            <td><strong>\${c.savedSearchesCount}</strong> \${c.alertsCount > 0 ? '<span class="badge badge-info" style="font-size: 0.65rem; padding: 2px 6px;">' + c.alertsCount + ' Alert</span>' : ''}</td>
+                            <td><strong>\${c.inquiriesCount}</strong></td>
+                            <td>
+                                <button class="btn btn-secondary btn-sm" onclick="openClientDetail('\${escapeHtml(c.id)}')">
+                                    View Activity
+                                </button>
+                            </td>
+                        </tr>
+                    \`).join('');
+                }
+
+                // Update pagination controls
+                document.getElementById('clientPageInfo').textContent = \`Page \${data.page} of \${clientTotalPages} (\${data.total} clients)\`;
+                document.getElementById('clientPrevBtn').disabled = (data.page <= 1);
+                document.getElementById('clientNextBtn').disabled = (data.page >= clientTotalPages);
+
+            } catch (err) {
+                tbody.innerHTML = '<tr><td colspan="8" style="text-align: center; color: var(--danger); padding: 24px;">Error loading clients.</td></tr>';
+            }
+        }
+
+        function changeClientPage(delta) {
+            const newPage = clientCurrentPage + delta;
+            if (newPage >= 1 && newPage <= clientTotalPages) {
+                loadClients(newPage);
+            }
+        }
+
+        // Client Detail Modal
+        async function openClientDetail(consumerId) {
+            activeClientId = consumerId;
+            const modal = document.getElementById('clientDetailModal');
+            modal.classList.add('open');
+
+            document.getElementById('clientDetailEmail').textContent = 'Loading client...';
+            document.getElementById('clientActivityTimeline').innerHTML = '<div style="color: var(--text-muted);">Loading activity ledger...</div>';
+            document.getElementById('clientSavedHomesGrid').innerHTML = '<div style="color: var(--text-muted);">Loading saved homes...</div>';
+            document.getElementById('clientSavedSearchesList').innerHTML = '<div style="color: var(--text-muted);">Loading saved searches...</div>';
+            document.getElementById('clientInquiriesList').innerHTML = '<div style="color: var(--text-muted);">Loading inquiries...</div>';
+
+            switchClientSubtab('activity');
+
+            try {
+                const [detailRes, activityRes] = await Promise.all([
+                    fetch(\`/api/member/clients/\${encodeURIComponent(consumerId)}\`),
+                    fetch(\`/api/member/clients/\${encodeURIComponent(consumerId)}/activity?limit=50\`)
+                ]);
+
+                if (!detailRes.ok) throw new Error('Client not found');
+                const detailData = await detailRes.json();
+                const activityData = activityRes.ok ? await activityRes.json() : { events: [] };
+
+                // Populate Header & Engagement Counters
+                const c = detailData.client;
+                document.getElementById('clientDetailEmail').textContent = c.email;
+                document.getElementById('clientDetailStatusBadge').textContent = c.status.toUpperCase();
+                document.getElementById('clientDetailStatusBadge').className = 'badge ' + (c.status === 'active' ? 'badge-success' : 'badge-danger');
+                document.getElementById('clientDetailMeta').textContent = \`Registered \${formatRelativeDate(c.createdAt)} on \${c.siteName} • Last Active: \${formatRelativeDate(c.lastActivityAt)}\`;
+
+                document.getElementById('clientDetailSavedHomesCount').textContent = detailData.engagement.savedHomesCount || 0;
+                document.getElementById('clientDetailSavedSearchesCount').textContent = detailData.engagement.savedSearchesCount || 0;
+                document.getElementById('clientDetailAlertsCount').textContent = detailData.engagement.alertsCount || 0;
+                document.getElementById('clientDetailInquiriesCount').textContent = detailData.engagement.inquiriesCount || 0;
+
+                // Render Timeline
+                renderClientTimeline(activityData.events || []);
+
+                // Render Saved Homes
+                renderClientSavedHomes(detailData.savedHomes || []);
+
+                // Render Saved Searches
+                renderClientSavedSearches(detailData.savedSearches || []);
+
+                // Render Inquiries
+                renderClientInquiries(detailData.inquiries || []);
+
+            } catch (err) {
+                alert('Failed to load client details.');
+                closeClientDetail();
+            }
+        }
+
+        function closeClientDetail() {
+            document.getElementById('clientDetailModal').classList.remove('open');
+            activeClientId = null;
+        }
+
+        function switchClientSubtab(tab) {
+            document.querySelectorAll('.client-subtab-pane').forEach(p => p.style.display = 'none');
+            document.querySelectorAll('.subtab-btn').forEach(b => b.classList.remove('active'));
+            const target = document.getElementById('clientSubtab-' + tab);
+            if (target) target.style.display = 'block';
+            if (event && event.currentTarget) event.currentTarget.classList.add('active');
+        }
+
+        function renderClientTimeline(events) {
+            const container = document.getElementById('clientActivityTimeline');
+            if (!events.length) {
+                container.innerHTML = '<div style="color: var(--text-muted); padding: 16px 0;">No activity events recorded for this buyer yet.</div>';
+                return;
+            }
+
+            const eventLabels = {
+                listing_view: { label: 'Viewed Property', icon: '👁️', color: 'var(--accent-primary)' },
+                favorite_added: { label: 'Saved Home to Favorites', icon: '❤️', color: 'var(--danger)' },
+                favorite_removed: { label: 'Removed Home from Favorites', icon: '💔', color: 'var(--text-muted)' },
+                saved_search_created: { label: 'Created Saved Search', icon: '🔍', color: 'var(--purple)' },
+                saved_search_updated: { label: 'Updated Saved Search', icon: '✏️', color: 'var(--purple)' },
+                saved_search_deleted: { label: 'Deleted Saved Search', icon: '🗑️', color: 'var(--text-muted)' },
+                alert_enabled: { label: 'Enabled Email Alerts', icon: '🔔', color: 'var(--success)' },
+                alert_frequency_changed: { label: 'Changed Alert Frequency', icon: '🎛️', color: 'var(--warning)' },
+                alert_disabled: { label: 'Disabled Email Alerts', icon: '🔕', color: 'var(--text-muted)' },
+                inquiry_submitted: { label: 'Submitted Property Inquiry', icon: '✉️', color: 'var(--success)' }
+            };
+
+            container.innerHTML = events.map(e => {
+                const conf = eventLabels[e.type] || { label: e.type, icon: '•', color: 'var(--accent-primary)' };
+                let extraHtml = '';
+
+                if (e.listing) {
+                    const priceFmt = e.listing.price ? '$' + Number(e.listing.price).toLocaleString() : '';
+                    extraHtml = \`
+                        <div class="mini-listing-card">
+                            <img src="\${escapeHtml(e.listing.primaryPhoto || '')}" class="mini-listing-img" alt="Listing" onerror="this.style.display='none'">
+                            <div class="mini-listing-info">
+                                <div class="mini-listing-price">\${escapeHtml(priceFmt)}</div>
+                                <div class="mini-listing-addr">\${escapeHtml(e.listing.address || 'Address Undisclosed')}\${e.listing.city ? ', ' + escapeHtml(e.listing.city) : ''}</div>
+                            </div>
+                        </div>
+                    \`;
+                } else if (e.listingKey) {
+                    extraHtml = \`
+                        <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 4px;">
+                            Listing Key: <code>\${escapeHtml(e.listingKey)}</code> (Property no longer available or off-market)
+                        </div>
+                    \`;
+                }
+
+                if (e.searchName) {
+                    extraHtml += \`
+                        <div style="font-size: 0.85rem; color: var(--text-secondary); margin-top: 4px;">
+                            Search: <strong>\${escapeHtml(e.searchName)}</strong>
+                        </div>
+                    \`;
+                }
+
+                if (e.metadata?.frequency) {
+                    extraHtml += \`
+                        <div style="margin-top: 4px;">
+                            <span class="badge badge-info">Frequency: \${escapeHtml(e.metadata.frequency.toUpperCase())}</span>
+                        </div>
+                    \`;
+                }
+
+                return \`
+                    <div class="timeline-item">
+                        <div class="timeline-marker" style="border-color: \${conf.color};">\${conf.icon}</div>
+                        <div class="timeline-content">
+                            <div class="timeline-meta">
+                                <span>\${formatRelativeDate(e.createdAt)}</span>
+                                <span class="badge badge-info" style="font-size: 0.65rem;">\${escapeHtml(e.type)}</span>
+                            </div>
+                            <div class="timeline-title">\${escapeHtml(conf.label)}</div>
+                            \${extraHtml}
+                        </div>
+                    </div>
+                \`;
+            }).join('');
+        }
+
+        function renderClientSavedHomes(homes) {
+            const grid = document.getElementById('clientSavedHomesGrid');
+            if (!homes.length) {
+                grid.innerHTML = '<div style="color: var(--text-muted); grid-column: 1 / -1; padding: 16px 0;">No saved homes.</div>';
+                return;
+            }
+
+            grid.innerHTML = homes.map(h => {
+                if (h.unavailable) {
+                    return \`
+                        <div class="property-grid-card">
+                            <div style="height: 130px; background: #1e293b; display: flex; align-items: center; justify-content: center; color: var(--text-muted); font-size: 0.8rem; padding: 12px; text-align: center;">
+                                Property no longer available
+                            </div>
+                            <div class="property-grid-body">
+                                <div style="font-size: 0.75rem; color: var(--text-muted);">MLS: \${escapeHtml(h.listingKey)}</div>
+                                <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 4px;">Saved: \${formatRelativeDate(h.createdAt)}</div>
+                            </div>
+                        </div>
+                    \`;
+                }
+
+                const price = h.price ? '$' + Number(h.price).toLocaleString() : '$0';
+                return \`
+                    <div class="property-grid-card">
+                        <img src="\${escapeHtml(h.primaryPhoto || '')}" alt="Property" onerror="this.src='data:image/svg+xml;utf8,<svg xmlns=\\'http://www.w3.org/2000/svg\\' width=\\'100\\' height=\\'100\\'><rect fill=\\'%231e293b\\' width=\\'100\\' height=\\'100\\'/></svg>'">
+                        <div class="property-grid-body">
+                            <div style="font-weight: 800; font-size: 1rem; color: var(--text-primary);">\${escapeHtml(price)}</div>
+                            <div style="font-size: 0.8rem; color: var(--text-secondary); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                                \${escapeHtml(h.address)}\${h.city ? ', ' + escapeHtml(h.city) : ''}
+                            </div>
+                            <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 6px;">
+                                \${h.bedrooms ? h.bedrooms + ' Beds • ' : ''}\${h.bathrooms ? h.bathrooms + ' Baths • ' : ''}\${h.livingArea ? Number(h.livingArea).toLocaleString() + ' sqft' : ''}
+                            </div>
+                            <div style="font-size: 0.7rem; color: var(--text-muted); margin-top: 6px; border-top: 1px solid var(--border-subtle); padding-top: 6px;">
+                                Saved \${formatRelativeDate(h.createdAt)}
+                            </div>
+                        </div>
+                    </div>
+                \`;
+            }).join('');
+        }
+
+        function renderClientSavedSearches(searches) {
+            const list = document.getElementById('clientSavedSearchesList');
+            if (!searches.length) {
+                list.innerHTML = '<div style="color: var(--text-muted); padding: 16px 0;">No saved searches.</div>';
+                return;
+            }
+
+            list.innerHTML = searches.map(s => \`
+                <div style="background: var(--bg-base); border: 1px solid var(--border-subtle); border-radius: var(--radius-md); padding: 14px 16px; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+                    <div>
+                        <div style="font-weight: 700; font-size: 0.95rem;">\${escapeHtml(s.name)}</div>
+                        <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 4px;">Created: \${formatRelativeDate(s.createdAt)} • Updated: \${formatRelativeDate(s.updatedAt)}</div>
+                    </div>
+                    <div>
+                        <span class="badge \${s.alertEnabled ? 'badge-success' : 'badge-warning'}">
+                            Alert: \${escapeHtml(s.alertFrequency.toUpperCase())}
+                        </span>
+                    </div>
+                </div>
+            \`).join('');
+        }
+
+        function renderClientInquiries(inquiries) {
+            const list = document.getElementById('clientInquiriesList');
+            if (!inquiries.length) {
+                list.innerHTML = '<div style="color: var(--text-muted); padding: 16px 0;">No inquiries recorded.</div>';
+                return;
+            }
+
+            list.innerHTML = inquiries.map(inq => \`
+                <div style="background: var(--bg-base); border: 1px solid var(--border-subtle); border-radius: var(--radius-md); padding: 14px 16px; margin-bottom: 12px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; font-size: 0.8rem; color: var(--text-muted);">
+                        <span>\${formatRelativeDate(inq.createdAt)}</span>
+                        \${inq.listingKey ? '<span>Listing: <code>' + escapeHtml(inq.listingKey) + '</code></span>' : ''}
+                    </div>
+                    <div style="font-weight: 600; font-size: 0.9rem; margin-bottom: 4px;">\${escapeHtml(inq.name || 'Client')}\${inq.phone ? ' • ' + escapeHtml(inq.phone) : ''}</div>
+                    <div style="font-size: 0.85rem; color: var(--text-secondary); background: var(--bg-surface); padding: 10px; border-radius: var(--radius-sm); margin-top: 8px; line-height: 1.4;">
+                        \${escapeHtml(inq.message || 'No message provided.')}
+                    </div>
+                </div>
+            \`).join('');
+        }
+
+        // --- Other Portal Sections ---
+        async function loadLeads() {
+            const tbody = document.getElementById('leadsTableBody');
+            tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; color: var(--text-muted); padding: 24px;">Loading leads...</td></tr>';
+            try {
+                const res = await fetch('/api/member/leads');
+                const data = await res.json();
+                if (!data.leads || !data.leads.length) {
+                    tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; color: var(--text-muted); padding: 32px;">No leads captured yet.</td></tr>';
+                    return;
+                }
+                tbody.innerHTML = data.leads.map(l => \`
+                    <tr>
+                        <td><strong>\${escapeHtml(l.name || 'Anonymous')}</strong></td>
+                        <td>\${escapeHtml(l.email || '-')}</td>
+                        <td>\${escapeHtml(l.phone || '-')}</td>
+                        <td><code>\${escapeHtml(l.listing_key || 'General')}</code></td>
+                        <td>\${formatRelativeDate(l.created_at)}</td>
+                    </tr>
+                \`).join('');
+            } catch {
+                tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; color: var(--danger); padding: 24px;">Failed to load leads.</td></tr>';
+            }
+        }
+
         function renderDomains(domains) {
             const tbody = document.getElementById('domainsTableBody');
             if (!domains.length) {
@@ -526,10 +1211,10 @@ export function renderMemberUI() {
             }
             tbody.innerHTML = domains.map(d => \`
                 <tr>
-                    <td><strong>\${d.domain}</strong></td>
+                    <td><strong>\${escapeHtml(d.domain)}</strong></td>
                     <td>\${d.verified ? '<span class="badge badge-success">Verified</span>' : '<span class="badge badge-warning">Pending Admin Verification</span>'}</td>
                     <td>\${d.created_at || '-'}</td>
-                    <td><button class="btn btn-danger" onclick="deleteDomain('\${d.id}')">Remove</button></td>
+                    <td><button class="btn btn-danger btn-sm" onclick="deleteDomain('\${escapeHtml(d.id)}')">Remove</button></td>
                 </tr>
             \`).join('');
         }
@@ -541,20 +1226,13 @@ export function renderMemberUI() {
             
             div.innerHTML = \`
                 <p style="margin-bottom: 8px;"><strong>Billing Provider:</strong> GrowthZone</p>
-                <p style="margin-bottom: 8px;"><strong>Current Plan:</strong> \${plan}</p>
-                <p style="margin-bottom: 8px;"><strong>Service Status:</strong> <span class="badge \${status === 'ACTIVE' ? 'badge-success' : 'badge-warning'}">\${status}</span></p>
+                <p style="margin-bottom: 8px;"><strong>Current Plan:</strong> \${escapeHtml(plan)}</p>
+                <p style="margin-bottom: 8px;"><strong>Service Status:</strong> <span class="badge \${status === 'ACTIVE' ? 'badge-success' : 'badge-warning'}">\${escapeHtml(status)}</span></p>
                 <p style="margin-bottom: 16px;"><strong>Billing Schedule:</strong> Recurring on the 1st of each month.</p>
                 <p style="color: var(--text-muted); font-size: 0.875rem; line-height: 1.5;">
                     Your CCOR IDX Plug-in subscription is administered directly by Coconut Coast Organization of REALTORS® through GrowthZone. To view past statements or update your payment method, click below to open GrowthZone.
                 </p>
             \`;
-        }
-
-        function switchTab(tabId) {
-            document.querySelectorAll('.tab-pane').forEach(p => p.style.display = 'none');
-            document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
-            document.getElementById('tab-' + tabId).style.display = 'block';
-            event.currentTarget.classList.add('active');
         }
 
         document.getElementById('addDomainForm').addEventListener('submit', async (e) => {
