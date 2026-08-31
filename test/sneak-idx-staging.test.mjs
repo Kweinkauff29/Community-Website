@@ -1016,13 +1016,15 @@ describe('SNEAK IDX Phase 2.2 Test Suite', () => {
         assert.ok(Array.isArray(data.data));
     });
 
-    test('PHASE 7.3C2B: Frontend build versions are uniformly bumped to 2026.08.30.7.3c2b', () => {
+    test('PHASE 7.3C3A: Serving and frontend build versions are uniformly bumped to 2026.08.31.7.3c3a', () => {
         const searchHtml = fs.readFileSync(path.join(rootDir, 'sneak-idx/search/index.html'), 'utf8');
         const embedJs = fs.readFileSync(path.join(rootDir, 'sneak-idx/embed.js'), 'utf8');
+        const servingWorker = fs.readFileSync(path.join(rootDir, 'SneakIDXWorker.js'), 'utf8');
 
-        assert.ok(searchHtml.includes('data-ui-build="2026.08.30.7.3c2b"'), 'search/index.html must have data-ui-build="2026.08.30.7.3c2b"');
-        assert.ok(searchHtml.includes("CCOR_IDX_UI_BUILD = '2026.08.30.7.3c2b'"), "search/index.html must have CCOR_IDX_UI_BUILD = '2026.08.30.7.3c2b'");
-        assert.ok(embedJs.includes("const buildVersion = '2026.08.30.7.3c2b'"), "embed.js must have buildVersion = '2026.08.30.7.3c2b'");
+        assert.ok(searchHtml.includes('data-ui-build="2026.08.31.7.3c3a"'), 'search/index.html must have data-ui-build="2026.08.31.7.3c3a"');
+        assert.ok(searchHtml.includes("CCOR_IDX_UI_BUILD = '2026.08.31.7.3c3a'"), "search/index.html must have CCOR_IDX_UI_BUILD = '2026.08.31.7.3c3a'");
+        assert.ok(embedJs.includes("const buildVersion = '2026.08.31.7.3c3a'"), "embed.js must have buildVersion = '2026.08.31.7.3c3a'");
+        assert.ok(servingWorker.includes("SNEAK_IDX_BUILD = '2026.08.31.7.3c3a'"), 'SneakIDXWorker.js must expose the C3A build');
         assert.ok(embedJs.includes('ccor_listing'), 'embed.js must forward ccor_listing deep link parameter');
         assert.ok(searchHtml.includes('initialDeepListingKey'), 'search/index.html must parse initialDeepListingKey');
         assert.ok(searchHtml.includes('updateSavedSearchAlert'), 'search/index.html must implement updateSavedSearchAlert');

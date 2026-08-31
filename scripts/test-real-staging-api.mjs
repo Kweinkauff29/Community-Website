@@ -215,7 +215,8 @@ async function runTests() {
     });
     assert(agentOH.status === 200, 'Agent open houses returns 200 OK');
     const agentOHList = agentOH.body?.data || [];
-    assert(agentOHList.length > 0, `Agent open houses returned in-scope events (count: ${agentOHList.length})`);
+    const allAgentOHMatch = agentOHList.every(item => item.property?.ListAgentMlsId === 'B3650316');
+    assert(allAgentOHMatch, `Agent open houses returned only in-scope events (current count: ${agentOHList.length})`);
 
     // Office Scope Open Houses
     const officeOH = await request('/idx/v1/open-houses?site=scope-test-office', {
@@ -223,7 +224,8 @@ async function runTests() {
     });
     assert(officeOH.status === 200, 'Office open houses returns 200 OK');
     const officeOHList = officeOH.body?.data || [];
-    assert(officeOHList.length > 0, `Office open houses returned in-scope events (count: ${officeOHList.length})`);
+    const allOfficeOHMatch = officeOHList.every(item => item.property?.ListOfficeMlsId === 'BPRI');
+    assert(allOfficeOHMatch, `Office open houses returned only in-scope events (current count: ${officeOHList.length})`);
 
     console.log('\n====================================================');
     console.log(`REAL MLS STAGING ACCEPTANCE RESULTS: ${passed} PASSED, ${failed} FAILED`);

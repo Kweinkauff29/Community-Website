@@ -28,10 +28,15 @@ import {
     handleDeleteSavedSearch,
     handleGetSavedSearchAlert,
     handleUpdateSavedSearchAlert,
-    handleReportActivity
+    handleReportActivity,
+    handleListRecentlyViewed,
+    handleListCompare,
+    handleAddCompare,
+    handleRemoveCompare,
+    handleMergeCompare
 } from './api.js';
 
-const CONSUMER_BUILD = '2026.08.30.7.3c2b';
+const CONSUMER_BUILD = '2026.08.31.7.3c3a';
 
 /**
  * Validates request origin against authorized sites/domains in D1.
@@ -180,6 +185,28 @@ export default {
             // Activity Ingestion Route (Phase 7.3C2B)
             if (url.pathname === '/api/consumer/activity' && method === 'POST') {
                 return await handleReportActivity(req, env, allowedOrigin);
+            }
+
+            // Recently Viewed + Property Compare (Phase 7.3C3A)
+            if (url.pathname === '/api/consumer/recently-viewed' && method === 'GET') {
+                return await handleListRecentlyViewed(req, url, env, allowedOrigin);
+            }
+
+            if (url.pathname === '/api/consumer/compare' && method === 'GET') {
+                return await handleListCompare(req, url, env, allowedOrigin);
+            }
+
+            if (url.pathname === '/api/consumer/compare' && method === 'POST') {
+                return await handleAddCompare(req, env, allowedOrigin);
+            }
+
+            if (url.pathname === '/api/consumer/compare/merge' && method === 'POST') {
+                return await handleMergeCompare(req, env, allowedOrigin);
+            }
+
+            if (url.pathname.startsWith('/api/consumer/compare/') && method === 'DELETE') {
+                const listingKey = decodeURIComponent(url.pathname.slice('/api/consumer/compare/'.length));
+                return await handleRemoveCompare(req, listingKey, url, env, allowedOrigin);
             }
 
             return jsonResponse({ error: 'NotFound', message: `Route ${method} ${url.pathname} not found.` }, 404, allowedOrigin);

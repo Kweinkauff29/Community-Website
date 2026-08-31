@@ -582,13 +582,13 @@ function createMockConsumerDB() {
 
 describe('CCOR IDX / SNEAK Consumer Worker & Identity (Phase 7.3C1A)', () => {
 
-    test('1. Health and Version check returns build 2026.08.30.7.3c2b', async () => {
+    test('1. Health and Version check returns build 2026.08.31.7.3c3a', async () => {
         const req = new Request('https://sneak-idx-consumer-staging.bonitaspringsrealtors.workers.dev/api/consumer/version');
         const res = await worker.fetch(req, {});
         assert.equal(res.status, 200);
         const data = await res.json();
         assert.equal(data.service, 'sneak-consumer-worker');
-        assert.equal(data.build, '2026.08.30.7.3c2b');
+        assert.equal(data.build, '2026.08.31.7.3c3a');
         assert.equal(data.status, 'healthy');
     });
 

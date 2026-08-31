@@ -2296,10 +2296,237 @@
       background: #fee2e2;
       border-color: #fca5a5;
     }
+
+    /* Recently Viewed + Property Compare (Phase 7.3C3A) */
+    .recently-viewed-section {
+      max-width: 1440px;
+      margin: 14px auto 18px;
+      padding: 0 18px;
+    }
+    .recently-viewed-header {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 10px;
+    }
+    .recently-viewed-header h2 {
+      margin: 0;
+      color: var(--primary);
+      font-size: 1.15rem;
+    }
+    .recently-viewed-header p {
+      margin: 3px 0 0;
+      color: var(--text-muted);
+      font-size: 0.75rem;
+    }
+    .recently-viewed-clear {
+      border: 1px solid var(--border);
+      background: #fff;
+      color: var(--text-muted);
+      border-radius: 7px;
+      padding: 6px 10px;
+      cursor: pointer;
+      font-weight: 700;
+    }
+    .recently-viewed-track {
+      display: grid;
+      grid-auto-flow: column;
+      grid-auto-columns: minmax(210px, 250px);
+      gap: 10px;
+      overflow-x: auto;
+      overscroll-behavior-inline: contain;
+      padding: 2px 2px 10px;
+      scrollbar-width: thin;
+    }
+    .recent-card {
+      display: grid;
+      grid-template-columns: 76px minmax(0, 1fr);
+      gap: 10px;
+      align-items: center;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 7px;
+      background: #fff;
+      text-align: left;
+      cursor: pointer;
+      box-shadow: 0 2px 7px rgba(15, 23, 42, 0.06);
+    }
+    .recent-card:hover { border-color: var(--accent); transform: translateY(-1px); }
+    .recent-card img {
+      width: 76px;
+      height: 58px;
+      border-radius: 7px;
+      object-fit: cover;
+      background: #e2e8f0;
+    }
+    .recent-card-price { color: var(--primary); font-size: 0.88rem; font-weight: 800; }
+    .recent-card-address, .recent-card-meta {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      font-size: 0.72rem;
+      color: var(--text-muted);
+    }
+    .card-compare-btn {
+      position: absolute;
+      left: 8px;
+      bottom: 8px;
+      z-index: 3;
+      border: 1px solid rgba(255, 255, 255, 0.9);
+      border-radius: 7px;
+      padding: 6px 8px;
+      background: rgba(15, 23, 42, 0.86);
+      color: #fff;
+      font-size: 0.72rem;
+      font-weight: 800;
+      cursor: pointer;
+      backdrop-filter: blur(4px);
+    }
+    .card-compare-btn.selected { background: #0284c7; }
+    .detail-compare-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      margin: 2px 0 16px;
+      padding: 10px 14px;
+      border: 1px solid var(--primary);
+      border-radius: 8px;
+      background: #fff;
+      color: var(--primary);
+      font-weight: 800;
+      cursor: pointer;
+    }
+    .detail-compare-btn.selected { background: var(--primary); color: #fff; }
+    .compare-tray {
+      position: fixed;
+      left: 50%;
+      bottom: 18px;
+      z-index: 9000;
+      width: min(900px, calc(100vw - 140px));
+      min-height: 70px;
+      display: none;
+      align-items: center;
+      gap: 12px;
+      transform: translateX(-50%);
+      border: 1px solid rgba(255,255,255,0.18);
+      border-radius: 14px;
+      padding: 10px 12px;
+      background: rgba(15, 23, 42, 0.97);
+      color: #fff;
+      box-shadow: 0 14px 40px rgba(15, 23, 42, 0.32);
+      backdrop-filter: blur(9px);
+    }
+    .compare-tray.open { display: flex; }
+    .compare-tray-copy { min-width: 104px; display: flex; flex-direction: column; gap: 2px; }
+    .compare-tray-copy strong { font-size: 0.9rem; }
+    .compare-tray-copy span { font-size: 0.7rem; color: #cbd5e1; }
+    .compare-tray-items { display: grid; grid-template-columns: repeat(4, 54px); gap: 7px; flex: 1; }
+    .compare-tray-item {
+      position: relative;
+      width: 54px;
+      height: 48px;
+      border-radius: 7px;
+      border: 1px solid rgba(255,255,255,0.32);
+      overflow: hidden;
+      background: #334155;
+    }
+    .compare-tray-item img { width: 100%; height: 100%; object-fit: cover; }
+    .compare-tray-remove {
+      position: absolute;
+      top: 1px;
+      right: 1px;
+      width: 18px;
+      height: 18px;
+      border: 0;
+      border-radius: 50%;
+      background: rgba(15,23,42,0.9);
+      color: #fff;
+      cursor: pointer;
+      line-height: 16px;
+    }
+    .compare-tray-clear, .compare-tray-open {
+      border-radius: 8px;
+      padding: 9px 12px;
+      font-weight: 800;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+    .compare-tray-clear { border: 1px solid #64748b; color: #e2e8f0; background: transparent; }
+    .compare-tray-open { border: 1px solid #38bdf8; color: #082f49; background: #7dd3fc; }
+    .compare-tray-open:disabled { opacity: 0.48; cursor: not-allowed; }
+    .compare-modal-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 10000;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      background: rgba(2, 6, 23, 0.76);
+    }
+    .compare-modal-overlay.open { display: flex; }
+    .compare-modal-card {
+      width: min(1180px, 100%);
+      max-height: calc(100vh - 48px);
+      overflow: hidden;
+      border-radius: 15px;
+      background: #fff;
+      box-shadow: 0 22px 70px rgba(0,0,0,0.35);
+    }
+    .compare-modal-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 18px 20px;
+      border-bottom: 1px solid var(--border);
+    }
+    .compare-modal-header h2 { margin: 0; color: var(--primary); font-size: 1.35rem; }
+    .compare-modal-header p { margin: 3px 0 0; color: var(--text-muted); font-size: 0.78rem; }
+    .compare-modal-close { border: 0; background: transparent; color: #64748b; cursor: pointer; font-size: 1.9rem; line-height: 1; }
+    .compare-table-scroll { max-height: calc(100vh - 150px); overflow: auto; padding: 0 20px 20px; }
+    .compare-table { width: 100%; min-width: 680px; border-collapse: separate; border-spacing: 0; table-layout: fixed; }
+    .compare-table th, .compare-table td { border-bottom: 1px solid var(--border); padding: 11px; text-align: left; vertical-align: middle; }
+    .compare-table th:first-child, .compare-table td:first-child { position: sticky; left: 0; z-index: 2; width: 135px; background: #f8fafc; color: #475569; font-size: 0.75rem; }
+    .compare-property-head { min-width: 180px; background: #fff; }
+    .compare-property-head img { width: 100%; height: 115px; object-fit: cover; border-radius: 9px; background: #e2e8f0; }
+    .compare-property-price { margin-top: 7px; color: var(--primary); font-size: 1rem; font-weight: 850; }
+    .compare-property-address { color: #475569; font-size: 0.75rem; line-height: 1.3; }
+    .compare-property-kind { display: inline-block; margin-top: 5px; padding: 2px 6px; border-radius: 999px; background: #e0f2fe; color: #075985; font-size: 0.66rem; font-weight: 800; }
+    .compare-cell-empty { color: #94a3b8; }
+
+    @media (max-width: 768px) {
+      #recentlyViewedNavBtn span { display: none; }
+      .recently-viewed-section { padding: 0 10px; margin-top: 10px; }
+      .recently-viewed-track { grid-auto-columns: minmax(195px, 78vw); }
+      .compare-tray {
+        width: calc(100vw - 16px);
+        bottom: 8px;
+        gap: 7px;
+        padding: 8px;
+        border-radius: 11px;
+      }
+      .compare-tray-copy { display: none; }
+      .compare-tray-items { grid-template-columns: repeat(4, 40px); gap: 4px; }
+      .compare-tray-item { width: 40px; height: 40px; }
+      .compare-tray-clear { display: none; }
+      .compare-tray-open { margin-left: auto; padding: 9px 10px; font-size: 0.75rem; }
+      body.compare-active .cart-fab { bottom: 88px; z-index: 9001; }
+      body.compare-active .cart-panel { bottom: 150px; z-index: 9001; max-height: calc(100vh - 170px); }
+      .compare-modal-overlay { padding: 0; align-items: stretch; }
+      .compare-modal-card { width: 100%; max-height: 100vh; border-radius: 0; }
+      .compare-modal-header { padding: 14px; }
+      .compare-table-scroll { max-height: calc(100vh - 92px); padding: 0 10px 14px; }
+      .compare-table th, .compare-table td { padding: 8px; }
+      .compare-property-head img { height: 92px; }
+      .card-compare-btn { padding: 6px; }
+      .card-compare-btn span { display: none; }
+    }
   </style>
 </head>
 
-<body data-ui-build="2026.08.30.7.3c2b">
+<body data-ui-build="2026.08.31.7.3c3a">
 
   <!-- Loading Overlay -->
   <div class="loading-overlay" id="loadingOverlay" style="display:none">
@@ -2319,6 +2546,7 @@
         <li><a href="#" id="navHome">Homes For Sale</a></li>
         <li><a href="#" id="navOpenHouses">Open Houses</a></li>
         <li><a href="#" id="navContact">Contact</a></li>
+        <li><a href="javascript:void(0)" id="recentlyViewedNavBtn"><i class="far fa-clock"></i> <span>Recently Viewed</span></a></li>
         <li id="consumerAuthNavItem"><a href="javascript:void(0)" id="consumerAuthBtn" class="consumer-nav-btn"><i class="far fa-heart"></i> <span>Sign In</span></a></li>
         <li id="consumerSavedNavItem" style="display:none"><a href="javascript:void(0)" id="consumerSavedBtn" class="consumer-nav-btn"><i class="fas fa-heart" style="color:var(--hot)"></i> <span>Saved (<span id="consumerFavCount">0</span>)</span></a></li>
         <li id="consumerUserNavItem" style="display:none"><a href="javascript:void(0)" id="consumerUserBtn" class="consumer-nav-btn logged-in"><i class="fas fa-user-circle"></i> <span id="consumerUserLabel">Account</span></a></li>
@@ -2609,6 +2837,18 @@
     </div>
   </div>
 
+  <!-- Site-scoped Recently Viewed (Phase 7.3C3A) -->
+  <section class="recently-viewed-section" id="recentlyViewedSection" style="display:none" aria-labelledby="recentlyViewedHeading">
+    <div class="recently-viewed-header">
+      <div>
+        <h2 id="recentlyViewedHeading"><i class="far fa-clock"></i> Recently Viewed</h2>
+        <p id="recentlyViewedPrivacyLabel">Stored only in this browser while signed out.</p>
+      </div>
+      <button class="recently-viewed-clear" id="recentlyViewedClearBtn" type="button">Clear</button>
+    </div>
+    <div class="recently-viewed-track" id="recentlyViewedTrack"></div>
+  </section>
+
   <!-- Mobile / Tablet Segmented Toggle (<= 1024px) -->
   <div class="mobile-view-toggle-bar" id="mobileViewToggleBar">
     <button class="mobile-toggle-btn active" id="mobileToggleList" onclick="setMobileViewMode('list')">
@@ -2748,6 +2988,7 @@
         <div class="detail-addr" id="detailAddr"></div>
         <div class="detail-badges" id="detailBadges"></div>
         <div class="detail-stats" id="detailStats"></div>
+        <button class="detail-compare-btn" id="detailCompareBtn" type="button"><i class="fas fa-columns"></i> Add to Compare</button>
         <div class="detail-description" id="detailDesc"></div>
 
         <!-- Area B: Site Owner CTA (Ursula Weinkauff / Local Real Estate LLC) -->
@@ -2768,6 +3009,30 @@
           </div>
         </div>
       </div>
+    </div>
+  </div>
+
+  <!-- Compare Tray + Contextual Comparison Modal (Phase 7.3C3A) -->
+  <aside class="compare-tray" id="compareTray" aria-live="polite" aria-label="Property comparison tray">
+    <div class="compare-tray-copy">
+      <strong><i class="fas fa-columns"></i> Compare</strong>
+      <span><span id="compareTrayCount">0</span> of 4 selected</span>
+    </div>
+    <div class="compare-tray-items" id="compareTrayItems"></div>
+    <button class="compare-tray-clear" id="compareTrayClear" type="button">Clear</button>
+    <button class="compare-tray-open" id="compareTrayOpen" type="button" disabled>Compare Properties</button>
+  </aside>
+
+  <div class="compare-modal-overlay" id="compareModal" role="dialog" aria-modal="true" aria-labelledby="compareModalTitle">
+    <div class="compare-modal-card">
+      <div class="compare-modal-header">
+        <div>
+          <h2 id="compareModalTitle">Property Comparison</h2>
+          <p>Current listing information, compared in context.</p>
+        </div>
+        <button class="compare-modal-close" id="compareModalClose" type="button" aria-label="Close comparison">&times;</button>
+      </div>
+      <div class="compare-table-scroll" id="compareTableContainer"></div>
     </div>
   </div>
 
@@ -2898,7 +3163,7 @@
   <!-- CCOR IDX Plug-in Application Logic -->
   <script>
     // Telemetry & Build Identifier
-    const CCOR_IDX_UI_BUILD = '2026.08.30.7.3c2b';
+    const CCOR_IDX_UI_BUILD = '2026.08.31.7.3c3a';
     console.log('[CCOR IDX Plug-in] UI build:', CCOR_IDX_UI_BUILD);
 
     // XSS Hardening & URL Sanitization Helpers (Phase 7.3C1A)
@@ -2961,6 +3226,13 @@
 
     let consumerUser = null;
     let consumerSessionToken = localStorage.getItem('ccor_consumer_session_' + SITE_KEY) || '';
+    const COMPARE_STORAGE_KEY = 'ccor_compare_' + SITE_KEY;
+    const RECENT_STORAGE_KEY = 'ccor_recently_viewed_' + SITE_KEY;
+    const COMPARE_LIMIT = 4;
+    const RECENT_LIMIT = 12;
+    let compareKeys = readLocalCompareKeys();
+    let compareListings = [];
+    let recentlyViewedEntries = [];
 
     function getAuthHeaders(extraHeaders = {}) {
       const headers = { ...extraHeaders };
@@ -2969,6 +3241,34 @@
         headers['X-SNEAK-Session'] = SNEAK_SESSION;
       }
       return headers;
+    }
+
+    function readLocalCompareKeys() {
+      try {
+        const parsed = JSON.parse(localStorage.getItem(COMPARE_STORAGE_KEY) || '[]');
+        if (!Array.isArray(parsed)) return [];
+        return [...new Set(parsed.filter(key => typeof key === 'string' && key.trim()).map(key => key.trim().slice(0, 50)))].slice(0, COMPARE_LIMIT);
+      } catch {
+        return [];
+      }
+    }
+
+    function readLocalRecentEntries() {
+      try {
+        const parsed = JSON.parse(localStorage.getItem(RECENT_STORAGE_KEY) || '[]');
+        if (!Array.isArray(parsed)) return [];
+        const seen = new Set();
+        return parsed.filter(entry => {
+          if (!entry || typeof entry.key !== 'string' || seen.has(entry.key)) return false;
+          seen.add(entry.key);
+          return true;
+        }).map(entry => ({
+          key: entry.key.trim().slice(0, 50),
+          viewedAt: typeof entry.viewedAt === 'string' ? entry.viewedAt : new Date(0).toISOString()
+        })).filter(entry => entry.key).slice(0, RECENT_LIMIT);
+      } catch {
+        return [];
+      }
     }
 
     // Price Ladder Steps
@@ -3093,6 +3393,8 @@
 
       await loadTenantConfig();
       await initConsumerAuth(initialAuthCode);
+      await loadCompareState();
+      await loadRecentlyViewed();
       triggerSearch(false);
       if (initialDeepListingKey) {
         openDetailByKey(initialDeepListingKey);
@@ -4130,6 +4432,7 @@
         const sc = item.StandardStatus === 'Pending' ? 'pending' : item.StandardStatus === 'Active Under Contract' ? 'auc' : 'active';
         const sl = escapeHtml(item.StandardStatus === 'Active Under Contract' ? 'Under Contract' : item.StandardStatus || 'Active');
         const isSaved = savedListings.some(s => s.key === item.ListingKey);
+        const isCompared = compareKeys.includes(item.ListingKey);
 
         const isLand = item.PropertyType === 'Land';
         const isComm = (item.PropertyType || '').toLowerCase().includes('commercial') || (item.PropertyType || '').toLowerCase().includes('business');
@@ -4166,6 +4469,7 @@
             <div class="price-badge">${escapeHtml(fmt.format(item.ListPrice || 0))}</div>
             <div class="status-badge-card ${sc}">${sl}</div>
             <button class="card-save-btn ${isSaved ? 'saved' : ''}" onclick="event.stopPropagation();toggleSave('${escapeHtml(item.ListingKey)}')" title="Save property"><i class="fas fa-heart"></i></button>
+            <button class="card-compare-btn ${isCompared ? 'selected' : ''}" onclick="event.stopPropagation();toggleCompare('${escapeHtml(item.ListingKey)}')" title="${isCompared ? 'Remove from' : 'Add to'} comparison"><i class="fas ${isCompared ? 'fa-check' : 'fa-columns'}"></i> <span>${isCompared ? 'Compared' : 'Compare'}</span></button>
           </div>
           <div class="card-content">
             <div class="card-subtype">${escapeHtml(item.PropertySubType || item.PropertyType || '')}</div>
@@ -4350,8 +4654,8 @@
       detailIdx = 0;
       currentMediaUrls = item.PrimaryPhoto ? [item.PrimaryPhoto] : [];
 
-      // Non-blocking Activity Ingestion: listing_view for authenticated buyers
-      if (consumerSessionToken && item?.ListingKey) {
+      // Authenticated history comes only from the existing listing_view ledger.
+      if (consumerUser && consumerSessionToken && item?.ListingKey) {
         fetch(`${CONSUMER_API_BASE}/api/consumer/activity`, {
           method: 'POST',
           headers: {
@@ -4365,7 +4669,11 @@
             listingKey: item.ListingKey
           }),
           keepalive: true
-        }).catch(() => {});
+        }).then(res => { if (res.ok) loadRecentlyViewed(); }).catch(() => {});
+      } else if (item?.ListingKey) {
+        // Anonymous history never leaves this site-scoped browser key.
+        recordAnonymousRecentlyViewed(item.ListingKey);
+        loadRecentlyViewed();
       }
 
       const modal = document.getElementById('detailOverlay');
@@ -4375,6 +4683,7 @@
       document.getElementById('detailPrice').textContent = fmt.format(item.ListPrice || 0);
       document.getElementById('detailAddr').textContent = `${item.UnparsedAddress || ''}${item.City ? ', ' + item.City : ''}`;
       document.getElementById('detailDesc').textContent = item.PublicRemarks || 'Loading description...';
+      updateDetailCompareButton();
 
       // Area A: Listing Brokerage Attribution
       document.getElementById('detailListingCourtesy').textContent = `Listed by: ${item.ListOfficeName || 'Listing Brokerage'}`;
@@ -4469,6 +4778,304 @@
         alert('This property is no longer available.');
       }
     };
+
+    // --- Recently Viewed + Property Compare (Phase 7.3C3A) ---
+    async function fetchCurrentSummaries(keys) {
+      const cleanKeys = [...new Set((keys || []).filter(Boolean))].slice(0, 20);
+      if (!cleanKeys.length) return [];
+      try {
+        const params = new URLSearchParams({ site: SITE_KEY, keys: cleanKeys.join(',') });
+        const res = await fetch(`${API_BASE}/idx/v1/listings/summary?${params.toString()}`, { headers: getAuthHeaders() });
+        if (!res.ok) return [];
+        const data = await res.json();
+        return Array.isArray(data.data) ? data.data : [];
+      } catch (err) {
+        console.warn('Listing summary fetch error:', err);
+        return [];
+      }
+    }
+
+    function applyCompareResponse(data) {
+      const entries = Array.isArray(data?.compare) ? data.compare : [];
+      compareKeys = entries.map(entry => entry.listingKey).filter(Boolean).slice(0, COMPARE_LIMIT);
+      compareListings = entries.map(entry => entry.listing).filter(Boolean).slice(0, COMPARE_LIMIT);
+      renderCompareUI();
+    }
+
+    async function fetchServerCompare() {
+      if (!consumerUser || !consumerSessionToken) return;
+      try {
+        const res = await fetch(`${CONSUMER_API_BASE}/api/consumer/compare?site=${encodeURIComponent(SITE_KEY)}`, {
+          headers: { 'Authorization': 'Bearer ' + consumerSessionToken }
+        });
+        if (res.ok) applyCompareResponse(await res.json());
+      } catch (err) {
+        console.warn('Compare fetch error:', err);
+      }
+    }
+
+    async function loadCompareState() {
+      if (consumerUser && consumerSessionToken) {
+        await fetchServerCompare();
+        return;
+      }
+
+      compareKeys = readLocalCompareKeys();
+      compareListings = await fetchCurrentSummaries(compareKeys);
+      const eligible = new Set(compareListings.map(listing => listing.ListingKey));
+      compareKeys = compareKeys.filter(key => eligible.has(key)).slice(0, COMPARE_LIMIT);
+      localStorage.setItem(COMPARE_STORAGE_KEY, JSON.stringify(compareKeys));
+      renderCompareUI();
+    }
+
+    async function mergeAndSyncCompare() {
+      if (!consumerUser || !consumerSessionToken) return;
+      const localKeys = readLocalCompareKeys();
+      if (!localKeys.length) {
+        await fetchServerCompare();
+        return;
+      }
+
+      try {
+        const res = await fetch(`${CONSUMER_API_BASE}/api/consumer/compare/merge`, {
+          method: 'POST',
+          headers: {
+            'Authorization': 'Bearer ' + consumerSessionToken,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ site: SITE_KEY, listingKeys: localKeys })
+        });
+        if (res.ok) {
+          applyCompareResponse(await res.json());
+          localStorage.removeItem(COMPARE_STORAGE_KEY);
+          return;
+        }
+      } catch (err) {
+        console.warn('Compare merge error:', err);
+      }
+      await fetchServerCompare();
+    }
+
+    window.toggleCompare = async function(key) {
+      if (!key) return;
+      const isSelected = compareKeys.includes(key);
+      if (!isSelected && compareKeys.length >= COMPARE_LIMIT) {
+        alert(`You can compare up to ${COMPARE_LIMIT} properties.`);
+        return;
+      }
+
+      if (consumerUser && consumerSessionToken) {
+        try {
+          const res = await fetch(isSelected
+            ? `${CONSUMER_API_BASE}/api/consumer/compare/${encodeURIComponent(key)}?site=${encodeURIComponent(SITE_KEY)}`
+            : `${CONSUMER_API_BASE}/api/consumer/compare`, {
+            method: isSelected ? 'DELETE' : 'POST',
+            headers: {
+              'Authorization': 'Bearer ' + consumerSessionToken,
+              'Content-Type': 'application/json'
+            },
+            body: isSelected ? undefined : JSON.stringify({ site: SITE_KEY, listingKey: key })
+          });
+          const data = await res.json().catch(() => ({}));
+          if (!res.ok) {
+            alert(data.message || 'Unable to update your property comparison.');
+            return;
+          }
+          applyCompareResponse(data);
+        } catch (err) {
+          alert('Unable to update your property comparison. Please try again.');
+          return;
+        }
+      } else {
+        compareKeys = isSelected ? compareKeys.filter(itemKey => itemKey !== key) : [...compareKeys, key];
+        compareKeys = compareKeys.slice(0, COMPARE_LIMIT);
+        localStorage.setItem(COMPARE_STORAGE_KEY, JSON.stringify(compareKeys));
+        compareListings = await fetchCurrentSummaries(compareKeys);
+        const eligible = new Set(compareListings.map(listing => listing.ListingKey));
+        compareKeys = compareKeys.filter(itemKey => eligible.has(itemKey));
+        localStorage.setItem(COMPARE_STORAGE_KEY, JSON.stringify(compareKeys));
+        renderCompareUI();
+      }
+
+      renderListings(allListings);
+      updateDetailCompareButton();
+    };
+
+    async function clearCompare() {
+      if (consumerUser && consumerSessionToken) {
+        const keysToRemove = [...compareKeys];
+        await Promise.all(keysToRemove.map(key => fetch(
+          `${CONSUMER_API_BASE}/api/consumer/compare/${encodeURIComponent(key)}?site=${encodeURIComponent(SITE_KEY)}`,
+          { method: 'DELETE', headers: { 'Authorization': 'Bearer ' + consumerSessionToken } }
+        ).catch(() => null)));
+        await fetchServerCompare();
+      } else {
+        compareKeys = [];
+        compareListings = [];
+        localStorage.setItem(COMPARE_STORAGE_KEY, '[]');
+        renderCompareUI();
+      }
+      renderListings(allListings);
+      updateDetailCompareButton();
+      closeCompareModal();
+    }
+
+    function updateDetailCompareButton() {
+      const btn = document.getElementById('detailCompareBtn');
+      if (!btn || !currentDetail?.ListingKey) return;
+      const selected = compareKeys.includes(currentDetail.ListingKey);
+      btn.classList.toggle('selected', selected);
+      btn.innerHTML = `<i class="fas ${selected ? 'fa-check' : 'fa-columns'}"></i> ${selected ? 'Remove from Compare' : 'Add to Compare'}`;
+    }
+
+    function renderCompareUI() {
+      const tray = document.getElementById('compareTray');
+      const countEl = document.getElementById('compareTrayCount');
+      const itemsEl = document.getElementById('compareTrayItems');
+      const openBtn = document.getElementById('compareTrayOpen');
+      if (!tray || !itemsEl) return;
+
+      tray.classList.toggle('open', compareKeys.length > 0);
+      document.body.classList.toggle('compare-active', compareKeys.length > 0);
+      if (countEl) countEl.textContent = compareKeys.length;
+      if (openBtn) openBtn.disabled = compareKeys.length < 2;
+      const byKey = new Map(compareListings.map(listing => [listing.ListingKey, listing]));
+      itemsEl.innerHTML = compareKeys.map(key => {
+        const listing = byKey.get(key);
+        return `<div class="compare-tray-item" title="${escapeHtml(listing?.UnparsedAddress || 'Selected property')}">
+          ${listing?.PrimaryPhoto ? `<img src="${sanitizeUrl(listing.PrimaryPhoto)}" alt="">` : ''}
+          <button class="compare-tray-remove" type="button" onclick="toggleCompare('${escapeHtml(key)}')" aria-label="Remove property">&times;</button>
+        </div>`;
+      }).join('');
+      updateDetailCompareButton();
+      if (document.getElementById('compareModal')?.classList.contains('open')) {
+        if (compareListings.length >= 2) openCompareModal();
+        else closeCompareModal();
+      }
+    }
+
+    function getCompareCategory(listing) {
+      const type = String(listing?.PropertyType || '').toLowerCase();
+      if (type.includes('lease')) return 'rental';
+      if (type === 'land') return 'land';
+      if (type.includes('commercial') || type.includes('business')) return 'commercial';
+      return 'residential';
+    }
+
+    function formatCompareValue(value, suffix = '') {
+      if (value === null || value === undefined || value === '') return '<span class="compare-cell-empty">—</span>';
+      return escapeHtml(`${value}${suffix}`);
+    }
+
+    function openCompareModal() {
+      if (compareListings.length < 2) return;
+      const categories = new Set(compareListings.map(getCompareCategory));
+      const priceLabel = categories.size === 1 && categories.has('rental') ? 'Monthly Rent' : 'Price';
+      const rows = [
+        { label: priceLabel, cats: ['residential','rental','land','commercial'], value: listing => fmt.format(listing.ListPrice || 0) },
+        { label: 'Status', cats: ['residential','rental','land','commercial'], value: listing => listing.StandardStatus },
+        { label: 'Property Type', cats: ['residential','rental','land','commercial'], value: listing => listing.PropertySubType || listing.PropertyType },
+        { label: 'Bedrooms', cats: ['residential','rental'], value: listing => listing.BedroomsTotal },
+        { label: 'Bathrooms', cats: ['residential','rental'], value: listing => listing.BathroomsTotalInteger },
+        { label: 'Living / Building Area', cats: ['residential','rental','commercial'], value: listing => listing.LivingArea ? Number(listing.LivingArea).toLocaleString() + ' sq ft' : null },
+        { label: 'Lot Size', cats: ['residential','rental','land','commercial'], value: listing => listing.LotSizeAcres ? listing.LotSizeAcres + ' acres' : null },
+        { label: 'Year Built', cats: ['residential','rental','commercial'], value: listing => listing.YearBuilt },
+        { label: 'Waterfront', cats: ['residential','rental'], value: listing => listing.WaterfrontYN === 1 ? 'Yes' : 'No' },
+        { label: 'Private Pool', cats: ['residential','rental'], value: listing => listing.PoolPrivateYN === 1 ? 'Yes' : 'No' },
+        { label: 'Garage', cats: ['residential','rental'], value: listing => listing.GarageSpaces ? listing.GarageSpaces + ' spaces' : null },
+        { label: 'Zoning', cats: ['land','commercial'], value: listing => listing.Zoning },
+        { label: 'Subdivision', cats: ['residential','rental','land'], value: listing => listing.SubdivisionName },
+        { label: 'Location', cats: ['residential','rental','land','commercial'], value: listing => [listing.City, listing.CountyOrParish].filter(Boolean).join(', ') },
+        { label: 'Listing Office', cats: ['residential','rental','land','commercial'], value: listing => listing.ListOfficeName }
+      ].filter(row => row.cats.some(category => categories.has(category)));
+
+      const header = compareListings.map(listing => {
+        const category = getCompareCategory(listing);
+        return `<th class="compare-property-head">
+          ${listing.PrimaryPhoto ? `<img src="${sanitizeUrl(listing.PrimaryPhoto)}" alt="Property">` : ''}
+          <div class="compare-property-price">${escapeHtml(fmt.format(listing.ListPrice || 0))}</div>
+          <div class="compare-property-address">${escapeHtml(listing.UnparsedAddress || 'Address Undisclosed')}</div>
+          <span class="compare-property-kind">${escapeHtml(category.charAt(0).toUpperCase() + category.slice(1))}</span>
+        </th>`;
+      }).join('');
+      const body = rows.map(row => `<tr><td>${escapeHtml(row.label)}</td>${compareListings.map(listing => {
+        if (!row.cats.includes(getCompareCategory(listing))) return '<td><span class="compare-cell-empty">Not applicable</span></td>';
+        return `<td>${formatCompareValue(row.value(listing))}</td>`;
+      }).join('')}</tr>`).join('');
+
+      document.getElementById('compareTableContainer').innerHTML = `<table class="compare-table"><thead><tr><th>Feature</th>${header}</tr></thead><tbody>${body}</tbody></table>`;
+      document.getElementById('compareModal').classList.add('open');
+    }
+
+    function closeCompareModal() {
+      document.getElementById('compareModal')?.classList.remove('open');
+    }
+
+    function recordAnonymousRecentlyViewed(key) {
+      if (consumerUser && consumerSessionToken) return;
+      const entries = readLocalRecentEntries().filter(entry => entry.key !== key);
+      entries.unshift({ key, viewedAt: new Date().toISOString() });
+      localStorage.setItem(RECENT_STORAGE_KEY, JSON.stringify(entries.slice(0, RECENT_LIMIT)));
+    }
+
+    async function loadRecentlyViewed() {
+      if (consumerUser && consumerSessionToken) {
+        try {
+          const res = await fetch(`${CONSUMER_API_BASE}/api/consumer/recently-viewed?site=${encodeURIComponent(SITE_KEY)}`, {
+            headers: { 'Authorization': 'Bearer ' + consumerSessionToken }
+          });
+          if (res.ok) {
+            const data = await res.json();
+            recentlyViewedEntries = Array.isArray(data.recentlyViewed) ? data.recentlyViewed.map(entry => ({
+              key: entry.listingKey,
+              viewedAt: entry.viewedAt,
+              listing: entry.listing
+            })) : [];
+          }
+        } catch (err) {
+          console.warn('Recently viewed fetch error:', err);
+        }
+      } else {
+        const localEntries = readLocalRecentEntries();
+        const summaries = await fetchCurrentSummaries(localEntries.map(entry => entry.key));
+        const byKey = new Map(summaries.map(listing => [listing.ListingKey, listing]));
+        recentlyViewedEntries = localEntries.map(entry => byKey.has(entry.key) ? { ...entry, listing: byKey.get(entry.key) } : null).filter(Boolean);
+        localStorage.setItem(RECENT_STORAGE_KEY, JSON.stringify(recentlyViewedEntries.map(entry => ({ key: entry.key, viewedAt: entry.viewedAt }))));
+      }
+      renderRecentlyViewed();
+    }
+
+    function renderRecentlyViewed() {
+      const section = document.getElementById('recentlyViewedSection');
+      const track = document.getElementById('recentlyViewedTrack');
+      const privacy = document.getElementById('recentlyViewedPrivacyLabel');
+      const clearBtn = document.getElementById('recentlyViewedClearBtn');
+      if (!section || !track) return;
+      section.style.display = recentlyViewedEntries.length ? 'block' : 'none';
+      if (privacy) privacy.textContent = consumerUser && consumerSessionToken
+        ? 'Synced from your authenticated listing activity across devices.'
+        : 'Stored only in this browser for this website while signed out.';
+      if (clearBtn) clearBtn.style.display = consumerUser && consumerSessionToken ? 'none' : 'inline-block';
+      track.innerHTML = recentlyViewedEntries.map(entry => {
+        const listing = entry.listing;
+        const viewed = entry.viewedAt ? new Date(entry.viewedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : '';
+        return `<button class="recent-card" type="button" onclick="openDetailByKey('${escapeHtml(entry.key)}')">
+          ${listing?.PrimaryPhoto ? `<img src="${sanitizeUrl(listing.PrimaryPhoto)}" alt="">` : '<span></span>'}
+          <span style="min-width:0">
+            <span class="recent-card-price">${escapeHtml(fmt.format(listing?.ListPrice || 0))}</span>
+            <span class="recent-card-address" style="display:block">${escapeHtml(listing?.UnparsedAddress || 'Address Undisclosed')}</span>
+            <span class="recent-card-meta" style="display:block">${escapeHtml([listing?.City, viewed].filter(Boolean).join(' · '))}</span>
+          </span>
+        </button>`;
+      }).join('');
+    }
+
+    function clearAnonymousRecentlyViewed() {
+      if (consumerUser && consumerSessionToken) return;
+      recentlyViewedEntries = [];
+      localStorage.setItem(RECENT_STORAGE_KEY, '[]');
+      renderRecentlyViewed();
+    }
 
     // --- Event Listeners Setup ---
     function setupEventListeners() {
@@ -4709,6 +5316,26 @@
       const openSearchesBtn = document.getElementById('consumerOpenSearchesBtn');
       if (openSearchesBtn) openSearchesBtn.onclick = openSavedSearchesModal;
 
+      // Recently Viewed + Compare (Phase 7.3C3A)
+      const recentNavBtn = document.getElementById('recentlyViewedNavBtn');
+      if (recentNavBtn) recentNavBtn.onclick = () => {
+        const section = document.getElementById('recentlyViewedSection');
+        if (section && recentlyViewedEntries.length) section.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      };
+      const recentClearBtn = document.getElementById('recentlyViewedClearBtn');
+      if (recentClearBtn) recentClearBtn.onclick = clearAnonymousRecentlyViewed;
+      const detailCompareBtn = document.getElementById('detailCompareBtn');
+      if (detailCompareBtn) detailCompareBtn.onclick = () => currentDetail?.ListingKey && window.toggleCompare(currentDetail.ListingKey);
+      const compareClearBtn = document.getElementById('compareTrayClear');
+      if (compareClearBtn) compareClearBtn.onclick = clearCompare;
+      const compareOpenBtn = document.getElementById('compareTrayOpen');
+      if (compareOpenBtn) compareOpenBtn.onclick = openCompareModal;
+      const compareCloseBtn = document.getElementById('compareModalClose');
+      if (compareCloseBtn) compareCloseBtn.onclick = closeCompareModal;
+      const compareModal = document.getElementById('compareModal');
+      if (compareModal) compareModal.onclick = event => { if (event.target === compareModal) closeCompareModal(); };
+      document.addEventListener('keydown', event => { if (event.key === 'Escape') closeCompareModal(); });
+
       // Invalidate map size on window/viewport resize
       window.addEventListener('resize', () => {
         if (map) {
@@ -4864,6 +5491,7 @@
               consumerUser = data.user;
               localStorage.setItem('ccor_consumer_session_' + SITE_KEY, consumerSessionToken);
               await mergeAndSyncFavorites();
+              await mergeAndSyncCompare();
               await fetchSavedSearches();
               updateConsumerNavUI();
 
@@ -4893,6 +5521,7 @@
             const data = await res.json();
             consumerUser = data.user;
             await fetchServerFavorites();
+            await mergeAndSyncCompare();
             await fetchSavedSearches();
             updateConsumerNavUI();
             return;
@@ -5010,6 +5639,8 @@
       savedListings = JSON.parse(localStorage.getItem('savedListings_' + SITE_KEY) || '[]');
       updateConsumerNavUI();
       updateCartUI();
+      await loadCompareState();
+      await loadRecentlyViewed();
       renderListings(allListings);
     }
 
@@ -5032,9 +5663,16 @@
       sessionStorage.removeItem('ccor_pending_saved_search_' + SITE_KEY);
       savedListings = [];
       localStorage.removeItem('savedListings_' + SITE_KEY);
+      compareKeys = [];
+      compareListings = [];
+      recentlyViewedEntries = [];
+      localStorage.removeItem(COMPARE_STORAGE_KEY);
+      localStorage.removeItem(RECENT_STORAGE_KEY);
       closeConsumerAccountModal();
       updateConsumerNavUI();
       updateCartUI();
+      renderCompareUI();
+      renderRecentlyViewed();
       renderListings(allListings);
       alert('Your account and saved data have been permanently deleted.');
     }

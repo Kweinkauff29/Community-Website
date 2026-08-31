@@ -517,7 +517,7 @@ function createMockAlertsDB() {
 
 describe('SNEAK IDX Phase 7.3C2A.1 — Alert Delivery Correctness, Concurrency & Secret Hardening', () => {
 
-    test('1. Alert Worker Version & Health endpoint returns build 2026.08.30.7.3c2b and deliveryReady status', async () => {
+    test('1. Alert Worker Version & Health endpoint returns build 2026.08.31.7.3c3a and deliveryReady status', async () => {
         const req = new Request('https://sneak-idx-alerts-staging.bonitaspringsrealtors.workers.dev/api/alerts/version');
         const res = await alertWorker.fetch(req, {
             MAILJET_API_KEY: 'test',
@@ -528,7 +528,7 @@ describe('SNEAK IDX Phase 7.3C2A.1 — Alert Delivery Correctness, Concurrency &
         const data = await res.json();
         assert.equal(data.service, 'sneak-alerts-worker');
         assert.equal(data.build, ALERT_BUILD);
-        assert.equal(data.build, '2026.08.30.7.3c2b');
+        assert.equal(data.build, '2026.08.31.7.3c3a');
         assert.equal(data.status, 'healthy');
         assert.equal(data.emailProviderConfigured, true);
         assert.equal(data.signingSecretConfigured, true);

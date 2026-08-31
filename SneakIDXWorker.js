@@ -18,6 +18,8 @@ import {
     buildCommonListingFilters
 } from './sneak-shared/idx-query.js';
 
+export const SNEAK_IDX_BUILD = '2026.08.31.7.3c3a';
+
 export default {
     async fetch(req, env, ctx) {
         const url = new URL(req.url);
@@ -35,6 +37,7 @@ export default {
                 status: 'ok',
                 service: 'sneak-idx-worker',
                 version: '2.1.0',
+                build: SNEAK_IDX_BUILD,
                 dataset: 'sneak_listings',
                 environment: env.SNEAK_ENV || 'staging',
                 timestamp: new Date().toISOString()
@@ -100,6 +103,11 @@ export default {
             // --- ROUTE: GET /idx/v1/map ---
             if (url.pathname === '/idx/v1/map' && req.method === 'GET') {
                 return await handleMap(url, site, env, ctx, allowedOrigin);
+            }
+
+            // --- ROUTE: GET /idx/v1/listings/summary?keys=key1,key2 ---
+            if (url.pathname === '/idx/v1/listings/summary' && req.method === 'GET') {
+                return await handleListingSummaries(url, site, env, allowedOrigin);
             }
 
             // --- ROUTE: GET /idx/v1/listing/:listingKey/media ---
@@ -880,6 +888,53 @@ async function handleMap(url, site, env, ctx, allowedOrigin) {
         limit: markerLimit,
         truncated
     }, 200, allowedOrigin, 'public, max-age=60, s-maxage=120');
+}
+
+/**
+ * GET /idx/v1/listings/summary?site=abc123&keys=key1,key2
+ * Bounded current-state lookup used by anonymous recently-viewed and compare UI.
+ */
+export async function handleListingSummaries(url, site, env, allowedOrigin) {
+    const rawKeys = (url.searchParams.get('keys') || '').split(',').map(key => key.trim()).filter(Boolean);
+    const listingKeys = [...new Set(rawKeys)];
+    if (!listingKeys.length) {
+        return jsonResponse({ error: 'MissingListingKeys', message: 'At least one listing key is required.' }, 400, allowedOrigin);
+    }
+    if (listingKeys.length > 20 || listingKeys.some(key => key.length > 50)) {
+        return jsonResponse({ error: 'InvalidListingKeys', message: 'A maximum of 20 valid listing keys is allowed.' }, 400, allowedOrigin);
+    }
+
+    const scope = buildTenantListingScope(site);
+    if (!scope.valid) {
+        return jsonResponse({ error: 'InvalidTenantScope', message: 'Tenant scope is invalid.' }, 403, allowedOrigin);
+    }
+
+    const placeholders = listingKeys.map(() => '?').join(',');
+    const rows = await env.DB.prepare(`
+        SELECT
+            ListingKey, ListingId, ListPrice, OriginalListPrice, StandardStatus,
+            PropertyType, PropertySubType, BedroomsTotal, BathroomsTotalInteger,
+            LivingArea, LotSizeAcres, YearBuilt, City, StateOrProvince, PostalCode,
+            CountyOrParish, UnparsedAddress, PrimaryPhoto, ListOfficeName,
+            SubdivisionName, WaterfrontYN, PoolPrivateYN, GarageSpaces,
+            NewConstructionYN, Zoning, ListingContractDate,
+            InternetEntireListingDisplayYN, InternetAddressDisplayYN
+        FROM sneak_listings
+        WHERE ListingKey IN (${placeholders})
+          AND InternetEntireListingDisplayYN = 1
+          AND StandardStatus IN ('Active', 'Active Under Contract', 'Pending')
+          AND ${scope.clause}
+    `).bind(...listingKeys, ...scope.binds).all();
+
+    const eligibleByKey = new Map();
+    for (const row of rows.results || []) {
+        if (!isListingIdxEligible(row)) continue;
+        const item = applyListingDisplayControls(row);
+        eligibleByKey.set(item.ListingKey, item);
+    }
+
+    const data = listingKeys.map(key => eligibleByKey.get(key)).filter(Boolean);
+    return jsonResponse({ data, count: data.length, limit: 20 }, 200, allowedOrigin, 'private, max-age=0, no-store');
 }
 
 /**

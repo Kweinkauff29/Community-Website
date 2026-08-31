@@ -18,7 +18,7 @@ import { findDueAlerts, matchNewListingsForAlert } from './matcher.js';
 import { renderSavedSearchAlertEmail, escapeHtml } from './email.js';
 import { sendTransactionalEmail, createUnsubscribeToken, verifyUnsubscribeToken } from '../sneak-shared/email-provider.js';
 
-export const ALERT_BUILD = '2026.08.30.7.3c2b';
+export const ALERT_BUILD = '2026.08.31.7.3c3a';
 
 export function jsonResponse(data, status = 200, origin = null) {
     const headers = new Headers();

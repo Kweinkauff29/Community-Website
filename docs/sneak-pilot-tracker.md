@@ -80,7 +80,8 @@ Every participant must complete all verification gates before being marked **Lau
   * Phase 7.3C1B.1 Live WordPress Embed Layout Hotfix & Browser QA: 2026-08-28 16:00 UTC (100% PASS)
   * Phase 7.3C2A Saved Search Email Alert Engine & Delivery Infrastructure: 2026-08-30 21:50 UTC (100% PASS)
   * Phase 7.3C2A.1 Alert Delivery Correctness, Concurrency & Secret Hardening Hotfix: 2026-08-30 23:00 UTC (100% PASS)
-  * Phase 7.3C2B Agent Client Activity Dashboard & Buyer Timeline: 2026-08-31 09:30 UTC (100% PASS)
+  * Phase 7.3C2B Agent Client Activity Dashboard & Buyer Timeline: 2026-08-31 09:30 UTC (deployed; required authenticated desktop/tablet/mobile browser sign-off pending)
+  * Phase 7.3C3A Recently Viewed + Property Compare: 2026-08-31 (deployed; automated and live API QA pass; required browser sign-off pending)
 * **Phase 7.3C2B Agent Client Activity Dashboard & Authenticated Buyer Timeline:**
   * *Privacy-Preserving Activity Ledger:* D1 table `sneak_consumer_activity_events` (migration 0030) records authenticated buyer events (`listing_view`, `favorite_*`, `saved_search_*`, `alert_*`, `inquiry_submitted`). Zero anonymous tracking, zero fingerprinting, zero geolocation tracking.
   * *Consumer Ingestion Protection:* `POST /api/consumer/activity` enforces authentication, strict browser allowlist (`listing_view`, `inquiry_submitted`), 30-minute deduplication on listing views, lead email match verification, and 120 events/hr rate limiting.
@@ -95,12 +96,25 @@ Every participant must complete all verification gates before being marked **Lau
   * Live Member Worker Clients Route Security: PASS — `https://sneak-idx-member-staging.bonitaspringsrealtors.workers.dev/api/member/clients` (401 Unauthorized for unauthenticated requests)
   * Automated Regression Suite: PASS — 133/133 tests passing across 9 test suites (`node --test test/*.test.mjs`)
   * Live Automated Verification: PASS — 8/8 live verification assertions passing (`node scripts/verify-phase73c2b-live.mjs`)
+  * Required C2B Authenticated Browser QA: **PENDING** — the in-app browser runtime reported no connected browser. Clients navigation, KPI cards, search/sort, Client Detail, Saved Homes, Saved Searches, Activity Timeline, Inquiries, responsive behavior, and clipping/overflow still require actual verification at 1440×900, 1024×768, and 390×844.
+* **Phase 7.3C3A Recently Viewed + Property Compare:**
+  * *Recently Viewed Privacy:* Authenticated history is derived only from existing `listing_view` events. Anonymous history stays in site-scoped local storage as `{ key, viewedAt }` and is never uploaded after login.
+  * *Compare Persistence:* Anonymous compare stores site-scoped listing keys only. Authenticated compare uses `sneak_consumer_compare`, merges eligible local keys after login, and enforces a four-property maximum in both API logic and D1.
+  * *Current-State Safety:* All recent/compare reads and writes validate current site scope, display permission, and active status; stored references never expose historical listing snapshots.
+  * *Contextual UI:* Search cards and listing detail include compare actions, with a responsive tray and Residential/Rental/Land/Commercial comparison modal.
+  * *D1 Migrations:* `0031_sneak_consumer_compare.sql` and guarded legacy staging FK repair `0032_sneak_site_fk_compatibility.sql` applied remotely; `PRAGMA foreign_key_check` returned zero violations and no migrations remain pending.
+  * *Authenticated Cross-Session API QA:* PASS — compare written with session A and recently viewed recorded with session A were both visible from independent session B; zero Compare activity events; isolated QA account/session data removed and verified absent.
+  * *Automated Regression:* PASS — 149/149 tests across 10 suites.
+  * *Live Endpoint Verification:* PASS — 12/12 checks for build health, auth boundaries, pilot bootstrap/search, bounded current-state summaries, assets/embed, and the live WordPress pilot.
+  * *Anonymous Privacy Automation:* PASS — no anonymous recent upload route, no anonymous consumer request, site-scoped local keys/timestamps only, listing keys only for compare, and no full listing records in browser storage.
+  * *Required C3A Browser QA:* **PENDING** — actual anonymous/authenticated desktop, tablet, mobile, cross-device, local-to-server merge, modal, tray, privacy/storage, and overflow verification could not run because the in-app browser runtime reported no connected browser.
+  * *Build:* `2026.08.31.7.3c3a`.
 * **Observability & Timing:**
   * Staff Setup Time: ~9 minutes
   * Member Implementation Time: ~2 minutes (HTML snippet paste in WordPress)
   * Staff Interventions Required: 13 (Identity reconciliation, Phase 7.1 model correction, Phase 7.2 product corrections, Phase 7.3A search parity, Phase 7.3B1 interactive map synchronization, Phase 7.3B2A radius search, Phase 7.3B2B polygon search, Phase 7.3C1A buyer auth, Phase 7.3C1B saved searches, Phase 7.3C1B.1 embed layout hotfix, Phase 7.3C2A email alert engine, Phase 7.3C2A.1 delivery hardening, Phase 7.3C2B client activity dashboard)
   * Support Questions Logged: 0
-* **Final Status:** **ACTIVE PILOT (CCOR IDX Plug-in Phase 7.3C2B Deployed & Verified)**
+* **Final Status:** **ACTIVE PILOT (Phase 7.3C3A deployed; C2B/C3A required browser sign-off pending)**
 
 ---
 

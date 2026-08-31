@@ -25,6 +25,9 @@ import {
 } from './auth.js';
 
 const FAVORITES_LIMIT = 200;
+const COMPARE_LIMIT = 4;
+const RECENTLY_VIEWED_LIMIT = 12;
+const RECENTLY_VIEWED_CANDIDATE_LIMIT = 40;
 
 export function jsonResponse(data, status = 200, origin = null) {
     const headers = new Headers();
@@ -59,6 +62,35 @@ export const ALLOWED_ACTIVITY_TYPES = [
     'inquiry_submitted'
 ];
 
+const ACTIVITY_METADATA_MAX_BYTES = 2048;
+const ALERT_FREQUENCIES = new Set(['asap', 'daily', 'weekly', 'off']);
+
+/**
+ * Reduces activity metadata to the fields explicitly allowed for each event.
+ * Unknown keys are discarded before serialization so the activity ledger never
+ * becomes an accidental storage channel for arbitrary browser or request data.
+ */
+export function sanitizeActivityMetadata(eventType, metadata) {
+    if (!metadata || typeof metadata !== 'object' || Array.isArray(metadata)) return null;
+
+    let sanitized = null;
+    if (eventType === 'saved_search_created' || eventType === 'saved_search_updated' || eventType === 'saved_search_deleted') {
+        if (typeof metadata.name === 'string' && metadata.name.trim()) {
+            sanitized = { name: metadata.name.trim().slice(0, 80) };
+        }
+    } else if (eventType === 'alert_enabled' || eventType === 'alert_frequency_changed') {
+        if (typeof metadata.frequency === 'string' && ALERT_FREQUENCIES.has(metadata.frequency)) {
+            sanitized = { frequency: metadata.frequency };
+        }
+    }
+
+    if (!sanitized) return null;
+
+    const serialized = JSON.stringify(sanitized);
+    if (new TextEncoder().encode(serialized).byteLength > ACTIVITY_METADATA_MAX_BYTES) return null;
+    return sanitized;
+}
+
 /**
  * Logs an authenticated buyer activity event into sneak_consumer_activity_events
  * and updates sneak_consumer_users.last_activity_at.
@@ -83,9 +115,10 @@ export async function recordConsumerActivity(db, {
         return { success: false, error: 'InvalidActivityEvent' };
     }
 
-    const eventId = `cact_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
+    const eventId = `cact_${crypto.randomUUID()}`;
     const nowIso = (now instanceof Date ? now : new Date(now)).toISOString();
-    const metadataJson = metadata ? JSON.stringify(metadata).slice(0, 2048) : null;
+    const sanitizedMetadata = sanitizeActivityMetadata(eventType, metadata);
+    const metadataJson = sanitizedMetadata ? JSON.stringify(sanitizedMetadata) : null;
 
     try {
         await db.prepare(`
@@ -857,6 +890,93 @@ async function resolveSiteScope(db, siteKey) {
     `).bind(siteKey).first();
 }
 
+function buildCurrentListingScope(site) {
+    if (!site) return { valid: false, clause: '1=0', bindings: [] };
+    if (site.scope_type === 'market') return { valid: true, clause: '1=1', bindings: [] };
+    if (site.scope_type === 'agent' && site.scope_value) {
+        return {
+            valid: true,
+            clause: '(ListAgentMlsId = ? OR ListAgentKey = ?)',
+            bindings: [site.scope_value, site.scope_value]
+        };
+    }
+    if (site.scope_type === 'office' && site.scope_value) {
+        return {
+            valid: true,
+            clause: '(ListOfficeMlsId = ? OR ListOfficeKey = ?)',
+            bindings: [site.scope_value, site.scope_value]
+        };
+    }
+    return { valid: false, clause: '1=0', bindings: [] };
+}
+
+function toListingSummary(listing) {
+    const addressAllowed = listing.InternetAddressDisplayYN === 1;
+    return {
+        ListingKey: listing.ListingKey,
+        ListingId: listing.ListingId,
+        ListPrice: listing.ListPrice,
+        OriginalListPrice: listing.OriginalListPrice,
+        StandardStatus: listing.StandardStatus,
+        PropertyType: listing.PropertyType,
+        PropertySubType: listing.PropertySubType,
+        BedroomsTotal: listing.BedroomsTotal,
+        BathroomsTotalInteger: listing.BathroomsTotalInteger,
+        LivingArea: listing.LivingArea,
+        LotSizeAcres: listing.LotSizeAcres,
+        YearBuilt: listing.YearBuilt,
+        City: listing.City,
+        StateOrProvince: listing.StateOrProvince,
+        PostalCode: listing.PostalCode,
+        CountyOrParish: listing.CountyOrParish,
+        UnparsedAddress: addressAllowed ? listing.UnparsedAddress : 'Address Undisclosed',
+        PrimaryPhoto: listing.PrimaryPhoto,
+        ListOfficeName: listing.ListOfficeName,
+        SubdivisionName: listing.SubdivisionName,
+        WaterfrontYN: listing.WaterfrontYN,
+        PoolPrivateYN: listing.PoolPrivateYN,
+        GarageSpaces: listing.GarageSpaces,
+        NewConstructionYN: listing.NewConstructionYN,
+        Zoning: listing.Zoning,
+        ListingContractDate: listing.ListingContractDate
+    };
+}
+
+/**
+ * Resolves only current, tenant-scoped, Internet-display-eligible summaries.
+ * Historical listing snapshots are never read from consumer persistence.
+ */
+export async function fetchCurrentListingSummaries(db, site, listingKeys, maxKeys = 40) {
+    const cleanKeys = [...new Set((Array.isArray(listingKeys) ? listingKeys : [])
+        .filter(key => typeof key === 'string' && key.trim())
+        .map(key => key.trim().slice(0, 50)))]
+        .slice(0, maxKeys);
+    if (!cleanKeys.length) return [];
+
+    const scope = buildCurrentListingScope(site);
+    if (!scope.valid) return [];
+
+    const placeholders = cleanKeys.map(() => '?').join(',');
+    const rows = await db.prepare(`
+        SELECT
+            ListingKey, ListingId, ListPrice, OriginalListPrice, StandardStatus,
+            PropertyType, PropertySubType, BedroomsTotal, BathroomsTotalInteger,
+            LivingArea, LotSizeAcres, YearBuilt, City, StateOrProvince, PostalCode,
+            CountyOrParish, UnparsedAddress, PrimaryPhoto, ListOfficeName,
+            SubdivisionName, WaterfrontYN, PoolPrivateYN, GarageSpaces,
+            NewConstructionYN, Zoning, ListingContractDate,
+            InternetEntireListingDisplayYN, InternetAddressDisplayYN
+        FROM sneak_listings
+        WHERE ListingKey IN (${placeholders})
+          AND InternetEntireListingDisplayYN = 1
+          AND StandardStatus IN ('Active', 'Active Under Contract', 'Pending')
+          AND ${scope.clause}
+    `).bind(...cleanKeys, ...scope.bindings).all();
+
+    const byKey = new Map((rows.results || []).map(row => [row.ListingKey, toListingSummary(row)]));
+    return cleanKeys.map(key => byKey.get(key)).filter(Boolean);
+}
+
 /**
  * GET /api/consumer/favorites?site=...
  */
@@ -1179,6 +1299,230 @@ export async function handleMergeFavorites(req, env, origin) {
         success: true,
         count: finalCount?.count || 0,
         merged: toInsert.length
+    }, 200, origin);
+}
+
+/**
+ * GET /api/consumer/recently-viewed?site=...
+ * Builds authenticated history exclusively from existing listing_view events.
+ */
+export async function handleListRecentlyViewed(req, url, env, origin) {
+    const rawToken = extractBearerToken(req);
+    const siteKey = url.searchParams.get('site');
+    const session = await verifyConsumerSession(env.DB, rawToken, siteKey);
+    if (!session || session.error) return sessionErrorResponse(session, origin);
+
+    const site = await resolveSiteScope(env.DB, siteKey);
+    if (!site || site.site_id !== session.siteId) {
+        return jsonResponse({ error: 'SiteNotFound', message: 'Site is inactive or not found.' }, 404, origin);
+    }
+
+    const eventRows = await env.DB.prepare(`
+        SELECT listing_key, MAX(created_at) AS viewed_at
+        FROM sneak_consumer_activity_events
+        WHERE user_id = ? AND site_id = ? AND event_type = 'listing_view' AND listing_key IS NOT NULL
+        GROUP BY listing_key
+        ORDER BY viewed_at DESC
+        LIMIT ${RECENTLY_VIEWED_CANDIDATE_LIMIT}
+    `).bind(session.userId, session.siteId).all();
+
+    const events = eventRows.results || [];
+    const summaries = await fetchCurrentListingSummaries(
+        env.DB,
+        site,
+        events.map(event => event.listing_key),
+        RECENTLY_VIEWED_CANDIDATE_LIMIT
+    );
+    const summaryByKey = new Map(summaries.map(listing => [listing.ListingKey, listing]));
+    const recentlyViewed = events
+        .map(event => {
+            const listing = summaryByKey.get(event.listing_key);
+            return listing ? { listingKey: event.listing_key, viewedAt: event.viewed_at, listing } : null;
+        })
+        .filter(Boolean)
+        .slice(0, RECENTLY_VIEWED_LIMIT);
+
+    return jsonResponse({ success: true, count: recentlyViewed.length, recentlyViewed }, 200, origin);
+}
+
+async function loadValidCompareEntries(db, site, session) {
+    const rows = await db.prepare(`
+        SELECT listing_key, created_at
+        FROM sneak_consumer_compare
+        WHERE user_id = ? AND site_id = ?
+        ORDER BY created_at ASC, id ASC
+        LIMIT ${COMPARE_LIMIT + 20}
+    `).bind(session.userId, session.siteId).all();
+
+    const entries = rows.results || [];
+    const summaries = await fetchCurrentListingSummaries(db, site, entries.map(entry => entry.listing_key), COMPARE_LIMIT + 20);
+    const summaryByKey = new Map(summaries.map(listing => [listing.ListingKey, listing]));
+    const staleKeys = entries.filter(entry => !summaryByKey.has(entry.listing_key)).map(entry => entry.listing_key);
+    if (staleKeys.length) {
+        const placeholders = staleKeys.map(() => '?').join(',');
+        await db.prepare(`
+            DELETE FROM sneak_consumer_compare
+            WHERE user_id = ? AND site_id = ? AND listing_key IN (${placeholders})
+        `).bind(session.userId, session.siteId, ...staleKeys).run();
+    }
+    return entries
+        .map(entry => {
+            const listing = summaryByKey.get(entry.listing_key);
+            return listing ? { listingKey: entry.listing_key, addedAt: entry.created_at, listing } : null;
+        })
+        .filter(Boolean)
+        .slice(0, COMPARE_LIMIT);
+}
+
+/** GET /api/consumer/compare?site=... */
+export async function handleListCompare(req, url, env, origin) {
+    const rawToken = extractBearerToken(req);
+    const siteKey = url.searchParams.get('site');
+    const session = await verifyConsumerSession(env.DB, rawToken, siteKey);
+    if (!session || session.error) return sessionErrorResponse(session, origin);
+
+    const site = await resolveSiteScope(env.DB, siteKey);
+    if (!site || site.site_id !== session.siteId) {
+        return jsonResponse({ error: 'SiteNotFound', message: 'Site is inactive or not found.' }, 404, origin);
+    }
+
+    const compare = await loadValidCompareEntries(env.DB, site, session);
+    return jsonResponse({ success: true, count: compare.length, limit: COMPARE_LIMIT, compare }, 200, origin);
+}
+
+/** POST /api/consumer/compare */
+export async function handleAddCompare(req, env, origin) {
+    let body;
+    try {
+        body = await req.json();
+    } catch {
+        return jsonResponse({ error: 'InvalidJSON', message: 'Request body must be valid JSON.' }, 400, origin);
+    }
+
+    const { site: siteKey, listingKey } = body || {};
+    if (typeof listingKey !== 'string' || !listingKey.trim()) {
+        return jsonResponse({ error: 'MissingListingKey', message: 'listingKey is required.' }, 400, origin);
+    }
+
+    const rawToken = extractBearerToken(req);
+    const session = await verifyConsumerSession(env.DB, rawToken, siteKey);
+    if (!session || session.error) return sessionErrorResponse(session, origin);
+
+    const site = await resolveSiteScope(env.DB, siteKey);
+    if (!site || site.site_id !== session.siteId) {
+        return jsonResponse({ error: 'SiteNotFound', message: 'Site is inactive or not found.' }, 404, origin);
+    }
+
+    const cleanKey = listingKey.trim().slice(0, 50);
+    const eligible = await fetchCurrentListingSummaries(env.DB, site, [cleanKey], 1);
+    if (!eligible.length) {
+        return jsonResponse({ error: 'ListingNotFound', message: 'Listing is not currently available for comparison.' }, 404, origin);
+    }
+
+    const existing = await loadValidCompareEntries(env.DB, site, session);
+    if (existing.some(item => item.listingKey === cleanKey)) {
+        return jsonResponse({ success: true, count: existing.length, limit: COMPARE_LIMIT, compare: existing }, 200, origin);
+    }
+    if (existing.length >= COMPARE_LIMIT) {
+        return jsonResponse({ error: 'CompareLimitExceeded', message: `You can compare up to ${COMPARE_LIMIT} properties.` }, 400, origin);
+    }
+
+    const compareId = `ccmp_${crypto.randomUUID()}`;
+    try {
+        await env.DB.prepare(`
+            INSERT OR IGNORE INTO sneak_consumer_compare (id, site_id, user_id, listing_key, created_at)
+            VALUES (?, ?, ?, ?, datetime('now'))
+        `).bind(compareId, session.siteId, session.userId, cleanKey).run();
+    } catch (error) {
+        if (String(error?.message || '').includes('compare_limit_exceeded')) {
+            return jsonResponse({ error: 'CompareLimitExceeded', message: `You can compare up to ${COMPARE_LIMIT} properties.` }, 400, origin);
+        }
+        throw error;
+    }
+
+    const compare = await loadValidCompareEntries(env.DB, site, session);
+    return jsonResponse({ success: true, count: compare.length, limit: COMPARE_LIMIT, compare }, 200, origin);
+}
+
+/** DELETE /api/consumer/compare/:listingKey?site=... */
+export async function handleRemoveCompare(req, listingKey, url, env, origin) {
+    const siteKey = url.searchParams.get('site');
+    const rawToken = extractBearerToken(req);
+    const session = await verifyConsumerSession(env.DB, rawToken, siteKey);
+    if (!session || session.error) return sessionErrorResponse(session, origin);
+
+    const site = await resolveSiteScope(env.DB, siteKey);
+    if (!site || site.site_id !== session.siteId) {
+        return jsonResponse({ error: 'SiteNotFound', message: 'Site is inactive or not found.' }, 404, origin);
+    }
+
+    const cleanKey = String(listingKey || '').trim().slice(0, 50);
+    await env.DB.prepare(`
+        DELETE FROM sneak_consumer_compare
+        WHERE user_id = ? AND site_id = ? AND listing_key = ?
+    `).bind(session.userId, session.siteId, cleanKey).run();
+
+    const compare = await loadValidCompareEntries(env.DB, site, session);
+    return jsonResponse({ success: true, count: compare.length, limit: COMPARE_LIMIT, compare }, 200, origin);
+}
+
+/** POST /api/consumer/compare/merge */
+export async function handleMergeCompare(req, env, origin) {
+    let body;
+    try {
+        body = await req.json();
+    } catch {
+        return jsonResponse({ error: 'InvalidJSON', message: 'Request body must be valid JSON.' }, 400, origin);
+    }
+
+    const { site: siteKey, listingKeys } = body || {};
+    if (!Array.isArray(listingKeys)) {
+        return jsonResponse({ error: 'InvalidListingKeys', message: 'listingKeys must be an array.' }, 400, origin);
+    }
+
+    const rawToken = extractBearerToken(req);
+    const session = await verifyConsumerSession(env.DB, rawToken, siteKey);
+    if (!session || session.error) return sessionErrorResponse(session, origin);
+
+    const site = await resolveSiteScope(env.DB, siteKey);
+    if (!site || site.site_id !== session.siteId) {
+        return jsonResponse({ error: 'SiteNotFound', message: 'Site is inactive or not found.' }, 404, origin);
+    }
+
+    const localKeys = [...new Set(listingKeys
+        .filter(key => typeof key === 'string' && key.trim())
+        .map(key => key.trim().slice(0, 50)))]
+        .slice(0, COMPARE_LIMIT);
+    const eligibleLocal = await fetchCurrentListingSummaries(env.DB, site, localKeys, COMPARE_LIMIT);
+    const eligibleSet = new Set(eligibleLocal.map(listing => listing.ListingKey));
+    const existing = await loadValidCompareEntries(env.DB, site, session);
+    const existingSet = new Set(existing.map(item => item.listingKey));
+    const toInsert = localKeys
+        .filter(key => eligibleSet.has(key) && !existingSet.has(key))
+        .slice(0, Math.max(0, COMPARE_LIMIT - existing.length));
+
+    let mergedCount = 0;
+    for (const key of toInsert) {
+        const compareId = `ccmp_${crypto.randomUUID()}`;
+        try {
+            const insertResult = await env.DB.prepare(`
+                INSERT OR IGNORE INTO sneak_consumer_compare (id, site_id, user_id, listing_key, created_at)
+                VALUES (?, ?, ?, ?, datetime('now'))
+            `).bind(compareId, session.siteId, session.userId, key).run();
+            if (Number(insertResult?.meta?.changes || 0) > 0) mergedCount += 1;
+        } catch (error) {
+            if (!String(error?.message || '').includes('compare_limit_exceeded')) throw error;
+            break;
+        }
+    }
+
+    const compare = await loadValidCompareEntries(env.DB, site, session);
+    return jsonResponse({
+        success: true,
+        count: compare.length,
+        limit: COMPARE_LIMIT,
+        merged: mergedCount,
+        compare
     }, 200, origin);
 }
 

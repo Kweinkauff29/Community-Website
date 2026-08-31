@@ -160,14 +160,14 @@ graph TD
 
 ---
 
-### Phase 7.3C2B — Agent Client Activity Dashboard & Authenticated Buyer Activity Timeline (COMPLETED)
+### Phase 7.3C2B — Agent Client Activity Dashboard & Authenticated Buyer Activity Timeline (DEPLOYED; BROWSER SIGN-OFF PENDING)
 * **Goal:** Deliver a dedicated Clients area in the REALTOR® Member Portal allowing the REALTOR® to view authenticated buyers using their CCOR IDX site, inspect longitudinal buyer activity timelines, and review saved homes, searches, and inquiries with strict tenant isolation and MLS display controls.
-* **Status:** `COMPLETE / DEPLOYED`
+* **Status:** `DEPLOYED / AUTOMATED QA PASS / REQUIRED AUTHENTICATED BROWSER QA PENDING`
 * **Features Included:**
   * **Privacy & Controlled Telemetry Ledger (`sneak_consumer_activity_events`):**
     * D1 Migration `0030_sneak_consumer_activity.sql` creates high-throughput activity ledger with compound indexes and adds `last_activity_at` to `sneak_consumer_users`.
     * **Zero Anonymous Telemetry Invariant:** Anonymous browsing is never tracked. Strictly captures authenticated buyer actions under controlled vocabulary (`listing_view`, `favorite_added`, `favorite_removed`, `saved_search_created`, `saved_search_updated`, `saved_search_deleted`, `alert_enabled`, `alert_frequency_changed`, `alert_disabled`, `inquiry_submitted`).
-    * Zero visitor fingerprinting, zero IP profiles, zero scroll/pan tracking, zero GPS coordinates. Metadata JSON capped at 2KB.
+    * Zero visitor fingerprinting, zero IP profiles, zero scroll/pan tracking, zero GPS coordinates. Known event metadata is allowlisted before serialization, unknown fields are discarded, and only complete valid JSON values up to 2KB are stored.
   * **Consumer Activity Ingestion API (`POST /api/consumer/activity`):**
     * Authenticated session required (HTTP 401 on missing/invalid token).
     * Restrictive browser allowlist: Only `listing_view` and `inquiry_submitted` accepted from frontend.
@@ -191,14 +191,28 @@ graph TD
   * **Member Portal UI (`sneak-member/ui.js`):**
     * Modern dark-mode dashboard with Clients navigation tab, 4 live KPI summary cards, responsive client list table, search bar, sort dropdown, and empty states.
     * Modal Client Detail view with quick summary, Saved Homes grid, Saved Searches/Alerts list, Inquiries list, and interactive Activity Timeline with human-friendly event badges and timestamps.
-    * Responsive at desktop (1440x900), tablet (1024x768), and mobile (390x844).
+    * Responsive layouts implemented for desktop (1440x900), tablet (1024x768), and mobile (390x844); authenticated live browser verification at those exact viewports remains a required sign-off item.
   * **Deterministic UI & Worker Build:** `2026.08.30.7.3c2b` across alert worker, consumer worker, member worker, serving worker, embed loader, search UI, and test suites.
 
 ---
 
-### Phase 7.3C3 — Property Comparison, Recently Viewed & Sharing (NEXT)
-* **Goal:** Side-by-side listing comparison (up to 4 homes), recently viewed history, and social/native sharing.
-* **Status:** `PLANNED`
+### Phase 7.3C3A — Recently Viewed + Property Compare (DEPLOYED; BROWSER SIGN-OFF PENDING)
+* **Goal:** Private recently viewed history and contextual side-by-side listing comparison for anonymous and authenticated consumers without adding anonymous server tracking.
+* **Status:** `DEPLOYED / AUTOMATED QA PASS / REQUIRED LIVE BROWSER QA PENDING`
+* **Features Included:**
+  * **Authenticated Recently Viewed:** `GET /api/consumer/recently-viewed` derives history exclusively from existing authenticated `listing_view` events. Every read resolves current D1 listing state and filters by active site scope, current display eligibility, and current status.
+  * **Anonymous Recently Viewed:** Site-scoped local storage retains only `{ key, viewedAt }`. Anonymous history is never sent to the consumer worker and is not uploaded after login.
+  * **Property Compare:** Card controls, listing-detail action, responsive four-property tray, clear/remove controls, and a contextual comparison modal for Residential, Rental, Land, and Commercial listings.
+  * **Authenticated Persistence:** `0031_sneak_consumer_compare.sql` stores listing references only, enforces a unique user/site/listing tuple, and provides a database-level maximum-four trigger. API reads and writes resolve current listing state and prune stale, private, off-market, or out-of-scope keys.
+  * **Anonymous Persistence & Merge:** Site-scoped local storage contains listing keys only. Login merges eligible local keys into the server list, preserves existing server entries, respects the four-property cap, and clears local compare keys only after a successful merge. Anonymous Recently Viewed is not part of that merge.
+  * **Bounded Summary Endpoint:** `GET /idx/v1/listings/summary` accepts at most 20 keys and uses only the serving D1 cache; it does not call Bridge or emit consumer activity.
+  * **Activity Isolation:** Compare mutations do not create REALTOR® Client Activity events.
+  * **Legacy Staging Repair:** `0032_sneak_site_fk_compatibility.sql` repairs an empty legacy staging schema whose consumer foreign keys targeted the wrong site column. The migration aborts if any consumer data exists rather than risk data loss.
+  * **Deterministic UI & Worker Build:** `2026.08.31.7.3c3a` across alert, consumer, member, and serving workers, embed loader, search UI, and tests.
+
+### Phase 7.3C3B — Sharing & Public Lists (PLANNED)
+* **Goal:** Add explicitly user-controlled sharing and public-list capabilities after C3A sign-off.
+* **Status:** `PLANNED / NOT STARTED`
 
 ---
 
