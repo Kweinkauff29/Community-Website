@@ -67,7 +67,7 @@ export default {
             return json({
                 status: 'healthy',
                 worker: 'sneak-idx-member-staging',
-                build: '2026.08.31.7.3c3a',
+                build: '2026.08.31.7.3c3a1',
                 timestamp: new Date().toISOString()
             });
         }

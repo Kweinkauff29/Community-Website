@@ -780,6 +780,8 @@ describe('SNEAK IDX Phase 7.3C2B — Agent Client Activity Dashboard & Buyer Tim
         assert.ok(uiHtml.includes('id="clientDetailModal"'), 'UI must contain Client Detail modal');
         assert.ok(uiHtml.includes('id="clientActivityTimeline"'), 'UI must contain Activity Timeline');
         assert.ok(uiHtml.includes('id="clientKpiTotal"'), 'UI must contain client KPI total card');
+        assert.ok(uiHtml.includes("this.removeAttribute('src');this.style.background='#1e293b'"), 'Saved-home image fallback must be valid inline JavaScript');
+        assert.ok(!uiHtml.includes("data:image/svg+xml;utf8,<svg xmlns=\\'http"), 'Saved-home image fallback must not emit malformed nested quotes');
 
         // Test XSS escape function logic
         function escapeHtml(str) {

@@ -147,7 +147,7 @@
 
         // Construct iframe URL with signed session token and deterministic build version
         const separator = widgetPath.includes('?') ? '&' : '?';
-        const buildVersion = '2026.08.31.7.3c3a';
+        const buildVersion = '2026.08.31.7.3c3a1';
         let iframeUrl = `${baseUrl}${widgetPath}${separator}site=${encodeURIComponent(siteKey)}&session=${encodeURIComponent(data.session)}&embed=true&v=${encodeURIComponent(buildVersion)}`;
         if (parentAuthCode) {
             iframeUrl += `&auth_code=${encodeURIComponent(parentAuthCode)}`;

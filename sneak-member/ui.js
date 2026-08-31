@@ -1117,7 +1117,7 @@ export function renderMemberUI() {
                 const price = h.price ? '$' + Number(h.price).toLocaleString() : '$0';
                 return \`
                     <div class="property-grid-card">
-                        <img src="\${escapeHtml(h.primaryPhoto || '')}" alt="Property" onerror="this.src='data:image/svg+xml;utf8,<svg xmlns=\\'http://www.w3.org/2000/svg\\' width=\\'100\\' height=\\'100\\'><rect fill=\\'%231e293b\\' width=\\'100\\' height=\\'100\\'/></svg>'">
+                        <img src="\${escapeHtml(h.primaryPhoto || '')}" alt="Property" onerror="this.onerror=null;this.removeAttribute('src');this.style.background='#1e293b';">
                         <div class="property-grid-body">
                             <div style="font-weight: 800; font-size: 1rem; color: var(--text-primary);">\${escapeHtml(price)}</div>
                             <div style="font-size: 0.8rem; color: var(--text-secondary); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">

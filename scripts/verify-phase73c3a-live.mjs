@@ -1,7 +1,8 @@
 /** Live staging verification for Phase 7.3C3A. */
 import assert from 'node:assert/strict';
 
-const BUILD = '2026.08.31.7.3c3a';
+const BUILD = '2026.08.31.7.3c3a1';
+const ALERT_BUILD = '2026.08.31.7.3c3a';
 const SITE = 'ursula-weinkauff-pilot';
 const ORIGIN = 'https://coconutcoastrealtors.org';
 const IDX = 'https://sneak-idx-worker-staging.bonitaspringsrealtors.workers.dev';
@@ -24,11 +25,11 @@ async function check(name, fn) {
     }
 }
 
-await check('Alert Worker reports C3A build and explicit delivery configuration state', async () => {
+await check('Alert Worker remains healthy and reports explicit delivery configuration state', async () => {
     const res = await fetch(`${ALERTS}/api/alerts/version`);
     assert.equal(res.status, 200);
     const data = await res.json();
-    assert.equal(data.build, BUILD);
+    assert.equal(data.build, ALERT_BUILD);
     assert.equal(typeof data.emailProviderConfigured, 'boolean');
     assert.equal(typeof data.signingSecretConfigured, 'boolean');
     assert.equal(data.deliveryReady, data.emailProviderConfigured && data.signingSecretConfigured);
@@ -41,7 +42,7 @@ await check('Consumer Worker reports C3A build', async () => {
     assert.equal((await res.json()).build, BUILD);
 });
 
-await check('Member Worker reports C3A build', async () => {
+await check('Member Worker reports the corrective C3A.1 browser-QA build', async () => {
     const res = await fetch(`${MEMBER}/health`, { headers: { Accept: 'application/json' } });
     assert.equal(res.status, 200);
     assert.equal((await res.json()).build, BUILD);

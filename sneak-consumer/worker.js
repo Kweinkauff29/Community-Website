@@ -36,7 +36,7 @@ import {
     handleMergeCompare
 } from './api.js';
 
-const CONSUMER_BUILD = '2026.08.31.7.3c3a';
+const CONSUMER_BUILD = '2026.08.31.7.3c3a1';
 
 /**
  * Validates request origin against authorized sites/domains in D1.

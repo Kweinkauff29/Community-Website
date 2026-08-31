@@ -26,7 +26,7 @@ import {
 
 const FAVORITES_LIMIT = 200;
 const COMPARE_LIMIT = 4;
-const RECENTLY_VIEWED_LIMIT = 12;
+const RECENTLY_VIEWED_LIMIT = 20;
 const RECENTLY_VIEWED_CANDIDATE_LIMIT = 40;
 
 export function jsonResponse(data, status = 200, origin = null) {
@@ -63,7 +63,7 @@ export const ALLOWED_ACTIVITY_TYPES = [
 ];
 
 const ACTIVITY_METADATA_MAX_BYTES = 2048;
-const ALERT_FREQUENCIES = new Set(['asap', 'daily', 'weekly', 'off']);
+const ALERT_FREQUENCIES = new Set(['asap', 'daily', 'off']);
 
 /**
  * Reduces activity metadata to the fields explicitly allowed for each event.
@@ -1321,6 +1321,7 @@ export async function handleListRecentlyViewed(req, url, env, origin) {
         SELECT listing_key, MAX(created_at) AS viewed_at
         FROM sneak_consumer_activity_events
         WHERE user_id = ? AND site_id = ? AND event_type = 'listing_view' AND listing_key IS NOT NULL
+          AND created_at >= datetime('now', '-90 days')
         GROUP BY listing_key
         ORDER BY viewed_at DESC
         LIMIT ${RECENTLY_VIEWED_CANDIDATE_LIMIT}

@@ -1991,6 +1991,11 @@
         flex-direction: column;
         align-items: stretch;
       }
+      .search-input-wrap {
+        flex: 0 0 auto;
+        width: 100%;
+        min-height: 0;
+      }
       .property-pills-container {
         width: 100%;
         justify-content: space-between;
@@ -2526,7 +2531,7 @@
   </style>
 </head>
 
-<body data-ui-build="2026.08.31.7.3c3a">
+<body data-ui-build="2026.08.31.7.3c3a1">
 
   <!-- Loading Overlay -->
   <div class="loading-overlay" id="loadingOverlay" style="display:none">
@@ -3163,7 +3168,7 @@
   <!-- CCOR IDX Plug-in Application Logic -->
   <script>
     // Telemetry & Build Identifier
-    const CCOR_IDX_UI_BUILD = '2026.08.31.7.3c3a';
+    const CCOR_IDX_UI_BUILD = '2026.08.31.7.3c3a1';
     console.log('[CCOR IDX Plug-in] UI build:', CCOR_IDX_UI_BUILD);
 
     // XSS Hardening & URL Sanitization Helpers (Phase 7.3C1A)
@@ -3229,7 +3234,8 @@
     const COMPARE_STORAGE_KEY = 'ccor_compare_' + SITE_KEY;
     const RECENT_STORAGE_KEY = 'ccor_recently_viewed_' + SITE_KEY;
     const COMPARE_LIMIT = 4;
-    const RECENT_LIMIT = 12;
+    const RECENT_LIMIT = 20;
+    const RECENT_RETENTION_MS = 30 * 24 * 60 * 60 * 1000;
     let compareKeys = readLocalCompareKeys();
     let compareListings = [];
     let recentlyViewedEntries = [];
@@ -3256,17 +3262,30 @@
     function readLocalRecentEntries() {
       try {
         const parsed = JSON.parse(localStorage.getItem(RECENT_STORAGE_KEY) || '[]');
-        if (!Array.isArray(parsed)) return [];
+        if (!Array.isArray(parsed)) {
+          localStorage.setItem(RECENT_STORAGE_KEY, '[]');
+          return [];
+        }
+        const cutoff = Date.now() - RECENT_RETENTION_MS;
+        const candidates = parsed.map(entry => {
+          if (!entry || typeof entry.key !== 'string' || typeof entry.viewedAt !== 'string') return null;
+          const key = entry.key.trim().slice(0, 50);
+          const viewedAtMs = Date.parse(entry.viewedAt);
+          if (!key || !Number.isFinite(viewedAtMs) || viewedAtMs < cutoff) return null;
+          return { key, viewedAt: new Date(viewedAtMs).toISOString(), viewedAtMs };
+        }).filter(Boolean).sort((a, b) => b.viewedAtMs - a.viewedAtMs);
         const seen = new Set();
-        return parsed.filter(entry => {
-          if (!entry || typeof entry.key !== 'string' || seen.has(entry.key)) return false;
+        const cleaned = candidates.filter(entry => {
+          if (seen.has(entry.key)) return false;
           seen.add(entry.key);
           return true;
-        }).map(entry => ({
-          key: entry.key.trim().slice(0, 50),
-          viewedAt: typeof entry.viewedAt === 'string' ? entry.viewedAt : new Date(0).toISOString()
-        })).filter(entry => entry.key).slice(0, RECENT_LIMIT);
+        }).slice(0, RECENT_LIMIT).map(entry => ({ key: entry.key, viewedAt: entry.viewedAt }));
+        if (JSON.stringify(cleaned) !== JSON.stringify(parsed)) {
+          localStorage.setItem(RECENT_STORAGE_KEY, JSON.stringify(cleaned));
+        }
+        return cleaned;
       } catch {
+        localStorage.setItem(RECENT_STORAGE_KEY, '[]');
         return [];
       }
     }

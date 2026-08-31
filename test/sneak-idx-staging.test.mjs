@@ -1016,15 +1016,15 @@ describe('SNEAK IDX Phase 2.2 Test Suite', () => {
         assert.ok(Array.isArray(data.data));
     });
 
-    test('PHASE 7.3C3A: Serving and frontend build versions are uniformly bumped to 2026.08.31.7.3c3a', () => {
+    test('PHASE 7.3C3A.1: Serving and frontend build versions are uniformly bumped to 2026.08.31.7.3c3a1', () => {
         const searchHtml = fs.readFileSync(path.join(rootDir, 'sneak-idx/search/index.html'), 'utf8');
         const embedJs = fs.readFileSync(path.join(rootDir, 'sneak-idx/embed.js'), 'utf8');
         const servingWorker = fs.readFileSync(path.join(rootDir, 'SneakIDXWorker.js'), 'utf8');
 
-        assert.ok(searchHtml.includes('data-ui-build="2026.08.31.7.3c3a"'), 'search/index.html must have data-ui-build="2026.08.31.7.3c3a"');
-        assert.ok(searchHtml.includes("CCOR_IDX_UI_BUILD = '2026.08.31.7.3c3a'"), "search/index.html must have CCOR_IDX_UI_BUILD = '2026.08.31.7.3c3a'");
-        assert.ok(embedJs.includes("const buildVersion = '2026.08.31.7.3c3a'"), "embed.js must have buildVersion = '2026.08.31.7.3c3a'");
-        assert.ok(servingWorker.includes("SNEAK_IDX_BUILD = '2026.08.31.7.3c3a'"), 'SneakIDXWorker.js must expose the C3A build');
+        assert.ok(searchHtml.includes('data-ui-build="2026.08.31.7.3c3a1"'), 'search/index.html must have data-ui-build="2026.08.31.7.3c3a1"');
+        assert.ok(searchHtml.includes("CCOR_IDX_UI_BUILD = '2026.08.31.7.3c3a1'"), "search/index.html must have CCOR_IDX_UI_BUILD = '2026.08.31.7.3c3a1'");
+        assert.ok(embedJs.includes("const buildVersion = '2026.08.31.7.3c3a1'"), "embed.js must have buildVersion = '2026.08.31.7.3c3a1'");
+        assert.ok(servingWorker.includes("SNEAK_IDX_BUILD = '2026.08.31.7.3c3a1'"), 'SneakIDXWorker.js must expose the C3A.1 build');
         assert.ok(embedJs.includes('ccor_listing'), 'embed.js must forward ccor_listing deep link parameter');
         assert.ok(searchHtml.includes('initialDeepListingKey'), 'search/index.html must parse initialDeepListingKey');
         assert.ok(searchHtml.includes('updateSavedSearchAlert'), 'search/index.html must implement updateSavedSearchAlert');
@@ -1049,6 +1049,7 @@ describe('SNEAK IDX Phase 2.2 Test Suite', () => {
         assert.ok(searchHtml.includes('body.is-embedded .main-container'), 'search/index.html must configure body.is-embedded .main-container');
         assert.ok(searchHtml.includes('body.is-embedded .listings-section'), 'search/index.html must configure body.is-embedded .listings-section');
         assert.ok(searchHtml.includes('overflow-y: auto'), 'listings-section must have overflow-y: auto');
+        assert.match(searchHtml, /@media \(max-width: 640px\)[\s\S]*?\.search-input-wrap\s*\{[\s\S]*?flex:\s*0 0 auto;/, 'mobile column layout must not treat the search field flex basis as height');
         // Ensure footer disclaimer is inside listings-section
         const listingsSecIdx = searchHtml.indexOf('class="listings-section"');
         const footerIdx = searchHtml.indexOf('class="footer-disclaimer"');

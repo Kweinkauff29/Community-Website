@@ -18,7 +18,7 @@ import {
     buildCommonListingFilters
 } from './sneak-shared/idx-query.js';
 
-export const SNEAK_IDX_BUILD = '2026.08.31.7.3c3a';
+export const SNEAK_IDX_BUILD = '2026.08.31.7.3c3a1';
 
 export default {
     async fetch(req, env, ctx) {

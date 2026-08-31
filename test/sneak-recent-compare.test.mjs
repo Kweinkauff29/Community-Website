@@ -5,6 +5,7 @@ import { describe, test } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
+import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import consumerWorker from '../sneak-consumer/worker.js';
 import {
@@ -17,6 +18,10 @@ import {
     handleMergeCompare
 } from '../sneak-consumer/api.js';
 import { handleListingSummaries } from '../SneakIDXWorker.js';
+import {
+    CONSUMER_FK_TABLES,
+    classifySneakSiteFkCompatibility
+} from '../scripts/check-sneak-site-fk-compatibility.mjs';
 
 const rootDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const RAW_TOKEN = 'phase73c3a-test-consumer-session-token-123456789';
@@ -53,7 +58,7 @@ function listing(key, overrides = {}) {
     };
 }
 
-function createDb({ compare = [] } = {}) {
+function createDb({ compare = [], events = null, extraListings = [] } = {}) {
     const tables = {
         sites: [
             { site_id: 'site_a', id: 'site_a', site_key: 'site-a', status: 'active', scope_type: 'agent', scope_value: 'AGENT_A' },
@@ -67,15 +72,17 @@ function createDb({ compare = [] } = {}) {
             listing('res-5'),
             listing('hidden-6', { InternetEntireListingDisplayYN: 0 }),
             listing('closed-7', { StandardStatus: 'Closed' }),
-            listing('foreign-8', { ListAgentMlsId: 'AGENT_B', ListAgentKey: 'AGENT_B' })
+            listing('foreign-8', { ListAgentMlsId: 'AGENT_B', ListAgentKey: 'AGENT_B' }),
+            ...extraListings
         ],
-        events: [
-            { listing_key: 'res-1', viewed_at: '2026-08-31T12:00:00Z' },
-            { listing_key: 'hidden-6', viewed_at: '2026-08-31T11:00:00Z' },
-            { listing_key: 'land-3', viewed_at: '2026-08-31T10:00:00Z' }
+        events: events || [
+            { listing_key: 'res-1', created_at: '2026-08-31T12:00:00Z' },
+            { listing_key: 'hidden-6', created_at: '2026-08-31T11:00:00Z' },
+            { listing_key: 'land-3', created_at: '2026-08-31T10:00:00Z' }
         ],
         compare: compare.map((key, index) => ({ id: `cmp_${index}`, site_id: 'site_a', user_id: 'user_a', listing_key: key, created_at: `2026-08-31T0${index}:00:00Z` })),
-        activityWrites: []
+        activityWrites: [],
+        recentQueries: []
     };
 
     function queryExecutor(sql, args) {
@@ -97,7 +104,25 @@ function createDb({ compare = [] } = {}) {
             },
             async all() {
                 if (normalized.includes('FROM sneak_consumer_activity_events') && normalized.includes("event_type = 'listing_view'")) {
-                    return { results: tables.events };
+                    tables.recentQueries.push(normalized);
+                    const databaseNow = Date.parse('2026-08-31T16:00:00Z');
+                    const cutoff = databaseNow - (90 * 24 * 60 * 60 * 1000);
+                    const eligibleEvents = normalized.includes("created_at >= datetime('now', '-90 days')")
+                        ? tables.events.filter(event => Date.parse(event.created_at) >= cutoff)
+                        : tables.events;
+                    const latestByKey = new Map();
+                    for (const event of eligibleEvents) {
+                        const current = latestByKey.get(event.listing_key);
+                        if (!current || Date.parse(event.created_at) > Date.parse(current)) {
+                            latestByKey.set(event.listing_key, event.created_at);
+                        }
+                    }
+                    const limit = Number(normalized.match(/LIMIT (\d+)/)?.[1] || 40);
+                    const results = [...latestByKey.entries()]
+                        .map(([listing_key, viewed_at]) => ({ listing_key, viewed_at }))
+                        .sort((a, b) => Date.parse(b.viewed_at) - Date.parse(a.viewed_at))
+                        .slice(0, limit);
+                    return { results };
                 }
                 if (normalized.includes('FROM sneak_consumer_compare') && normalized.includes('ORDER BY created_at')) {
                     return { results: tables.compare.filter(row => row.user_id === args[0] && row.site_id === args[1]) };
@@ -162,10 +187,48 @@ function authRequest(url, method = 'GET', body = null) {
     });
 }
 
+function recentReaderFromHtml() {
+    const html = fs.readFileSync(path.join(rootDir, 'sneak-idx', 'search', 'index.html'), 'utf8');
+    const scripts = [...html.matchAll(/<script(?:\s[^>]*)?>([\s\S]*?)<\/script>/g)].map(match => match[1]);
+    const applicationScript = scripts.find(script => script.includes('CCOR_IDX_UI_BUILD'));
+    const start = applicationScript.indexOf('function readLocalRecentEntries()');
+    const end = applicationScript.indexOf('// Price Ladder Steps', start);
+    assert.ok(start >= 0 && end > start, 'readLocalRecentEntries must be present in the application script');
+    const functionSource = applicationScript.slice(start, end);
+    return new Function(
+        'localStorage',
+        'RECENT_STORAGE_KEY',
+        'RECENT_LIMIT',
+        'RECENT_RETENTION_MS',
+        `${functionSource}; return readLocalRecentEntries();`
+    );
+}
+
+function storageWith(value) {
+    let stored = value;
+    const writes = [];
+    return {
+        writes,
+        getItem() { return stored; },
+        setItem(_key, next) { stored = next; writes.push(next); },
+        value() { return stored; }
+    };
+}
+
+function canonicalForeignKeys(targetColumn = 'id') {
+    return CONSUMER_FK_TABLES.map(table_name => ({
+        table_name,
+        parent_table: 'sneak_sites',
+        from_column: 'site_id',
+        target_column: targetColumn
+    }));
+}
+
 describe('SNEAK IDX Phase 7.3C3A — Recently Viewed + Property Compare', () => {
     test('1. Activity metadata is event-sanitized and unknown fields are discarded', () => {
         assert.deepEqual(sanitizeActivityMetadata('saved_search_created', { name: ' Gulf Homes ', secret: 'discard' }), { name: 'Gulf Homes' });
-        assert.deepEqual(sanitizeActivityMetadata('alert_frequency_changed', { frequency: 'weekly', email: 'discard' }), { frequency: 'weekly' });
+        assert.deepEqual(sanitizeActivityMetadata('alert_frequency_changed', { frequency: 'asap', email: 'discard' }), { frequency: 'asap' });
+        assert.equal(sanitizeActivityMetadata('alert_frequency_changed', { frequency: 'weekly' }), null);
         assert.equal(sanitizeActivityMetadata('listing_view', { arbitrary: 'discard' }), null);
         assert.equal(sanitizeActivityMetadata('alert_enabled', { frequency: 'hourly' }), null);
     });
@@ -199,7 +262,38 @@ describe('SNEAK IDX Phase 7.3C3A — Recently Viewed + Property Compare', () => 
         assert.equal(data.recentlyViewed.some(entry => entry.listingKey === 'hidden-6'), false);
     });
 
-    test('5. Compare reads expose only current scoped listings and prune invalid keys', async () => {
+    test('5. Authenticated Recently Viewed returns at most 20 unique current listings from a 40-row candidate window', async () => {
+        const extraListings = Array.from({ length: 25 }, (_, index) => listing(`recent-${index}`));
+        const events = extraListings.map((item, index) => ({
+            listing_key: item.ListingKey,
+            created_at: new Date(Date.parse('2026-08-01T00:00:00Z') + (index * 60_000)).toISOString()
+        }));
+        const db = createDb({ extraListings, events });
+        const url = new URL('https://consumer.test/api/consumer/recently-viewed?site=site-a');
+        const data = await (await handleListRecentlyViewed(authRequest(url.href), url, { DB: db }, 'https://site.test')).json();
+        assert.equal(data.count, 20);
+        assert.equal(new Set(data.recentlyViewed.map(entry => entry.listingKey)).size, 20);
+        assert.equal(data.recentlyViewed[0].listingKey, 'recent-24');
+        assert.match(db.tables.recentQueries[0], /LIMIT 40/);
+    });
+
+    test('6. Authenticated Recently Viewed excludes events older than 90 days and uses the latest duplicate view', async () => {
+        const db = createDb({
+            events: [
+                { listing_key: 'res-1', created_at: '2026-07-01T10:00:00Z' },
+                { listing_key: 'res-1', created_at: '2026-08-30T15:00:00Z' },
+                { listing_key: 'rent-2', created_at: '2026-08-29T12:00:00Z' },
+                { listing_key: 'land-3', created_at: '2026-05-01T12:00:00Z' }
+            ]
+        });
+        const url = new URL('https://consumer.test/api/consumer/recently-viewed?site=site-a');
+        const data = await (await handleListRecentlyViewed(authRequest(url.href), url, { DB: db }, 'https://site.test')).json();
+        assert.deepEqual(data.recentlyViewed.map(entry => entry.listingKey), ['res-1', 'rent-2']);
+        assert.equal(data.recentlyViewed[0].viewedAt, '2026-08-30T15:00:00Z');
+        assert.match(db.tables.recentQueries[0], /created_at >= datetime\('now', '-90 days'\)/);
+    });
+
+    test('7. Compare reads expose only current scoped listings and prune invalid keys', async () => {
         const db = createDb({ compare: ['res-1', 'hidden-6', 'foreign-8'] });
         const url = new URL('https://consumer.test/api/consumer/compare?site=site-a');
         const res = await handleListCompare(authRequest(url.href), url, { DB: db }, 'https://site.test');
@@ -208,7 +302,7 @@ describe('SNEAK IDX Phase 7.3C3A — Recently Viewed + Property Compare', () => 
         assert.deepEqual(db.tables.compare.map(entry => entry.listing_key), ['res-1']);
     });
 
-    test('6. Compare writes reject unavailable listings and enforce a maximum of four', async () => {
+    test('8. Compare writes reject unavailable listings and enforce a maximum of four', async () => {
         const invalidDb = createDb();
         const invalidRes = await handleAddCompare(authRequest('https://consumer.test/api/consumer/compare', 'POST', { site: 'site-a', listingKey: 'hidden-6' }), { DB: invalidDb }, 'https://site.test');
         assert.equal(invalidRes.status, 404);
@@ -219,7 +313,7 @@ describe('SNEAK IDX Phase 7.3C3A — Recently Viewed + Property Compare', () => 
         assert.equal((await fullRes.json()).error, 'CompareLimitExceeded');
     });
 
-    test('7. Local-to-server Compare merge validates keys, preserves server entries, and stays bounded', async () => {
+    test('9. Local-to-server Compare merge validates keys, preserves server entries, and stays bounded', async () => {
         const db = createDb({ compare: ['res-1'] });
         const req = authRequest('https://consumer.test/api/consumer/compare/merge', 'POST', {
             site: 'site-a', listingKeys: ['hidden-6', 'rent-2', 'foreign-8', 'land-3', 'comm-4']
@@ -230,7 +324,7 @@ describe('SNEAK IDX Phase 7.3C3A — Recently Viewed + Property Compare', () => 
         assert.deepEqual(data.compare.map(entry => entry.listingKey), ['res-1', 'rent-2', 'land-3']);
     });
 
-    test('8. Recently Viewed and Compare consumer APIs reject anonymous requests', async () => {
+    test('10. Recently Viewed and Compare consumer APIs reject anonymous requests', async () => {
         const env = { DB: createDb() };
         const recent = await consumerWorker.fetch(new Request('https://consumer.test/api/consumer/recently-viewed?site=site-a'), env);
         const compare = await consumerWorker.fetch(new Request('https://consumer.test/api/consumer/compare?site=site-a'), env);
@@ -238,7 +332,7 @@ describe('SNEAK IDX Phase 7.3C3A — Recently Viewed + Property Compare', () => 
         assert.equal(compare.status, 401);
     });
 
-    test('9. Serving summary endpoint is bounded and returns only current scoped summaries', async () => {
+    test('11. Serving summary endpoint is bounded and returns only current scoped summaries', async () => {
         const db = createDb();
         const url = new URL('https://idx.test/idx/v1/listings/summary?site=site-a&keys=res-1,hidden-6,foreign-8,land-3');
         const res = await handleListingSummaries(url, db.tables.sites[0], { DB: db }, 'https://site.test');
@@ -250,7 +344,7 @@ describe('SNEAK IDX Phase 7.3C3A — Recently Viewed + Property Compare', () => 
         assert.equal((await handleListingSummaries(tooMany, db.tables.sites[0], { DB: db }, 'https://site.test')).status, 400);
     });
 
-    test('10. Migration 0031 stores references only and enforces four via a database trigger', () => {
+    test('12. Migration 0031 stores references only; migration 0032 is a non-destructive compatibility marker', () => {
         const sql = fs.readFileSync(path.join(rootDir, 'migrations', '0031_sneak_consumer_compare.sql'), 'utf8');
         assert.match(sql, /CREATE TABLE IF NOT EXISTS sneak_consumer_compare/);
         assert.match(sql, /listing_key TEXT NOT NULL/);
@@ -259,21 +353,82 @@ describe('SNEAK IDX Phase 7.3C3A — Recently Viewed + Property Compare', () => 
         assert.doesNotMatch(sql, /ListPrice|UnparsedAddress|MediaJSON|PrimaryPhoto/);
 
         const compatibilitySql = fs.readFileSync(path.join(rootDir, 'migrations', '0032_sneak_site_fk_compatibility.sql'), 'utf8');
-        assert.match(compatibilitySql, /CHECK \(row_count = 0\)/);
-        assert.match(compatibilitySql, /REFERENCES sneak_sites\(id\)/);
-        assert.doesNotMatch(compatibilitySql, /REFERENCES sneak_sites\(site_id\)/);
+        assert.match(compatibilitySql, /compatibility marker only/i);
+        assert.match(compatibilitySql, /SELECT 1 AS sneak_site_fk_compatibility_marker/);
+        assert.doesNotMatch(compatibilitySql, /DROP TABLE|ALTER TABLE|CREATE TABLE|CHECK \(row_count/);
+
+        const manualRepair = fs.readFileSync(path.join(rootDir, 'scripts', 'sql', 'repair-legacy-sneak-site-fks-empty.sql'), 'utf8');
+        assert.match(manualRepair, /MANUAL LEGACY ENVIRONMENT REPAIR — NOT AN AUTOMATIC MIGRATION/);
+        assert.match(manualRepair, /CHECK \(row_count = 0\)/);
+        assert.match(manualRepair, /REFERENCES sneak_sites\(id\)/);
     });
 
-    test('11. Anonymous privacy uses only site-scoped key storage and has no Recently Viewed upload path', () => {
+    test('13. Migration preflight classifies empty and populated canonical schemas as no-repair PASS', () => {
+        const empty = classifySneakSiteFkCompatibility(canonicalForeignKeys('id'), 0);
+        const populated = classifySneakSiteFkCompatibility(canonicalForeignKeys('id'), 27);
+        assert.deepEqual([empty.classification, empty.exitCode], ['CANONICAL', 0]);
+        assert.deepEqual([populated.classification, populated.exitCode], ['CANONICAL', 0]);
+        assert.equal(populated.message, 'PASS — NO REPAIR REQUIRED');
+    });
+
+    test('14. Migration preflight identifies legacy empty schemas and directs explicit manual repair', () => {
+        const result = classifySneakSiteFkCompatibility(canonicalForeignKeys('site_id'), 0);
+        assert.equal(result.classification, 'LEGACY_EMPTY');
+        assert.equal(result.exitCode, 2);
+        assert.equal(result.message, 'LEGACY EMPTY — MANUAL EMPTY-SCHEMA REPAIR AVAILABLE');
+    });
+
+    test('15. Migration preflight fails closed for legacy populated schemas without deleting data', () => {
+        const result = classifySneakSiteFkCompatibility(canonicalForeignKeys('site_id'), 12);
+        assert.equal(result.classification, 'LEGACY_POPULATED');
+        assert.equal(result.exitCode, 3);
+        assert.equal(result.message, 'STOP — DATA-PRESERVING MANUAL MIGRATION REQUIRED');
+        const source = fs.readFileSync(path.join(rootDir, 'scripts', 'check-sneak-site-fk-compatibility.mjs'), 'utf8');
+        assert.doesNotMatch(source, /DROP TABLE|ALTER TABLE|DELETE FROM|UPDATE sneak_/);
+    });
+
+    test('16. Anonymous privacy uses only site-scoped key storage and has no Recently Viewed upload path', () => {
         const html = fs.readFileSync(path.join(rootDir, 'sneak-idx', 'search', 'index.html'), 'utf8');
         assert.match(html, /ccor_recently_viewed_' \+ SITE_KEY/);
         assert.match(html, /JSON\.stringify\(recentlyViewedEntries\.map\(entry => \(\{ key: entry\.key, viewedAt: entry\.viewedAt \}\)\)\)/);
         assert.doesNotMatch(html, /recently-viewed\/merge/);
         assert.match(html, /if \(consumerUser && consumerSessionToken && item\?\.ListingKey\)/);
         assert.match(html, /recordAnonymousRecentlyViewed\(item\.ListingKey\)/);
+        const logoutSource = html.slice(html.indexOf('async function handleConsumerLogout()'), html.indexOf('async function handleConsumerDeleteAccount()'));
+        assert.doesNotMatch(logoutSource, /removeItem\(RECENT_STORAGE_KEY\)/);
     });
 
-    test('12. Compare UI covers card/detail/tray and Residential, Rental, Land, Commercial contexts responsively', () => {
+    test('17. Anonymous Recently Viewed retains at most 20 unique listings', () => {
+        const now = Date.now();
+        const entries = Array.from({ length: 25 }, (_, index) => ({
+            key: `anon-${index}`,
+            viewedAt: new Date(now - (index * 60_000)).toISOString()
+        }));
+        const storage = storageWith(JSON.stringify(entries));
+        const cleaned = recentReaderFromHtml()(storage, 'recent-key', 20, 30 * 24 * 60 * 60 * 1000);
+        assert.equal(cleaned.length, 20);
+        assert.equal(new Set(cleaned.map(entry => entry.key)).size, 20);
+        assert.equal(JSON.parse(storage.value()).length, 20);
+    });
+
+    test('18. Anonymous Recently Viewed prunes entries older than 30 days and malformed timestamps, then rewrites storage', () => {
+        const now = Date.now();
+        const entries = [
+            { key: 'fresh', viewedAt: new Date(now - 60_000).toISOString() },
+            { key: 'duplicate', viewedAt: new Date(now - 120_000).toISOString() },
+            { key: 'duplicate', viewedAt: new Date(now - 180_000).toISOString() },
+            { key: 'expired', viewedAt: new Date(now - (31 * 24 * 60 * 60 * 1000)).toISOString() },
+            { key: 'malformed', viewedAt: 'not-a-date' },
+            { key: '', viewedAt: new Date(now).toISOString() }
+        ];
+        const storage = storageWith(JSON.stringify(entries));
+        const cleaned = recentReaderFromHtml()(storage, 'recent-key', 20, 30 * 24 * 60 * 60 * 1000);
+        assert.deepEqual(cleaned.map(entry => entry.key), ['fresh', 'duplicate']);
+        assert.ok(storage.writes.length >= 1, 'cleaned list must be written back to localStorage');
+        assert.deepEqual(JSON.parse(storage.value()), cleaned);
+    });
+
+    test('19. Compare UI covers card/detail/tray and Residential, Rental, Land, Commercial contexts responsively', () => {
         const html = fs.readFileSync(path.join(rootDir, 'sneak-idx', 'search', 'index.html'), 'utf8');
         for (const marker of ['card-compare-btn', 'detailCompareBtn', 'compareTray', 'compareModal', "return 'rental'", "return 'land'", "return 'commercial'", "return 'residential'"]) {
             assert.ok(html.includes(marker), `Missing UI marker: ${marker}`);
@@ -282,7 +437,7 @@ describe('SNEAK IDX Phase 7.3C3A — Recently Viewed + Property Compare', () => 
         assert.match(html, /const COMPARE_LIMIT = 4/);
     });
 
-    test('13. C3A application script parses and serving/consumer paths contain no Bridge calls', () => {
+    test('20. C3A application script parses and serving/consumer paths contain no Bridge calls', () => {
         const html = fs.readFileSync(path.join(rootDir, 'sneak-idx', 'search', 'index.html'), 'utf8');
         const scripts = [...html.matchAll(/<script(?:\s[^>]*)?>([\s\S]*?)<\/script>/g)].map(match => match[1]);
         const applicationScript = scripts.find(script => script.includes('CCOR_IDX_UI_BUILD'));
@@ -292,5 +447,15 @@ describe('SNEAK IDX Phase 7.3C3A — Recently Viewed + Property Compare', () => 
         const consumer = fs.readFileSync(path.join(rootDir, 'sneak-consumer', 'api.js'), 'utf8');
         assert.doesNotMatch(serving.slice(serving.indexOf('handleListingSummaries'), serving.indexOf('handleListingMedia')), /api\.bridgeinteractive|BRIDGE_TOKEN/);
         assert.doesNotMatch(consumer, /api\.bridgeinteractive|BRIDGE_TOKEN/);
+    });
+
+    test('21. All four protected legacy files remain zero-diff from origin/main', () => {
+        const protectedFiles = ['ListingsWorker.js', 'home-search/index.html', 'open-house/index.html', 'wrangler.toml'];
+        const result = spawnSync('git', ['diff', '--exit-code', 'origin/main', '--', ...protectedFiles], {
+            cwd: rootDir,
+            encoding: 'utf8',
+            windowsHide: true
+        });
+        assert.equal(result.status, 0, result.stdout || result.stderr);
     });
 });
