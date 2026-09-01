@@ -1,14 +1,21 @@
 # CCOR IDX Phase 7.4B2 Launch Readiness
 
-Current Phase 7.4B2A production foundation gate: **COMPLETE**. Production capability gates, isolated configs, clean production D1, migration 0035, automated regression (287/287 passing across 20 suites), Admin CSP simplified to `connect-src 'self'` with zero staging host allowances, zero staging runtime leaks, and fail-closed optional-feature behavior are implemented.
+Current Phase 7.4B2A production foundation gate: **COMPLETE**. Production capability gates, isolated configs, clean production D1, migration 0035, automated regression (298/298 passing across 21 suites), Admin CSP simplified to `connect-src 'self'` with zero staging host allowances, zero staging runtime leaks, fail-closed optional-feature behavior, and complete production full-inventory bootstrap with self-healing reconciliation are implemented.
 
-Phase 7.4B2B first-member launch activation: **BLOCKED / NOT STARTED**. Production Workers/routes/schedules and the member record were deliberately not created because production Bridge, Serving/Admin/Member secrets, sender verification, approved controlled-mailbox evidence, production sync, member-page access, and required connected-Chrome QA are unavailable. Optional Consumer accounts, Alerts, GrowthZone automation, and custom hosting are explicitly disabled rather than presented as broken features.
+Phase 7.4B2B first-member launch activation: **BLOCKED / NOT STARTED**. Production Workers/routes/schedules and the member record were deliberately not created because production Bridge, Serving/Admin/Member secrets, sender verification, approved controlled-mailbox evidence, production sync bootstrap, member-page access, and required connected-Chrome QA are unavailable. Optional Consumer accounts, Alerts, GrowthZone automation, and custom hosting are explicitly disabled rather than presented as broken features.
 
 Build: `2026.09.01.7.4b2` for shared Serving, Sync, Consumer, Member, Admin, Sites, Alerts, embed, and search sources.
 
 Environments assessed: staging and isolated production foundation
 
-Production cutover status: **PHASE 7.4B2A — PRODUCTION FOUNDATION: COMPLETE | PHASE 7.4B2B — FIRST MEMBER ACTIVATION: BLOCKED / NOT STARTED** (D1/config foundation only, no production Worker deployment or member activation)
+Production cutover status: **PHASE 7.4B2A — PRODUCTION FOUNDATION: COMPLETE | PHASE 7.4B2B — FIRST MEMBER ACTIVATION: BLOCKED / NOT STARTED** (D1/config foundation only, no production Worker deployment, zero production listings until operator-assisted activation)
+
+### Synchronization & Inventory Architecture (Phase 7.4B2A.3)
+- **Initial Production Sync:** Full inventory bootstrap without lookback limitation (`FINAL_SNEAK_LISTING_FILTER and ModificationTimestamp lt syncUpperBound`). Enforces strict completeness guards (`@odata.count == fetched == unique keys`), transforms all 49 columns including `MediaJSON`, idempotently prunes any preexisting stale rows, and writes `last_cursor = syncUpperBound`, `last_successful_sync`, and `status = 'success'` only upon complete success.
+- **Normal Listing Sync:** 15-minute incremental delta from stored cursor with 5-minute overlap (`ModificationTimestamp ge ${cursor - 5min}`).
+- **Self-Healing Reconciliation:** Daily scheduled job enumerates complete eligible Bridge keys vs D1 keys. Missing listings are hydrated via targeted chunk queries (`ListingKey eq '...'`), transformed, and upserted into D1; stale rows are pruned; and final inventory consistency is asserted (`finalD1Keys.size === bridgeKeys.size`).
+- **Open Houses:** 60-day forward horizon sync against bootstrapped D1 listings; zero historical backfill needed.
+- **Sync Readiness Metadata:** Sync Worker `/health` reports `syncReadiness` (`NOT_INITIALIZED`, `BOOTSTRAPPING`, `HEALTHY`, `FAILED`) and `syncState`. Admin readiness blocks core launch if `last_cursor` is absent (`SYNC_NOT_BOOTSTRAPPED`) or listing inventory is zero (`MLS_INVENTORY_EMPTY`). Production listing bootstrap has NOT run yet; production D1 inventory remains 0.
 
 ## Control-plane audit
 

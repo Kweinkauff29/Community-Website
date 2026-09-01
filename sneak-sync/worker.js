@@ -6,11 +6,11 @@
  * ROLE:
  * - Executes automated scheduled sync tasks (listing deltas, open house deltas, reconciliation).
  * - Holds BRIDGE_TOKEN secret securely.
- * - Writes directly to sneak-idx-staging D1.
+ * - Writes directly to D1 database.
  * - Does NOT expose public mutation or trigger routes.
  */
 
-import { runListingDelta } from './listing-sync.js';
+import { runListingDelta, runFullInventoryBootstrap } from './listing-sync.js';
 import { runOpenHouseSync } from './open-house-sync.js';
 import { runListingReconciliation } from './reconciliation.js';
 
@@ -24,12 +24,40 @@ export default {
         const url = new URL(request.url);
 
         if (url.pathname === '/' || url.pathname === '/health') {
+            let syncState = null;
+            if (env?.DB) {
+                try {
+                    syncState = await env.DB.prepare("SELECT * FROM sneak_sync_state WHERE sync_name = 'listings'").first();
+                } catch {}
+            }
+
+            const hasCursor = Boolean(syncState?.last_cursor);
+            const isSuccess = syncState?.status === 'success';
+            const recordCount = Number(syncState?.last_record_count || 0);
+
+            let syncReadiness = 'NOT_INITIALIZED';
+            if (isSuccess && hasCursor && recordCount > 0) {
+                syncReadiness = 'HEALTHY';
+            } else if (syncState?.status === 'running') {
+                syncReadiness = 'BOOTSTRAPPING';
+            } else if (syncState?.status === 'failure') {
+                syncReadiness = 'FAILED';
+            }
+
             return new Response(JSON.stringify({
                 service: env?.SNEAK_SERVICE_NAME || (env?.SNEAK_ENV === 'production' ? 'sneak-idx-sync' : 'sneak-idx-sync-staging'),
                 build: SNEAK_SYNC_BUILD,
                 status: 'ok',
-                env: env.SNEAK_ENV || 'staging',
-                timestamp: new Date().toISOString()
+                env: env?.SNEAK_ENV || 'staging',
+                timestamp: new Date().toISOString(),
+                syncReadiness,
+                syncState: {
+                    last_cursor: syncState?.last_cursor || null,
+                    last_successful_sync: syncState?.last_successful_sync || null,
+                    last_full_reconciliation: syncState?.last_full_reconciliation || null,
+                    last_record_count: recordCount,
+                    status: syncState?.status || 'uninitialized'
+                }
             }, null, 2), {
                 status: 200,
                 headers: {
@@ -77,6 +105,7 @@ export default {
 
 export {
     runListingDelta,
+    runFullInventoryBootstrap,
     runOpenHouseSync,
     runListingReconciliation
 };

@@ -109,7 +109,8 @@ export async function calculateAccountReadiness(db, accountId, env = {}) {
     ).snippets.search?.htmlSnippet);
     const syncDate = parseD1Date(syncState?.last_successful_sync || syncState?.updated_at);
     const syncAgeMinutes = syncDate ? Math.max(0, Math.round((Date.now() - syncDate.getTime()) / 60000)) : null;
-    const syncFresh = syncState?.status === 'success' && Number.isFinite(syncAgeMinutes) && syncAgeMinutes <= 180;
+    const hasCursor = Boolean(syncState?.last_cursor || syncState?.last_successful_sync);
+    const syncFresh = syncState?.status === 'success' && hasCursor && Number.isFinite(syncAgeMinutes) && syncAgeMinutes <= 180;
 
     const launchBlockers = serving.blockers.map(item => ({ ...item, capability: 'core_idx' }));
     if (!memberExists) launchBlockers.push(launchBlocker('MEMBER_USER_MISSING', 'Create an invited or active Member Portal user.', 'member_portal'));
@@ -117,7 +118,8 @@ export async function calculateAccountReadiness(db, accountId, env = {}) {
     if (!brandingReady) launchBlockers.push(launchBlocker('BRANDING_INCOMPLETE', 'Display name, brokerage, and contact email are required.'));
     if (!searchWidgetReady) launchBlockers.push(launchBlocker('SEARCH_WIDGET_DISABLED', 'The primary search widget is not enabled.'));
     if (!embedReady) launchBlockers.push(launchBlocker('EMBED_UNAVAILABLE', 'A current embed snippet could not be generated.'));
-    if (!syncFresh) launchBlockers.push(launchBlocker('SYNC_STALE', 'The latest successful listing sync is missing or older than three hours.'));
+    if (!hasCursor) launchBlockers.push(launchBlocker('SYNC_NOT_BOOTSTRAPPED', 'Initial listing inventory bootstrap has not completed.'));
+    if (!syncFresh && hasCursor) launchBlockers.push(launchBlocker('SYNC_STALE', 'The latest successful listing sync is missing or older than three hours.'));
     if (Number(listingsRow?.count || 0) < 1) launchBlockers.push(launchBlocker('MLS_INVENTORY_EMPTY', 'No listing inventory is available.'));
     if (!servingHealth.reachable) launchBlockers.push(launchBlocker('SERVING_WORKER_UNHEALTHY', 'The Serving Worker health check did not succeed.'));
     if (!bootstrap.reachable) launchBlockers.push(launchBlocker('BOOTSTRAP_UNVERIFIED', 'The authorized-domain bootstrap check did not succeed.', 'custom_domain'));

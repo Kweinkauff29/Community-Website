@@ -71,20 +71,27 @@ Store values only as Cloudflare Worker secrets. Never put values in Wrangler con
 
 `EMAIL_FROM` and service URLs are non-secret configuration. The proposed sender name is `no-reply@ccorealtors.org`, but it is not approved for production until Mailjet sender/domain authorization, CCOR ownership, SPF/DKIM as applicable, provider acceptance, and controlled-inbox delivery all pass.
 
+### Production listing & synchronization architecture
+- **INITIAL PRODUCTION LISTING SYNC:** Full inventory bootstrap without lookback limitation (`FINAL_SNEAK_LISTING_FILTER and ModificationTimestamp lt syncUpperBound`). Hydrates all eligible current MLS market inventory, enforces strict completeness guards (`@odata.count == fetched == unique keys`), populates `MediaJSON`, prunes any preexisting stale rows idempotently, and commits `last_cursor = syncUpperBound`.
+- **NORMAL LISTING SYNC:** 15-minute incremental delta from stored cursor with a 5-minute overlap window.
+- **FULL RECONCILIATION:** Daily scheduled execution with self-healing repair (enumerates complete eligible Bridge keys vs D1 keys, repairs missing listings via targeted chunk retrieval, prunes stale records, and verifies exact final set consistency).
+- **OPEN HOUSES:** 60-day forward horizon sync executed after listing bootstrap; references active D1 listing inventory with zero historical backfill required.
+
 ## Required cutover sequence
 
-1. Restore Chrome control by installing/enabling the ChatGPT/Codex Browser extension and native host. Confirm the connected Chrome session before any required browser claim.
-2. Connect the approved controlled mailbox. Do not substitute the currently connected unrelated Gmail account.
-3. Configure production Serving, Sync, Member, and Admin secrets by name. Inventory with `wrangler secret list`; never print values.
-4. Verify the exact Mailjet sender/domain, then prove Member request → provider success → controlled inbox → one-time consume → session. Prove replay rejection and expiry rejection without exposing tokens.
-5. Deploy production Serving, Sync, Consumer, Member, Sites, Alerts, then Admin. Record immutable version IDs. Optional Workers remain fail closed.
-6. Run the initial Bridge sync from Sync only. Verify inventory, `MediaJSON`, display controls, sync state, and a subsequent incremental sync. Then enable only the verified Sync schedules.
-7. Provision one manual-source account/site/member/domain for PILOT-01 through Admin. Do not copy staging rows. Associate the real member domain and generate a production-serving embed.
-8. Run Admin readiness. Required capabilities must be READY; optional capabilities must read DISABLED, MANUAL MODE, or NOT USED.
-9. Install the production embed on the member page. Run the production smoke and the complete Chrome matrix before activation.
-10. Test suspend/reactivate at a coordinated time, record rollback evidence, reactivate, then begin the monitoring window. Do not onboard another member.
-
-Production deployment commands use the corresponding `wrangler.sneak-*.production.toml` files. Do not add production Sync cron until initial and incremental sync evidence passes. Do not add Alert or GrowthZone cron in this launch profile.
+1. Production D1 migrations and FK constraints verified (migrations 0001–0035 applied, clean zero rows, zero FK violations).
+2. Restore Chrome control by installing/enabling the ChatGPT/Codex Browser extension and native host.
+3. Connect the approved controlled mailbox. Do not substitute unrelated email accounts.
+4. Bind production secrets: `BRIDGE_TOKEN` on Sync; `SNEAK_SIGNING_SECRET` on Serving; `MAILJET_API_KEY`, `MAILJET_SECRET_KEY`, `SNEAK_WEBSITE_PREVIEW_SECRET` on Member; `SNEAK_ADMIN_PASSWORD_HASH`, `SNEAK_WEBSITE_PREVIEW_SECRET` on Admin; `SNEAK_WEBSITE_PREVIEW_SECRET` on Sites.
+5. Deploy production Sync Worker.
+6. Enable listing delta cron (`*/15 * * * *`). The FIRST execution detects no cursor and automatically performs FULL INVENTORY BOOTSTRAP.
+7. Verify complete listing inventory in production D1 (`last_cursor` committed, positive listing count, `syncReadiness: HEALTHY`).
+8. Run/allow open-house sync to populate the forward horizon against bootstrapped inventory.
+9. Run listing reconciliation and verify `missingKeysRepaired` and `finalMismatch === 0`.
+10. Deploy remaining production Workers (Serving, Member, Admin, Sites, Alerts, Consumer). Record immutable version IDs.
+11. Verify Mailjet sender/domain and prove Member request → provider success → controlled inbox → one-time consume → session.
+12. Provision one manual-source account/site/member/domain for PILOT-01 through Admin. Verify Admin readiness reports READY for core capabilities.
+13. Install the production embed on the member page, execute the complete Chrome QA matrix, test coordinated suspend/reactivate, and begin the monitoring window. Do not onboard another member.
 
 ## Verification gates
 

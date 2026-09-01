@@ -54,6 +54,21 @@ for (const [name, endpoint] of Object.entries({
     check(result.data?.build === BUILD, `${name} build`, String(result.data?.build || 'missing'));
 }
 
+const syncHealth = await readJson(`${urls.sync}/health`);
+const syncData = syncHealth.data;
+const syncState = syncData?.syncState;
+const syncRecordCount = Number(syncState?.last_record_count || 0);
+const syncCursor = syncState?.last_cursor;
+const syncStatus = syncState?.status;
+const syncDate = syncState?.last_successful_sync ? new Date(syncState.last_successful_sync) : null;
+const syncAgeMinutes = syncDate && Number.isFinite(syncDate.getTime()) ? Math.max(0, Math.round((Date.now() - syncDate.getTime()) / 60000)) : null;
+
+check(Boolean(syncCursor), 'Production sync cursor committed', syncCursor || 'absent');
+check(syncRecordCount > 0, 'Production sync listing inventory positive', `${syncRecordCount} listings`);
+check(syncStatus === 'success', 'Production sync status successful', syncStatus || 'uninitialized');
+check(Number.isFinite(syncAgeMinutes) && syncAgeMinutes <= 180, 'Production sync inventory fresh within policy', syncAgeMinutes !== null ? `${syncAgeMinutes}m ago` : 'no timestamp');
+check(syncData?.syncReadiness === 'HEALTHY', 'Production sync readiness is HEALTHY', syncData?.syncReadiness || 'NOT_INITIALIZED');
+
 const consumerHealth = await readJson(`${urls.consumer}/api/consumer/version`);
 check(consumerHealth.data?.authEnabled === false, 'Consumer accounts disabled for pilot');
 check(consumerHealth.data?.emailAlertsEnabled === false, 'Consumer alert controls disabled for pilot');
