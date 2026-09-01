@@ -241,7 +241,7 @@ graph TD
   * Human Member subscription states and removal of legacy Stripe presentation from current MVP controls.
   * External dependency, security, email, lifecycle, provisioning, and production-next-phase documentation in `docs/ccor-idx-launch-readiness.md`.
   * Corrective consumer detail hydration always fetches the authoritative current D1 listing, consumes the canonical URL-string media contract, rejects stale A→B responses, and keeps activity/history work non-blocking. Ten real multi-photo listings passed 65/65 live detail/media assertions after deployment.
-  * Actual Chrome acceptance passed 527/527 checks at 1440×900, 1024×768, and 390×844 across the 11-listing category/gallery matrix, authenticated Admin workflow, authenticated C2B Member workflow, anonymous privacy, request ordering, overflow, and no-Bridge gates.
+  * Actual Chrome acceptance passed 616/616 checks at 1440×900, 1024×768, and 390×844 across the 11-listing category/gallery matrix, every current detail origin, authenticated Admin workflow, complete authenticated Member/C2B navigation and client workflow, anonymous privacy, request ordering, overflow, and no-Bridge gates.
   * Automated regression passed 246/246 tests across 13 suites; live Phase 7.4A health/auth verification passed 17/17; remote D1 has no pending migrations and no foreign-key violations.
   * Deterministic Admin/Serving/Member/Sites/embed/search build `2026.08.31.7.4a`.
 

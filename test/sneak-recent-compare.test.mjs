@@ -431,7 +431,7 @@ describe('SNEAK IDX Phase 7.3C3A — Recently Viewed + Property Compare', () => 
 
     test('19. Compare UI covers card/detail/tray and Residential, Rental, Land, Commercial contexts responsively', () => {
         const html = fs.readFileSync(path.join(rootDir, 'sneak-idx', 'search', 'index.html'), 'utf8');
-        for (const marker of ['card-compare-btn', 'detailCompareBtn', 'compareTray', 'compareModal', "return 'rental'", "return 'land'", "return 'commercial'", "return 'residential'"]) {
+        for (const marker of ['card-compare-btn', 'detailCompareBtn', 'compareTray', 'compareModal', 'compare-view-detail', 'openDetailByKey(this.dataset.listingKey)', "return 'rental'", "return 'land'", "return 'commercial'", "return 'residential'"]) {
             assert.ok(html.includes(marker), `Missing UI marker: ${marker}`);
         }
         assert.match(html, /@media \(max-width: 768px\)[\s\S]*\.compare-tray/);

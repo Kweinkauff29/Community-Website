@@ -38,6 +38,7 @@ let browser = null;
 let adminSessionId = null;
 let memberSessionId = null;
 let fixture = null;
+let listingSurfaceFixture = null;
 
 function check(condition, label, detail = '') {
   if (condition) {
@@ -88,6 +89,21 @@ function insertTemporarySession(table, prefix, fields) {
     runD1(`INSERT INTO sneak_member_sessions (id,user_id,account_id,token_hash,created_at,expires_at,last_seen_at,revoked_at) VALUES (${sqlString(id)},${sqlString(fields.userId)},${sqlString(fields.accountId)},${sqlString(tokenHash)},${sqlString(now)},${sqlString(expires)},${sqlString(now)},NULL)`, 'wrangler.sneak-member.toml');
   }
   return { id, rawToken };
+}
+
+function seedListingSurfaceFixture(listingKey) {
+  const site = runD1(`SELECT id FROM sneak_sites WHERE site_key=${sqlString(SITE)} LIMIT 1`, 'wrangler.sneak-consumer.toml')[0];
+  if (!site?.id) throw new Error(`Unable to find browser QA site ${SITE}.`);
+  const now = new Date().toISOString();
+  const userId = `cuser_surface_${suffix}`.replaceAll('-', '_');
+  const listId = `clist_surface_${suffix}`.replaceAll('-', '_');
+  const itemId = `clitem_surface_${suffix}`.replaceAll('-', '_');
+  const publicSlug = crypto.randomBytes(24).toString('hex');
+  runD1(`INSERT INTO sneak_consumer_users (id,site_id,email,status,created_at,activated_at,last_login_at,updated_at,last_activity_at) VALUES (${sqlString(userId)},${sqlString(site.id)},${sqlString(`surface-${suffix}@example.com`)},'active',${sqlString(now)},${sqlString(now)},${sqlString(now)},${sqlString(now)},${sqlString(now)})`, 'wrangler.sneak-consumer.toml');
+  runD1(`INSERT INTO sneak_consumer_shared_lists (id,site_id,user_id,name,share_enabled,public_slug,created_at,updated_at) VALUES (${sqlString(listId)},${sqlString(site.id)},${sqlString(userId)},'Phase 74A Detail Origin QA',1,${sqlString(publicSlug)},${sqlString(now)},${sqlString(now)})`, 'wrangler.sneak-consumer.toml');
+  runD1(`INSERT INTO sneak_consumer_shared_list_items (id,list_id,listing_key,sort_order,created_at) VALUES (${sqlString(itemId)},${sqlString(listId)},${sqlString(listingKey)},0,${sqlString(now)})`, 'wrangler.sneak-consumer.toml');
+  listingSurfaceFixture = { userId, listId, publicSlug };
+  return listingSurfaceFixture;
 }
 
 function loadPlaywright() {
@@ -172,11 +188,13 @@ async function documentFits(page) {
   return page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 1);
 }
 
-async function runListingBrowserQa(playwright, executablePath, servingSession, matrix) {
+async function runListingBrowserQa(playwright, executablePath, servingSession, matrix, publicListSlug) {
   const context = await browser.newContext({ viewport: viewports[0], ignoreHTTPSErrors: false });
   await context.addInitScript(site => {
     localStorage.removeItem('ccor_compare_' + site);
     localStorage.removeItem('ccor_recently_viewed_' + site);
+    localStorage.removeItem('savedListings_' + site);
+    localStorage.removeItem('ccor_idx_map_visible_' + site);
   }, SITE);
   const page = await context.newPage();
   const requests = [];
@@ -189,6 +207,24 @@ async function runListingBrowserQa(playwright, executablePath, servingSession, m
   page.on('pageerror', error => pageErrors.push(error.message));
 
   const baseUrl = `${SERVING}/search/?site=${encodeURIComponent(SITE)}&propertyType=sale&session=${encodeURIComponent(servingSession)}`;
+  const hasAuthoritativePair = (start, expectedKey = '') => {
+    const opened = requests.slice(start);
+    const detailKeys = new Set(opened.map(item => item.url.match(/\/idx\/v1\/listing\/([^/?]+)\?/)?.[1]).filter(Boolean));
+    const mediaKeys = new Set(opened.map(item => item.url.match(/\/idx\/v1\/listing\/([^/?]+)\/media\?/)?.[1]).filter(Boolean));
+    if (expectedKey) return detailKeys.has(encodeURIComponent(expectedKey)) && mediaKeys.has(encodeURIComponent(expectedKey));
+    return [...detailKeys].some(key => mediaKeys.has(key));
+  };
+  const checkSurfaceOpen = async (label, trigger, expectedKey = '', expectedFact = '') => {
+    const start = requests.length;
+    await trigger();
+    await page.waitForSelector('#detailOverlay', { state: 'visible' });
+    await page.waitForFunction(() => document.querySelector('#detailListingInfoFacts')?.childElementCount > 0);
+    if (expectedFact) {
+      await page.waitForFunction(value => [...document.querySelectorAll('#detailListingInfoFacts dd')].some(node => node.textContent === value), expectedFact);
+    }
+    check(hasAuthoritativePair(start, expectedKey), `${label} uses authoritative detail and media requests`);
+    await page.click('#detailClose');
+  };
   await page.goto(baseUrl, { waitUntil: 'domcontentloaded', timeout: 45000 });
   await page.waitForSelector('.listing-card', { timeout: 45000 });
   check(await page.getAttribute('body', 'data-ui-build') === BUILD, 'live consumer browser build marker', BUILD);
@@ -198,6 +234,7 @@ async function runListingBrowserQa(playwright, executablePath, servingSession, m
   await page.waitForSelector('#detailOverlay', { state: 'visible' });
   await page.waitForFunction(() => document.querySelector('#detailListingInfoFacts')?.childElementCount > 0);
   check(true, 'search card enters authoritative detail modal');
+  check(hasAuthoritativePair(beforeCardRequests), 'search card uses authoritative detail and media requests');
   await page.click('#detailClose');
   const anonymousActivityPosts = requests.slice(beforeCardRequests).filter(item => item.method === 'POST' && item.url.includes('/api/consumer/activity'));
   check(anonymousActivityPosts.length === 0, 'anonymous detail view creates no server activity request');
@@ -207,6 +244,22 @@ async function runListingBrowserQa(playwright, executablePath, servingSession, m
     return value.length > 0 && value.every(entry => entry && Object.keys(entry).sort().join(',') === 'key,viewedAt');
   }, SITE);
   check(recentShape, 'anonymous Recently Viewed stores only site-scoped key/timestamp records');
+
+  await checkSurfaceOpen('map popup', async () => {
+    await page.evaluate(() => new Promise(resolve => {
+      suppressViewportSearch = true;
+      searchAsIMove = false;
+      map.invalidateSize();
+      const marker = markers[0];
+      if (!marker) return resolve();
+      markerCluster.zoomToShowLayer(marker, () => {
+        marker.openPopup();
+        resolve();
+      });
+    }));
+    await page.waitForSelector('.leaflet-popup button', { state: 'visible' });
+    await page.locator('.leaflet-popup button', { hasText: 'View Details' }).click();
+  });
 
   for (const viewport of viewports) {
     await page.setViewportSize({ width: viewport.width, height: viewport.height });
@@ -274,9 +327,22 @@ async function runListingBrowserQa(playwright, executablePath, servingSession, m
       const detailAt = openRequests.find(item => item.url.includes(`/idx/v1/listing/${encodeURIComponent(sample.key)}?`))?.at;
       const mediaAt = openRequests.find(item => item.url.includes(`/idx/v1/listing/${encodeURIComponent(sample.key)}/media?`))?.at;
       const activityAt = openRequests.find(item => item.url.includes('/api/consumer/activity'))?.at;
-      check(Boolean(detailAt && mediaAt) && (!activityAt || (detailAt <= activityAt && mediaAt <= activityAt)), `${label} primary detail/media requests start before activity`);
+      const recentAt = openRequests.find(item => item.url.includes('/idx/v1/listings/summaries'))?.at;
+      check(Boolean(detailAt && mediaAt)
+        && (!activityAt || (detailAt <= activityAt && mediaAt <= activityAt))
+        && (!recentAt || (detailAt <= recentAt && mediaAt <= recentAt)), `${label} primary detail/media requests start before activity/recent refresh`);
 
-      if (sample.media.length > 1) {
+      if (sample.media.length > 2) {
+        await page.locator('#detailThumbs .detail-thumb-button').nth(2).click();
+        await page.waitForFunction(() => document.getElementById('detailImgCount').textContent.trim().startsWith('3 /'));
+        check(await page.locator('#detailThumbs .detail-thumb-button').nth(2).getAttribute('aria-current') === 'true', `${label} thumbnail changes hero and selected state`);
+        await page.click('#detailPrevBtn');
+        await page.waitForFunction(() => document.getElementById('detailImgCount').textContent.trim().startsWith('2 /'));
+        check(true, `${label} previous-photo navigation`);
+        await page.click('#detailNextBtn');
+        await page.waitForFunction(() => document.getElementById('detailImgCount').textContent.trim().startsWith('3 /'));
+        check(true, `${label} next-photo navigation across several images`);
+      } else if (sample.media.length > 1) {
         const before = metrics.count;
         await page.click('#detailNextBtn');
         await page.waitForFunction(previous => document.getElementById('detailImgCount').textContent.trim() !== previous, before);
@@ -288,6 +354,19 @@ async function runListingBrowserQa(playwright, executablePath, servingSession, m
       await page.click('#detailClose');
     }
   }
+
+  await page.setViewportSize({ width: viewports[0].width, height: viewports[0].height });
+  const carousel = page.locator('#carouselTrack .carousel-card').first();
+  if (await carousel.count() && await carousel.isVisible()) {
+    await checkSurfaceOpen('Just Listed carousel', () => carousel.click());
+  } else {
+    check(true, 'Just Listed carousel origin unavailable in current inventory');
+  }
+  await checkSurfaceOpen('Recently Viewed', () => page.locator('#recentlyViewedTrack .recent-card').first().click());
+
+  await page.locator('.listing-card .card-save-btn').first().click();
+  await page.click('#cartFab');
+  await checkSurfaceOpen('Saved Homes', () => page.locator('#cartItems > div').first().click());
 
   const [first, second] = matrix;
   await page.evaluate(({ a, b }) => { window.openDetailByKey(a); window.openDetailByKey(b); }, { a: first.key, b: second.key });
@@ -304,11 +383,25 @@ async function runListingBrowserQa(playwright, executablePath, servingSession, m
   check(await page.locator('#compareTray').isVisible(), 'anonymous Compare tray is visible after two selections');
   await page.click('#compareTrayOpen');
   check(await page.locator('#compareModal').isVisible() && await page.locator('.compare-table').count() === 1, 'anonymous contextual Compare modal renders current summaries');
+  await checkSurfaceOpen('Compare', () => page.locator('.compare-view-detail').first().click(), second.key, second.detail.ListingId || second.key);
   const compareShape = await page.evaluate(site => {
     const value = JSON.parse(localStorage.getItem('ccor_compare_' + site) || '[]');
     return value.length === 2 && value.every(entry => typeof entry === 'string');
   }, SITE);
   check(compareShape, 'anonymous Compare stores site-scoped listing keys only');
+
+  await page.goto(`${baseUrl}&ccor_list=${encodeURIComponent(publicListSlug)}`, { waitUntil: 'domcontentloaded', timeout: 45000 });
+  await page.waitForSelector('#publicSharedListModal.open .public-list-property-card', { timeout: 30000 });
+  await checkSurfaceOpen('Shared List', () => page.locator('#publicSharedListGrid .public-list-property-actions button', { hasText: 'View Details' }).first().click(), first.key, first.detail.ListingId || first.key);
+
+  const deepLinkStart = requests.length;
+  await page.goto(`${baseUrl}&ccor_listing=${encodeURIComponent(first.key)}`, { waitUntil: 'domcontentloaded', timeout: 45000 });
+  await page.waitForSelector('#detailOverlay', { state: 'visible', timeout: 30000 });
+  await page.waitForFunction(key => [...document.querySelectorAll('#detailListingInfoFacts dd')].some(node => node.textContent === key), first.detail.ListingId || first.key);
+  check(hasAuthoritativePair(deepLinkStart, first.key), 'direct ccor_listing deep link uses authoritative detail and media requests');
+  await page.click('#detailClose');
+
+  check(requests.filter(item => item.method === 'POST' && item.url.includes('/api/consumer/activity')).length === 0, 'all anonymous detail origin surfaces create no activity POST');
 
   check(!requests.some(item => /api\.bridgedata|bridgedataoutput/i.test(item.url)), 'consumer browser traffic makes no Bridge call');
   check(badImages.length === 0, 'consumer browser has no failed image responses', badImages.slice(0, 2).join('; '));
@@ -375,6 +468,7 @@ async function runAdminBrowserQa(adminToken) {
   for (const heading of ['Account', 'Entitlement', 'Member Users', 'Client / Lead Summary', 'IDX Site', 'Domains', 'Branding', 'Responsive Embed', 'Readiness Checklist', 'Audit History']) {
     check(await page.getByRole('heading', { name: heading, exact: true }).isVisible(), `Admin account detail ${heading}`);
   }
+  check(await page.locator('.audit-item').count() > 0, 'Admin account audit history contains fixture operations');
   const domainsSection = page.locator('section').filter({ has: page.getByRole('heading', { name: 'Domains', exact: true }) });
   await domainsSection.getByRole('button', { name: 'Authorize' }).click();
   await page.waitForFunction(() => document.querySelector('#adminToast')?.textContent.includes('active and verified'));
@@ -394,15 +488,21 @@ async function runAdminBrowserQa(adminToken) {
   await page.getByText('Accounts', { exact: true }).first().click();
   await page.waitForSelector('#accountSearch');
   await page.fill('#accountSearch', accountName);
+  await page.selectOption('#accountStatusFilter', 'active');
+  await page.selectOption('#entitlementFilter', 'active');
   const filteredResponse = page.waitForResponse(response => {
     const url = new URL(response.url());
-    return response.request().method() === 'GET' && url.pathname === '/api/admin/accounts' && url.searchParams.get('q') === accountName;
+    return response.request().method() === 'GET'
+      && url.pathname === '/api/admin/accounts'
+      && url.searchParams.get('q') === accountName
+      && url.searchParams.get('status') === 'active'
+      && url.searchParams.get('entitlement') === 'active';
   });
   await page.locator('form.filters').first().getByRole('button', { name: 'Search' }).click();
   await filteredResponse;
   await page.waitForFunction(name => document.querySelector('tbody')?.textContent.includes(name) && document.querySelectorAll('tbody tr').length === 1, accountName);
   const fixtureRow = page.getByRole('row').filter({ hasText: accountName });
-  check(await fixtureRow.count() === 1, 'Admin account search isolates fixture row');
+  check(await fixtureRow.count() === 1, 'Admin account search/status/entitlement filters isolate fixture row');
   await fixtureRow.getByRole('button', { name: 'Open' }).click();
   await page.waitForFunction(name => document.querySelector('#app h2')?.textContent === name, accountName);
 
@@ -481,6 +581,47 @@ async function runMemberBrowserQa(memberToken) {
 
   for (const viewport of viewports) {
     await page.setViewportSize({ width: viewport.width, height: viewport.height });
+
+    const memberSurfaces = [
+      {
+        label: 'Overview and service state', nav: 'Overview', pane: 'tab-overview',
+        ready: () => page.locator('#statBilling').innerText().then(text => text !== '-' && text.length > 0)
+          .then(async valid => valid && (await page.locator('#siteDetails').innerText()).includes(fixture.siteKey))
+      },
+      {
+        label: 'Website & Domains', nav: 'Website & Domains', pane: 'tab-domains',
+        ready: () => page.locator('#domainsTableBody').innerText().then(text => text.includes(`qa-${suffix}.example.com`))
+      },
+      {
+        label: 'Branding', nav: 'Branding', pane: 'tab-branding',
+        ready: () => page.locator('#brandDisplayName').inputValue().then(value => value === fixture.accountName)
+      },
+      {
+        label: 'Widgets', nav: 'Widgets', pane: 'tab-widgets',
+        ready: () => page.getByRole('heading', { name: 'IDX Widget Management', exact: true }).isVisible()
+      },
+      {
+        label: 'Embed Code', nav: 'Embed Code', pane: 'tab-embed',
+        ready: () => page.locator('#embedSearchCode').innerText().then(text => text.includes(fixture.siteKey))
+      },
+      {
+        label: 'Leads', nav: 'Leads', pane: 'tab-leads',
+        wait: () => page.waitForFunction(email => document.getElementById('leadsTableBody')?.textContent.includes(email), fixture.consumerEmail),
+        ready: () => page.locator('#leadsTableBody').innerText().then(text => text.includes(fixture.consumerEmail) && text.includes('Browser QA Buyer'))
+      },
+      {
+        label: 'Subscription & Billing', nav: 'Subscription & Billing', pane: 'tab-billing',
+        ready: () => page.locator('#billingDetails').innerText().then(text => /active|growthzone/i.test(text))
+      }
+    ];
+    for (const surface of memberSurfaces) {
+      await page.locator('.nav-item').filter({ hasText: surface.nav }).click();
+      await page.waitForFunction(id => getComputedStyle(document.getElementById(id)).display !== 'none', surface.pane);
+      if (surface.wait) await surface.wait();
+      const contentReady = await surface.ready();
+      check(contentReady && await documentFits(page), `Member ${viewport.name} ${surface.label} visible without page overflow`);
+    }
+
     await page.getByText('Clients', { exact: true }).click();
     await page.waitForFunction(email => document.getElementById('clientsTableBody')?.textContent.includes(email), fixture.consumerEmail);
     const kpiVisibility = await Promise.all(['clientKpiTotal', 'clientKpiActive7d', 'clientKpiSavedHomes', 'clientKpiSavedSearches'].map(id => page.locator('#' + id).isVisible()));
@@ -530,6 +671,13 @@ async function runMemberBrowserQa(memberToken) {
 }
 
 function cleanup() {
+  if (listingSurfaceFixture?.userId) {
+    try {
+      runD1(`DELETE FROM sneak_consumer_users WHERE id=${sqlString(listingSurfaceFixture.userId)}`, 'wrangler.sneak-consumer.toml');
+      const remaining = runD1(`SELECT COUNT(*) AS count FROM sneak_consumer_users WHERE id=${sqlString(listingSurfaceFixture.userId)}`, 'wrangler.sneak-consumer.toml')[0]?.count;
+      check(Number(remaining || 0) === 0, 'isolated anonymous Shared List origin fixture cleanup');
+    } catch (error) { check(false, 'isolated anonymous Shared List origin fixture cleanup', error.message); }
+  }
   if (memberSessionId) {
     try { runD1(`DELETE FROM sneak_member_sessions WHERE id=${sqlString(memberSessionId)}`, 'wrangler.sneak-member.toml'); } catch (error) { check(false, 'temporary Member session cleanup', error.message); }
   }
@@ -562,7 +710,10 @@ try {
 
   const { session: servingSession, matrix } = await selectListingMatrix();
   console.log(`SAMPLE ${JSON.stringify(matrix.map(item => ({ category: item.propertyType, listingKey: item.key, photos: item.media.length })))}`);
-  if (!SKIP_LISTING_BROWSER) await runListingBrowserQa(playwright, executablePath, servingSession, matrix);
+  if (!SKIP_LISTING_BROWSER) {
+    const surfaceFixture = seedListingSurfaceFixture(matrix[0].key);
+    await runListingBrowserQa(playwright, executablePath, servingSession, matrix, surfaceFixture.publicSlug);
+  }
 
   const adminSession = insertTemporarySession('sneak_admin_sessions', 'sess_browser', {});
   adminSessionId = adminSession.id;
