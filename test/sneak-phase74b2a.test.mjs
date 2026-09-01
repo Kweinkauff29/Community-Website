@@ -213,38 +213,137 @@ describe('CCOR IDX — Phase 7.4B2A.1 Production Activation Pre-Flight Correctio
     });
 
     describe('2. Admin Content Security Policy (CSP)', () => {
-        test('production Admin CSP contains no staging worker hostnames', () => {
-            const prodHeaders = getSecurityHeaders({
-                SNEAK_ENV: 'production',
-                SNEAK_SERVING_URL: 'https://sneak-idx-worker.bonitaspringsrealtors.workers.dev'
-            });
+        test('Admin CSP is strictly connect-src self for production, staging, and missing env', () => {
+            const prodHeaders = getSecurityHeaders({ SNEAK_ENV: 'production' });
+            const stagingHeaders = getSecurityHeaders({ SNEAK_ENV: 'staging' });
+            const emptyHeaders = getSecurityHeaders({});
 
-            const csp = prodHeaders['Content-Security-Policy'];
-            assert.ok(csp, 'CSP header exists');
-            assert.doesNotMatch(csp, /staging/, 'Production CSP must contain zero staging references');
-            assert.match(csp, /connect-src 'self' https:\/\/sneak-idx-worker\.bonitaspringsrealtors\.workers\.dev/);
-            assert.match(csp, /frame-ancestors 'none'/);
+            for (const [name, headers] of [
+                ['production', prodHeaders],
+                ['staging', stagingHeaders],
+                ['empty env', emptyHeaders]
+            ]) {
+                const csp = headers['Content-Security-Policy'];
+                assert.ok(csp, `${name} CSP header exists`);
+                assert.match(csp, /connect-src 'self';/, `${name} CSP strictly uses connect-src 'self'`);
+                assert.doesNotMatch(csp, /staging/, `${name} CSP contains no staging references`);
+                assert.doesNotMatch(csp, /sneak-idx-worker/, `${name} CSP contains no external worker hostnames`);
+                assert.match(csp, /frame-ancestors 'none'/, `${name} frame-ancestors is none`);
+            }
         });
 
-        test('production Admin CSP rejects accidental staging serving URL and falls back to self', () => {
-            const prodHeaders = getSecurityHeaders({
-                SNEAK_ENV: 'production',
-                SNEAK_SERVING_URL: 'https://sneak-idx-worker-staging.bonitaspringsrealtors.workers.dev'
-            });
+        const mockDb = {
+            prepare: (sql) => ({
+                bind: (...args) => ({
+                    first: async () => {
+                        if (sql.includes('sneak_admin_sessions')) {
+                            return { session_hash: 'mock_hash', expires_at: new Date(Date.now() + 10000).toISOString(), admin_actor: 'admin' };
+                        }
+                        return null;
+                    },
+                    all: async () => [],
+                    run: async () => ({})
+                }),
+                first: async () => null,
+                all: async () => [],
+                run: async () => ({})
+            })
+        };
 
-            const csp = prodHeaders['Content-Security-Policy'];
-            assert.doesNotMatch(csp, /staging/, 'Production CSP strictly blocks staging URL injection');
-            assert.match(csp, /connect-src 'self'/);
+        const prodEnv = {
+            SNEAK_ENV: 'production',
+            SNEAK_SERVICE_NAME: 'sneak-idx-admin',
+            SNEAK_ADMIN_PASSWORD_HASH: null,
+            DB: mockDb
+        };
+
+        function assertNoStagingCsp(res, label) {
+            const csp = res.headers.get('Content-Security-Policy');
+            assert.ok(csp, `${label} has CSP header`);
+            assert.match(csp, /connect-src 'self';/, `${label} CSP enforces connect-src 'self'`);
+            assert.doesNotMatch(csp, /staging/, `${label} CSP contains no staging references`);
+            assert.doesNotMatch(csp, /sneak-idx-worker-staging/, `${label} CSP contains no staging worker host`);
+            assert.doesNotMatch(csp, /sneak-idx-staging/, `${label} CSP contains no sneak-idx-staging`);
+        }
+
+        test('production Admin UI route (GET /) returns clean CSP with zero staging hosts', async () => {
+            const res = await adminWorker.fetch(new Request('https://admin.example/', { method: 'GET' }), prodEnv);
+            assert.equal(res.status, 200);
+            assertNoStagingCsp(res, 'GET /');
         });
 
-        test('staging Admin CSP allows staging serving origin', () => {
-            const stagingHeaders = getSecurityHeaders({
+        test('production Admin health route (GET /health) returns clean CSP with zero staging hosts', async () => {
+            const res = await adminWorker.fetch(new Request('https://admin.example/health', { method: 'GET' }), prodEnv);
+            assert.equal(res.status, 200);
+            assertNoStagingCsp(res, 'GET /health');
+        });
+
+        test('production Admin login CSRF failure returns clean CSP with zero staging hosts', async () => {
+            const res = await adminWorker.fetch(new Request('https://admin.example/api/admin/login', { method: 'POST' }), prodEnv);
+            assert.equal(res.status, 403);
+            assertNoStagingCsp(res, 'POST /api/admin/login (CSRF)');
+        });
+
+        test('production Admin login missing password hash returns clean CSP with zero staging hosts', async () => {
+            const res = await adminWorker.fetch(new Request('https://admin.example/api/admin/login', {
+                method: 'POST',
+                headers: { 'X-Sneak-Admin': '1', Origin: 'https://admin.example', Host: 'admin.example' }
+            }), prodEnv);
+            assert.equal(res.status, 500);
+            assertNoStagingCsp(res, 'POST /api/admin/login (missing hash)');
+        });
+
+        test('production Admin protected route unauthenticated returns clean CSP with zero staging hosts', async () => {
+            const res = await adminWorker.fetch(new Request('https://admin.example/api/admin/me', {
+                method: 'GET',
+                headers: { 'X-Sneak-Admin': '1', Origin: 'https://admin.example', Host: 'admin.example' }
+            }), prodEnv);
+            assert.equal(res.status, 401);
+            assertNoStagingCsp(res, 'GET /api/admin/me (unauthenticated)');
+        });
+
+        test('production Admin protected route authenticated JSON returns clean CSP with zero staging hosts', async () => {
+            const res = await adminWorker.fetch(new Request('https://admin.example/api/admin/me', {
+                method: 'GET',
+                headers: {
+                    'X-Sneak-Admin': '1',
+                    Origin: 'https://admin.example',
+                    Host: 'admin.example',
+                    Cookie: '__Host-sneak_admin_session=0123456789abcdef0123456789abcdef'
+                }
+            }), prodEnv);
+            assert.equal(res.status, 200);
+            assertNoStagingCsp(res, 'GET /api/admin/me (authenticated)');
+        });
+
+        test('production Admin root 404 route returns clean CSP with zero staging hosts', async () => {
+            const res = await adminWorker.fetch(new Request('https://admin.example/nonexistent-path', { method: 'GET' }), prodEnv);
+            assert.equal(res.status, 404);
+            assertNoStagingCsp(res, 'GET /nonexistent-path (Root 404)');
+        });
+
+        test('production Admin API 404 route returns clean CSP with zero staging hosts', async () => {
+            const res = await adminWorker.fetch(new Request('https://admin.example/api/admin/nonexistent-endpoint', {
+                method: 'GET',
+                headers: {
+                    'X-Sneak-Admin': '1',
+                    Origin: 'https://admin.example',
+                    Host: 'admin.example',
+                    Cookie: '__Host-sneak_admin_session=0123456789abcdef0123456789abcdef'
+                }
+            }), prodEnv);
+            assert.equal(res.status, 404);
+            assertNoStagingCsp(res, 'GET /api/admin/nonexistent-endpoint (API 404)');
+        });
+
+        test('staging Admin health route remains functional with same-origin CSP', async () => {
+            const res = await adminWorker.fetch(new Request('https://admin-staging.example/health', { method: 'GET' }), {
                 SNEAK_ENV: 'staging',
-                SNEAK_SERVING_URL: 'https://sneak-idx-worker-staging.bonitaspringsrealtors.workers.dev'
+                SNEAK_SERVICE_NAME: 'sneak-idx-admin-staging',
+                DB: mockDb
             });
-
-            const csp = stagingHeaders['Content-Security-Policy'];
-            assert.match(csp, /connect-src 'self' https:\/\/sneak-idx-worker-staging\.bonitaspringsrealtors\.workers\.dev/);
+            assert.equal(res.status, 200);
+            assertNoStagingCsp(res, 'Staging GET /health');
         });
     });
 

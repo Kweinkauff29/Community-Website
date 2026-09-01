@@ -28,26 +28,8 @@ function growthZoneEnabled(env) {
 }
 
 export function getSecurityHeaders(env = {}) {
-    const isProd = (env?.SNEAK_ENV || '').toLowerCase() === 'production';
-    let connectSrc = "'self'";
-    if (env?.SNEAK_SERVING_URL) {
-        try {
-            const parsed = new URL(env.SNEAK_SERVING_URL);
-            if (isProd) {
-                // Production Admin CSP must contain NO staging worker hostname
-                if (!parsed.origin.includes('staging') && parsed.protocol === 'https:') {
-                    connectSrc = `'self' ${parsed.origin}`;
-                }
-            } else {
-                connectSrc = `'self' ${parsed.origin}`;
-            }
-        } catch {}
-    } else if (!isProd) {
-        connectSrc = "'self' https://sneak-idx-worker-staging.bonitaspringsrealtors.workers.dev";
-    }
-
     return {
-        'Content-Security-Policy': `default-src 'self'; script-src 'self' 'unsafe-inline' https://fonts.googleapis.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; connect-src ${connectSrc}; frame-ancestors 'none';`,
+        'Content-Security-Policy': "default-src 'self'; script-src 'self' 'unsafe-inline' https://fonts.googleapis.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; connect-src 'self'; frame-ancestors 'none';",
         'X-Frame-Options': 'DENY',
         'X-Content-Type-Options': 'nosniff',
         'Referrer-Policy': 'strict-origin-when-cross-origin',
@@ -95,6 +77,10 @@ export default {
         const ipHash = await sha256Hex(clientIp);
         const uaHash = await sha256Hex(userAgent);
 
+        // Bind scoped response helpers ensuring env is passed consistently
+        const respondJson = (data, status = 200, headers = {}) => json(data, status, headers, env);
+        const respondError = (message, status = 400, code = 'BadRequest') => error(message, status, code, env);
+
         // 1. Static UI Route
         if (method === 'GET' && (path === '/' || path === '/admin' || path === '/index.html')) {
             return new Response(renderAdminHtml(env), {
@@ -109,34 +95,34 @@ export default {
 
         // 2. Health check
         if (method === 'GET' && path === '/health') {
-            return json({
+            return respondJson({
                 service: env?.SNEAK_SERVICE_NAME || (env?.SNEAK_ENV === 'production' ? 'sneak-idx-admin' : 'sneak-idx-admin-staging'),
                 status: 'ok',
                 build: SNEAK_ADMIN_BUILD,
                 environment: env.SNEAK_ENV || 'staging',
                 growthZoneEnabled: growthZoneEnabled(env),
                 growthZoneConfigured: Boolean(growthZoneEnabled(env) && env?.GROWTHZONE_BASE_URL && env?.GROWTHZONE_API_KEY)
-            }, 200, {}, env);
+            }, 200);
         }
 
         // 3. Admin Login (POST /api/admin/login)
         if (path === '/api/admin/login' && method === 'POST') {
             // CSRF / Same-Origin Check
             if (!validateAdminCsrf(request)) {
-                return error('CSRF verification failed', 403, 'Forbidden');
+                return respondError('CSRF verification failed', 403, 'Forbidden');
             }
 
             const storedHash = env.SNEAK_ADMIN_PASSWORD_HASH;
             if (!storedHash) {
                 // Fail closed: Never authenticate without explicit password hash configuration
-                return error('Admin authentication configuration missing.', 500, 'ConfigurationError');
+                return respondError('Admin authentication configuration missing.', 500, 'ConfigurationError');
             }
 
             // Rate Limit Check
             const rateLimit = await checkLoginRateLimit(env.DB, ipHash);
             if (!rateLimit.allowed) {
                 await logAuthAudit(env.DB, 'anonymous', 'LOGIN_RATE_LIMITED', `Rate limited after ${rateLimit.failedAttempts} failed attempts`);
-                return error('Too many failed login attempts. Please try again in 15 minutes.', 429, 'TooManyRequests');
+                return respondError('Too many failed login attempts. Please try again in 15 minutes.', 429, 'TooManyRequests');
             }
 
             try {
@@ -147,7 +133,7 @@ export default {
                 if (!valid) {
                     await recordLoginAttempt(env.DB, ipHash, false);
                     await logAuthAudit(env.DB, 'anonymous', 'LOGIN_FAILURE', 'Invalid password attempt');
-                    return error('Invalid credentials.', 401, 'InvalidCredentials');
+                    return respondError('Invalid credentials.', 401, 'InvalidCredentials');
                 }
 
                 // Successful login
@@ -159,13 +145,13 @@ export default {
 
                 const cookie = `__Host-sneak_admin_session=${encodeURIComponent(rawToken)}; HttpOnly; Secure; SameSite=Strict; Path=/; Max-Age=14400`;
 
-                return json({
+                return respondJson({
                     success: true,
                     message: 'Authenticated successfully'
                 }, 200, { 'Set-Cookie': cookie });
             } catch (err) {
                 console.error('[LOGIN ERROR]', err);
-                return error('Malformed login request: ' + err.message, 400);
+                return respondError('Malformed login request: ' + err.message, 400);
             }
         }
 
@@ -178,25 +164,25 @@ export default {
             }
 
             const cookie = `__Host-sneak_admin_session=; HttpOnly; Secure; SameSite=Strict; Path=/; Max-Age=0`;
-            return json({ success: true, message: 'Logged out' }, 200, { 'Set-Cookie': cookie });
+            return respondJson({ success: true, message: 'Logged out' }, 200, { 'Set-Cookie': cookie });
         }
 
         // 5. Protected Admin API Routes Guard
         if (path.startsWith('/api/admin/')) {
             // Strict Same-Origin CSRF Verification for all state-changing calls
             if (!validateAdminCsrf(request)) {
-                return error('CSRF verification failed', 403, 'Forbidden');
+                return respondError('CSRF verification failed', 403, 'Forbidden');
             }
 
             // Verify Server-Side Session from D1
             const rawToken = getSessionTokenFromRequest(request);
             if (!rawToken || !env.DB) {
-                return error('Authentication required to access admin resources.', 401, 'Unauthorized');
+                return respondError('Authentication required to access admin resources.', 401, 'Unauthorized');
             }
 
             const session = await verifyAdminSession(env.DB, rawToken);
             if (!session) {
-                return error('Invalid or expired session. Please log in again.', 401, 'Unauthorized');
+                return respondError('Invalid or expired session. Please log in again.', 401, 'Unauthorized');
             }
 
             const actor = session.admin_actor || 'admin';
@@ -204,7 +190,7 @@ export default {
 
             // Route matching
             if (path === '/api/admin/me' && method === 'GET') {
-                return json({ authenticated: true, sub: actor, expiresAt: session.expires_at });
+                return respondJson({ authenticated: true, sub: actor, expiresAt: session.expires_at });
             }
 
             if (path === '/api/admin/dashboard' && method === 'GET') {
@@ -439,7 +425,7 @@ export default {
                 return await api.handleGetDomainDiagnostic(env);
             }
 
-            return error('API endpoint not found', 404, 'NotFound', env);
+            return respondError('API endpoint not found', 404, 'NotFound');
         }
 
         return new Response('Not Found', { status: 404, headers: getSecurityHeaders(env) });

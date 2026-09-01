@@ -50,6 +50,11 @@ No production account, site, site key, member user, entitlement, or domain row h
 
 Anonymous search, map, detail, Compare, Recently Viewed, and direct property share remain part of the intended core experience. Disabled account/email controls must not appear or accept direct API requests.
 
+### Admin Portal browser network model & CSP
+- **Admin Browser API Calls:** Strict same-origin `/api/admin/*` (`const API_BASE = '/api/admin'`).
+- **Inter-Worker Service Integration:** Server-side Cloudflare Worker service bindings (`env.SERVING_WORKER`, `env.MEMBER_WORKER`, `env.CONSUMER_WORKER`, `env.SITES_WORKER`, `env.ALERT_WORKER`). Zero browser-to-worker cross-origin requests.
+- **Content Security Policy (CSP):** `connect-src 'self'`. Guarantees zero external/staging Worker origin leakage in production or staging response headers. Missing environment information strictly defaults to `connect-src 'self'`.
+
 ## Production secret-name inventory
 
 Store values only as Cloudflare Worker secrets. Never put values in Wrangler config, D1, source, screenshots, smoke output, audit text, or this document.

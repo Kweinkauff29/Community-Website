@@ -1,6 +1,6 @@
 # CCOR IDX Phase 7.4B2 Launch Readiness
 
-Current Phase 7.4B2A production foundation gate: **COMPLETE**. Production capability gates, isolated configs, clean production D1, migration 0035, automated regression (280/280 passing), Admin CSP environment isolation, zero staging runtime leaks, and fail-closed optional-feature behavior are implemented.
+Current Phase 7.4B2A production foundation gate: **COMPLETE**. Production capability gates, isolated configs, clean production D1, migration 0035, automated regression (287/287 passing across 20 suites), Admin CSP simplified to `connect-src 'self'` with zero staging host allowances, zero staging runtime leaks, and fail-closed optional-feature behavior are implemented.
 
 Phase 7.4B2B first-member launch activation: **BLOCKED / NOT STARTED**. Production Workers/routes/schedules and the member record were deliberately not created because production Bridge, Serving/Admin/Member secrets, sender verification, approved controlled-mailbox evidence, production sync, member-page access, and required connected-Chrome QA are unavailable. Optional Consumer accounts, Alerts, GrowthZone automation, and custom hosting are explicitly disabled rather than presented as broken features.
 
@@ -121,7 +121,7 @@ Unknown or unavailable fields are omitted. The UI never invents bedrooms for Lan
 
 Phase 7.4B2 foundation evidence:
 
-- Automated regression: `280/280` tests passing across 16 suites.
+- Automated regression: `287/287` tests passing across 20 suites.
 - Production/staging Wrangler config dry-runs: `14/14` pass; production files contain no secret values and bind only production D1.
 - JavaScript syntax: `12/12` changed entry points pass `node --check`.
 - Migration 0035: populated-row preservation and account-delete cascade pass; fresh migration chain passes; remote staging and production FK checks return zero rows.

@@ -86,7 +86,7 @@ Every participant must complete all verification gates before being marked **Lau
   * Phase 7.4A Launch Readiness Control Plane + Staff Provisioning: 2026-08-31 (COMPLETE; deployed; automated, live API/detail, D1, and mandatory actual-browser gates pass)
   * Phase 7.4B1 Transactional Email Readiness + GrowthZone Reconciliation: 2026-09-01 (IMPLEMENTED and staging deployed; controlled-inbox/GrowthZone credentials and evidence pending)
   * Phase 7.4B2 Production Environment + First Controlled Member Cutover: 2026-09-01
-    * PHASE 7.4B2A — PRODUCTION FOUNDATION: COMPLETE (clean isolated production D1, migrations 0001–0035, 7 production Wrangler configs, Admin CSP isolation, zero staging leaks, 280/280 passing tests).
+    * PHASE 7.4B2A — PRODUCTION FOUNDATION: COMPLETE (clean isolated production D1, migrations 0001–0035, 7 production Wrangler configs, Admin CSP isolation, zero staging leaks, 287/287 passing tests across 20 suites).
     * PHASE 7.4B2B — FIRST MEMBER ACTIVATION: BLOCKED / NOT STARTED (awaiting operator-assisted activation, secrets, Bridge sync, and member-page verification).
     * Production PILOT-01 Model: Site search scope is 'market' (full authorized MLS market inventory, scope_value: null); Participant identity is agent 633942 for participant-scoped featured listings and lead capture. Production account/site records NOT yet created.
 * **Phase 7.3C2B Agent Client Activity Dashboard & Authenticated Buyer Timeline:**

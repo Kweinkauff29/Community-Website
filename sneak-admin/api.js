@@ -31,15 +31,28 @@ function makeId(prefix) {
     return `${prefix}_${crypto.randomUUID()}`;
 }
 
-function json(data, status = 200) {
+const SECURITY_HEADERS = {
+    'Content-Security-Policy': "default-src 'self'; script-src 'self' 'unsafe-inline' https://fonts.googleapis.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; connect-src 'self'; frame-ancestors 'none';",
+    'X-Frame-Options': 'DENY',
+    'X-Content-Type-Options': 'nosniff',
+    'Referrer-Policy': 'strict-origin-when-cross-origin',
+    'Permissions-Policy': 'accelerometer=(), camera=(), geolocation=(), gyroscope=(), magnetometer=(), microphone=(), payment=(), usb=()'
+};
+
+function json(data, status = 200, headers = {}) {
     return new Response(JSON.stringify(data), {
         status,
-        headers: { 'Content-Type': 'application/json' }
+        headers: {
+            'Content-Type': 'application/json',
+            'Cache-Control': 'no-store',
+            ...SECURITY_HEADERS,
+            ...headers
+        }
     });
 }
 
-function error(message, status = 400, code = 'BadRequest') {
-    return json({ error: code, message }, status);
+function error(message, status = 400, code = 'BadRequest', headers = {}) {
+    return json({ error: code, message }, status, headers);
 }
 
 function capabilityEnabled(value, defaultValue = true) {
