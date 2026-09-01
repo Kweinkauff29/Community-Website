@@ -4,7 +4,7 @@
  * Tenant Resolution, Branding, Website Configuration & MLS Data Access for SNEAK Websites.
  */
 
-import { isAccountEntitled } from '../sneak-member/billing.js';
+import { evaluateServingDecision } from '../sneak-shared/entitlement.js';
 
 /**
  * Resolves a full tenant site bundle (Site, Account, Entitlement, Branding, Website Config).
@@ -17,7 +17,7 @@ export async function resolveTenantSite(db, { siteKey, domain }) {
         SELECT 
             s.id AS site_id, s.account_id, s.site_key, s.site_name, s.scope_type, s.scope_value, s.status AS site_status,
             a.account_name, a.plan AS account_plan, a.status AS account_status,
-            e.status AS entitlement_status, e.grace_until, e.plan AS entitlement_plan,
+            e.status AS entitlement_status, e.grace_until, e.expires_at, e.plan AS entitlement_plan,
             b.display_name, b.brokerage, b.logo_url, b.agent_photo_url, b.primary_color, b.secondary_color,
             b.phone, b.email, b.website_url,
             w.enabled AS website_enabled, w.template_key, w.site_title, w.tagline,
@@ -52,12 +52,16 @@ export async function resolveTenantSite(db, { siteKey, domain }) {
         return null;
     }
 
-    // Check Administrative Status
-    const isAccountActive = row.account_status === 'active';
-    const isSiteActive = row.site_status === 'active';
-
-    // Check Service Entitlement
-    const isEntitled = isAccountEntitled(row.account_status, row.entitlement_status, row.grace_until);
+    const servingDecision = evaluateServingDecision({
+        accountStatus: row.account_status,
+        siteStatus: row.site_status,
+        entitlementStatus: row.entitlement_status,
+        graceUntil: row.grace_until,
+        expiresAt: row.expires_at,
+        domainAuthorized: siteKey ? true : Boolean(domain),
+        scopeType: row.scope_type,
+        scopeValue: row.scope_value
+    });
 
     let featuredAreas = [];
     try {
@@ -87,11 +91,12 @@ export async function resolveTenantSite(db, { siteKey, domain }) {
             status: row.account_status
         },
         entitlement: {
-            status: row.entitlement_status || 'active',
-            isEntitled,
+            status: row.entitlement_status || 'missing',
+            isEntitled: !servingDecision.blockers.some(item => item.code.startsWith('ENTITLEMENT_') || item.code === 'GRACE_EXPIRED' || item.code === 'ACCOUNT_INACTIVE'),
             graceUntil: row.grace_until
         },
-        isOperational: isAccountActive && isSiteActive && isEntitled,
+        servingDecision,
+        isOperational: servingDecision.canServe,
         branding: {
             display_name: row.display_name || row.account_name || 'Premier Agent',
             brokerage: row.brokerage || 'Bonita Springs-Estero REALTORS®',

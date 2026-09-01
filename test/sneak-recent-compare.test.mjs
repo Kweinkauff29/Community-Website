@@ -392,8 +392,9 @@ describe('SNEAK IDX Phase 7.3C3A — Recently Viewed + Property Compare', () => 
         assert.match(html, /ccor_recently_viewed_' \+ SITE_KEY/);
         assert.match(html, /JSON\.stringify\(recentlyViewedEntries\.map\(entry => \(\{ key: entry\.key, viewedAt: entry\.viewedAt \}\)\)\)/);
         assert.doesNotMatch(html, /recently-viewed\/merge/);
-        assert.match(html, /if \(consumerUser && consumerSessionToken && item\?\.ListingKey\)/);
-        assert.match(html, /recordAnonymousRecentlyViewed\(item\.ListingKey\)/);
+        const trackingSource = html.slice(html.indexOf('function recordDetailViewInBackground'), html.indexOf('async function fetchDetailMedia'));
+        assert.match(trackingSource, /if \(consumerUser && consumerSessionToken\)/);
+        assert.match(trackingSource, /recordAnonymousRecentlyViewed\(listingKey\)/);
         const logoutSource = html.slice(html.indexOf('async function handleConsumerLogout()'), html.indexOf('async function handleConsumerDeleteAccount()'));
         assert.doesNotMatch(logoutSource, /removeItem\(RECENT_STORAGE_KEY\)/);
     });

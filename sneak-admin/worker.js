@@ -18,6 +18,8 @@ import {
 } from './auth.js';
 import * as api from './api.js';
 
+export const SNEAK_ADMIN_BUILD = '2026.08.31.7.4a';
+
 const SECURITY_HEADERS = {
     'Content-Security-Policy': "default-src 'self'; script-src 'self' 'unsafe-inline' https://fonts.googleapis.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; connect-src 'self' https://sneak-idx-worker-staging.bonitaspringsrealtors.workers.dev; frame-ancestors 'none';",
     'X-Frame-Options': 'DENY',
@@ -44,7 +46,7 @@ function error(message, status = 400, code = 'BadRequest') {
 
 async function logAuthAudit(db, actor, action, summary) {
     try {
-        const id = `audit_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
+        const id = `audit_${crypto.randomUUID()}`;
         await db.prepare(`
             INSERT INTO sneak_admin_audit (id, admin_actor, action, entity_type, entity_id, summary, created_at)
             VALUES (?, ?, ?, 'auth', ?, ?, datetime('now'))
@@ -83,8 +85,8 @@ export default {
             return json({
                 service: 'sneak-idx-admin-staging',
                 status: 'ok',
-                env: env.SNEAK_ENV || 'staging',
-                timestamp: new Date().toISOString()
+                build: SNEAK_ADMIN_BUILD,
+                environment: env.SNEAK_ENV || 'staging'
             });
         }
 
@@ -197,11 +199,22 @@ export default {
             const accMatch = path.match(/^\/api\/admin\/accounts\/([^\/]+)$/);
             if (accMatch) {
                 const accountId = accMatch[1];
-                if (method === 'GET') return await api.handleGetAccount(db, accountId);
+                if (method === 'GET') return await api.handleGetAccount(db, accountId, env);
                 if (method === 'PATCH') {
                     const body = await request.json();
                     return await api.handleUpdateAccount(db, accountId, body, actor);
                 }
+            }
+
+            const accLifecycleMatch = path.match(/^\/api\/admin\/accounts\/([^\/]+)\/lifecycle$/);
+            if (accLifecycleMatch && method === 'POST') {
+                const body = await request.json();
+                return await api.handleAccountLifecycle(db, accLifecycleMatch[1], body, actor);
+            }
+
+            const accReadinessMatch = path.match(/^\/api\/admin\/accounts\/([^\/]+)\/readiness$/);
+            if (accReadinessMatch && method === 'GET') {
+                return await api.handleGetAccountReadiness(db, accReadinessMatch[1], env);
             }
 
             // /api/admin/accounts/:id/sites

@@ -7,41 +7,10 @@
  * - Zero cardholder data or payment tokens stored in SNEAK.
  */
 
-/**
- * Generic entitlement helper: Evaluates SNEAK service entitlement status.
- * Backward compatible: Returns true if no entitlement record exists (staging/demo accounts).
- */
-export function isAccountEntitled(accountStatus, entitlementStatus, graceUntil, now = new Date()) {
-    if (accountStatus !== 'active') return false;
-    if (!entitlementStatus) return true; // Backward compatibility for staging/demo accounts
+import { isAccountEntitled, humanizeEntitlementStatus } from '../sneak-shared/entitlement.js';
 
-    const status = (entitlementStatus || '').toLowerCase().trim();
-
-    switch (status) {
-        case 'active':
-            return true;
-
-        case 'grace':
-            if (graceUntil) {
-                const graceDate = new Date(graceUntil);
-                return now <= graceDate;
-            }
-            return false;
-
-        case 'delinquent':
-            // Delinquent accounts are blocked unless within an active grace window
-            if (graceUntil) {
-                const graceDate = new Date(graceUntil);
-                return now <= graceDate;
-            }
-            return false;
-
-        case 'suspended':
-        case 'canceled':
-        default:
-            return false;
-    }
-}
+// Compatibility re-export for existing callers. The implementation is centralized.
+export { isAccountEntitled };
 
 /**
  * Retrieves full billing & entitlement overview for an account.
@@ -63,7 +32,13 @@ export async function getAccountEntitlement(db, accountId) {
     const row = await db.prepare(query).bind(accountId).first();
     if (!row) return null;
 
-    const isEntitled = isAccountEntitled(row.account_status, row.entitlement_status, row.grace_until);
+    const isEntitled = isAccountEntitled(
+        row.account_status,
+        row.entitlement_status,
+        row.grace_until,
+        new Date(),
+        row.expires_at
+    );
 
     return {
         accountId: row.account_id,
@@ -71,7 +46,8 @@ export async function getAccountEntitlement(db, accountId) {
         plan: row.plan || row.account_plan || 'pro',
         provider: 'GrowthZone',
         billingCycle: 'Monthly (1st of each month)',
-        status: row.entitlement_status || 'active',
+        status: row.entitlement_status || 'missing',
+        statusLabel: humanizeEntitlementStatus(row.entitlement_status),
         isEntitled,
         graceUntil: row.grace_until || null,
         externalReference: row.external_reference || null,

@@ -229,9 +229,30 @@ graph TD
 
 ---
 
-### Phase 7.3D — SEO & Market Content Engine (PLANNED)
+### Phase 7.4A — Launch Readiness Control Plane + Staff Provisioning (COMPLETE)
+* **Goal:** Let CCOR staff safely provision, understand, activate, troubleshoot, suspend, cancel, and reactivate member service without ad-hoc D1 edits.
+* **Status:** `COMPLETE / STAGING DEPLOYED / ALL ACCEPTANCE GATES PASS`
+* **Features Included:**
+  * Central fail-closed serving helper backed only by `sneak_account_entitlements`; legacy Stripe rows cannot authorize service.
+  * Resumable eight-step Admin workflow using canonical account, entitlement, site, member, domain, branding, widget, and readiness records.
+  * Searchable account operations list and complete Account Detail with setup progress, serving/launch blockers, audit, lifecycle, and current responsive embed.
+  * Stable per-account readiness blocker codes, automated checklist, and core-versus-optional capability status.
+  * Deliberate non-browser modal confirmations for suspend, cancel, reactivate, site disable, and domain removal; no routine lifecycle action deletes data.
+  * Human Member subscription states and removal of legacy Stripe presentation from current MVP controls.
+  * External dependency, security, email, lifecycle, provisioning, and production-next-phase documentation in `docs/ccor-idx-launch-readiness.md`.
+  * Corrective consumer detail hydration always fetches the authoritative current D1 listing, consumes the canonical URL-string media contract, rejects stale A→B responses, and keeps activity/history work non-blocking. Ten real multi-photo listings passed 65/65 live detail/media assertions after deployment.
+  * Actual Chrome acceptance passed 527/527 checks at 1440×900, 1024×768, and 390×844 across the 11-listing category/gallery matrix, authenticated Admin workflow, authenticated C2B Member workflow, anonymous privacy, request ordering, overflow, and no-Bridge gates.
+  * Automated regression passed 246/246 tests across 13 suites; live Phase 7.4A health/auth verification passed 17/17; remote D1 has no pending migrations and no foreign-key violations.
+  * Deterministic Admin/Serving/Member/Sites/embed/search build `2026.08.31.7.4a`.
+
+### Phase 7.4B — GrowthZone Reconciliation + Production Cutover (NEXT)
+* **Goal:** Automate tested GrowthZone-to-generic-entitlement reconciliation and execute the documented production environment/cutover plan.
+* **Status:** `NEXT / NOT STARTED`
+* **Boundary:** Production Workers, production D1, secrets, schedules, custom-host/DNS validation, rollback, and real email verification belong here.
+
+### Phase 7.3D — SEO & Market Content Engine (DEFERRED / POST-LAUNCH)
 * **Goal:** Drive organic Google search traffic and local community authority through static/edge-rendered SEO landing pages.
-* **Status:** `FUTURE`
+* **Status:** `DEFERRED / POST-LAUNCH`
 * **Feature Candidates:**
   * **SEO-Friendly Listing URLs:** Slugged paths (e.g. `/homes/bonita-springs/pelican-landing/3694-pleasant-springs-dr-224017488`).
   * **Community & Neighborhood Landing Pages:** Pre-filtered landing pages for major subdivisions (Pelican Landing, Bonita Bay, Miromar Lakes, Mediterra).

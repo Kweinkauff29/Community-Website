@@ -245,7 +245,7 @@ export function renderMemberUI() {
             justify-content: space-between;
             align-items: center;
         }
-        .modal-body { padding: 24px; overflow-y: auto; flex: 1; }
+        .modal-body { padding: 24px; overflow-y: auto; overflow-x: hidden; flex: 1; min-width: 0; }
         .modal-close-btn { background: transparent; border: none; color: var(--text-secondary); font-size: 1.5rem; cursor: pointer; padding: 4px; line-height: 1; }
         .modal-close-btn:hover { color: var(--text-primary); }
 
@@ -321,7 +321,19 @@ export function renderMemberUI() {
             .sidebar { width: 100%; border-right: none; border-bottom: 1px solid var(--border-subtle); }
             .sidebar-nav { flex-direction: row; overflow-x: auto; padding: 10px; }
             .grid-cards { grid-template-columns: 1fr; }
-            .modal-card { max-height: 95vh; padding: 12px; }
+            .modal-overlay { padding: 8px; }
+            .modal-card { max-height: calc(100vh - 16px); max-height: calc(100dvh - 16px); padding: 0; }
+            .modal-header { padding: 16px; align-items: flex-start; gap: 8px; }
+            .modal-body { padding: 14px; }
+            #clientDetailEmail { overflow-wrap: anywhere; }
+            #clientDetailModal .grid-cards { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+            #clientDetailModal .stat-card { min-width: 0; padding: 12px !important; }
+            #clientDetailModal .stat-label { font-size: 0.68rem; overflow-wrap: anywhere; }
+            .subtab-nav { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; overflow: hidden; }
+            .subtab-btn { min-width: 0; padding: 8px 6px; font-size: 0.76rem; white-space: normal; line-height: 1.25; }
+            .properties-grid { grid-template-columns: 1fr; }
+            .timeline { padding-left: 24px; }
+            .timeline-meta { align-items: flex-start; flex-wrap: wrap; gap: 5px; }
         }
     </style>
 </head>
@@ -830,17 +842,26 @@ export function renderMemberUI() {
             document.getElementById('clientKpiSavedHomes').innerText = (data.savedHomesCount || 0).toLocaleString();
             document.getElementById('clientKpiSavedSearches').innerText = (data.savedSearchesCount || 0).toLocaleString();
 
-            const ent = data.billing?.entitlement_status || 'inactive';
+            const ent = data.billing?.entitlement_status || 'missing';
             const badge = document.getElementById('entitlementBadge');
             if (ent === 'active') {
                 badge.innerHTML = '<span class="badge badge-success">Live IDX Active</span>';
                 document.getElementById('statBilling').innerText = 'Active';
             } else if (ent === 'grace') {
                 badge.innerHTML = '<span class="badge badge-warning">Grace Period</span>';
-                document.getElementById('statBilling').innerText = 'Past Due (Grace)';
+                document.getElementById('statBilling').innerText = 'Grace Period';
+            } else if (ent === 'delinquent') {
+                badge.innerHTML = '<span class="badge badge-warning">Payment Attention Required</span>';
+                document.getElementById('statBilling').innerText = 'Payment Attention';
+            } else if (ent === 'suspended') {
+                badge.innerHTML = '<span class="badge badge-danger">Suspended — Contact CCOR</span>';
+                document.getElementById('statBilling').innerText = 'Suspended';
+            } else if (ent === 'canceled') {
+                badge.innerHTML = '<span class="badge badge-danger">Canceled</span>';
+                document.getElementById('statBilling').innerText = 'Canceled';
             } else {
-                badge.innerHTML = '<span class="badge badge-danger">Subscription Required</span>';
-                document.getElementById('statBilling').innerText = 'Inactive';
+                badge.innerHTML = '<span class="badge badge-danger">Not Configured — Contact CCOR</span>';
+                document.getElementById('statBilling').innerText = 'Not Configured';
             }
 
             if (data.site) {
@@ -1221,13 +1242,14 @@ export function renderMemberUI() {
 
         function renderBilling(billing) {
             const div = document.getElementById('billingDetails');
-            const status = (billing?.status || 'active').toUpperCase();
+            const status = billing?.status || 'missing';
+            const statusLabel = billing?.statusLabel || 'Not Configured — Contact CCOR';
             const plan = (billing?.plan || currentAccount?.account?.plan || 'pro').toUpperCase();
             
             div.innerHTML = \`
-                <p style="margin-bottom: 8px;"><strong>Billing Provider:</strong> GrowthZone</p>
+                <p style="margin-bottom: 8px;"><strong>Subscription Administrator:</strong> CCOR / GrowthZone</p>
                 <p style="margin-bottom: 8px;"><strong>Current Plan:</strong> \${escapeHtml(plan)}</p>
-                <p style="margin-bottom: 8px;"><strong>Service Status:</strong> <span class="badge \${status === 'ACTIVE' ? 'badge-success' : 'badge-warning'}">\${escapeHtml(status)}</span></p>
+                <p style="margin-bottom: 8px;"><strong>Service Status:</strong> <span class="badge \${status === 'active' ? 'badge-success' : (status === 'grace' || status === 'delinquent' ? 'badge-warning' : 'badge-danger')}">\${escapeHtml(statusLabel)}</span></p>
                 <p style="margin-bottom: 16px;"><strong>Billing Schedule:</strong> Recurring on the 1st of each month.</p>
                 <p style="color: var(--text-muted); font-size: 0.875rem; line-height: 1.5;">
                     Your CCOR IDX Plug-in subscription is administered directly by Coconut Coast Organization of REALTORS® through GrowthZone. To view past statements or update your payment method, click below to open GrowthZone.

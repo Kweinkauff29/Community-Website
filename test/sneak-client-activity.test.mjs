@@ -803,4 +803,12 @@ describe('SNEAK IDX Phase 7.3C2B — Agent Client Activity Dashboard & Buyer Tim
         assert.ok(safeOutput.includes('&amp;'));
         assert.ok(safeOutput.includes('&quot;'));
     });
+
+    test('11. Member Client Detail mobile layout contains horizontal flow inside the modal', () => {
+        const uiHtml = renderMemberUI();
+        assert.match(uiHtml, /\.modal-body \{[^}]*overflow-y: auto;[^}]*overflow-x: hidden;/);
+        assert.match(uiHtml, /#clientDetailModal \.grid-cards \{ grid-template-columns: repeat\(2, minmax\(0, 1fr\)\)/);
+        assert.match(uiHtml, /\.subtab-nav \{ display: grid; grid-template-columns: repeat\(2, minmax\(0, 1fr\)\)/);
+        assert.match(uiHtml, /\.subtab-btn \{ min-width: 0;[^}]*white-space: normal;/);
+    });
 });

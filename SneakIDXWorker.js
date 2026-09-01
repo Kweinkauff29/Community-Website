@@ -17,8 +17,9 @@ import {
     applyListingDisplayControls,
     buildCommonListingFilters
 } from './sneak-shared/idx-query.js';
+import { isAccountEntitled } from './sneak-shared/entitlement.js';
 
-export const SNEAK_IDX_BUILD = '2026.08.31.7.3c3b';
+export const SNEAK_IDX_BUILD = '2026.08.31.7.4a';
 
 export default {
     async fetch(req, env, ctx) {
@@ -284,22 +285,6 @@ function getSigningSecret(env) {
     return env.SNEAK_SIGNING_SECRET.trim();
 }
 
-/**
- * Generic entitlement helper: Evaluates SNEAK service entitlement status.
- * Backward compatible: allows service if no entitlement row exists (staging/demo accounts).
- */
-function isAccountEntitled(accountStatus, entitlementStatus, graceUntil, now = new Date()) {
-    if (accountStatus !== 'active') return false;
-    if (!entitlementStatus) return true; // Backward compatibility
-
-    const status = (entitlementStatus || '').toLowerCase().trim();
-    if (status === 'active') return true;
-    if (status === 'grace' || status === 'delinquent') {
-        return Boolean(graceUntil && new Date(graceUntil) > now);
-    }
-    return false; // suspended, canceled
-}
-
 const SENSITIVE_SHARE_QUERY_PARAMS = new Set([
     'auth_code',
     'session',
@@ -422,7 +407,7 @@ async function handleBootstrap(req, url, env) {
         SELECT 
             s.id AS site_id, s.account_id, s.site_key, s.status AS site_status,
             a.account_name, a.status AS account_status,
-            ent.status AS entitlement_status, ent.grace_until
+            ent.status AS entitlement_status, ent.grace_until, ent.expires_at
         FROM sneak_sites s
         JOIN sneak_accounts a ON s.account_id = a.id
         LEFT JOIN sneak_account_entitlements ent ON a.id = ent.account_id
@@ -437,8 +422,7 @@ async function handleBootstrap(req, url, env) {
         return jsonResponse({ error: 'SiteInactive', message: 'This SNEAK site is currently inactive or suspended.' }, 403);
     }
 
-    // Generic entitlement check (backward compatible if no entitlement row exists)
-    if (!isAccountEntitled(siteRecord.account_status, siteRecord.entitlement_status, siteRecord.grace_until)) {
+    if (!isAccountEntitled(siteRecord.account_status, siteRecord.entitlement_status, siteRecord.grace_until, new Date(), siteRecord.expires_at)) {
         return jsonResponse({ error: 'EntitlementInactive', message: 'This SNEAK site service entitlement is currently inactive or expired.' }, 403);
     }
 
@@ -528,7 +512,7 @@ async function resolveAndAuthorizeRequest(req, siteKey, origin, referer, env) {
             a.account_name, a.status AS account_status, a.plan, a.agent_mls_id AS default_agent_mls_id, a.office_mls_id AS default_office_mls_id,
             b.display_name, b.brokerage, b.logo_url, b.agent_photo_url, b.primary_color, b.secondary_color,
             b.phone, b.email, b.website_url, b.config_json AS branding_config,
-            ent.status AS entitlement_status, ent.grace_until
+            ent.status AS entitlement_status, ent.grace_until, ent.expires_at
         FROM sneak_sites s
         JOIN sneak_accounts a ON s.account_id = a.id
         LEFT JOIN sneak_branding b ON s.id = b.site_id
@@ -545,8 +529,7 @@ async function resolveAndAuthorizeRequest(req, siteKey, origin, referer, env) {
         return { authorized: false, error: 'SiteInactive', message: 'This SNEAK site is currently inactive or suspended.', status: 403 };
     }
 
-    // Generic entitlement check (backward compatible if no entitlement row exists)
-    if (!isAccountEntitled(siteRecord.account_status, siteRecord.entitlement_status, siteRecord.grace_until)) {
+    if (!isAccountEntitled(siteRecord.account_status, siteRecord.entitlement_status, siteRecord.grace_until, new Date(), siteRecord.expires_at)) {
         return { authorized: false, error: 'EntitlementInactive', message: 'This SNEAK site service entitlement is currently inactive or expired.', status: 403 };
     }
 
@@ -1103,6 +1086,30 @@ export async function handlePublicSharedList(publicSlug, site, env, allowedOrigi
 /**
  * GET /idx/v1/listing/:listingKey?site=abc123
  */
+export function getListingMediaUrls(listing) {
+    const candidates = [];
+    if (listing?.MediaJSON) {
+        try {
+            const parsed = JSON.parse(listing.MediaJSON);
+            if (Array.isArray(parsed)) {
+                for (const item of parsed) {
+                    candidates.push(typeof item === 'string' ? item : item?.MediaURL);
+                }
+            }
+        } catch {}
+    }
+    if (!candidates.length && listing?.PrimaryPhoto) candidates.push(listing.PrimaryPhoto);
+
+    const seen = new Set();
+    return candidates.filter(url => {
+        if (typeof url !== 'string') return false;
+        const clean = url.trim();
+        if (!clean || seen.has(clean) || !/^(https?:\/\/|\/)/i.test(clean)) return false;
+        seen.add(clean);
+        return true;
+    }).map(url => url.trim());
+}
+
 async function handleListingDetail(listingKey, site, req, env, ctx, allowedOrigin) {
     const scope = buildTenantListingScope(site);
     if (!scope.valid) {
@@ -1133,20 +1140,9 @@ async function handleListingDetail(listingKey, site, req, env, ctx, allowedOrigi
         fullDetails.Coordinates = [fullDetails.Longitude, fullDetails.Latitude];
     }
 
-    // Parse synchronized full media gallery from D1 MediaJSON
-    let mediaArray = [];
-    if (fullDetails.MediaJSON) {
-        try {
-            const parsed = JSON.parse(fullDetails.MediaJSON);
-            if (Array.isArray(parsed) && parsed.length > 0) {
-                mediaArray = parsed.map((url, idx) => ({ MediaURL: url, Order: idx }));
-            }
-        } catch {}
-    }
-    if (mediaArray.length === 0 && fullDetails.PrimaryPhoto) {
-        mediaArray = [{ MediaURL: fullDetails.PrimaryPhoto, Order: 0 }];
-    }
-    fullDetails.Media = mediaArray;
+    // Canonical synchronized gallery. This is the primary detail/photo contract.
+    fullDetails.Media = getListingMediaUrls(fullDetails)
+        .map((url, index) => ({ MediaURL: url, Order: index }));
 
     if (ctx && ctx.waitUntil) {
         ctx.waitUntil(recordUsage(site.site_id, 'listing_views', env));
@@ -1172,18 +1168,7 @@ async function handleListingMedia(listingKey, site, req, env, ctx, allowedOrigin
         return jsonResponse({ error: 'ListingNotFound', message: 'Property media not accessible.' }, 404, allowedOrigin);
     }
 
-    let mediaUrls = [];
-    if (row.MediaJSON) {
-        try {
-            const parsed = JSON.parse(row.MediaJSON);
-            if (Array.isArray(parsed)) {
-                mediaUrls = parsed.filter(Boolean);
-            }
-        } catch {}
-    }
-    if (mediaUrls.length === 0 && row.PrimaryPhoto) {
-        mediaUrls = [row.PrimaryPhoto];
-    }
+    const mediaUrls = getListingMediaUrls(row);
 
     const payload = {
         listingKey: row.ListingKey,

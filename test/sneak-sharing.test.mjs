@@ -547,14 +547,14 @@ describe('SNEAK IDX Phase 7.3C3B — Safe Property Sharing + Shared Lists', () =
         assert.doesNotMatch(member, /Shared Lists|shared-lists/);
     });
 
-    test('31. C3B application script parses and affected build markers are exact', () => {
+    test('31. C3B application script parses and current affected build markers are exact', () => {
         const html = fs.readFileSync(path.join(rootDir, 'sneak-idx', 'search', 'index.html'), 'utf8');
         const scripts = [...html.matchAll(/<script(?:\s[^>]*)?>([\s\S]*?)<\/script>/g)].map(match => match[1]);
         const app = scripts.find(script => script.includes('CCOR_IDX_UI_BUILD'));
         assert.doesNotThrow(() => new Function(app));
-        assert.match(html, /data-ui-build="2026\.08\.31\.7\.3c3b"/);
-        assert.match(fs.readFileSync(path.join(rootDir, 'sneak-idx', 'embed.js'), 'utf8'), /2026\.08\.31\.7\.3c3b/);
-        assert.match(fs.readFileSync(path.join(rootDir, 'SneakIDXWorker.js'), 'utf8'), /2026\.08\.31\.7\.3c3b/);
+        assert.match(html, /data-ui-build="2026\.08\.31\.7\.4a"/);
+        assert.match(fs.readFileSync(path.join(rootDir, 'sneak-idx', 'embed.js'), 'utf8'), /2026\.08\.31\.7\.4a/);
+        assert.match(fs.readFileSync(path.join(rootDir, 'SneakIDXWorker.js'), 'utf8'), /2026\.08\.31\.7\.4a/);
         assert.match(fs.readFileSync(path.join(rootDir, 'sneak-consumer', 'worker.js'), 'utf8'), /2026\.08\.31\.7\.3c3b/);
     });
 });

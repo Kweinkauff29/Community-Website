@@ -3,7 +3,7 @@
 
 name = "sneak-idx-admin-staging"
 main = "sneak-admin/worker.js"
-compatibility_date = "2024-01-01"
+compatibility_date = "2026-08-31"
 
 [observability]
 enabled = true
@@ -25,4 +25,20 @@ migrations_dir = "migrations"
 [[services]]
 binding = "MEMBER_WORKER"
 service = "sneak-idx-member-staging"
+
+[[services]]
+binding = "SERVING_WORKER"
+service = "sneak-idx-worker-staging"
+
+[[services]]
+binding = "CONSUMER_WORKER"
+service = "sneak-idx-consumer-staging"
+
+[[services]]
+binding = "SITES_WORKER"
+service = "sneak-idx-sites-staging"
+
+[[services]]
+binding = "ALERT_WORKER"
+service = "sneak-idx-alerts-staging"
 

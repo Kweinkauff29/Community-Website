@@ -32,6 +32,8 @@ import {
     handleGetMemberClientActivity
 } from './api.js';
 
+export const SNEAK_MEMBER_BUILD = '2026.08.31.7.4a';
+
 const SECURITY_HEADERS = {
     'Content-Security-Policy': "default-src 'self'; script-src 'self' 'unsafe-inline' https://fonts.googleapis.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; connect-src 'self'; frame-ancestors 'none';",
     'X-Frame-Options': 'DENY',
@@ -67,7 +69,7 @@ export default {
             return json({
                 status: 'healthy',
                 worker: 'sneak-idx-member-staging',
-                build: '2026.08.31.7.3c3a1',
+                build: SNEAK_MEMBER_BUILD,
                 timestamp: new Date().toISOString()
             });
         }

@@ -348,8 +348,8 @@ describe('SNEAK Member Worker & GrowthZone Alignment Suite (Phase 5.1)', () => {
         const futureGrace = '2026-08-23T12:00:00Z';
         const expiredGrace = '2026-08-19T12:00:00Z';
 
-        // 1. Backward compatibility (no entitlement row)
-        assert.equal(isAccountEntitled('active', null, null, now), true);
+        // 1. Generic entitlement row is mandatory and authoritative
+        assert.equal(isAccountEntitled('active', null, null, now), false);
         assert.equal(isAccountEntitled('suspended', null, null, now), false);
 
         // 2. Active status

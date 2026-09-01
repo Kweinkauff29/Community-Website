@@ -63,7 +63,7 @@ export async function handleMemberOverview(db, memberContext) {
         embed = generateEmbedSnippets(primarySite.site_key, allowed, branding || {});
     }
 
-    const billing = await db.prepare("SELECT * FROM sneak_account_billing WHERE account_id = ?").bind(account_id).first();
+    const entitlement = await getAccountEntitlement(db, account_id);
     const listingsCount = await db.prepare("SELECT count(*) as count FROM sneak_listings").first();
     const openHousesCount = await db.prepare("SELECT count(*) as count FROM sneak_open_houses").first();
 
@@ -115,9 +115,16 @@ export async function handleMemberOverview(db, memberContext) {
         branding,
         widgets: widgetConfigs,
         embed,
-        billing: billing || {
-            billing_status: 'none',
-            entitlement_status: 'inactive'
+        billing: {
+            authority: 'sneak_account_entitlements',
+            provider: entitlement?.provider || 'CCOR / GrowthZone',
+            plan: entitlement?.plan || account_plan,
+            status: entitlement?.status || 'missing',
+            statusLabel: entitlement?.statusLabel || 'Not Configured — Contact CCOR',
+            entitlement_status: entitlement?.status || 'missing',
+            isEntitled: entitlement?.isEntitled === true,
+            graceUntil: entitlement?.graceUntil || null,
+            lastVerifiedAt: entitlement?.lastVerifiedAt || null
         },
         inventory: {
             activeListings: listingsCount?.count || 0,
@@ -342,8 +349,9 @@ export async function handleGetMemberBilling(db, memberContext) {
         plan: entitlement?.plan || memberContext.account_plan || 'pro',
         provider: 'GrowthZone',
         billingCycle: 'Monthly (1st of each month)',
-        status: entitlement?.status || 'active',
-        isEntitled: entitlement ? entitlement.isEntitled : true,
+        status: entitlement?.status || 'missing',
+        statusLabel: entitlement?.statusLabel || 'Not Configured — Contact CCOR',
+        isEntitled: entitlement?.isEntitled === true,
         graceUntil: entitlement?.graceUntil || null,
         growthzoneUrl: 'https://bonitaspringsesterorealtorsfl.growthzoneapp.com/',
         instructions: 'Your SNEAK IDX subscription is managed by the Coconut Coast Organization of REALTORS® through GrowthZone. Billing occurs automatically on the first of each month.'

@@ -3,7 +3,7 @@
 
 name = "sneak-idx-member-staging"
 main = "sneak-member/worker.js"
-compatibility_date = "2024-01-01"
+compatibility_date = "2026-08-31"
 
 [observability]
 enabled = true

@@ -83,11 +83,22 @@ Every participant must complete all verification gates before being marked **Lau
   * Phase 7.3C2B Agent Client Activity Dashboard & Buyer Timeline: 2026-08-31 (COMPLETE; authenticated desktop/tablet/mobile browser QA pass)
   * Phase 7.3C3A.1 Recently Viewed Retention, Migration Safety & Browser Sign-Off: 2026-08-31 (COMPLETE; deployed and all acceptance gates pass)
   * Phase 7.3C3B Safe Property Sharing + Consumer Shareable Property Lists: 2026-08-31 (COMPLETE; deployed, independent anonymous recipient and revocation browser QA pass)
+  * Phase 7.4A Launch Readiness Control Plane + Staff Provisioning: 2026-08-31 (COMPLETE; deployed; automated, live API/detail, D1, and mandatory actual-browser gates pass)
 * **Phase 7.3C2B Agent Client Activity Dashboard & Authenticated Buyer Timeline:**
   * *Privacy-Preserving Activity Ledger:* D1 table `sneak_consumer_activity_events` (migration 0030) records authenticated buyer events (`listing_view`, `favorite_*`, `saved_search_*`, `alert_*`, `inquiry_submitted`). Zero anonymous tracking, zero fingerprinting, zero geolocation tracking.
   * *Consumer Ingestion Protection:* `POST /api/consumer/activity` enforces authentication, strict browser allowlist (`listing_view`, `inquiry_submitted`), 30-minute deduplication on listing views, lead email match verification, and 120 events/hr rate limiting.
   * *Member Portal Clients Roster & Timeline:* REALTOR® Member Portal features full Clients navigation tab, 4 live aggregate KPI summary cards, email search filter, multi-criteria sorting, and responsive Client Detail modal with interactive longitudinal activity timeline, saved homes (with display controls), saved searches, and inquiries.
   * *Strict Tenant Isolation:* All member client and timeline queries strictly scoped by authenticated `account_id`; cross-account lookups return 404 with zero enumeration.
+* **Phase 7.4A Staff Control Plane & Launch Readiness:**
+  * *MVP Authority:* `sneak_account_entitlements` is the only service authority. Migration 0016 Stripe-shaped rows remain legacy and cannot grant service.
+  * *Staff Workflow:* Guided provisioning persists account/site, entitlement, member invitation, pending domain, branding, widget, and readiness state. Account Detail is the resume point.
+  * *Lifecycle Safety:* Suspend/cancel/reactivate and site/domain impact actions use deliberate modals and preserve site key, domain records where applicable, configuration, consumer data, leads, and audit history.
+  * *Capability Split:* Core search/custom domain/member/admin readiness is reported separately from consumer magic-link delivery and optional saved-search alert email.
+  * *Current Email Finding:* Member staging has both Mailjet secret names and selects the real adapter, but current inbox delivery/consumption is not re-verified. Consumer staging has no provider secrets and uses simulation. Alert delivery has neither Mailjet nor unsubscribe-signing secrets and remains not ready.
+  * *Consumer Detail Correction:* Search cards, map/deep links, Recently Viewed, Compare, shared lists, and Saved Homes now converge on one authoritative listing hydration path. D1 `MediaJSON`, detail `Media`, and `/media` counts agreed for 10 real listings (26–39 photos each); the post-deploy live check passed 65/65.
+  * *Final Browser Sign-Off:* PASS — actual local Google Chrome/Playwright staging acceptance passed 527/527 checks at 1440×900, 1024×768, and 390×844. The matrix covered five Residential, two Rental, two Land, two Commercial, seven listings with more than 20 photos, rapid A→B, anonymous Recent/Compare privacy, authenticated guided Admin provisioning/lifecycle/readiness, and authenticated C2B Member Clients/KPIs/search/sort/detail/Saved Homes/Saved Searches/Activity/Inquiries with no clipping or protected API errors.
+  * *Final Regression and Data Gates:* PASS — 246/246 automated tests across 13 suites, 17/17 live Phase 7.4A health/auth checks, no pending remote migrations, and zero D1 foreign-key violations.
+  * *Operator Reference:* See `docs/ccor-idx-launch-readiness.md` and `docs/operations/member-provisioning.md`.
 * **Live Validation Evidence:**
   * Live Public URL: `https://coconutcoastrealtors.org/idx-test/` (HTTP 200 OK)
   * Live Static UI Build: PASS — `data-ui-build="2026.08.30.7.3c2b"`, `CCOR_IDX_UI_BUILD = '2026.08.30.7.3c2b'`, `embed.js &v=2026.08.30.7.3c2b`

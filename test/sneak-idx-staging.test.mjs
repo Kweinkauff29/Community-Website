@@ -29,6 +29,9 @@ function createMockDB() {
             scope_value: null,
             account_name: 'Premier Coast Realty Demo',
             account_status: 'active',
+            entitlement_status: 'active',
+            grace_until: null,
+            expires_at: null,
             plan: 'pro',
             default_agent_mls_id: 'DEMO_AGENT_01',
             default_office_mls_id: 'DEMO_OFFICE_01',
@@ -53,6 +56,9 @@ function createMockDB() {
             scope_value: 'AGENT_99',
             account_name: 'Other Realty Demo',
             account_status: 'active',
+            entitlement_status: 'active',
+            grace_until: null,
+            expires_at: null,
             plan: 'standard',
             default_agent_mls_id: 'AGENT_99',
             default_office_mls_id: null,
@@ -133,6 +139,9 @@ function createMockDB() {
                                         scope_value: s.scope_value,
                                         account_name: s.account_name,
                                         account_status: s.account_status,
+                                        entitlement_status: s.entitlement_status,
+                                        grace_until: s.grace_until,
+                                        expires_at: s.expires_at,
                                         plan: s.plan,
                                         default_agent_mls_id: s.default_agent_mls_id,
                                         default_office_mls_id: s.default_office_mls_id,
@@ -1016,15 +1025,15 @@ describe('SNEAK IDX Phase 2.2 Test Suite', () => {
         assert.ok(Array.isArray(data.data));
     });
 
-    test('PHASE 7.3C3B: Serving and frontend build versions are uniformly bumped to 2026.08.31.7.3c3b', () => {
+    test('PHASE 7.4A: Serving and frontend build versions are uniformly bumped to 2026.08.31.7.4a', () => {
         const searchHtml = fs.readFileSync(path.join(rootDir, 'sneak-idx/search/index.html'), 'utf8');
         const embedJs = fs.readFileSync(path.join(rootDir, 'sneak-idx/embed.js'), 'utf8');
         const servingWorker = fs.readFileSync(path.join(rootDir, 'SneakIDXWorker.js'), 'utf8');
 
-        assert.ok(searchHtml.includes('data-ui-build="2026.08.31.7.3c3b"'), 'search/index.html must have data-ui-build="2026.08.31.7.3c3b"');
-        assert.ok(searchHtml.includes("CCOR_IDX_UI_BUILD = '2026.08.31.7.3c3b'"), "search/index.html must have CCOR_IDX_UI_BUILD = '2026.08.31.7.3c3b'");
-        assert.ok(embedJs.includes("const buildVersion = '2026.08.31.7.3c3b'"), "embed.js must have buildVersion = '2026.08.31.7.3c3b'");
-        assert.ok(servingWorker.includes("SNEAK_IDX_BUILD = '2026.08.31.7.3c3b'"), 'SneakIDXWorker.js must expose the C3B build');
+        assert.ok(searchHtml.includes('data-ui-build="2026.08.31.7.4a"'), 'search/index.html must have data-ui-build="2026.08.31.7.4a"');
+        assert.ok(searchHtml.includes("CCOR_IDX_UI_BUILD = '2026.08.31.7.4a'"), "search/index.html must have CCOR_IDX_UI_BUILD = '2026.08.31.7.4a'");
+        assert.ok(embedJs.includes("const buildVersion = '2026.08.31.7.4a'"), "embed.js must have buildVersion = '2026.08.31.7.4a'");
+        assert.ok(servingWorker.includes("SNEAK_IDX_BUILD = '2026.08.31.7.4a'"), 'SneakIDXWorker.js must expose the 7.4A build');
         assert.ok(embedJs.includes('ccor_listing'), 'embed.js must forward ccor_listing deep link parameter');
         assert.ok(searchHtml.includes('initialDeepListingKey'), 'search/index.html must parse initialDeepListingKey');
         assert.ok(searchHtml.includes('updateSavedSearchAlert'), 'search/index.html must implement updateSavedSearchAlert');

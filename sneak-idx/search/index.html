@@ -1523,13 +1523,22 @@
       background: #fff;
       border-radius: 16px;
       width: 100%;
-      max-width: 900px;
-      max-height: 90vh;
-      overflow-y: auto;
+      max-width: 1040px;
+      max-height: 92vh;
+      max-height: 92dvh;
+      overflow: hidden;
       position: relative;
       display: flex;
       flex-direction: column;
       box-shadow: var(--shadow-lg);
+    }
+
+    .detail-scroll-region {
+      min-height: 0;
+      overflow-y: auto;
+      overscroll-behavior: contain;
+      scrollbar-gutter: stable;
+      -webkit-overflow-scrolling: touch;
     }
 
     .detail-close {
@@ -1550,16 +1559,32 @@
       color: var(--text);
     }
 
+    .detail-close:hover,
+    .detail-close:focus-visible {
+      background: #fff;
+      outline: 3px solid rgba(37, 150, 190, 0.45);
+    }
+
+    .detail-gallery-shell {
+      background: #0f172a;
+      overflow: hidden;
+      flex: 0 0 auto;
+    }
+
     .detail-gallery {
       position: relative;
-      height: 420px;
-      background: #0f172a;
+      height: clamp(340px, 52vh, 540px);
+      background: #111827;
+      overflow: hidden;
     }
 
     .detail-gallery-img {
+      display: block;
       width: 100%;
       height: 100%;
       object-fit: contain;
+      object-position: center;
+      background: #111827;
     }
 
     .detail-gallery-nav {
@@ -1594,31 +1619,56 @@
       border-radius: 6px;
       font-size: 0.75rem;
       font-weight: 600;
+      pointer-events: none;
     }
 
     .detail-gallery-thumbs {
       display: flex;
+      align-items: center;
       gap: 8px;
+      min-height: 68px;
       padding: 10px 16px;
       background: #0f172a;
       overflow-x: auto;
+      overflow-y: hidden;
       scrollbar-width: thin;
+      scroll-snap-type: x proximity;
+      border-top: 1px solid rgba(255, 255, 255, 0.12);
     }
 
     .detail-thumb {
-      width: 70px;
-      height: 48px;
+      width: 74px;
+      height: 50px;
       object-fit: cover;
       border-radius: 4px;
       cursor: pointer;
       opacity: 0.6;
       border: 2px solid transparent;
       flex-shrink: 0;
+      scroll-snap-align: center;
+      background: #1e293b;
+    }
+
+    .detail-thumb-button {
+      width: 78px;
+      height: 54px;
+      padding: 2px;
+      border: 0;
+      border-radius: 6px;
+      background: transparent;
+      cursor: pointer;
+      flex: 0 0 auto;
     }
 
     .detail-thumb.active {
       opacity: 1;
       border-color: var(--accent);
+      box-shadow: 0 0 0 2px #fff;
+    }
+
+    .detail-thumb:focus-visible {
+      outline: 3px solid #fff;
+      outline-offset: 2px;
     }
 
     .detail-body {
@@ -1654,30 +1704,84 @@
       text-transform: uppercase;
     }
 
-    .detail-stats {
-      display: flex;
-      gap: 20px;
-      padding: 16px 0;
-      border-top: 1px solid var(--border);
-      border-bottom: 1px solid var(--border);
-      flex-wrap: wrap;
+    .detail-sections {
+      display: grid;
+      gap: 14px;
     }
 
-    .detail-stat {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      font-size: 0.95rem;
-      font-weight: 600;
+    .detail-section {
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      background: #fff;
+      padding: 16px;
+    }
+
+    .detail-section h3 {
+      margin: 0 0 12px;
+      color: var(--primary);
+      font-size: 1rem;
+      font-weight: 800;
+    }
+
+    .detail-fact-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 10px 18px;
+      margin: 0;
+    }
+
+    .detail-fact { min-width: 0; }
+
+    .detail-fact dt {
+      color: var(--text-muted);
+      font-size: 0.72rem;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+      text-transform: uppercase;
+    }
+
+    .detail-fact dd {
+      margin: 3px 0 0;
       color: var(--text);
+      font-size: 0.92rem;
+      font-weight: 700;
+      overflow-wrap: anywhere;
     }
-
-    .detail-stat i { color: var(--accent); }
 
     .detail-description {
       font-size: 0.92rem;
-      line-height: 1.6;
+      line-height: 1.7;
       color: #334155;
+      white-space: pre-line;
+      overflow-wrap: anywhere;
+    }
+
+    @media (max-width: 1024px) {
+      .detail-modal { max-width: min(94vw, 920px); }
+      .detail-gallery { height: clamp(300px, 48vh, 460px); }
+      .detail-fact-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+
+    @media (max-width: 640px) {
+      .detail-overlay { padding: 0; align-items: stretch; }
+      .detail-modal {
+        height: 100vh;
+        height: 100dvh;
+        max-width: none;
+        max-height: none;
+        border-radius: 0;
+      }
+      .detail-gallery { height: clamp(220px, 62vw, 300px); }
+      .detail-gallery-nav { width: 44px; height: 44px; }
+      .detail-gallery-nav.prev { left: 10px; }
+      .detail-gallery-nav.next { right: 10px; }
+      .detail-gallery-thumbs { min-height: 70px; padding: 10px 12px; }
+      .detail-thumb { width: 76px; height: 50px; }
+      .detail-body { padding: 18px 14px 28px; gap: 13px; }
+      .detail-price { font-size: 1.55rem; padding-right: 38px; }
+      .detail-addr { font-size: 1rem; }
+      .detail-section { padding: 14px; }
+      .detail-fact-grid { grid-template-columns: 1fr 1fr; gap: 11px 12px; }
     }
 
     /* Lead Contact Modal */
@@ -2654,7 +2758,7 @@
   </style>
 </head>
 
-<body data-ui-build="2026.08.31.7.3c3b">
+<body data-ui-build="2026.08.31.7.4a">
 
   <!-- Loading Overlay -->
   <div class="loading-overlay" id="loadingOverlay" style="display:none">
@@ -3100,28 +3204,51 @@
 
 
   <!-- Property Detail Modal -->
-  <div class="detail-overlay" id="detailOverlay">
+  <div class="detail-overlay" id="detailOverlay" role="dialog" aria-modal="true" aria-labelledby="detailAddr">
     <div class="detail-modal">
-      <button class="detail-close" id="detailClose">&times;</button>
-      <div class="detail-gallery" id="detailGallery">
-        <img class="detail-gallery-img" id="detailMainImg" src="" alt="Property Photo">
-        <button class="detail-gallery-nav prev" id="detailPrevBtn">&#10094;</button>
-        <button class="detail-gallery-nav next" id="detailNextBtn">&#10095;</button>
-        <div class="detail-gallery-count" id="detailImgCount"></div>
-      </div>
-      <div class="detail-gallery-thumbs" id="detailThumbs"></div>
-      
-      <div class="detail-body">
+      <button class="detail-close" id="detailClose" type="button" aria-label="Close property details">&times;</button>
+      <div class="detail-scroll-region" id="detailScrollRegion">
+        <div class="detail-gallery-shell">
+          <div class="detail-gallery" id="detailGallery">
+            <img class="detail-gallery-img" id="detailMainImg" src="" alt="Property Photo" loading="eager" decoding="async" fetchpriority="high">
+            <button class="detail-gallery-nav prev" id="detailPrevBtn" type="button" aria-label="Previous photo">&#10094;</button>
+            <button class="detail-gallery-nav next" id="detailNextBtn" type="button" aria-label="Next photo">&#10095;</button>
+            <div class="detail-gallery-count" id="detailImgCount" aria-live="polite"></div>
+          </div>
+          <div class="detail-gallery-thumbs" id="detailThumbs" aria-label="Property photo thumbnails"></div>
+        </div>
+
+        <div class="detail-body">
         <div class="detail-price" id="detailPrice"></div>
         <div class="detail-addr" id="detailAddr"></div>
         <div class="detail-badges" id="detailBadges"></div>
-        <div class="detail-stats" id="detailStats"></div>
         <div class="detail-consumer-actions" aria-label="Property actions">
           <button class="detail-compare-btn" id="detailCompareBtn" type="button"><i class="fas fa-columns"></i> Add to Compare</button>
           <button class="detail-list-btn" id="detailAddToListBtn" type="button"><i class="fas fa-list"></i> Add to List</button>
           <button class="detail-share-btn" id="detailShareBtn" type="button"><i class="fas fa-share-alt"></i> Share</button>
         </div>
-        <div class="detail-description" id="detailDesc"></div>
+        <div class="detail-sections">
+          <section class="detail-section" id="detailOverviewSection">
+            <h3>Property Overview</h3>
+            <dl class="detail-fact-grid" id="detailOverviewFacts"></dl>
+          </section>
+          <section class="detail-section" id="detailFeaturesSection">
+            <h3>Features &amp; Amenities</h3>
+            <dl class="detail-fact-grid" id="detailFeaturesFacts"></dl>
+          </section>
+          <section class="detail-section" id="detailLocationSection">
+            <h3>Location &amp; Community</h3>
+            <dl class="detail-fact-grid" id="detailLocationFacts"></dl>
+          </section>
+          <section class="detail-section" id="detailListingInfoSection">
+            <h3>Listing Information</h3>
+            <dl class="detail-fact-grid" id="detailListingInfoFacts"></dl>
+          </section>
+          <section class="detail-section" id="detailDescriptionSection">
+            <h3>Description</h3>
+            <div class="detail-description" id="detailDesc"></div>
+          </section>
+        </div>
 
         <!-- Area B: Site Owner CTA (Ursula Weinkauff / Local Real Estate LLC) -->
         <div class="detail-owner-cta" id="detailOwnerCta" style="margin-top:20px;padding:20px;background:linear-gradient(135deg,#0f172a,#1e3a8a);border-radius:12px;color:#fff;box-shadow:0 4px 14px rgba(0,0,0,0.15);">
@@ -3134,12 +3261,14 @@
 
         <!-- Area A: Listing Data & MLS Brokerage Attribution -->
         <div class="detail-attribution-section" id="detailAttributionSection" style="margin-top:16px;padding:14px;background:#f8fafc;border-radius:10px;border:1px solid var(--border);font-size:0.82rem;color:var(--text-muted);">
+          <div style="font-size:0.9rem;font-weight:800;color:var(--primary);margin-bottom:8px;">Attribution &amp; Contact</div>
           <div style="font-weight:700;color:var(--text);margin-bottom:4px;" id="detailListingCourtesy"></div>
           <div id="detailListingAgent"></div>
           <div style="font-size:0.75rem;margin-top:8px;line-height:1.4;color:#94a3b8;">
             Real estate listings held by brokerage firms other than the website owner are marked with the Internet Data Exchange logo and detailed information about them includes the name of the listing brokers. All information deemed reliable but not guaranteed.
           </div>
         </div>
+      </div>
       </div>
     </div>
   </div>
@@ -3352,11 +3481,12 @@
   <!-- Leaflet Scripts -->
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.5.3/leaflet.markercluster.js"></script>
+  <script src="/detail-hydration.js?v=7.4a"></script>
 
   <!-- CCOR IDX Plug-in Application Logic -->
   <script>
     // Telemetry & Build Identifier
-    const CCOR_IDX_UI_BUILD = '2026.08.31.7.3c3b';
+        const CCOR_IDX_UI_BUILD = '2026.08.31.7.4a';
     console.log('[CCOR IDX Plug-in] UI build:', CCOR_IDX_UI_BUILD);
 
     // XSS Hardening & URL Sanitization Helpers (Phase 7.3C1A)
@@ -3507,6 +3637,9 @@
     let currentDetail = null;
     let detailIdx = 0;
     let currentMediaUrls = [];
+    const DETAIL_THUMBNAIL_WINDOW = 12;
+    const detailHydration = window.CCORDetailHydration;
+    const detailRequests = detailHydration.createRequestCoordinator();
     let savedListings = JSON.parse(localStorage.getItem('savedListings_' + SITE_KEY) || localStorage.getItem('savedListings') || '[]');
 
     // Map & Viewport Synchronization State (Phase 7.3B1)
@@ -4709,7 +4842,7 @@
         card.addEventListener('focus', () => highlightMarker(item.ListingKey, true));
         card.addEventListener('blur', () => highlightMarker(item.ListingKey, false));
 
-        card.onclick = () => openDetail(item);
+        card.onclick = () => openDetailByKey(item.ListingKey, item);
         grid.appendChild(card);
       });
     }
@@ -4845,7 +4978,7 @@
             <div class="card-meta" style="margin-top:2px;font-size:0.7rem">${escapeHtml(item.City || '')}</div>
           </div>
         `;
-        el.onclick = () => openDetail(item);
+        el.onclick = () => openDetailByKey(item.ListingKey, item);
         track.appendChild(el);
       });
     }
@@ -4869,136 +5002,273 @@
       nextBtn.onclick = () => { if (pagination.page < pagination.totalPages) fetchListings(pagination.page + 1, Boolean(currentViewportBounds && spatialState.mode !== 'radius')); };
     }
 
-    // --- Detail Modal ---
-    async function openDetail(item) {
-      currentDetail = item;
-      detailIdx = 0;
-      currentMediaUrls = item.PrimaryPhoto ? [item.PrimaryPhoto] : [];
+    // --- Authoritative Listing Detail Modal ---
+    function safeDetailMedia(urls) {
+      return detailHydration.uniqueStrings((urls || []).map(sanitizeUrl).filter(Boolean));
+    }
 
-      // Authenticated history comes only from the existing listing_view ledger.
-      if (consumerUser && consumerSessionToken && item?.ListingKey) {
-        fetch(`${CONSUMER_API_BASE}/api/consumer/activity`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': 'Bearer ' + consumerSessionToken,
-            'X-Site-Key': SITE_KEY
-          },
-          body: JSON.stringify({
-            site: SITE_KEY,
-            type: 'listing_view',
-            listingKey: item.ListingKey
-          }),
-          keepalive: true
-        }).then(res => { if (res.ok) loadRecentlyViewed(); }).catch(() => {});
-      } else if (item?.ListingKey) {
-        // Anonymous history never leaves this site-scoped browser key.
-        recordAnonymousRecentlyViewed(item.ListingKey);
-        loadRecentlyViewed();
+    function setDetailActionAvailability(available) {
+      ['detailCompareBtn', 'detailAddToListBtn', 'detailShareBtn', 'detailContactBtn'].forEach(id => {
+        const button = document.getElementById(id);
+        if (button) button.disabled = !available;
+      });
+      document.getElementById('detailOwnerCta').style.display = available ? 'block' : 'none';
+      document.getElementById('detailAttributionSection').style.display = available ? 'block' : 'none';
+    }
+
+    function formatDetailFactValue(fact) {
+      if (fact.kind === 'currency') return fmt.format(Number(fact.value));
+      if (fact.kind === 'integer') return Math.round(Number(fact.value)).toLocaleString();
+      if (fact.kind === 'number') return Number(fact.value).toLocaleString(undefined, { maximumFractionDigits: 2 });
+      if (fact.kind === 'squareFeet') return Number(fact.value).toLocaleString(undefined, { maximumFractionDigits: 0 }) + ' sq ft';
+      if (fact.kind === 'acres') return Number(fact.value).toLocaleString(undefined, { maximumFractionDigits: 3 }) + ' acres';
+      if (fact.kind === 'date') {
+        const date = new Date(fact.value);
+        return Number.isNaN(date.getTime())
+          ? String(fact.value)
+          : date.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
       }
+      if (fact.kind === 'priceReduction') {
+        return fmt.format(Number(fact.value.amount)) + ' (' + Number(fact.value.percent).toFixed(1) + '%)';
+      }
+      return String(fact.value);
+    }
 
-      const modal = document.getElementById('detailOverlay');
-      modal.style.display = 'flex';
+    function renderDetailFactSection(sectionId, containerId, facts) {
+      const section = document.getElementById(sectionId);
+      const container = document.getElementById(containerId);
+      container.innerHTML = '';
+      (facts || []).forEach(fact => {
+        const wrapper = document.createElement('div');
+        wrapper.className = 'detail-fact';
+        const term = document.createElement('dt');
+        const value = document.createElement('dd');
+        term.textContent = fact.label;
+        value.textContent = formatDetailFactValue(fact);
+        wrapper.appendChild(term);
+        wrapper.appendChild(value);
+        container.appendChild(wrapper);
+      });
+      section.hidden = container.childElementCount === 0;
+    }
 
-      document.getElementById('detailMainImg').src = currentMediaUrls[0] || '';
-      document.getElementById('detailPrice').textContent = fmt.format(item.ListPrice || 0);
-      document.getElementById('detailAddr').textContent = `${item.UnparsedAddress || ''}${item.City ? ', ' + item.City : ''}`;
-      document.getElementById('detailDesc').textContent = item.PublicRemarks || 'Loading description...';
-      updateDetailCompareButton();
+    function renderDetailFactSections(facts) {
+      renderDetailFactSection('detailOverviewSection', 'detailOverviewFacts', facts.overview);
+      renderDetailFactSection('detailFeaturesSection', 'detailFeaturesFacts', facts.features);
+      renderDetailFactSection('detailLocationSection', 'detailLocationFacts', facts.location);
+      renderDetailFactSection('detailListingInfoSection', 'detailListingInfoFacts', facts.listingInformation);
+    }
 
-      // Area A: Listing Brokerage Attribution
-      document.getElementById('detailListingCourtesy').textContent = `Listed by: ${item.ListOfficeName || 'Listing Brokerage'}`;
-      document.getElementById('detailListingAgent').textContent = `Listing Agent: ${item.ListAgentFullName || 'Listing Agent'}`;
+    function renderDetailRecord(item, options = {}) {
+      const loading = Boolean(options.loading);
+      const listPrice = detailHydration.positiveNumber(item.ListPrice);
+      document.getElementById('detailPrice').textContent = listPrice !== null ? fmt.format(listPrice) : 'Price unavailable';
+      const safeAddress = item.UnparsedAddress || 'Address Undisclosed';
+      document.getElementById('detailAddr').textContent = safeAddress + (item.City ? ', ' + item.City : '');
+      document.getElementById('detailDesc').textContent = detailHydration.descriptionText(item, loading);
+      const attribution = detailHydration.listingAttribution(item);
+      document.getElementById('detailListingCourtesy').textContent = attribution.brokerage;
+      document.getElementById('detailListingAgent').textContent = attribution.agent;
 
-      // Area B: Site Owner CTA (Ursula Weinkauff)
       document.getElementById('ctaOwnerName').textContent = tenantConfig?.displayName || 'Ursula Weinkauff';
       document.getElementById('ctaOwnerBrokerage').textContent = tenantConfig?.brokerage || 'Local Real Estate LLC';
 
-      // Badges
       const badges = document.getElementById('detailBadges');
       badges.innerHTML = '';
-      const addBadge = (txt, bg) => {
-        const b = document.createElement('span');
-        b.className = 'detail-badge';
-        b.style.background = bg;
-        b.style.color = '#fff';
-        b.textContent = txt;
-        badges.appendChild(b);
+      const addBadge = (textValue, background) => {
+        if (!textValue) return;
+        const badge = document.createElement('span');
+        badge.className = 'detail-badge';
+        badge.style.background = background;
+        badge.style.color = '#fff';
+        badge.textContent = textValue;
+        badges.appendChild(badge);
       };
-      addBadge(item.StandardStatus || 'Active', item.StandardStatus === 'Pending' ? 'var(--pending)' : item.StandardStatus === 'Active Under Contract' ? 'var(--warning)' : 'var(--success)');
-      if (item.PropertySubType) addBadge(item.PropertySubType, 'var(--primary)');
-      if (item.PropertyType) addBadge(item.PropertyType, '#64748b');
+      addBadge(item.StandardStatus || (loading ? 'Loading current status…' : 'Status unavailable'),
+        item.StandardStatus === 'Pending' ? 'var(--pending)' : item.StandardStatus === 'Active Under Contract' ? 'var(--warning)' : 'var(--success)');
+      addBadge(item.PropertySubType, 'var(--primary)');
+      addBadge(item.PropertyType, '#64748b');
 
-      // Stats
-      const stats = document.getElementById('detailStats');
-      stats.innerHTML = '';
-      if (item.BedroomsTotal) stats.innerHTML += `<div class="detail-stat"><i class="fas fa-bed"></i>${item.BedroomsTotal} Beds</div>`;
-      if (item.BathroomsTotalInteger) stats.innerHTML += `<div class="detail-stat"><i class="fas fa-bath"></i>${item.BathroomsTotalInteger} Baths</div>`;
-      if (item.LivingArea) stats.innerHTML += `<div class="detail-stat"><i class="fas fa-ruler-combined"></i>${(item.LivingArea).toLocaleString()} sqft</div>`;
-      if (item.YearBuilt) stats.innerHTML += `<div class="detail-stat"><i class="fas fa-calendar"></i>Built ${item.YearBuilt}</div>`;
-      if (item.LotSizeAcres) stats.innerHTML += `<div class="detail-stat"><i class="fas fa-tree"></i>${item.LotSizeAcres} Acres</div>`;
+      renderDetailFactSections(detailHydration.buildDetailFacts(item));
+    }
 
-      // Fetch Full Media Gallery from D1
-      try {
-        const mediaRes = await fetch(`${API_BASE}/idx/v1/listing/${encodeURIComponent(item.ListingKey)}/media?site=${encodeURIComponent(SITE_KEY)}`, {
-          headers: getAuthHeaders()
-        });
-        if (mediaRes.ok) {
-          const mediaData = await mediaRes.json();
-          if (mediaData.data && mediaData.data.length > 0) {
-            currentMediaUrls = mediaData.data.map(m => m.MediaURL).filter(Boolean);
-            renderGalleryThumbs();
-          }
-        }
-      } catch (err) {
-        console.warn('Media gallery fetch error:', err);
-      }
+    function renderDetailUnavailable() {
+      currentDetail = null;
+      setGalleryMedia([]);
+      document.getElementById('detailPrice').textContent = '';
+      document.getElementById('detailAddr').textContent = 'This property is no longer available.';
+      document.getElementById('detailDesc').textContent = 'Current listing details could not be loaded.';
+      document.getElementById('detailBadges').innerHTML = '';
+      renderDetailFactSections({ overview: [], features: [], location: [], listingInformation: [] });
+      document.getElementById('detailListingCourtesy').textContent = '';
+      document.getElementById('detailListingAgent').textContent = '';
+      setDetailActionAvailability(false);
     }
 
     function renderGalleryThumbs() {
       const thumbs = document.getElementById('detailThumbs');
+      const mainImage = document.getElementById('detailMainImg');
+      const count = document.getElementById('detailImgCount');
+      const previous = document.getElementById('detailPrevBtn');
+      const next = document.getElementById('detailNextBtn');
       thumbs.innerHTML = '';
-      document.getElementById('detailImgCount').textContent = `${detailIdx + 1} / ${currentMediaUrls.length}`;
-      document.getElementById('detailMainImg').src = currentMediaUrls[detailIdx] || '';
 
-      currentMediaUrls.forEach((url, i) => {
-        const img = document.createElement('img');
-        img.className = 'detail-thumb' + (i === detailIdx ? ' active' : '');
-        img.src = url;
-        img.onclick = () => {
-          detailIdx = i;
-          document.getElementById('detailMainImg').src = currentMediaUrls[detailIdx];
-          document.getElementById('detailImgCount').textContent = `${detailIdx + 1} / ${currentMediaUrls.length}`;
-          document.querySelectorAll('.detail-thumb').forEach((t, idx) => t.classList.toggle('active', idx === detailIdx));
+      if (!currentMediaUrls.length) {
+        detailIdx = 0;
+        mainImage.removeAttribute('src');
+        mainImage.alt = 'Property photo unavailable';
+        count.textContent = '';
+        previous.hidden = true;
+        next.hidden = true;
+        thumbs.hidden = true;
+        return;
+      }
+
+      detailIdx = Math.min(detailIdx, currentMediaUrls.length - 1);
+      thumbs.hidden = false;
+      mainImage.src = currentMediaUrls[detailIdx];
+      mainImage.alt = 'Property photo ' + String(detailIdx + 1) + ' of ' + String(currentMediaUrls.length);
+      mainImage.fetchPriority = 'high';
+      count.textContent = String(detailIdx + 1) + ' / ' + String(currentMediaUrls.length);
+      previous.hidden = currentMediaUrls.length < 2;
+      next.hidden = currentMediaUrls.length < 2;
+      previous.disabled = detailIdx === 0;
+      next.disabled = detailIdx === currentMediaUrls.length - 1;
+
+      const maxStart = Math.max(0, currentMediaUrls.length - DETAIL_THUMBNAIL_WINDOW);
+      const windowStart = Math.max(0, Math.min(detailIdx - 2, maxStart));
+      const windowEnd = Math.min(currentMediaUrls.length, windowStart + DETAIL_THUMBNAIL_WINDOW);
+      thumbs.dataset.windowStart = String(windowStart);
+      thumbs.dataset.windowEnd = String(windowEnd);
+
+      currentMediaUrls.slice(windowStart, windowEnd).forEach((url, offset) => {
+        const index = windowStart + offset;
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className = 'detail-thumb-button';
+        button.setAttribute('aria-label', 'Show property photo ' + String(index + 1));
+        if (index === detailIdx) button.setAttribute('aria-current', 'true');
+        const image = document.createElement('img');
+        image.className = 'detail-thumb' + (index === detailIdx ? ' active' : '');
+        image.src = url;
+        image.alt = 'Property photo ' + String(index + 1);
+        image.loading = index === detailIdx ? 'eager' : 'lazy';
+        image.decoding = 'async';
+        button.onclick = () => {
+          detailIdx = index;
+          renderGalleryThumbs();
         };
-        thumbs.appendChild(img);
+        button.appendChild(image);
+        thumbs.appendChild(button);
       });
     }
 
-    window.openDetailByKey = async function(key) {
-      if (!key) return;
-      const item = allListings.find(l => l.ListingKey === key);
-      if (item) {
-        openDetail(item);
-        return;
-      }
-      try {
-        const res = await fetch(`${API_BASE}/idx/v1/listing/${encodeURIComponent(key)}?site=${encodeURIComponent(SITE_KEY)}`, {
-          headers: getAuthHeaders()
-        });
-        if (res.ok) {
-          const data = await res.json();
-          if (data.data) {
-            openDetail(data.data);
-            return;
-          }
+    function setGalleryMedia(urls) {
+      const previousUrl = currentMediaUrls[detailIdx] || '';
+      currentMediaUrls = safeDetailMedia(urls);
+      const previousIndex = previousUrl ? currentMediaUrls.indexOf(previousUrl) : -1;
+      detailIdx = previousIndex >= 0 ? previousIndex : 0;
+      renderGalleryThumbs();
+    }
+
+    function recordDetailViewInBackground(listingKey) {
+      setTimeout(() => {
+        if (consumerUser && consumerSessionToken) {
+          fetch(CONSUMER_API_BASE + '/api/consumer/activity', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': 'Bearer ' + consumerSessionToken,
+              'X-Site-Key': SITE_KEY
+            },
+            body: JSON.stringify({ site: SITE_KEY, type: 'listing_view', listingKey }),
+            keepalive: true
+          }).then(response => { if (response.ok) loadRecentlyViewed(); }).catch(() => {});
+        } else {
+          recordAnonymousRecentlyViewed(listingKey);
+          loadRecentlyViewed();
         }
-        alert('This property is no longer available.');
-      } catch (err) {
-        console.warn('Listing fetch error:', err);
-        alert('This property is no longer available.');
+      }, 0);
+    }
+
+    async function fetchDetailMedia(request) {
+      try {
+        const response = await fetch(API_BASE + '/idx/v1/listing/' + encodeURIComponent(request.listingKey) + '/media?site=' + encodeURIComponent(SITE_KEY), {
+          headers: getAuthHeaders(),
+          signal: request.signal
+        });
+        if (!response.ok || !detailRequests.isCurrent(request)) return [];
+        const payload = await response.json();
+        if (String(payload.listingKey || '') !== request.listingKey) return [];
+        return safeDetailMedia(detailHydration.mediaFromEndpoint(payload));
+      } catch (error) {
+        if (error?.name !== 'AbortError') console.warn('Media gallery fetch error:', error);
+        return [];
       }
-    };
+    }
+
+    async function openDetailByKey(key, optimisticSummary = null) {
+      const listingKey = typeof key === 'string' ? key.trim() : '';
+      if (!listingKey) return;
+
+      const optimistic = optimisticSummary || allListings.find(listing => listing.ListingKey === listingKey) || { ListingKey: listingKey };
+      const request = detailRequests.begin(listingKey);
+      let detailFailed = false;
+      let detailResolved = false;
+
+      currentDetail = optimistic;
+      detailIdx = 0;
+      setGalleryMedia(safeDetailMedia([optimistic.PrimaryPhoto]));
+      renderDetailRecord(optimistic, { loading: true });
+      setDetailActionAvailability(false);
+      updateDetailCompareButton();
+      document.getElementById('detailOverlay').style.display = 'flex';
+      document.getElementById('detailScrollRegion').scrollTop = 0;
+
+      const detailPromise = fetch(API_BASE + '/idx/v1/listing/' + encodeURIComponent(listingKey) + '?site=' + encodeURIComponent(SITE_KEY), {
+        headers: getAuthHeaders(),
+        signal: request.signal
+      });
+      const mediaPromise = fetchDetailMedia(request);
+
+      mediaPromise.then(mediaUrls => {
+        if (!detailFailed && detailRequests.isCurrent(request) && mediaUrls.length) {
+          const detailMedia = detailResolved ? safeDetailMedia(detailHydration.mediaFromDetail(currentDetail)) : [];
+          setGalleryMedia(detailHydration.chooseGallery(detailMedia, mediaUrls, currentMediaUrls));
+        }
+      });
+      recordDetailViewInBackground(listingKey);
+
+      try {
+        const response = await detailPromise;
+        if (!detailRequests.isCurrent(request)) return;
+        if (!response.ok) {
+          detailFailed = true;
+          renderDetailUnavailable();
+          return;
+        }
+
+        const payload = await response.json();
+        const fullDetail = payload?.data;
+        if (!detailRequests.matchesListing(request, fullDetail)) return;
+
+        detailResolved = true;
+        currentDetail = fullDetail;
+        renderDetailRecord(fullDetail);
+        setDetailActionAvailability(true);
+        updateDetailCompareButton();
+
+        const detailMedia = safeDetailMedia(detailHydration.mediaFromDetail(fullDetail));
+        setGalleryMedia(detailHydration.chooseGallery(detailMedia, [], currentMediaUrls));
+      } catch (error) {
+        if (error?.name === 'AbortError' || !detailRequests.isCurrent(request)) return;
+        detailFailed = true;
+        console.warn('Listing detail fetch error:', error);
+        renderDetailUnavailable();
+      }
+    }
+
+    window.openDetailByKey = openDetailByKey;
 
     // --- Recently Viewed + Property Compare (Phase 7.3C3A) ---
     async function fetchCurrentSummaries(keys) {
@@ -5993,6 +6263,7 @@
         }
       };
       document.getElementById('detailClose').onclick = () => {
+        detailRequests.cancel();
         document.getElementById('detailOverlay').style.display = 'none';
       };
 

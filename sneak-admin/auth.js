@@ -15,10 +15,10 @@ export function bufferToHex(buffer) {
  */
 export function timingSafeEqual(a, b) {
     if (typeof a !== 'string' || typeof b !== 'string') return false;
-    if (a.length !== b.length) return false;
-    let result = 0;
-    for (let i = 0; i < a.length; i++) {
-        result |= a.charCodeAt(i) ^ b.charCodeAt(i);
+    const maxLength = Math.max(a.length, b.length);
+    let result = a.length ^ b.length;
+    for (let i = 0; i < maxLength; i++) {
+        result |= (a.charCodeAt(i) || 0) ^ (b.charCodeAt(i) || 0);
     }
     return result === 0;
 }
@@ -111,7 +111,7 @@ export function generateRawSessionToken() {
 export async function createAdminSession(db, actor, ipHash, userAgentHash, ttlSeconds = 14400) {
     const rawToken = generateRawSessionToken();
     const tokenHash = await sha256Hex(rawToken);
-    const sessionId = `sess_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
+    const sessionId = `sess_${crypto.randomUUID()}`;
     const now = new Date().toISOString();
     const expiresAt = new Date(Date.now() + (ttlSeconds * 1000)).toISOString();
 
@@ -206,7 +206,7 @@ export async function checkLoginRateLimit(db, ipHash) {
  * Records a login attempt in D1.
  */
 export async function recordLoginAttempt(db, ipHash, success) {
-    const id = `att_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
+    const id = `att_${crypto.randomUUID()}`;
     try {
         await db.prepare(`
             INSERT INTO sneak_admin_login_attempts (id, ip_hash, attempted_at, success)

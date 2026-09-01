@@ -16,6 +16,16 @@ import {
     VALID_WIDGET_TYPES
 } from './validation.js';
 import { generateEmbedSnippets } from './embed-generator.js';
+import { calculateAccountReadiness } from './readiness.js';
+import {
+    evaluateServingDecision,
+    humanizeEntitlementStatus,
+    isTenantScopeValid
+} from '../sneak-shared/entitlement.js';
+
+function makeId(prefix) {
+    return `${prefix}_${crypto.randomUUID()}`;
+}
 
 function json(data, status = 200) {
     return new Response(JSON.stringify(data), {
@@ -30,7 +40,7 @@ function error(message, status = 400, code = 'BadRequest') {
 
 async function logAudit(db, actor, action, entityType, entityId, summary) {
     try {
-        const id = `audit_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
+        const id = makeId('audit');
         await db.prepare(`
             INSERT INTO sneak_admin_audit (id, admin_actor, action, entity_type, entity_id, summary, created_at)
             VALUES (?, ?, ?, ?, ?, ?, datetime('now'))
@@ -118,14 +128,26 @@ export async function handleListAccounts(db, url) {
     const q = url.searchParams.get('q') || '';
     const status = url.searchParams.get('status') || '';
     const plan = url.searchParams.get('plan') || '';
+    const entitlementStatus = url.searchParams.get('entitlement') || '';
 
     let where = "WHERE 1=1";
     const binds = [];
 
     if (q) {
-        where += " AND (a.account_name LIKE ? OR a.member_id LIKE ? OR a.agent_mls_id LIKE ? OR a.office_mls_id LIKE ?)";
+        where += ` AND (
+            a.account_name LIKE ? OR a.member_id LIKE ? OR a.agent_mls_id LIKE ? OR a.office_mls_id LIKE ?
+            OR EXISTS (SELECT 1 FROM sneak_member_users mu WHERE mu.account_id = a.id AND mu.email LIKE ?)
+            OR EXISTS (
+                SELECT 1 FROM sneak_sites qs JOIN sneak_domains qd ON qd.site_id = qs.id
+                WHERE qs.account_id = a.id AND qd.domain LIKE ?
+            )
+            OR EXISTS (
+                SELECT 1 FROM sneak_account_entitlements qe
+                WHERE qe.account_id = a.id AND qe.external_reference LIKE ?
+            )
+        )`;
         const pattern = `%${q}%`;
-        binds.push(pattern, pattern, pattern, pattern);
+        binds.push(pattern, pattern, pattern, pattern, pattern, pattern, pattern);
     }
     if (status && VALID_STATUSES.has(status)) {
         where += " AND a.status = ?";
@@ -135,20 +157,67 @@ export async function handleListAccounts(db, url) {
         where += " AND a.plan = ?";
         binds.push(plan);
     }
+    if (entitlementStatus && ['active', 'grace', 'delinquent', 'suspended', 'canceled', 'missing'].includes(entitlementStatus)) {
+        if (entitlementStatus === 'missing') where += ' AND e.account_id IS NULL';
+        else {
+            where += ' AND e.status = ?';
+            binds.push(entitlementStatus);
+        }
+    }
 
     const query = `
         SELECT 
             a.*,
-            count(s.id) as site_count
+            e.source AS entitlement_source,
+            e.status AS entitlement_status,
+            e.grace_until,
+            e.expires_at,
+            e.external_reference,
+            (SELECT COUNT(*) FROM sneak_sites cs WHERE cs.account_id = a.id) AS site_count,
+            (SELECT email FROM sneak_member_users mu WHERE mu.account_id = a.id ORDER BY mu.created_at ASC LIMIT 1) AS member_email,
+            (SELECT d.domain FROM sneak_sites ps JOIN sneak_domains d ON d.site_id = ps.id WHERE ps.account_id = a.id ORDER BY d.created_at ASC LIMIT 1) AS primary_domain,
+            (SELECT d.verified FROM sneak_sites ps JOIN sneak_domains d ON d.site_id = ps.id WHERE ps.account_id = a.id ORDER BY d.created_at ASC LIMIT 1) AS domain_verified,
+            (SELECT d.status FROM sneak_sites ps JOIN sneak_domains d ON d.site_id = ps.id WHERE ps.account_id = a.id ORDER BY d.created_at ASC LIMIT 1) AS domain_status,
+            (SELECT ps.status FROM sneak_sites ps WHERE ps.account_id = a.id ORDER BY ps.created_at ASC LIMIT 1) AS primary_site_status,
+            (SELECT ps.scope_type FROM sneak_sites ps WHERE ps.account_id = a.id ORDER BY ps.created_at ASC LIMIT 1) AS primary_scope_type,
+            (SELECT ps.scope_value FROM sneak_sites ps WHERE ps.account_id = a.id ORDER BY ps.created_at ASC LIMIT 1) AS primary_scope_value
         FROM sneak_accounts a
-        LEFT JOIN sneak_sites s ON a.id = s.account_id
+        LEFT JOIN sneak_account_entitlements e ON e.account_id = a.id
         ${where}
-        GROUP BY a.id
-        ORDER BY a.created_at DESC
+        ORDER BY a.updated_at DESC, a.created_at DESC
     `;
 
     const res = await db.prepare(query).bind(...binds).all();
-    return json({ accounts: res.results || [] });
+    const accounts = (res.results || []).map(account => {
+        const serving = evaluateServingDecision({
+            accountStatus: account.status,
+            siteStatus: account.primary_site_status,
+            entitlementStatus: account.entitlement_status,
+            graceUntil: account.grace_until,
+            expiresAt: account.expires_at,
+            domainAuthorized: account.domain_verified === 1 && account.domain_status === 'active',
+            scopeType: account.primary_scope_type,
+            scopeValue: account.primary_scope_value
+        });
+        return {
+            ...account,
+            entitlement_status: account.entitlement_status || 'missing',
+            entitlement_label: humanizeEntitlementStatus(account.entitlement_status),
+            canServe: serving.canServe,
+            blockerCodes: serving.blockers.map(item => item.code)
+        };
+    });
+    return json({ accounts });
+}
+
+const MANUAL_LAUNCH_CHECK_KEYS = new Set([
+    'cloudflare_saas_enabled', 'cloudflare_fallback_active', 'cloudflare_real_custom_hostname',
+    'cloudflare_real_ssl', 'cloudflare_real_https', 'cloudflare_real_idx', 'cloudflare_real_removal',
+    'email_domain_verified', 'email_real_invitation', 'email_real_login'
+]);
+
+function withLaunchCheckType(check) {
+    return { ...check, checkType: MANUAL_LAUNCH_CHECK_KEYS.has(check.check_key) ? 'manual' : 'automated' };
 }
 
 /**
@@ -214,8 +283,8 @@ export async function handleCreateAccount(db, body, actor) {
     }
 
     // Generate IDs
-    const accountId = `acc_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
-    const siteId = `site_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
+    const accountId = makeId('acc');
+    const siteId = makeId('site');
     const finalSiteName = site_name || account_name;
 
     const agentMlsId = scope_type === 'agent' ? scope_value : (body.agent_mls_id || null);
@@ -261,11 +330,11 @@ export async function handleCreateAccount(db, body, actor) {
 
     // Optional Domain
     if (cleanDomain) {
-        const domainId = `dom_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
+        const domainId = makeId('dom');
         statements.push(
             db.prepare(`
                 INSERT INTO sneak_domains (id, site_id, domain, verified, status, created_at)
-                VALUES (?, ?, ?, 1, 'active', datetime('now'))
+                VALUES (?, ?, ?, 0, 'disabled', datetime('now'))
             `).bind(domainId, siteId, cleanDomain)
         );
     }
@@ -302,11 +371,27 @@ export async function handleCreateAccount(db, body, actor) {
 /**
  * GET /api/admin/accounts/:id
  */
-export async function handleGetAccount(db, accountId) {
+export async function handleGetAccount(db, accountId, env = {}) {
     const account = await db.prepare("SELECT * FROM sneak_accounts WHERE id = ?").bind(accountId).first();
     if (!account) return error('Account not found', 404);
 
-    const sites = await db.prepare("SELECT * FROM sneak_sites WHERE account_id = ?").bind(accountId).all();
+    const [sites, entitlement, members, audit, clientLeadSummary, launchChecks] = await Promise.all([
+        db.prepare("SELECT * FROM sneak_sites WHERE account_id = ? ORDER BY created_at ASC").bind(accountId).all(),
+        db.prepare("SELECT * FROM sneak_account_entitlements WHERE account_id = ?").bind(accountId).first(),
+        db.prepare(`SELECT id, account_id, email, role, status, invited_at, activated_at, last_login_at, created_at
+            FROM sneak_member_users WHERE account_id = ? ORDER BY created_at ASC`).bind(accountId).all(),
+        db.prepare(`SELECT * FROM sneak_admin_audit
+            WHERE (entity_type = 'account' AND entity_id = ?)
+               OR entity_id IN (SELECT id FROM sneak_sites WHERE account_id = ?)
+               OR entity_id IN (SELECT id FROM sneak_member_users WHERE account_id = ?)
+               OR entity_id IN (SELECT d.id FROM sneak_domains d JOIN sneak_sites s ON s.id = d.site_id WHERE s.account_id = ?)
+            ORDER BY created_at DESC LIMIT 50`).bind(accountId, accountId, accountId, accountId).all(),
+        db.prepare(`SELECT
+            (SELECT COUNT(*) FROM sneak_consumer_users u JOIN sneak_sites s ON s.id = u.site_id WHERE s.account_id = ?) AS clients,
+            (SELECT COUNT(*) FROM sneak_leads l JOIN sneak_sites s ON s.id = l.site_id WHERE s.account_id = ?) AS leads
+        `).bind(accountId, accountId).first(),
+        db.prepare("SELECT * FROM sneak_launch_checks ORDER BY check_key ASC").all()
+    ]);
     const siteList = [];
 
     for (const site of (sites.results || [])) {
@@ -330,7 +415,14 @@ export async function handleGetAccount(db, accountId) {
 
     return json({
         account,
-        sites: siteList
+        entitlement: entitlement || null,
+        entitlementLabel: humanizeEntitlementStatus(entitlement?.status),
+        members: members.results || [],
+        sites: siteList,
+        clientLeadSummary: clientLeadSummary || { clients: 0, leads: 0 },
+        readiness: await calculateAccountReadiness(db, accountId, env),
+        launchChecks: (launchChecks.results || []).map(withLaunchCheckType),
+        audit: audit.results || []
     });
 }
 
@@ -379,6 +471,49 @@ export async function handleUpdateAccount(db, accountId, body, actor) {
 }
 
 /**
+ * POST /api/admin/accounts/:id/lifecycle
+ * Non-destructive operational suspend, cancel, and reactivate actions.
+ */
+export async function handleAccountLifecycle(db, accountId, body, actor) {
+    const account = await db.prepare("SELECT * FROM sneak_accounts WHERE id = ?").bind(accountId).first();
+    if (!account) return error('Account not found', 404);
+
+    const action = String(body?.action || '').trim().toLowerCase();
+    if (!['suspend', 'cancel', 'reactivate'].includes(action)) {
+        return error('Action must be suspend, cancel, or reactivate.');
+    }
+
+    const now = new Date().toISOString();
+    if (action === 'suspend') {
+        await db.prepare("UPDATE sneak_accounts SET status = 'suspended', updated_at = ? WHERE id = ?")
+            .bind(now, accountId).run();
+        await logAudit(db, actor, 'SUSPEND_ACCOUNT', 'account', accountId, `Suspended '${account.account_name}'. Public IDX and member operational access stop; data is preserved.`);
+    } else if (action === 'cancel') {
+        await db.batch([
+            db.prepare("UPDATE sneak_accounts SET status = 'inactive', updated_at = ? WHERE id = ?").bind(now, accountId),
+            db.prepare(`UPDATE sneak_account_entitlements
+                SET status = 'canceled', last_verified_at = ?, updated_at = ? WHERE account_id = ?`)
+                .bind(now, now, accountId)
+        ]);
+        await logAudit(db, actor, 'CANCEL_ACCOUNT', 'account', accountId, `Canceled service for '${account.account_name}'. No account, site, consumer, lead, or configuration data was deleted.`);
+    } else {
+        const entitlement = await db.prepare("SELECT status FROM sneak_account_entitlements WHERE account_id = ?").bind(accountId).first();
+        if (!entitlement) return error('Create an authoritative entitlement before reactivating.', 409, 'EntitlementRequired');
+        const entitlementStatus = ['suspended', 'canceled'].includes(entitlement.status) ? 'active' : entitlement.status;
+        await db.batch([
+            db.prepare("UPDATE sneak_accounts SET status = 'active', updated_at = ? WHERE id = ?").bind(now, accountId),
+            db.prepare("UPDATE sneak_account_entitlements SET status = ?, last_verified_at = ?, updated_at = ? WHERE account_id = ?")
+                .bind(entitlementStatus, now, now, accountId)
+        ]);
+        await logAudit(db, actor, 'REACTIVATE_ACCOUNT', 'account', accountId, `Reactivated '${account.account_name}' without rebuilding its site, domain, configuration, or consumer data.`);
+    }
+
+    const updated = await db.prepare("SELECT * FROM sneak_accounts WHERE id = ?").bind(accountId).first();
+    const entitlement = await db.prepare("SELECT * FROM sneak_account_entitlements WHERE account_id = ?").bind(accountId).first();
+    return json({ success: true, action, account: updated, entitlement, dataPreserved: true });
+}
+
+/**
  * POST /api/admin/accounts/:id/sites
  */
 export async function handleCreateSite(db, accountId, body, actor) {
@@ -421,7 +556,7 @@ export async function handleCreateSite(db, accountId, body, actor) {
         finalSiteKey = `${finalSiteKey}-${Math.random().toString(36).slice(2, 6)}`;
     }
 
-    const siteId = `site_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
+    const siteId = makeId('site');
 
     const statements = [
         db.prepare(`
@@ -519,11 +654,16 @@ export async function handleAddDomain(db, siteId, body, actor) {
     const site = await db.prepare("SELECT * FROM sneak_sites WHERE id = ?").bind(siteId).first();
     if (!site) return error('Site not found', 404);
 
-    const { domain, verified = 1, status = 'active' } = body;
+    const { domain, verified = 0, status = 'disabled' } = body;
     const domainVal = validateDomainSafety(domain);
     if (!domainVal.valid) return error(domainVal.error);
+    if (!['active', 'disabled'].includes(status)) return error('Invalid domain status');
 
-    const domainId = `dom_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
+    const duplicate = await db.prepare("SELECT id FROM sneak_domains WHERE site_id = ? AND domain = ?")
+        .bind(siteId, domainVal.domain).first();
+    if (duplicate) return error('This domain is already associated with the site.', 409, 'DomainConflict');
+
+    const domainId = makeId('dom');
 
     await db.prepare(`
         INSERT INTO sneak_domains (id, site_id, domain, verified, status, created_at)
@@ -697,7 +837,10 @@ export async function handleCreateAccountMemberInvite(db, accountId, body, actor
     if (!account) return error('Account not found', 404);
 
     let user = await db.prepare("SELECT * FROM sneak_member_users WHERE email = ?").bind(cleanEmail).first();
-    const userId = user?.id || `muser_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
+    if (user && user.account_id !== accountId) {
+        return error('That member email is already associated with another account.', 409, 'MemberAccountConflict');
+    }
+    const userId = user?.id || makeId('muser');
     const now = new Date().toISOString();
 
     if (!user) {
@@ -804,13 +947,13 @@ export async function handleGetAccountEntitlement(db, accountId) {
         account_name: account.account_name,
         account_status: account.status,
         plan: entitlement?.plan || account.plan,
-        provider: 'GrowthZone',
-        billing_cycle: 'Monthly (1st of each month)',
+        authority: 'sneak_account_entitlements',
+        stripe_authoritative: false,
         entitlement: entitlement || {
             source: 'manual',
-            status: 'active',
+            status: 'missing',
             plan: account.plan,
-            effective_at: account.created_at,
+            effective_at: null,
             grace_until: null,
             external_reference: null,
             notes: null
@@ -840,6 +983,13 @@ export async function handleUpdateAccountEntitlement(db, accountId, body, actor)
     if (!validStatuses.includes(status)) {
         return error(`Invalid status. Must be one of: ${validStatuses.join(', ')}`);
     }
+    const cleanSource = String(source).trim().toLowerCase();
+    if (!['manual', 'growthzone'].includes(cleanSource)) {
+        return error('Source must be manual or growthzone.');
+    }
+    if (plan && (typeof plan !== 'string' || plan.trim().length > 80)) return error('Plan must be 80 characters or fewer.');
+    if (external_reference && String(external_reference).length > 200) return error('External reference must be 200 characters or fewer.');
+    if (notes && String(notes).length > 1000) return error('Notes must be 1,000 characters or fewer.');
 
     const now = new Date().toISOString();
 
@@ -862,11 +1012,11 @@ export async function handleUpdateAccountEntitlement(db, accountId, body, actor)
             last_verified_at = excluded.last_verified_at,
             updated_at = excluded.updated_at
     `).bind(
-        accountId, source, status, plan || account.plan, effective_at || now, expires_at || null,
+        accountId, cleanSource, status, plan || account.plan, effective_at || now, expires_at || null,
         grace_until || null, external_reference || null, notes || null, now, now, now
     ).run();
 
-    await logAudit(db, actor, 'UPDATE_ENTITLEMENT', 'account_entitlement', accountId, `Updated entitlement status to '${status}' (source: ${source})`);
+    await logAudit(db, actor, 'UPDATE_ENTITLEMENT', 'account', accountId, `Updated entitlement status to '${status}' (source: ${cleanSource})`);
 
     const updated = await db.prepare("SELECT * FROM sneak_account_entitlements WHERE account_id = ?").bind(accountId).first();
     return json({ success: true, entitlement: updated });
@@ -884,11 +1034,12 @@ export async function handleGetWebsiteConfig(db, siteId, env) {
     const config = await db.prepare("SELECT * FROM sneak_website_configs WHERE site_id = ?").bind(siteId).first();
     const branding = await db.prepare("SELECT * FROM sneak_branding WHERE site_id = ?").bind(siteId).first();
 
-    const secret = env?.SNEAK_WEBSITE_PREVIEW_SECRET || 'dev_preview_secret_ccor_2026';
+    const secret = env?.SNEAK_WEBSITE_PREVIEW_SECRET;
     let previewToken = null;
     let previewUrl = null;
 
     try {
+        if (!secret) throw new Error('Preview signing secret is not configured.');
         previewToken = await createPreviewToken(site.site_key, site.id, secret, 1800);
         previewUrl = `https://sneak-idx-sites-staging.bonitaspringsrealtors.workers.dev/preview/${site.site_key}?token=${encodeURIComponent(previewToken)}`;
     } catch {}
@@ -1007,9 +1158,10 @@ export async function handleUpdateWebsiteConfig(db, siteId, body, actor, env) {
 
     const updated = await db.prepare("SELECT * FROM sneak_website_configs WHERE site_id = ?").bind(siteId).first();
     
-    const secret = env?.SNEAK_WEBSITE_PREVIEW_SECRET || 'dev_preview_secret_ccor_2026';
+    const secret = env?.SNEAK_WEBSITE_PREVIEW_SECRET;
     let previewUrl = null;
     try {
+        if (!secret) throw new Error('Preview signing secret is not configured.');
         const previewToken = await createPreviewToken(site.site_key, site.id, secret, 1800);
         previewUrl = `https://sneak-idx-sites-staging.bonitaspringsrealtors.workers.dev/preview/${site.site_key}?token=${encodeURIComponent(previewToken)}`;
     } catch {}
@@ -1024,7 +1176,8 @@ export async function handleCreateWebsitePreviewToken(db, siteId, env) {
     const site = await db.prepare("SELECT * FROM sneak_sites WHERE id = ?").bind(siteId).first();
     if (!site) return error('Site not found', 404);
 
-    const secret = env?.SNEAK_WEBSITE_PREVIEW_SECRET || 'dev_preview_secret_ccor_2026';
+    const secret = env?.SNEAK_WEBSITE_PREVIEW_SECRET;
+    if (!secret) return error('Website preview signing is not configured.', 503, 'ConfigurationError');
     const previewToken = await createPreviewToken(site.site_key, site.id, secret, 1800);
     const previewUrl = `https://sneak-idx-sites-staging.bonitaspringsrealtors.workers.dev/preview/${site.site_key}?token=${encodeURIComponent(previewToken)}`;
 
@@ -1122,6 +1275,12 @@ export async function handleUpdateFallbackOrigin(env, body) {
     } catch (err) {
         return json({ success: false, error: err.message, status: 'error' }, 500);
     }
+}
+
+/** GET /api/admin/accounts/:id/readiness */
+export async function handleGetAccountReadiness(db, accountId, env) {
+    const readiness = await calculateAccountReadiness(db, accountId, env);
+    return readiness ? json(readiness) : error('Account not found', 404);
 }
 
 /**
@@ -1229,10 +1388,10 @@ export async function handleGetReadiness(db, env) {
 
     const blockers = [];
     if (!saasDiag.zoneConfigured || saasDiag.mode !== 'live') {
-        blockers.push('SNEAK PROVIDER DOMAIN REQUIRED');
+        blockers.push({ code: 'CUSTOM_DOMAIN_PROVIDER_REQUIRED', message: 'Cloudflare for SaaS provider configuration is required.', capability: 'custom_domain' });
     }
     if (!emailConfigured) {
-        blockers.push('LIVE TRANSACTIONAL EMAIL REQUIRED');
+        blockers.push({ code: 'TRANSACTIONAL_EMAIL_REQUIRED', message: 'Live transactional email is not configured.', capability: 'consumer_login' });
     }
 
     let readinessCategory = 'Development Ready';
@@ -1275,7 +1434,16 @@ export async function handleGetReadiness(db, env) {
         memberPortal: 'Healthy',
         websiteEngine: 'Healthy',
         growthZone: 'Manual',
-        launchChecks,
+        launchChecks: launchChecks.map(withLaunchCheckType),
+        canServe: mlsStatus === 'Healthy',
+        capabilities: {
+            coreSearch: { status: mlsStatus === 'Healthy' ? 'READY' : 'NOT_READY', core: true },
+            consumerLogin: { status: emailConfigured ? 'NOT_VERIFIED' : 'NOT_READY', core: false },
+            savedSearchEmailAlerts: { status: 'NOT_READY', core: false },
+            customDomain: { status: saasDiag.mode === 'live' && saasDiag.zoneConfigured ? 'READY' : 'NOT_READY', core: true },
+            memberPortal: { status: 'READY', core: true },
+            adminPortal: { status: 'READY', core: true }
+        },
         dbError,
         blockers
     });
@@ -1301,7 +1469,7 @@ const ALLOWED_LAUNCH_CHECK_KEYS = new Set([
  */
 export async function handleListLaunchChecks(db) {
     const rows = await db.prepare("SELECT * FROM sneak_launch_checks ORDER BY check_key ASC").all();
-    return json({ checks: rows?.results || [] });
+    return json({ checks: (rows?.results || []).map(withLaunchCheckType) });
 }
 
 /**
@@ -1349,7 +1517,7 @@ export async function handleRecordLaunchCheck(db, body, actor = 'admin') {
     `).bind(check_key, status, source, now, detailJson, now).run();
 
     const updated = await db.prepare("SELECT * FROM sneak_launch_checks WHERE check_key = ?").bind(check_key).first();
-    return json({ success: true, check: updated });
+    return json({ success: true, check: withLaunchCheckType(updated) });
 }
 
 
