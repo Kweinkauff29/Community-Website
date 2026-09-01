@@ -285,6 +285,10 @@ async function runListingBrowserQa(playwright, executablePath, servingSession, m
         const thumbButtons = [...document.querySelectorAll('#detailThumbs .detail-thumb-button')];
         const tops = thumbButtons.map(button => Math.round(button.getBoundingClientRect().top));
         const facts = [...document.querySelectorAll('.detail-fact dd')].map(node => node.textContent.trim());
+        const factMap = Object.fromEntries([...document.querySelectorAll('.detail-fact')].map(node => [
+          node.querySelector('dt')?.textContent.trim(),
+          node.querySelector('dd')?.textContent.trim()
+        ]).filter(([key]) => key));
         return {
           objectFit: getComputedStyle(image).objectFit,
           imageComplete: image.complete && image.naturalWidth > 0,
@@ -298,6 +302,12 @@ async function runListingBrowserQa(playwright, executablePath, servingSession, m
           count: document.getElementById('detailImgCount').textContent.trim(),
           headings: [...document.querySelectorAll('.detail-section h3')].filter(node => !node.closest('section').hidden).map(node => node.textContent.trim()),
           facts,
+          factMap,
+          price: document.getElementById('detailPrice').textContent.trim(),
+          address: document.getElementById('detailAddr').textContent.trim(),
+          badges: [...document.querySelectorAll('#detailBadges .detail-badge')].map(node => node.textContent.trim()),
+          courtesy: document.getElementById('detailListingCourtesy').textContent.trim(),
+          agent: document.getElementById('detailListingAgent').textContent.trim(),
           description: document.getElementById('detailDesc').textContent,
           scrollable: document.getElementById('detailScrollRegion').scrollHeight >= document.getElementById('detailScrollRegion').clientHeight,
           bodyWidth: document.documentElement.scrollWidth,
@@ -313,6 +323,30 @@ async function runListingBrowserQa(playwright, executablePath, servingSession, m
       check(metrics.thumbs > 0 && metrics.thumbs <= 12 && metrics.oneThumbRow && metrics.activeThumbs === 1, `${label} bounded single-row thumbnail strip`, String(metrics.thumbs));
       check(metrics.count.endsWith(`/ ${sample.media.length}`), `${label} gallery count agrees with authoritative media`, metrics.count);
       check(['Property Overview', 'Location & Community', 'Listing Information', 'Description'].every(heading => metrics.headings.includes(heading)), `${label} rich detail hierarchy`);
+      const expectedAddress = String(sample.detail.UnparsedAddress || 'Address Undisclosed') + (sample.detail.City ? `, ${sample.detail.City}` : '');
+      check(metrics.price !== 'Price unavailable'
+        && Boolean(metrics.factMap['Current Price'])
+        && metrics.address === expectedAddress, `${label} current price and safe address`);
+      check([sample.detail.StandardStatus, sample.detail.PropertySubType, sample.detail.PropertyType]
+        .filter(Boolean).every(value => metrics.badges.includes(String(value))), `${label} current status/type/subtype badges`);
+      check((sample.detail.City ? metrics.factMap.City === String(sample.detail.City) : true)
+        && metrics.courtesy === (sample.detail.ListOfficeName ? `Listed by: ${sample.detail.ListOfficeName}` : 'Listing brokerage not provided.')
+        && metrics.agent === (sample.detail.ListAgentFullName ? `Listing Agent: ${sample.detail.ListAgentFullName}` : 'Listing agent not provided.'), `${label} city and current listing attribution`);
+      const affirmative = value => value === true || value === 1 || ['yes', 'true', '1', 'y'].includes(String(value || '').trim().toLowerCase());
+      const parityLabels = [];
+      if (sample.detail.PropertySubType) parityLabels.push('Property Subtype');
+      if (Number(sample.detail.LivingArea) > 0) parityLabels.push(sample.propertyType === 'commercial' ? 'Building Area' : 'Living Area');
+      if (Number(sample.detail.LotSizeAcres) > 0) parityLabels.push('Lot Size');
+      if (sample.propertyType !== 'land' && Number(sample.detail.YearBuilt) > 0) parityLabels.push('Year Built');
+      if (sample.detail.CountyOrParish) parityLabels.push('County');
+      if (sample.detail.PostalCode) parityLabels.push('ZIP Code');
+      if (sample.detail.SubdivisionName) parityLabels.push('Subdivision');
+      if (sample.detail.Zoning) parityLabels.push('Zoning');
+      if (affirmative(sample.detail.WaterfrontYN)) parityLabels.push('Waterfront');
+      if ((sample.propertyType === 'sale' || sample.propertyType === 'rental') && affirmative(sample.detail.PoolPrivateYN)) parityLabels.push('Private Pool');
+      if (sample.propertyType !== 'land' && Number(sample.detail.GarageSpaces) > 0) parityLabels.push('Garage Spaces');
+      if (sample.propertyType !== 'land' && affirmative(sample.detail.NewConstructionYN)) parityLabels.push('New Construction');
+      check(parityLabels.every(field => Boolean(metrics.factMap[field])), `${label} meaningful filterable fields appear in detail`);
       check(!metrics.facts.some(value => /(^|\s)0(?:\.0+)?\s*(acres?|sq\s*ft|garage)/i.test(value)), `${label} zero-value facts omitted`);
       if (sample.propertyType === 'land' || sample.propertyType === 'commercial') {
         check(!metrics.facts.some(value => /bed(room)?s?|bath(room)?s?/i.test(value)), `${label} no fake residential facts`);
