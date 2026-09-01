@@ -71,11 +71,17 @@ Store values only as Cloudflare Worker secrets. Never put values in Wrangler con
 
 `EMAIL_FROM` and service URLs are non-secret configuration. The proposed sender name is `no-reply@ccorealtors.org`, but it is not approved for production until Mailjet sender/domain authorization, CCOR ownership, SPF/DKIM as applicable, provider acceptance, and controlled-inbox delivery all pass.
 
-### Production listing & synchronization architecture
-- **INITIAL PRODUCTION LISTING SYNC:** Full inventory bootstrap without lookback limitation (`FINAL_SNEAK_LISTING_FILTER and ModificationTimestamp lt syncUpperBound`). Hydrates all eligible current MLS market inventory, enforces strict completeness guards (`@odata.count == fetched == unique keys`), populates `MediaJSON`, prunes any preexisting stale rows idempotently, and commits `last_cursor = syncUpperBound`.
-- **NORMAL LISTING SYNC:** 15-minute incremental delta from stored cursor with a 5-minute overlap window.
-- **FULL RECONCILIATION:** Daily scheduled execution with self-healing repair (enumerates complete eligible Bridge keys vs D1 keys, repairs missing listings via targeted chunk retrieval, prunes stale records, and verifies exact final set consistency).
+### Production listing & synchronization architecture (Phase 7.4B2A.4 Hardened)
+- **INITIAL PRODUCTION LISTING SYNC:** Full inventory bootstrap without lookback limitation (`FINAL_SNEAK_LISTING_FILTER and ModificationTimestamp lt syncUpperBound`). Hydrates all eligible current MLS market inventory, enforces strict completeness guards (`@odata.count == fetched == unique keys`), populates `MediaJSON`, and commits `last_cursor = syncUpperBound`.
+- **BOOTSTRAP STATE TRANSITIONS:** Initial state persists `status = 'running'` (cursor unset) before the first Bridge request. On failure, persists `status = 'failure'` (cursor remains unset). On complete success, persists `status = 'success'` with `last_cursor` and `last_successful_sync`. Worker `/health` truthfully reports `BOOTSTRAPPING`, `FAILED`, or `HEALTHY`.
+- **BOOTSTRAP COMPLETION MARKER:** Determined strictly by cursor presence. A failure in a subsequent delta does not erase the completed bootstrap or trigger an unnecessary full rescan.
+- **BOUNDED-MEMORY STREAMED WRITES:** Full transformed records and `MediaJSON` are written to D1 immediately per Bridge page in batches of 50; prepared statements are discarded per page to bound Worker heap.
+- **STALE PRUNING AFTER COMPLETENESS:** Preexisting D1 rows are pruned only after all Bridge pages complete, completeness guards pass, and lock ownership is verified.
+- **RENEWABLE LOCK LEASES:** Long-running bootstrap and reconciliation jobs periodically extend their lease via `renewLock(db, jobName, lockId, ttl)`. If lock ownership is lost, execution aborts immediately (`SyncLockLost`), preventing stale mutations, stale pruning, or cursor corruption.
+- **DELTA FAILURE & RECOVERY:** Delta failure preserves the existing cursor and `last_successful_sync` while setting `status = 'failure'`. The next execution retries delta mode using `last_cursor - 5 minutes`.
+- **RECONCILIATION REPAIR:** Streams missing listing repairs in bounded batches and renews lock lease. If lock ownership is lost, reconciliation fails closed without pruning stale rows or committing checkpoints.
 - **OPEN HOUSES:** 60-day forward horizon sync executed after listing bootstrap; references active D1 listing inventory with zero historical backfill required.
+- **PRODUCTION STATUS:** Production listing bootstrap has NOT run yet; production D1 inventory remains 0 until operator-assisted activation.
 
 ## Required cutover sequence
 

@@ -2,8 +2,10 @@
  * sneak-sync/reconciliation.js
  * 
  * Worker-native Self-Healing Listing Inventory Reconciliation.
- * Detects missing listings, repairs them via targeted Bridge hydration,
- * prunes stale listings, and verifies exact final set consistency.
+ * Hardened with:
+ * - Bounded-memory streamed writes during repair
+ * - Lock lease renewals during long scan/repair operations
+ * - Immediate abort if lock ownership is lost (fails closed, no stale pruning, no checkpoint)
  */
 
 import {
@@ -15,7 +17,7 @@ import {
     fetchBridgeOData
 } from './bridge.js';
 import { transformListingRecord } from './transforms.js';
-import { acquireLock, releaseLock, recordSyncRun } from './lock.js';
+import { acquireLock, renewLock, releaseLock, recordSyncRun } from './lock.js';
 
 const BATCH_CHUNK_SIZE = 50;
 const MISSING_CHUNK_SIZE = 25;
@@ -62,7 +64,7 @@ export async function runListingReconciliation(env) {
     const startedAt = new Date().toISOString();
     const startTime = Date.now();
 
-    // 1. Acquire Distributed Concurrency Lock
+    // 1. Acquire Distributed Concurrency Lock (600s with renewal)
     const lockId = await acquireLock(env.DB, jobName, 600);
     if (!lockId) {
         console.log(JSON.stringify({ job: jobName, status: 'skipped', reason: 'concurrency_lock_active', startedAt }));
@@ -116,18 +118,24 @@ export async function runListingReconciliation(env) {
                 }
             }
 
+            // Renew lock lease during key scan
+            const renewed = await renewLock(env.DB, jobName, lockId, 600);
+            if (!renewed) {
+                throw new Error('SyncLockLost: Lock lease expired or stolen during key scan');
+            }
+
             nextUrlStr = data['@odata.nextLink'] || null;
         }
 
         // 3. Strict Completeness Guards
+        if (duplicateCount > 0) {
+            throw new Error(`Reconciliation duplicate anomaly: ${duplicateCount} duplicate ListingKeys`);
+        }
         if (recordsFetched !== expectedCount) {
             throw new Error(`Reconciliation shortfall: fetched ${recordsFetched} != expected ${expectedCount}`);
         }
         if (bridgeKeys.size !== expectedCount) {
             throw new Error(`Reconciliation unique key mismatch: unique ${bridgeKeys.size} != expected ${expectedCount}`);
-        }
-        if (duplicateCount > 0) {
-            throw new Error(`Reconciliation duplicate anomaly: ${duplicateCount} duplicate ListingKeys`);
         }
 
         // 4. Query All Serving ListingKeys from D1
@@ -162,13 +170,12 @@ export async function runListingReconciliation(env) {
 
         missingFound = missingKeys.length;
 
-        // 6. Self-Healing Repair: Hydrate & Upsert Missing Keys (Sections 14, 15, 16)
+        // 6. Self-Healing Repair in Bounded Memory (Sections 18, 19)
         const repairedKeys = new Set();
-        const upsertStatements = [];
 
         if (missingKeys.length > 0) {
             if (missingKeys.length <= LARGE_MISSING_THRESHOLD) {
-                // Targeted chunk retrieval
+                // Targeted chunk retrieval: fetch chunk, write immediately, discard statements
                 for (let i = 0; i < missingKeys.length; i += MISSING_CHUNK_SIZE) {
                     const chunk = missingKeys.slice(i, i + MISSING_CHUNK_SIZE);
                     const keyDisjunction = chunk.map(k => `ListingKey eq '${String(k).replace(/'/g, "''")}'`).join(' or ');
@@ -184,15 +191,29 @@ export async function runListingReconciliation(env) {
                     const records = data.value || [];
                     recordsFetched += records.length;
 
+                    const chunkStatements = [];
                     for (const r of records) {
                         if (!r.ListingKey) continue;
                         repairedKeys.add(r.ListingKey);
                         const row = transformListingRecord(r);
-                        upsertStatements.push(createUpsertStatement(env.DB, row));
+                        chunkStatements.push(createUpsertStatement(env.DB, row));
+                    }
+
+                    // Bounded batch write
+                    for (let j = 0; j < chunkStatements.length; j += BATCH_CHUNK_SIZE) {
+                        const batchChunk = chunkStatements.slice(j, j + BATCH_CHUNK_SIZE);
+                        await env.DB.batch(batchChunk);
+                        d1Operations += batchChunk.length;
+                    }
+
+                    // Renew lock after chunk write
+                    const renewed = await renewLock(env.DB, jobName, lockId, 600);
+                    if (!renewed) {
+                        throw new Error('SyncLockLost: Lock lease expired or stolen during targeted missing key repair');
                     }
                 }
             } else {
-                // Large-missing fallback: full scan to avoid excessive chunk queries
+                // Large-missing fallback: stream repaired pages in bounded memory
                 console.log(JSON.stringify({
                     job: jobName,
                     action: 'large_missing_fallback',
@@ -219,13 +240,27 @@ export async function runListingReconciliation(env) {
                     const records = data.value || [];
                     recordsFetched += records.length;
 
+                    const pageStatements = [];
                     for (const r of records) {
                         if (r.ListingKey && missingSet.has(r.ListingKey)) {
                             repairedKeys.add(r.ListingKey);
                             const row = transformListingRecord(r);
-                            upsertStatements.push(createUpsertStatement(env.DB, row));
+                            pageStatements.push(createUpsertStatement(env.DB, row));
                         }
                     }
+
+                    // Bounded batch write for this page's repaired listings
+                    for (let j = 0; j < pageStatements.length; j += BATCH_CHUNK_SIZE) {
+                        const batchChunk = pageStatements.slice(j, j + BATCH_CHUNK_SIZE);
+                        await env.DB.batch(batchChunk);
+                        d1Operations += batchChunk.length;
+                    }
+
+                    const renewed = await renewLock(env.DB, jobName, lockId, 600);
+                    if (!renewed) {
+                        throw new Error('SyncLockLost: Lock lease expired or stolen during large missing key repair');
+                    }
+
                     nextUrlStr = data['@odata.nextLink'] || null;
                 }
             }
@@ -236,16 +271,16 @@ export async function runListingReconciliation(env) {
                 throw new Error(`Reconciliation repair shortfall: repaired ${repairedKeys.size} != expected ${missingKeys.length} missing keys. Still missing: ${stillMissing.slice(0, 5).join(', ')}`);
             }
 
-            // Batch upsert repaired listings
-            for (let i = 0; i < upsertStatements.length; i += BATCH_CHUNK_SIZE) {
-                const chunk = upsertStatements.slice(i, i + BATCH_CHUNK_SIZE);
-                await env.DB.batch(chunk);
-                d1Operations += chunk.length;
-            }
             missingRepaired = repairedKeys.size;
         }
 
-        // 7. Prune Stale Rows
+        // 7. Verify Lock Ownership Before Stale Pruning (Section 19)
+        const lockCheckPrePrune = await renewLock(env.DB, jobName, lockId, 600);
+        if (!lockCheckPrePrune) {
+            throw new Error('SyncLockLost: Lock lease lost before reconciliation stale pruning');
+        }
+
+        // 8. Prune Stale Rows
         if (staleKeys.length > 0) {
             const deleteStatements = staleKeys.map(k => env.DB.prepare(deleteSql).bind(k));
             for (let i = 0; i < deleteStatements.length; i += BATCH_CHUNK_SIZE) {
@@ -256,7 +291,7 @@ export async function runListingReconciliation(env) {
             stalePruned = staleKeys.length;
         }
 
-        // 8. Re-check Final Inventory Consistency (Section 17)
+        // 9. Re-check Final Inventory Consistency
         const finalD1Keys = new Set();
         offset = 0;
         hasMore = true;
@@ -283,7 +318,13 @@ export async function runListingReconciliation(env) {
             }
         }
 
-        // 9. Update Reconciliation Checkpoint
+        // 10. Verify Lock Ownership Before Checkpoint (Section 19)
+        const lockCheckPreCheckpoint = await renewLock(env.DB, jobName, lockId, 600);
+        if (!lockCheckPreCheckpoint) {
+            throw new Error('SyncLockLost: Lock lease lost before reconciliation checkpoint');
+        }
+
+        // 11. Update Reconciliation Checkpoint
         await env.DB.prepare(`
             INSERT INTO sneak_sync_state (sync_name, last_full_reconciliation, last_record_count, updated_at)
             VALUES ('listings', datetime('now'), ?, datetime('now'))
@@ -355,7 +396,7 @@ export async function runListingReconciliation(env) {
             bridgePages,
             d1Operations,
             durationSeconds,
-            errorCode: 'RECONCILIATION_ERROR',
+            errorCode: err.message.startsWith('SyncLockLost') ? 'SYNC_LOCK_LOST' : 'RECONCILIATION_ERROR',
             errorSummary: err.message
         });
 

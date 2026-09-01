@@ -1,6 +1,6 @@
 # CCOR IDX Phase 7.4B2 Launch Readiness
 
-Current Phase 7.4B2A production foundation gate: **COMPLETE**. Production capability gates, isolated configs, clean production D1, migration 0035, automated regression (298/298 passing across 21 suites), Admin CSP simplified to `connect-src 'self'` with zero staging host allowances, zero staging runtime leaks, fail-closed optional-feature behavior, and complete production full-inventory bootstrap with self-healing reconciliation are implemented.
+Current Phase 7.4B2A production foundation gate: **COMPLETE**. Production capability gates, isolated configs, clean production D1, migration 0035, automated regression (301/301 passing across 21 suites), Admin CSP simplified to `connect-src 'self'` with zero staging host allowances, zero staging runtime leaks, fail-closed optional-feature behavior, complete production full-inventory bootstrap with self-healing reconciliation, bounded-memory streamed writes, and renewable concurrency leases are implemented.
 
 Phase 7.4B2B first-member launch activation: **BLOCKED / NOT STARTED**. Production Workers/routes/schedules and the member record were deliberately not created because production Bridge, Serving/Admin/Member secrets, sender verification, approved controlled-mailbox evidence, production sync bootstrap, member-page access, and required connected-Chrome QA are unavailable. Optional Consumer accounts, Alerts, GrowthZone automation, and custom hosting are explicitly disabled rather than presented as broken features.
 
@@ -10,12 +10,16 @@ Environments assessed: staging and isolated production foundation
 
 Production cutover status: **PHASE 7.4B2A — PRODUCTION FOUNDATION: COMPLETE | PHASE 7.4B2B — FIRST MEMBER ACTIVATION: BLOCKED / NOT STARTED** (D1/config foundation only, no production Worker deployment, zero production listings until operator-assisted activation)
 
-### Synchronization & Inventory Architecture (Phase 7.4B2A.3)
-- **Initial Production Sync:** Full inventory bootstrap without lookback limitation (`FINAL_SNEAK_LISTING_FILTER and ModificationTimestamp lt syncUpperBound`). Enforces strict completeness guards (`@odata.count == fetched == unique keys`), transforms all 49 columns including `MediaJSON`, idempotently prunes any preexisting stale rows, and writes `last_cursor = syncUpperBound`, `last_successful_sync`, and `status = 'success'` only upon complete success.
-- **Normal Listing Sync:** 15-minute incremental delta from stored cursor with 5-minute overlap (`ModificationTimestamp ge ${cursor - 5min}`).
-- **Self-Healing Reconciliation:** Daily scheduled job enumerates complete eligible Bridge keys vs D1 keys. Missing listings are hydrated via targeted chunk queries (`ListingKey eq '...'`), transformed, and upserted into D1; stale rows are pruned; and final inventory consistency is asserted (`finalD1Keys.size === bridgeKeys.size`).
+### Synchronization & Inventory Architecture (Phase 7.4B2A.4 Hardened)
+- **Initial Production Sync:** Full inventory bootstrap without lookback limitation (`FINAL_SNEAK_LISTING_FILTER and ModificationTimestamp lt syncUpperBound`). Enforces strict completeness guards (`@odata.count == fetched == unique keys`), transforms all 49 columns including `MediaJSON`, and writes `last_cursor = syncUpperBound`, `last_successful_sync`, and `status = 'success'` only upon complete success.
+- **State Truthfulness:** Initial state persists `status = 'running'` (cursor unset) prior to Bridge requests. On failure, persists `status = 'failure'` (cursor remains unset). Worker `/health` reports `BOOTSTRAPPING`, `FAILED`, or `HEALTHY`.
+- **Bootstrap Completion Marker:** Evaluated strictly by cursor existence. A failure during an incremental delta does not invalidate the bootstrap or trigger an unnecessary full rescan.
+- **Bounded-Memory Streamed Writes:** Transformed property records and `MediaJSON` are written to D1 per Bridge page in batches of 50; prepared statement objects are discarded after each page to ensure heap usage does not scale with market inventory size.
+- **Renewable Lock Leases:** Periodic `renewLock(db, jobName, lockId, ttl)` extensions prevent cron overlap during long runs. If lock ownership is lost, execution aborts immediately (`SyncLockLost`), failing closed without stale pruning or cursor advance.
+- **Normal Listing Sync & Delta Failure:** 15-minute incremental delta from stored cursor with 5-minute overlap. Delta failure sets `status = 'failure'` while preserving `last_cursor` and `last_successful_sync`; the next execution retries delta mode from the stored cursor.
+- **Self-Healing Reconciliation:** Daily scheduled job enumerates complete eligible Bridge keys vs D1 keys, streams missing repairs in bounded batches, renews lock lease, prunes stale rows only after complete verification, and asserts final inventory consistency (`finalD1Keys.size === bridgeKeys.size`).
 - **Open Houses:** 60-day forward horizon sync against bootstrapped D1 listings; zero historical backfill needed.
-- **Sync Readiness Metadata:** Sync Worker `/health` reports `syncReadiness` (`NOT_INITIALIZED`, `BOOTSTRAPPING`, `HEALTHY`, `FAILED`) and `syncState`. Admin readiness blocks core launch if `last_cursor` is absent (`SYNC_NOT_BOOTSTRAPPED`) or listing inventory is zero (`MLS_INVENTORY_EMPTY`). Production listing bootstrap has NOT run yet; production D1 inventory remains 0.
+- **Sync Readiness Metadata:** Sync Worker `/health` reports `syncReadiness` (`NOT_INITIALIZED`, `BOOTSTRAPPING`, `HEALTHY`, `FAILED`) and `syncState`. Admin readiness blocks core launch if `last_cursor` is absent (`SYNC_NOT_BOOTSTRAPPED`), current sync has failed (`SYNC_FAILED`), or listing inventory is zero (`MLS_INVENTORY_EMPTY`). Production listing bootstrap has NOT run yet; production D1 inventory remains 0.
 
 ## Control-plane audit
 

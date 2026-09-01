@@ -32,16 +32,28 @@ export default {
             }
 
             const hasCursor = Boolean(syncState?.last_cursor);
-            const isSuccess = syncState?.status === 'success';
+            const status = syncState?.status;
             const recordCount = Number(syncState?.last_record_count || 0);
 
             let syncReadiness = 'NOT_INITIALIZED';
-            if (isSuccess && hasCursor && recordCount > 0) {
-                syncReadiness = 'HEALTHY';
-            } else if (syncState?.status === 'running') {
-                syncReadiness = 'BOOTSTRAPPING';
-            } else if (syncState?.status === 'failure') {
-                syncReadiness = 'FAILED';
+            if (!hasCursor) {
+                if (status === 'running') {
+                    syncReadiness = 'BOOTSTRAPPING';
+                } else if (status === 'failure') {
+                    syncReadiness = 'FAILED';
+                } else {
+                    syncReadiness = 'NOT_INITIALIZED';
+                }
+            } else {
+                if (status === 'failure') {
+                    syncReadiness = 'FAILED';
+                } else if (status === 'success' && recordCount > 0) {
+                    syncReadiness = 'HEALTHY';
+                } else if (status === 'running') {
+                    syncReadiness = recordCount > 0 ? 'HEALTHY' : 'BOOTSTRAPPING';
+                } else {
+                    syncReadiness = recordCount > 0 ? 'HEALTHY' : 'NOT_INITIALIZED';
+                }
             }
 
             return new Response(JSON.stringify({

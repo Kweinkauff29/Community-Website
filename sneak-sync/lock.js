@@ -1,7 +1,7 @@
 /**
  * sneak-sync/lock.js
  * 
- * D1-backed distributed locking and operational sync run history.
+ * D1-backed distributed locking, lease renewal, and operational sync run history.
  */
 
 export async function acquireLock(db, jobName, ttlSeconds = 300) {
@@ -24,6 +24,23 @@ export async function acquireLock(db, jobName, ttlSeconds = 300) {
     } catch {
         // Primary key conflict means job is already locked
         return null;
+    }
+}
+
+export async function renewLock(db, jobName, lockId, ttlSeconds = 600) {
+    if (!lockId) return false;
+    try {
+        const res = await db.prepare(`
+            UPDATE sneak_sync_locks
+            SET expires_at = datetime('now', '+' || ? || ' seconds')
+            WHERE job_name = ? AND lock_id = ?
+        `).bind(ttlSeconds, jobName, lockId).run();
+
+        const changes = res?.meta?.changes ?? res?.changes ?? 0;
+        return changes > 0;
+    } catch (err) {
+        console.error(`[LOCK RENEWAL ERROR] Failed to renew lock ${jobName}:`, err.message);
+        return false;
     }
 }
 

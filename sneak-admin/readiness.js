@@ -117,9 +117,9 @@ export async function calculateAccountReadiness(db, accountId, env = {}) {
     if (!scopeInventory.valid) launchBlockers.push(launchBlocker('MLS_IDENTITY_UNVERIFIED', 'The tenant MLS identity has no matching current inventory.'));
     if (!brandingReady) launchBlockers.push(launchBlocker('BRANDING_INCOMPLETE', 'Display name, brokerage, and contact email are required.'));
     if (!searchWidgetReady) launchBlockers.push(launchBlocker('SEARCH_WIDGET_DISABLED', 'The primary search widget is not enabled.'));
-    if (!embedReady) launchBlockers.push(launchBlocker('EMBED_UNAVAILABLE', 'A current embed snippet could not be generated.'));
     if (!hasCursor) launchBlockers.push(launchBlocker('SYNC_NOT_BOOTSTRAPPED', 'Initial listing inventory bootstrap has not completed.'));
-    if (!syncFresh && hasCursor) launchBlockers.push(launchBlocker('SYNC_STALE', 'The latest successful listing sync is missing or older than three hours.'));
+    if (hasCursor && syncState?.status === 'failure') launchBlockers.push(launchBlocker('SYNC_FAILED', 'The latest listing sync attempt failed.'));
+    if (!syncFresh && hasCursor && syncState?.status !== 'failure') launchBlockers.push(launchBlocker('SYNC_STALE', 'The latest successful listing sync is missing or older than three hours.'));
     if (Number(listingsRow?.count || 0) < 1) launchBlockers.push(launchBlocker('MLS_INVENTORY_EMPTY', 'No listing inventory is available.'));
     if (!servingHealth.reachable) launchBlockers.push(launchBlocker('SERVING_WORKER_UNHEALTHY', 'The Serving Worker health check did not succeed.'));
     if (!bootstrap.reachable) launchBlockers.push(launchBlocker('BOOTSTRAP_UNVERIFIED', 'The authorized-domain bootstrap check did not succeed.', 'custom_domain'));
