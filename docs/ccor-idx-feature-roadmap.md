@@ -245,10 +245,23 @@ graph TD
   * Automated regression passed 246/246 tests across 13 suites; live Phase 7.4A health/auth verification passed 17/17; remote D1 has no pending migrations and no foreign-key violations.
   * Deterministic Admin/Serving/Member/Sites/embed/search build `2026.08.31.7.4a`.
 
-### Phase 7.4B — GrowthZone Reconciliation + Production Cutover (NEXT)
-* **Goal:** Automate tested GrowthZone-to-generic-entitlement reconciliation and execute the documented production environment/cutover plan.
+### Phase 7.4B1 — Transactional Email Readiness + GrowthZone Reconciliation
+* **Goal:** Converge transactional email on one strict provider contract and add safe GrowthZone-to-canonical-entitlement reconciliation before production infrastructure exists.
+* **Status:** `IMPLEMENTED / STAGING DEPLOYED / OPERATOR EVIDENCE PENDING`
+* **Features Included:**
+  * Member, Consumer, and Alerts use `sneak-shared/email-provider.js`; simulated success is removed. Mailjet HTTP success alone is insufficient: message-level success and a provider message ID are required.
+  * Migration `0034_sneak_growthzone_reconciliation.sql` records bounded reconciliation state and separate controlled-inbox/API launch evidence.
+  * GrowthZone mutation requires an explicit person/org contact reference, normalizes documented membership states, preserves `sneak_account_entitlements` as the only serving authority, protects manual overrides, and never suspends on timeout/outage.
+  * Admin Account Detail shows reconciliation source/reference/status/attempt/difference and a single-account action; Launch Readiness provides separate capability cards and a bounded batch control.
+  * Daily reconciliation runs at 11:15 UTC, sequentially, with a default limit of 25 and hard limit of 50 because a documented upstream request allowance was not established.
+  * Automated regression passes 262/262 across 14 suites; live staging verification passes 22/22; full Chrome regression remains 748/748; focused 7.4B1 Chrome acceptance passes 123/123.
+  * Affected build: `2026.09.01.7.4b1`. Migration 0034 and Admin/Member/Consumer/Alerts staging deployments are complete.
+* **Remaining operator evidence:** Member controlled-inbox delivery/consumption has not been re-verified. Consumer/Alerts Mailjet credentials, Alerts signing secret, GrowthZone API key, controlled QA mailbox access, and authenticated GrowthZone proof are unavailable. Those capabilities remain `NOT_VERIFIED` or `NOT_READY`; no mock/config-only state is labeled ready.
+
+### Phase 7.4B2 — Production Environment + First Member Cutover (NEXT)
+* **Goal:** Supply and verify remaining operational credentials/evidence, create isolated production Workers and D1, and perform the first controlled member cutover with rollback readiness.
 * **Status:** `NEXT / NOT STARTED`
-* **Boundary:** Production Workers, production D1, secrets, schedules, custom-host/DNS validation, rollback, and real email verification belong here.
+* **Boundary:** No production Worker, production D1, route, DNS cutover, or SEO work started in 7.4B1.
 
 ### Phase 7.3D — SEO & Market Content Engine (DEFERRED / POST-LAUNCH)
 * **Goal:** Drive organic Google search traffic and local community authority through static/edge-rendered SEO landing pages.

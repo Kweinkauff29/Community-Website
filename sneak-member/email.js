@@ -5,8 +5,10 @@
  * - Magic Link Login Delivery
  * - Member Onboarding Invitation Delivery
  * - Lead Notification Delivery
- * - Supports Resend / Postmark / Simulated Staging Adapters
+ * - Uses the shared fail-closed Mailjet adapter
  */
+
+import { sendTransactionalEmail as sendSharedTransactionalEmail } from '../sneak-shared/email-provider.js';
 
 const DEFAULT_FROM = 'CCOR IDX Plug-in <no-reply@ccorealtors.org>';
 
@@ -135,146 +137,16 @@ export function renderInvitationTemplate({ inviteUrl, accountName }) {
     `.trim();
 }
 
-/**
- * Generic email delivery function supporting Resend, Postmark, or Simulated Staging Adapter.
- */
+/** Shared fail-closed delivery adapter retained as a local export for callers/tests. */
 export async function sendTransactionalEmail(env, { to, subject, html, text }) {
-    const from = env?.EMAIL_FROM || DEFAULT_FROM;
-
-    // 1. Mailjet Adapter (Primary for CCOR IDX Plug-in)
-    const mailjetApiKey = env?.MAILJET_API_KEY || env?.MJ_API_KEY;
-    const mailjetSecretKey = env?.MAILJET_SECRET_KEY || env?.MJ_API_SECRET;
-    if (mailjetApiKey && mailjetSecretKey) {
-        try {
-            let fromEmail = 'no-reply@ccorealtors.org';
-            let fromName = 'CCOR IDX Plug-in';
-            const fromStr = env?.EMAIL_FROM || env?.FROM_EMAIL || DEFAULT_FROM;
-            const fromMatch = fromStr.match(/^(?:(.*)<)?([^>]+)>?$/);
-            if (fromMatch) {
-                fromName = (fromMatch[1] || 'CCOR IDX Plug-in').trim();
-                fromEmail = fromMatch[2].trim();
-            }
-
-            const auth = 'Basic ' + btoa(`${mailjetApiKey}:${mailjetSecretKey}`);
-            const payload = {
-                Messages: [
-                    {
-                        From: {
-                            Email: fromEmail,
-                            Name: fromName
-                        },
-                        To: [
-                            {
-                                Email: to,
-                                Name: ''
-                            }
-                        ],
-                        Subject: subject,
-                        TextPart: text || '',
-                        HTMLPart: html,
-                        CustomID: 'SNEAK-IDX'
-                    }
-                ]
-            };
-
-            const res = await fetch('https://api.mailjet.com/v3.1/send', {
-                method: 'POST',
-                headers: {
-                    'Authorization': auth,
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(payload)
-            });
-
-            if (!res.ok) {
-                const errText = await res.text();
-                console.error('[EMAIL MAILJET ERROR]', res.status, errText);
-                return { success: false, error: `Mailjet HTTP ${res.status}` };
-            }
-
-            const data = await res.json();
-            const messageId = data?.Messages?.[0]?.To?.[0]?.MessageID || data?.Messages?.[0]?.CustomID || 'mj_sent';
-            return { success: true, id: String(messageId), provider: 'mailjet' };
-        } catch (err) {
-            console.error('[EMAIL MAILJET EXCEPTION]', err.message);
-            return { success: false, error: err.message };
-        }
-    }
-
-    // 2. Resend Adapter (Legacy fallback)
-    if (env?.RESEND_API_KEY) {
-        try {
-            const res = await fetch('https://api.resend.com/emails', {
-                method: 'POST',
-                headers: {
-                    'Authorization': `Bearer ${env.RESEND_API_KEY}`,
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    from,
-                    to: [to],
-                    subject,
-                    html,
-                    text: text || ''
-                })
-            });
-
-            if (!res.ok) {
-                const errText = await res.text();
-                console.error('[EMAIL RESEND ERROR]', res.status, errText);
-                return { success: false, error: `Resend HTTP ${res.status}` };
-            }
-
-            const data = await res.json();
-            return { success: true, id: data.id, provider: 'resend' };
-        } catch (err) {
-            console.error('[EMAIL RESEND EXCEPTION]', err.message);
-            return { success: false, error: err.message };
-        }
-    }
-
-    // 2. Postmark Adapter (if POSTMARK_SERVER_TOKEN is configured)
-    if (env?.POSTMARK_SERVER_TOKEN) {
-        try {
-            const res = await fetch('https://api.postmarkapp.com/email', {
-                method: 'POST',
-                headers: {
-                    'X-Postmark-Server-Token': env.POSTMARK_SERVER_TOKEN,
-                    'Content-Type': 'application/json',
-                    'Accept': 'application/json'
-                },
-                body: JSON.stringify({
-                    From: from,
-                    To: to,
-                    Subject: subject,
-                    HtmlBody: html,
-                    TextBody: text || ''
-                })
-            });
-
-            if (!res.ok) {
-                const errText = await res.text();
-                console.error('[EMAIL POSTMARK ERROR]', res.status, errText);
-                return { success: false, error: `Postmark HTTP ${res.status}` };
-            }
-
-            const data = await res.json();
-            return { success: true, id: data.MessageID, provider: 'postmark' };
-        } catch (err) {
-            console.error('[EMAIL POSTMARK EXCEPTION]', err.message);
-            return { success: false, error: err.message };
-        }
-    }
-
-    // 3. Staging Simulation Adapter (when no live email secret is configured)
-    // Logs delivery without exposing secret tokens publicly
-    return {
-        success: true,
-        provider: 'simulated',
+    return sendSharedTransactionalEmail(env, {
         to,
         subject,
-        timestamp: new Date().toISOString()
-    };
+        html,
+        text,
+        from: env?.EMAIL_FROM || env?.FROM_EMAIL || DEFAULT_FROM,
+        customId: 'SNEAK-IDX-MEMBER'
+    });
 }
 
 /**

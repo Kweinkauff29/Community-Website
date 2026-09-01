@@ -32,7 +32,7 @@ export async function calculateAccountReadiness(db, accountId, env = {}) {
     const account = await db.prepare("SELECT * FROM sneak_accounts WHERE id = ?").bind(accountId).first();
     if (!account) return null;
 
-    const [entitlement, sitesResult, membersResult, syncState, listingsRow, servingHealth, memberHealth, alertHealth] = await Promise.all([
+    const [entitlement, sitesResult, membersResult, syncState, listingsRow, servingHealth, memberHealth, consumerHealth, alertHealth, launchChecksResult, reconciliation] = await Promise.all([
         db.prepare("SELECT * FROM sneak_account_entitlements WHERE account_id = ?").bind(accountId).first(),
         db.prepare("SELECT * FROM sneak_sites WHERE account_id = ? ORDER BY created_at ASC").bind(accountId).all(),
         db.prepare("SELECT id, email, role, status, invited_at, activated_at FROM sneak_member_users WHERE account_id = ? ORDER BY created_at ASC").bind(accountId).all(),
@@ -40,7 +40,10 @@ export async function calculateAccountReadiness(db, accountId, env = {}) {
         db.prepare("SELECT COUNT(*) AS count FROM sneak_listings").first(),
         readWorkerHealth(env.SERVING_WORKER, '/idx/v1/health'),
         readWorkerHealth(env.MEMBER_WORKER, '/health'),
-        readWorkerHealth(env.ALERT_WORKER, '/health')
+        readWorkerHealth(env.CONSUMER_WORKER, '/api/consumer/version'),
+        readWorkerHealth(env.ALERT_WORKER, '/health'),
+        db.prepare("SELECT check_key, status, checked_at FROM sneak_launch_checks").all(),
+        db.prepare("SELECT * FROM sneak_growthzone_reconciliation WHERE account_id = ?").bind(accountId).first()
     ]);
 
     const site = (sitesResult.results || [])[0] || null;
@@ -132,6 +135,22 @@ export async function calculateAccountReadiness(db, accountId, env = {}) {
     const uniqueBlockers = [...new Map(launchBlockers.map(item => [item.code, item])).values()];
     const launchReady = uniqueBlockers.length === 0;
     const alertReady = alertHealth.data?.deliveryReady === true;
+    const launchChecksByKey = new Map((launchChecksResult.results || []).map(item => [item.check_key, item]));
+    const passed = key => launchChecksByKey.get(key)?.status === 'pass';
+    const memberEmailReady = memberHealth.data?.emailProviderConfigured === true && passed('member_magic_link_e2e');
+    const consumerEmailReady = consumerHealth.data?.emailProviderConfigured === true && passed('consumer_magic_link_e2e');
+    const savedSearchAlertsReady = alertReady
+        && passed('alerts_asap_e2e')
+        && passed('alerts_daily_e2e')
+        && passed('alerts_unsubscribe_e2e');
+    const reconciliationSuccess = ['verified_no_change', 'entitlement_changed'].includes(reconciliation?.status);
+    const reconciliationAge = parseD1Date(reconciliation?.last_success_at);
+    const reconciliationStale = Boolean(reconciliationSuccess && (!reconciliationAge || Date.now() - reconciliationAge.getTime() > 36 * 60 * 60 * 1000));
+    const growthZoneStatus = entitlement?.source === 'manual'
+        ? 'MANUAL_OVERRIDE'
+        : (!env?.GROWTHZONE_BASE_URL || !env?.GROWTHZONE_API_KEY
+            ? 'NOT_READY'
+            : (reconciliationStale ? 'VERIFICATION_STALE' : (reconciliationSuccess ? 'READY' : 'NOT_VERIFIED')));
 
     return {
         accountId,
@@ -153,8 +172,11 @@ export async function calculateAccountReadiness(db, accountId, env = {}) {
         },
         capabilities: {
             coreSearch: { status: launchReady ? 'READY' : 'NOT_READY', core: true },
-            consumerLogin: { status: 'NOT_VERIFIED', core: false, reason: 'Transactional email delivery is not exposed to the Admin Worker.' },
-            savedSearchEmailAlerts: { status: alertReady ? 'READY' : 'NOT_READY', core: false },
+            memberMagicLinkEmail: { status: memberEmailReady ? 'READY' : (memberHealth.data?.emailProviderConfigured ? 'NOT_VERIFIED' : 'NOT_READY'), core: false },
+            consumerLogin: { status: consumerEmailReady ? 'READY' : (consumerHealth.data?.emailProviderConfigured ? 'NOT_VERIFIED' : 'NOT_READY'), core: false },
+            consumerMagicLinkEmail: { status: consumerEmailReady ? 'READY' : (consumerHealth.data?.emailProviderConfigured ? 'NOT_VERIFIED' : 'NOT_READY'), core: false },
+            savedSearchEmailAlerts: { status: savedSearchAlertsReady ? 'READY' : (alertReady ? 'NOT_VERIFIED' : 'NOT_READY'), core: false },
+            growthZoneReconciliation: { status: growthZoneStatus, core: false },
             customDomain: { status: domainAuthorized && bootstrap.reachable ? 'READY' : 'NOT_READY', core: true },
             memberPortal: { status: memberHealth.reachable && memberExists ? 'READY' : 'NOT_READY', core: true },
             adminPortal: { status: 'READY', core: true }
@@ -164,7 +186,11 @@ export async function calculateAccountReadiness(db, accountId, env = {}) {
             listingCount: Number(listingsRow?.count || 0),
             servingWorker: servingHealth.status,
             memberWorker: memberHealth.status,
-            alertsDeliveryReady: alertReady,
+            consumerWorker: consumerHealth.status,
+            alertsDeliveryConfigured: alertReady,
+            reconciliationStatus: reconciliation?.status || 'never',
+            reconciliationLastAttempt: reconciliation?.last_attempt_at || null,
+            reconciliationLastVerified: entitlement?.last_verified_at || null,
             bootstrap: bootstrap.status
         }
     };

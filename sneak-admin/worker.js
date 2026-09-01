@@ -17,8 +17,9 @@ import {
     sha256Hex
 } from './auth.js';
 import * as api from './api.js';
+import { reconcileGrowthZoneBatch } from './growthzone.js';
 
-export const SNEAK_ADMIN_BUILD = '2026.08.31.7.4a';
+export const SNEAK_ADMIN_BUILD = '2026.09.01.7.4b1';
 
 const SECURITY_HEADERS = {
     'Content-Security-Policy': "default-src 'self'; script-src 'self' 'unsafe-inline' https://fonts.googleapis.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; connect-src 'self' https://sneak-idx-worker-staging.bonitaspringsrealtors.workers.dev; frame-ancestors 'none';",
@@ -86,7 +87,8 @@ export default {
                 service: 'sneak-idx-admin-staging',
                 status: 'ok',
                 build: SNEAK_ADMIN_BUILD,
-                environment: env.SNEAK_ENV || 'staging'
+                environment: env.SNEAK_ENV || 'staging',
+                growthZoneConfigured: Boolean(env?.GROWTHZONE_BASE_URL && env?.GROWTHZONE_API_KEY)
             });
         }
 
@@ -215,6 +217,21 @@ export default {
             const accReadinessMatch = path.match(/^\/api\/admin\/accounts\/([^\/]+)\/readiness$/);
             if (accReadinessMatch && method === 'GET') {
                 return await api.handleGetAccountReadiness(db, accReadinessMatch[1], env);
+            }
+
+            const accReconciliationMatch = path.match(/^\/api\/admin\/accounts\/([^\/]+)\/reconciliation$/);
+            if (accReconciliationMatch && method === 'GET') {
+                return await api.handleGetAccountReconciliation(db, accReconciliationMatch[1], env);
+            }
+
+            const accReconcileMatch = path.match(/^\/api\/admin\/accounts\/([^\/]+)\/reconcile$/);
+            if (accReconcileMatch && method === 'POST') {
+                return await api.handleReconcileAccount(db, accReconcileMatch[1], actor, env);
+            }
+
+            if (path === '/api/admin/growthzone/reconcile' && method === 'POST') {
+                const body = await request.json().catch(() => ({}));
+                return await api.handleBulkGrowthZoneReconcile(db, body, actor, env);
             }
 
             // /api/admin/accounts/:id/sites
@@ -399,5 +416,20 @@ export default {
         }
 
         return new Response('Not Found', { status: 404, headers: SECURITY_HEADERS });
+    },
+
+    async scheduled(controller, env) {
+        const result = await reconcileGrowthZoneBatch(env.DB, env, {
+            actor: 'system:growthzone-cron',
+            limit: Number(env?.GROWTHZONE_BATCH_LIMIT || 25),
+            now: new Date(controller?.scheduledTime || Date.now())
+        });
+        console.log(JSON.stringify({
+            event: 'growthzone_reconciliation_completed',
+            attempted: result.attempted,
+            succeeded: result.succeeded,
+            changed: result.changed,
+            failed: result.failed
+        }));
     }
 };

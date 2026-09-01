@@ -752,7 +752,7 @@ export function renderAdminHtml() {
 
         function renderGlobalReadiness(data) {
             const capabilities = Object.entries(data.capabilities || {});
-            document.getElementById('app').innerHTML = \`<div class="toolbar"><div><h2>Launch Readiness Control Plane</h2><p class="muted">Core IDX and optional capabilities are reported separately.</p></div><span class="badge \${data.pilotReady ? 'badge-active' : 'badge-suspended'}">\${escapeHtml(data.readinessCategory || 'Unknown')}</span></div>
+            document.getElementById('app').innerHTML = \`<div class="toolbar"><div><h2>Launch Readiness Control Plane</h2><p class="muted">Core IDX and optional capabilities are reported separately.</p></div><div class="actions"><button class="btn btn-secondary btn-sm" onclick="reconcileGrowthZoneBulk()">Reconcile GrowthZone</button><span class="badge \${data.pilotReady ? 'badge-active' : 'badge-suspended'}">\${escapeHtml(data.readinessCategory || 'Unknown')}</span></div></div>
                 <div class="grid-stats">\${capabilities.map(([name,value]) => '<div class="card card-stat"><h4>'+escapeHtml(name.replace(/([A-Z])/g,' $1'))+'</h4><div class="val" style="font-size:1.15rem">'+escapeHtml(value.status)+'</div><div class="sub">'+(value.core?'Core capability':'Optional capability')+'</div></div>').join('')}</div>
                 <div class="card"><div class="section-title"><h3>Environment blockers</h3><span class="badge">\${(data.blockers || []).length}</span></div><div class="blocker-list">\${(data.blockers || []).length ? data.blockers.map(b => '<div class="blocker"><strong>'+escapeHtml(b.code)+'</strong><br>'+escapeHtml(b.message)+'</div>').join('') : '<p class="status-ready">No environment blockers recorded.</p>'}</div></div>\`;
         }
@@ -771,6 +771,7 @@ export function renderAdminHtml() {
             const acc = data.account;
             const site = data.sites?.[0] || null;
             const ent = data.entitlement || {};
+            const rec = data.reconciliation || {};
             const readiness = data.readiness || { setupProgress:{}, launchBlockers:[], checklist:[] };
             const progress = Object.entries(readiness.setupProgress || {});
             document.getElementById('app').innerHTML = \`
@@ -793,6 +794,17 @@ export function renderAdminHtml() {
                             <div class="form-group"><label>Grace Until</label><input id="entGrace" type="datetime-local" class="form-control" value="\${escapeHtml((ent.grace_until || '').slice(0,16))}"></div>
                             <div class="form-group"><label>Last Verified</label><input class="form-control" disabled value="\${escapeHtml(ent.last_verified_at || 'Not verified')}"></div>
                         </div><div class="form-group"><label>Notes</label><textarea id="entNotes" class="form-control" rows="2">\${escapeHtml(ent.notes || '')}</textarea></div><button class="btn btn-primary">Save Entitlement</button></form>
+                    </section>
+                    <section class="card"><div class="section-title"><h3>GrowthZone Reconciliation</h3><span class="badge \${['verified_no_change','entitlement_changed'].includes(rec.status)?'badge-active':'badge-suspended'}">\${escapeHtml(setupLabel(rec.status || (ent.source === 'growthzone' ? 'never' : 'manual_override')))}</span></div>
+                        <p><strong>Entitlement Source:</strong> \${escapeHtml(ent.source || 'Not configured')}</p>
+                        <p><strong>GrowthZone Reference:</strong> \${escapeHtml(ent.external_reference || 'Not mapped')}</p>
+                        <p><strong>Canonical Status:</strong> \${escapeHtml(ent.status || 'Missing')}</p>
+                        <p><strong>Last Verified:</strong> \${escapeHtml(ent.last_verified_at || 'Never')}</p>
+                        <p><strong>Reconciliation Status:</strong> \${escapeHtml(setupLabel(rec.status || 'never'))}</p>
+                        <p><strong>Last Attempt:</strong> \${escapeHtml(rec.last_attempt_at || 'Never')}</p>
+                        <p><strong>Difference / Action:</strong> \${escapeHtml(rec.difference || rec.error_code || 'No difference')}</p>
+                        <p class="muted">Automatic reconciliation requires person:&lt;contactId&gt;:membership:&lt;membershipId&gt; or org:&lt;contactId&gt;:membership:&lt;membershipId&gt;. Manual source is protected.</p>
+                        <button class="btn btn-secondary" onclick="reconcileAccount('\${escapeHtml(acc.id)}')" \${ent.source === 'growthzone' ? '' : 'disabled'}>Reconcile Now</button>
                     </section>
                     <section class="card"><div class="section-title"><h3>Member Users</h3><span class="badge">\${data.members.length}</span></div>\${data.members.map(m=>'<p><strong>'+escapeHtml(m.email)+'</strong> · '+escapeHtml(setupLabel(m.status))+' · '+escapeHtml(m.role)+'</p>').join('') || '<p class="muted">No member user associated.</p>'}<form class="filters" onsubmit="inviteMember(event,'\${escapeHtml(acc.id)}')" style="margin-top:.8rem"><input id="inviteEmail" type="email" class="form-control" placeholder="member@example.com" required><button class="btn btn-secondary">Create / Resend Invite</button></form></section>
                     <section class="card"><div class="section-title"><h3>Client / Lead Summary</h3></div><div class="grid-stats" style="margin:0"><div class="card-stat"><h4>Authenticated Clients</h4><div class="val">\${Number(data.clientLeadSummary?.clients||0)}</div></div><div class="card-stat"><h4>Leads</h4><div class="val">\${Number(data.clientLeadSummary?.leads||0)}</div></div></div></section>
@@ -822,6 +834,8 @@ export function renderAdminHtml() {
         function requestDomainDelete(domainId,accountId,domain){openImpactModal('Remove domain authorization','The domain '+domain+' will immediately stop authorizing IDX bootstrap. Other account data is preserved.','Remove Domain',async()=>{await api('/domains/'+encodeURIComponent(domainId),{method:'DELETE'});await viewAccount(accountId,true);});}
         async function authorizeDomain(domainId,accountId){await api('/domains/'+encodeURIComponent(domainId),{method:'PATCH',body:{verified:true,status:'active'}});notify('Domain marked active and verified.');await viewAccount(accountId,true);}
         async function saveEntitlement(e,accountId){e.preventDefault();await api('/accounts/'+encodeURIComponent(accountId)+'/entitlement',{method:'PUT',body:{source:entSource.value,status:entStatus.value,plan:entPlan.value,external_reference:entReference.value,effective_at:entEffective.value||null,expires_at:entExpires.value||null,grace_until:entGrace.value||null,notes:entNotes.value}});notify('Entitlement saved.');await viewAccount(accountId,true);}
+        async function reconcileAccount(accountId){try{await api('/accounts/'+encodeURIComponent(accountId)+'/reconcile',{method:'POST',body:{}});notify('GrowthZone reconciliation completed.');}catch(err){notify(err.message,true);}await viewAccount(accountId,true);}
+        async function reconcileGrowthZoneBulk(){try{const result=await api('/growthzone/reconcile',{method:'POST',body:{limit:25}});notify('GrowthZone reconciliation: '+Number(result.succeeded||0)+' succeeded, '+Number(result.failed||0)+' need attention.');}catch(err){notify(err.message,true);}await showView('readiness');}
         async function inviteMember(e,accountId){e.preventDefault();const result=await api('/accounts/'+encodeURIComponent(accountId)+'/members',{method:'POST',body:{email:inviteEmail.value,role:'owner'}});notify(result.invitationRequested?'Invitation requested.':'Member associated; live email delivery was not confirmed.',!result.invitationRequested);await viewAccount(accountId,true);}
         async function addAdminDomain(e,siteId,accountId){e.preventDefault();await api('/sites/'+encodeURIComponent(siteId)+'/domains',{method:'POST',body:{domain:detailNewDomain.value,verified:false,status:'disabled'}});notify('Pending domain added.');await viewAccount(accountId,true);}
         async function saveBranding(e,siteId,accountId){e.preventDefault();await api('/sites/'+encodeURIComponent(siteId)+'/branding',{method:'PUT',body:{display_name:brandName.value,brokerage:brandBrokerage.value,phone:brandPhone.value,email:brandEmail.value,logo_url:brandLogo.value,primary_color:brandPrimary.value}});notify('Branding saved.');await viewAccount(accountId,true);}

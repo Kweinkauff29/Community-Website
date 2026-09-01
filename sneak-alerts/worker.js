@@ -9,7 +9,7 @@
  * - Claim-before-send atomic idempotency prevents duplicate email deliveries.
  * - Delivery status semantics: Only 'sent' marks notified_at and updates last_sent_at.
  * - 'provider_unconfigured' leaves listings retryable with delivery_status 'provider_unconfigured'.
- * - Strict secret verification: Fails closed when SNEAK_SIGNING_SECRET is absent (no fallback keys).
+ * - Strict secret verification: Fails closed when the alert unsubscribe signing secret is absent (no fallback keys).
  * - Cryptographically signed one-click unsubscribe endpoint with clean error states.
  * - Strict zero-Bridge token, zero-GrowthZone, zero-Stripe security boundary.
  */
@@ -18,7 +18,7 @@ import { findDueAlerts, matchNewListingsForAlert } from './matcher.js';
 import { renderSavedSearchAlertEmail, escapeHtml } from './email.js';
 import { sendTransactionalEmail, createUnsubscribeToken, verifyUnsubscribeToken } from '../sneak-shared/email-provider.js';
 
-export const ALERT_BUILD = '2026.08.31.7.3c3a';
+export const ALERT_BUILD = '2026.09.01.7.4b1';
 
 export function jsonResponse(data, status = 200, origin = null) {
     const headers = new Headers();

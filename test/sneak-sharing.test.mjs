@@ -555,6 +555,6 @@ describe('SNEAK IDX Phase 7.3C3B — Safe Property Sharing + Shared Lists', () =
         assert.match(html, /data-ui-build="2026\.08\.31\.7\.4a"/);
         assert.match(fs.readFileSync(path.join(rootDir, 'sneak-idx', 'embed.js'), 'utf8'), /2026\.08\.31\.7\.4a/);
         assert.match(fs.readFileSync(path.join(rootDir, 'SneakIDXWorker.js'), 'utf8'), /2026\.08\.31\.7\.4a/);
-        assert.match(fs.readFileSync(path.join(rootDir, 'sneak-consumer', 'worker.js'), 'utf8'), /2026\.08\.31\.7\.3c3b/);
+        assert.match(fs.readFileSync(path.join(rootDir, 'sneak-consumer', 'worker.js'), 'utf8'), /2026\.09\.01\.7\.4b1/);
     });
 });

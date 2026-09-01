@@ -518,9 +518,11 @@ describe('SNEAK Custom Domain Provisioning & Cloudflare for SaaS Suite (Phase 6.
             CLOUDFLARE_SAAS_API_TOKEN: 'valid_token',
             CLOUDFLARE_SAAS_ZONE_ID: 'valid_zone',
             CLOUDFLARE_SAAS_CNAME_TARGET: 'sneak-customers.coconutcoasthomes.com',
-            MAILJET_API_KEY: 'mj_valid_key',
-            MAILJET_SECRET_KEY: 'mj_valid_secret',
-            EMAIL_FROM: 'SNEAK IDX <idx@mail.coconutcoasthomes.com>'
+            MEMBER_WORKER: {
+                fetch: async () => new Response(JSON.stringify({ emailProviderConfigured: true }), {
+                    headers: { 'Content-Type': 'application/json' }
+                })
+            }
         };
 
         const r2Res = await handleGetReadiness(mockDB, liveEnv);

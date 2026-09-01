@@ -22,6 +22,10 @@ import {
     humanizeEntitlementStatus,
     isTenantScopeValid
 } from '../sneak-shared/entitlement.js';
+import {
+    reconcileGrowthZoneAccount,
+    reconcileGrowthZoneBatch
+} from './growthzone.js';
 
 function makeId(prefix) {
     return `${prefix}_${crypto.randomUUID()}`;
@@ -36,6 +40,16 @@ function json(data, status = 200) {
 
 function error(message, status = 400, code = 'BadRequest') {
     return json({ error: code, message }, status);
+}
+
+async function readServiceHealth(binding, path) {
+    if (!binding || typeof binding.fetch !== 'function') return { reachable: false, data: {} };
+    try {
+        const response = await binding.fetch(new Request(`https://service.internal${path}`, { headers: { Accept: 'application/json' } }));
+        return { reachable: response.ok, data: await response.json().catch(() => ({})) };
+    } catch {
+        return { reachable: false, data: {} };
+    }
 }
 
 async function logAudit(db, actor, action, entityType, entityId, summary) {
@@ -213,7 +227,9 @@ export async function handleListAccounts(db, url) {
 const MANUAL_LAUNCH_CHECK_KEYS = new Set([
     'cloudflare_saas_enabled', 'cloudflare_fallback_active', 'cloudflare_real_custom_hostname',
     'cloudflare_real_ssl', 'cloudflare_real_https', 'cloudflare_real_idx', 'cloudflare_real_removal',
-    'email_domain_verified', 'email_real_invitation', 'email_real_login'
+    'email_domain_verified', 'email_real_invitation', 'email_real_login',
+    'member_magic_link_e2e', 'consumer_magic_link_e2e', 'alerts_asap_e2e',
+    'alerts_daily_e2e', 'alerts_unsubscribe_e2e', 'growthzone_reconciliation_e2e'
 ]);
 
 function withLaunchCheckType(check) {
@@ -375,7 +391,7 @@ export async function handleGetAccount(db, accountId, env = {}) {
     const account = await db.prepare("SELECT * FROM sneak_accounts WHERE id = ?").bind(accountId).first();
     if (!account) return error('Account not found', 404);
 
-    const [sites, entitlement, members, audit, clientLeadSummary, launchChecks] = await Promise.all([
+    const [sites, entitlement, members, audit, clientLeadSummary, launchChecks, reconciliation] = await Promise.all([
         db.prepare("SELECT * FROM sneak_sites WHERE account_id = ? ORDER BY created_at ASC").bind(accountId).all(),
         db.prepare("SELECT * FROM sneak_account_entitlements WHERE account_id = ?").bind(accountId).first(),
         db.prepare(`SELECT id, account_id, email, role, status, invited_at, activated_at, last_login_at, created_at
@@ -390,7 +406,8 @@ export async function handleGetAccount(db, accountId, env = {}) {
             (SELECT COUNT(*) FROM sneak_consumer_users u JOIN sneak_sites s ON s.id = u.site_id WHERE s.account_id = ?) AS clients,
             (SELECT COUNT(*) FROM sneak_leads l JOIN sneak_sites s ON s.id = l.site_id WHERE s.account_id = ?) AS leads
         `).bind(accountId, accountId).first(),
-        db.prepare("SELECT * FROM sneak_launch_checks ORDER BY check_key ASC").all()
+        db.prepare("SELECT * FROM sneak_launch_checks ORDER BY check_key ASC").all(),
+        db.prepare("SELECT * FROM sneak_growthzone_reconciliation WHERE account_id = ?").bind(accountId).first()
     ]);
     const siteList = [];
 
@@ -417,6 +434,7 @@ export async function handleGetAccount(db, accountId, env = {}) {
         account,
         entitlement: entitlement || null,
         entitlementLabel: humanizeEntitlementStatus(entitlement?.status),
+        reconciliation: reconciliation || null,
         members: members.results || [],
         sites: siteList,
         clientLeadSummary: clientLeadSummary || { clients: 0, leads: 0 },
@@ -1022,6 +1040,39 @@ export async function handleUpdateAccountEntitlement(db, accountId, body, actor)
     return json({ success: true, entitlement: updated });
 }
 
+/** GET /api/admin/accounts/:id/reconciliation */
+export async function handleGetAccountReconciliation(db, accountId, env = {}) {
+    const account = await db.prepare("SELECT id, account_name FROM sneak_accounts WHERE id = ?").bind(accountId).first();
+    if (!account) return error('Account not found', 404);
+    const [entitlement, reconciliation] = await Promise.all([
+        db.prepare("SELECT * FROM sneak_account_entitlements WHERE account_id = ?").bind(accountId).first(),
+        db.prepare("SELECT * FROM sneak_growthzone_reconciliation WHERE account_id = ?").bind(accountId).first()
+    ]);
+    return json({
+        account,
+        entitlement,
+        reconciliation,
+        configured: Boolean(env?.GROWTHZONE_BASE_URL && env?.GROWTHZONE_API_KEY),
+        authority: 'sneak_account_entitlements'
+    });
+}
+
+/** POST /api/admin/accounts/:id/reconcile */
+export async function handleReconcileAccount(db, accountId, actor, env = {}) {
+    const result = await reconcileGrowthZoneAccount(db, env, accountId, { actor });
+    if (result.status === 404) return error('Account not found', 404);
+    const entitlement = await db.prepare("SELECT * FROM sneak_account_entitlements WHERE account_id = ?").bind(accountId).first();
+    const reconciliation = await db.prepare("SELECT * FROM sneak_growthzone_reconciliation WHERE account_id = ?").bind(accountId).first();
+    return json({ success: result.ok, result, entitlement, reconciliation }, result.ok ? 200 : (result.reconciliationStatus === 'remote_unavailable' || result.reconciliationStatus === 'not_configured' ? 503 : 409));
+}
+
+/** POST /api/admin/growthzone/reconcile */
+export async function handleBulkGrowthZoneReconcile(db, body, actor, env = {}) {
+    const limit = Math.max(1, Math.min(50, Number(body?.limit) || 25));
+    const result = await reconcileGrowthZoneBatch(db, env, { actor, limit });
+    return json({ success: result.failed === 0, ...result });
+}
+
 import { createPreviewToken } from '../sneak-sites/preview.js';
 
 /**
@@ -1345,14 +1396,19 @@ export async function handleGetReadiness(db, env) {
     }
 
     const saasDiag = getCloudflareSaaSDiagnostic(env);
+    const [memberHealth, consumerHealth, alertHealth] = await Promise.all([
+        readServiceHealth(env?.MEMBER_WORKER, '/health'),
+        readServiceHealth(env?.CONSUMER_WORKER, '/api/consumer/version'),
+        readServiceHealth(env?.ALERT_WORKER, '/health')
+    ]);
 
     let launchChecks = [];
     let allChecksPassed = false;
     let anyCheckFailed = false;
     let fallbackOriginStatus = 'Missing';
     let senderDomainStatus = 'Missing';
-    let emailConfigured = Boolean((env?.MAILJET_API_KEY || env?.MJ_API_KEY) && (env?.MAILJET_SECRET_KEY || env?.MJ_API_SECRET)) || Boolean(env?.RESEND_API_KEY || env?.POSTMARK_SERVER_TOKEN);
-    let emailMode = emailConfigured ? (Boolean((env?.MAILJET_API_KEY || env?.MJ_API_KEY) && (env?.MAILJET_SECRET_KEY || env?.MJ_API_SECRET)) ? 'Mailjet' : (env?.RESEND_API_KEY ? 'Resend' : 'Postmark')) : 'Simulated';
+    let emailConfigured = memberHealth.data?.emailProviderConfigured === true;
+    let emailMode = emailConfigured ? 'Mailjet' : 'Not configured';
 
     try {
         const checkRows = await db.prepare("SELECT * FROM sneak_launch_checks ORDER BY check_key ASC").all();
@@ -1371,8 +1427,8 @@ export async function handleGetReadiness(db, env) {
 
             const provCheck = launchChecks.find(c => c.check_key === 'email_provider_configured');
             if (provCheck?.status === 'pass' && provCheck?.source === 'real_mailjet') {
-                emailConfigured = true;
-                emailMode = 'Mailjet';
+                emailConfigured = memberHealth.data?.emailProviderConfigured === true;
+                emailMode = emailConfigured ? 'Mailjet' : 'Not configured';
             }
 
             const emailVerCheck = launchChecks.find(c => c.check_key === 'email_domain_verified');
@@ -1386,13 +1442,46 @@ export async function handleGetReadiness(db, env) {
         }
     } catch {}
 
+    const checkPassed = key => launchChecks.find(item => item.check_key === key)?.status === 'pass';
+    const memberProviderConfigured = memberHealth.data?.emailProviderConfigured === true;
+    const consumerProviderConfigured = consumerHealth.data?.emailProviderConfigured === true;
+    const alertDeliveryConfigured = alertHealth.data?.deliveryReady === true;
+    const memberEmailReady = memberProviderConfigured && checkPassed('member_magic_link_e2e');
+    const consumerEmailReady = consumerProviderConfigured && checkPassed('consumer_magic_link_e2e');
+    const alertsReady = alertDeliveryConfigured
+        && checkPassed('alerts_asap_e2e')
+        && checkPassed('alerts_daily_e2e')
+        && checkPassed('alerts_unsubscribe_e2e');
+    const growthZoneConfigured = Boolean(env?.GROWTHZONE_BASE_URL && env?.GROWTHZONE_API_KEY);
+    const growthZoneReady = growthZoneConfigured && checkPassed('growthzone_reconciliation_e2e');
+
+    let growthZoneSummary = { accounts: 0, verified: 0, needsAttention: 0, stale: 0 };
+    try {
+        const row = await db.prepare(`
+            SELECT COUNT(*) AS accounts,
+                SUM(CASE WHEN r.status IN ('verified_no_change','entitlement_changed') THEN 1 ELSE 0 END) AS verified,
+                SUM(CASE WHEN r.status IS NULL OR r.status NOT IN ('verified_no_change','entitlement_changed','manual_override') THEN 1 ELSE 0 END) AS needs_attention,
+                SUM(CASE WHEN r.last_success_at IS NOT NULL AND r.last_success_at < datetime('now','-36 hours') THEN 1 ELSE 0 END) AS stale
+            FROM sneak_account_entitlements e
+            LEFT JOIN sneak_growthzone_reconciliation r ON r.account_id = e.account_id
+            WHERE e.source = 'growthzone'
+        `).first();
+        growthZoneSummary = {
+            accounts: Number(row?.accounts || 0),
+            verified: Number(row?.verified || 0),
+            needsAttention: Number(row?.needs_attention || 0),
+            stale: Number(row?.stale || 0)
+        };
+    } catch {}
+
     const blockers = [];
     if (!saasDiag.zoneConfigured || saasDiag.mode !== 'live') {
         blockers.push({ code: 'CUSTOM_DOMAIN_PROVIDER_REQUIRED', message: 'Cloudflare for SaaS provider configuration is required.', capability: 'custom_domain' });
     }
-    if (!emailConfigured) {
-        blockers.push({ code: 'TRANSACTIONAL_EMAIL_REQUIRED', message: 'Live transactional email is not configured.', capability: 'consumer_login' });
-    }
+    if (!memberEmailReady) blockers.push({ code: 'MEMBER_EMAIL_NOT_VERIFIED', message: 'Member magic-link delivery and consumption require controlled-inbox evidence.', capability: 'member_email' });
+    if (!consumerEmailReady) blockers.push({ code: 'CONSUMER_EMAIL_NOT_VERIFIED', message: 'Consumer magic-link delivery and consumption require controlled-inbox evidence.', capability: 'consumer_email' });
+    if (!alertsReady) blockers.push({ code: 'ALERT_EMAIL_NOT_VERIFIED', message: 'ASAP, Daily, and unsubscribe controlled-inbox evidence is incomplete.', capability: 'saved_search_alerts' });
+    if (!growthZoneReady) blockers.push({ code: 'GROWTHZONE_NOT_VERIFIED', message: 'GrowthZone API configuration and an authenticated reconciliation proof are required.', capability: 'growthzone' });
 
     let readinessCategory = 'Development Ready';
     if (mlsStatus === 'Healthy' && allChecksPassed) {
@@ -1429,17 +1518,28 @@ export async function handleGetReadiness(db, env) {
         },
         email: {
             mode: emailMode,
-            senderDomain: senderDomainStatus
+            senderDomain: senderDomainStatus,
+            memberProviderConfigured,
+            consumerProviderConfigured,
+            alertDeliveryConfigured
         },
         memberPortal: 'Healthy',
         websiteEngine: 'Healthy',
-        growthZone: 'Manual',
+        growthZone: {
+            configured: growthZoneConfigured,
+            cadence: 'daily at 11:15 UTC',
+            ...growthZoneSummary
+        },
         launchChecks: launchChecks.map(withLaunchCheckType),
         canServe: mlsStatus === 'Healthy',
         capabilities: {
             coreSearch: { status: mlsStatus === 'Healthy' ? 'READY' : 'NOT_READY', core: true },
-            consumerLogin: { status: emailConfigured ? 'NOT_VERIFIED' : 'NOT_READY', core: false },
-            savedSearchEmailAlerts: { status: 'NOT_READY', core: false },
+            coreIdx: { status: mlsStatus === 'Healthy' ? 'READY' : 'NOT_READY', core: true },
+            memberMagicLinkEmail: { status: memberEmailReady ? 'READY' : (memberProviderConfigured ? 'NOT_VERIFIED' : 'NOT_READY'), core: false },
+            consumerLogin: { status: consumerEmailReady ? 'READY' : (consumerProviderConfigured ? 'NOT_VERIFIED' : 'NOT_READY'), core: false },
+            consumerMagicLinkEmail: { status: consumerEmailReady ? 'READY' : (consumerProviderConfigured ? 'NOT_VERIFIED' : 'NOT_READY'), core: false },
+            savedSearchEmailAlerts: { status: alertsReady ? 'READY' : (alertDeliveryConfigured ? 'NOT_VERIFIED' : 'NOT_READY'), core: false },
+            growthZoneReconciliation: { status: growthZoneSummary.stale > 0 ? 'VERIFICATION_STALE' : (growthZoneReady ? 'READY' : (growthZoneConfigured ? 'NOT_VERIFIED' : 'NOT_READY')), core: false },
             customDomain: { status: saasDiag.mode === 'live' && saasDiag.zoneConfigured ? 'READY' : 'NOT_READY', core: true },
             memberPortal: { status: 'READY', core: true },
             adminPortal: { status: 'READY', core: true }
@@ -1461,7 +1561,13 @@ const ALLOWED_LAUNCH_CHECK_KEYS = new Set([
     'email_domain_verified',
     'email_real_invitation',
     'email_real_login',
-    'email_replay_protection'
+    'email_replay_protection',
+    'member_magic_link_e2e',
+    'consumer_magic_link_e2e',
+    'alerts_asap_e2e',
+    'alerts_daily_e2e',
+    'alerts_unsubscribe_e2e',
+    'growthzone_reconciliation_e2e'
 ]);
 
 /**
@@ -1482,7 +1588,7 @@ export async function handleRecordLaunchCheck(db, body, actor = 'admin') {
         return error('check_key, status, and source are required.');
     }
     if (!ALLOWED_LAUNCH_CHECK_KEYS.has(check_key)) {
-        return error(`Unknown check_key '${check_key}'. Must be one of the 12 authorized launch check keys.`, 400);
+        return error(`Unknown check_key '${check_key}'.`, 400);
     }
     if (!['pass', 'pending', 'fail'].includes(status)) {
         return error('Invalid status. Must be pass, pending, or fail.', 400);
@@ -1499,6 +1605,13 @@ export async function handleRecordLaunchCheck(db, body, actor = 'admin') {
         }
         if (check_key === 'email_replay_protection' && normalizedSource !== 'system') {
             return error(`Source '${source}' is not authorized to pass check 'email_replay_protection'. Requires 'system'.`, 400);
+        }
+        if (['member_magic_link_e2e', 'consumer_magic_link_e2e', 'alerts_asap_e2e', 'alerts_daily_e2e', 'alerts_unsubscribe_e2e'].includes(check_key)
+            && normalizedSource !== 'controlled_inbox') {
+            return error(`Source '${source}' is not authorized to pass controlled-inbox check '${check_key}'. Requires 'controlled_inbox'.`, 400);
+        }
+        if (check_key === 'growthzone_reconciliation_e2e' && normalizedSource !== 'real_growthzone') {
+            return error(`Source '${source}' is not authorized to pass GrowthZone check '${check_key}'. Requires 'real_growthzone'.`, 400);
         }
     }
 

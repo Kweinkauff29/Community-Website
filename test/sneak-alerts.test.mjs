@@ -517,7 +517,7 @@ function createMockAlertsDB() {
 
 describe('SNEAK IDX Phase 7.3C2A.1 — Alert Delivery Correctness, Concurrency & Secret Hardening', () => {
 
-    test('1. Alert Worker Version & Health endpoint returns build 2026.08.31.7.3c3a and deliveryReady status', async () => {
+    test('1. Alert Worker Version & Health endpoint returns build 2026.09.01.7.4b1 and deliveryReady status', async () => {
         const req = new Request('https://sneak-idx-alerts-staging.bonitaspringsrealtors.workers.dev/api/alerts/version');
         const res = await alertWorker.fetch(req, {
             MAILJET_API_KEY: 'test',
@@ -528,7 +528,7 @@ describe('SNEAK IDX Phase 7.3C2A.1 — Alert Delivery Correctness, Concurrency &
         const data = await res.json();
         assert.equal(data.service, 'sneak-alerts-worker');
         assert.equal(data.build, ALERT_BUILD);
-        assert.equal(data.build, '2026.08.31.7.3c3a');
+        assert.equal(data.build, '2026.09.01.7.4b1');
         assert.equal(data.status, 'healthy');
         assert.equal(data.emailProviderConfigured, true);
         assert.equal(data.signingSecretConfigured, true);
@@ -716,7 +716,7 @@ describe('SNEAK IDX Phase 7.3C2A.1 — Alert Delivery Correctness, Concurrency &
             globalThis.fetch = async (url, opts) => {
                 if (url.includes('api.mailjet.com')) {
                     return new Response(JSON.stringify({
-                        Messages: [{ To: [{ MessageID: 99887766 }] }]
+                        Messages: [{ Status: 'success', To: [{ MessageID: 99887766 }] }]
                     }), { status: 200, headers: { 'Content-Type': 'application/json' } });
                 }
                 return originalFetch(url, opts);
@@ -809,7 +809,7 @@ describe('SNEAK IDX Phase 7.3C2A.1 — Alert Delivery Correctness, Concurrency &
             if (url.includes('api.mailjet.com')) {
                 mailjetSendCount++;
                 return new Response(JSON.stringify({
-                    Messages: [{ To: [{ MessageID: 1000 + mailjetSendCount }] }]
+                    Messages: [{ Status: 'success', To: [{ MessageID: 1000 + mailjetSendCount }] }]
                 }), { status: 200, headers: { 'Content-Type': 'application/json' } });
             }
             return originalFetch(url, opts);
@@ -857,7 +857,7 @@ describe('SNEAK IDX Phase 7.3C2A.1 — Alert Delivery Correctness, Concurrency &
                     return new Response(JSON.stringify({ ErrorMessage: 'MailjetRateLimited' }), { status: 429 });
                 }
                 return new Response(JSON.stringify({
-                    Messages: [{ To: [{ MessageID: 887766 }] }]
+                    Messages: [{ Status: 'success', To: [{ MessageID: 887766 }] }]
                 }), { status: 200 });
             }
             return originalFetch(url, opts);
@@ -912,7 +912,7 @@ describe('SNEAK IDX Phase 7.3C2A.1 — Alert Delivery Correctness, Concurrency &
         const originalFetch = globalThis.fetch;
         globalThis.fetch = async (url, opts) => {
             if (url.includes('api.mailjet.com')) {
-                return new Response(JSON.stringify({ Messages: [{ To: [{ MessageID: 12345 }] }] }), { status: 200, headers: { 'Content-Type': 'application/json' } });
+                return new Response(JSON.stringify({ Messages: [{ Status: 'success', To: [{ MessageID: 12345 }] }] }), { status: 200, headers: { 'Content-Type': 'application/json' } });
             }
             return originalFetch(url, opts);
         };

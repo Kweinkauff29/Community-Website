@@ -45,7 +45,7 @@ import {
     handleDisableSharedListShare
 } from './api.js';
 
-const CONSUMER_BUILD = '2026.08.31.7.3c3b';
+const CONSUMER_BUILD = '2026.09.01.7.4b1';
 
 /**
  * Validates request origin against authorized sites/domains in D1.
@@ -95,6 +95,10 @@ export default {
                 service: 'sneak-consumer-worker',
                 build: CONSUMER_BUILD,
                 status: 'healthy',
+                emailProviderConfigured: Boolean(
+                    (env?.MAILJET_API_KEY || env?.MJ_API_KEY)
+                    && (env?.MAILJET_SECRET_KEY || env?.MJ_API_SECRET)
+                ),
                 timestamp: new Date().toISOString()
             }, 200, '*');
         }

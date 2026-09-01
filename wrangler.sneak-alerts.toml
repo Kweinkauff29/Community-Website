@@ -3,7 +3,7 @@
 
 name = "sneak-idx-alerts-staging"
 main = "sneak-alerts/worker.js"
-compatibility_date = "2024-01-01"
+compatibility_date = "2026-09-01"
 
 [observability]
 enabled = true
@@ -12,6 +12,7 @@ head_sampling_rate = 1
 [vars]
 SNEAK_ENV = "staging"
 ALERTS_WORKER_URL = "https://sneak-idx-alerts-staging.bonitaspringsrealtors.workers.dev"
+EMAIL_FROM = "CCOR Property Search <no-reply@ccorealtors.org>"
 
 [[d1_databases]]
 binding = "DB"

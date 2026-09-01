@@ -3,7 +3,7 @@
 
 name = "sneak-idx-admin-staging"
 main = "sneak-admin/worker.js"
-compatibility_date = "2026-08-31"
+compatibility_date = "2026-09-01"
 
 [observability]
 enabled = true
@@ -15,6 +15,12 @@ CLOUDFLARE_SAAS_MODE = "live"
 CLOUDFLARE_SAAS_ZONE_ID = "e2329c400819970362fa907dcebbde9c"
 CLOUDFLARE_SAAS_CNAME_TARGET = "sneak-customers.coconutcoasthomes.com"
 CLOUDFLARE_SAAS_FALLBACK_ORIGIN = "sneak-origin.coconutcoasthomes.com"
+GROWTHZONE_BASE_URL = "https://bonitaspringsesterorealtorsfl.growthzoneapp.com"
+GROWTHZONE_PLAN_MAP_JSON = "{}"
+GROWTHZONE_BATCH_LIMIT = "25"
+
+[triggers]
+crons = ["15 11 * * *"]
 
 [[d1_databases]]
 binding = "DB"

@@ -108,97 +108,135 @@ export async function verifyUnsubscribeToken(token, secret) {
     }
 }
 
-/**
- * Dispatches transactional email via Mailjet API v3.1 or fallback simulated staging adapter.
- */
-export async function sendTransactionalEmail(env, { to, subject, html, text }) {
-    const fromStr = env?.EMAIL_FROM || env?.FROM_EMAIL || DEFAULT_FROM;
-    let fromEmail = 'no-reply@ccorealtors.org';
-    let fromName = 'CCOR Property Search';
-
-    const fromMatch = fromStr.match(/^(?:(.*)<)?([^>]+)>?$/);
-    if (fromMatch) {
-        fromName = (fromMatch[1] || 'CCOR Property Search').trim();
-        fromEmail = fromMatch[2].trim();
+function parseFromAddress(value, defaultName) {
+    const input = String(value || '').trim();
+    const bracketed = input.match(/^\s*(.*?)\s*<([^<>]+)>\s*$/);
+    if (bracketed) {
+        return { name: bracketed[1].trim() || defaultName, email: bracketed[2].trim() };
     }
+    return input.includes('@')
+        ? { name: defaultName, email: input }
+        : { name: defaultName, email: 'no-reply@ccorealtors.org' };
+}
+
+async function readJsonResponse(response, maxBytes = 64 * 1024) {
+    const declaredLength = Number(response.headers?.get?.('Content-Length') || 0);
+    if (declaredLength > maxBytes) throw new Error('ProviderResponseTooLarge');
+
+    if (!response.body || typeof response.body.getReader !== 'function') {
+        if (typeof response.text !== 'function' && typeof response.json === 'function') {
+            return await response.json();
+        }
+        const text = await response.text();
+        if (new TextEncoder().encode(text).byteLength > maxBytes) throw new Error('ProviderResponseTooLarge');
+        return text ? JSON.parse(text) : {};
+    }
+
+    const reader = response.body.getReader();
+    const chunks = [];
+    let size = 0;
+    while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        size += value.byteLength;
+        if (size > maxBytes) {
+            await reader.cancel();
+            throw new Error('ProviderResponseTooLarge');
+        }
+        chunks.push(value);
+    }
+    const combined = new Uint8Array(size);
+    let offset = 0;
+    for (const chunk of chunks) {
+        combined.set(chunk, offset);
+        offset += chunk.byteLength;
+    }
+    const text = new TextDecoder().decode(combined);
+    return text ? JSON.parse(text) : {};
+}
+
+function providerFailure({ status = 'failed', errorCode = 'DeliveryFailed', retryable = true } = {}) {
+    return {
+        success: false,
+        retryable,
+        status,
+        provider: status === 'provider_unconfigured' ? null : 'mailjet',
+        providerMessageId: null,
+        id: null,
+        errorCode: String(errorCode || 'DeliveryFailed').slice(0, 100)
+    };
+}
+
+/**
+ * Dispatches transactional email through Mailjet API v3.1.
+ * Provider configuration and every provider response are fail closed; there is
+ * no simulated-success adapter in a runtime path.
+ */
+export async function sendTransactionalEmail(env, { to, subject, html, text, from, customId }) {
+    const fromStr = env?.EMAIL_FROM || env?.FROM_EMAIL || DEFAULT_FROM;
+    const sender = parseFromAddress(from || fromStr, 'CCOR Property Search');
 
     const apiKey = env?.MAILJET_API_KEY || env?.MJ_API_KEY;
     const secretKey = env?.MAILJET_SECRET_KEY || env?.MJ_API_SECRET;
 
-    if (apiKey && secretKey) {
-        try {
-            const auth = 'Basic ' + (typeof btoa === 'function' ? btoa(`${apiKey}:${secretKey}`) : Buffer.from(`${apiKey}:${secretKey}`).toString('base64'));
-            const payload = {
-                Messages: [
-                    {
-                        From: {
-                            Email: fromEmail,
-                            Name: fromName
-                        },
-                        To: [
-                            {
-                                Email: to
-                            }
-                        ],
-                        Subject: subject,
-                        HTMLPart: html,
-                        TextPart: text || ''
-                    }
-                ]
-            };
-
-            const res = await fetch('https://api.mailjet.com/v3.1/send', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': auth
-                },
-                body: JSON.stringify(payload)
-            });
-
-            if (res.ok) {
-                const data = await res.json();
-                const msgId = data?.Messages?.[0]?.To?.[0]?.MessageID || `mj_${Date.now()}`;
-                return {
-                    success: true,
-                    status: 'sent',
-                    provider: 'mailjet',
-                    providerMessageId: String(msgId)
-                };
-            }
-
-            const errorText = await res.text();
-            let errorCode = `HTTP_${res.status}`;
-            try {
-                const errObj = JSON.parse(errorText);
-                errorCode = errObj?.ErrorMessage || errObj?.StatusCode || errorCode;
-            } catch {}
-
-            return {
-                success: false,
-                retryable: true,
-                status: 'failed',
-                provider: 'mailjet',
-                errorCode: String(errorCode).slice(0, 100)
-            };
-        } catch (err) {
-            return {
-                success: false,
-                retryable: true,
-                status: 'failed',
-                provider: 'mailjet',
-                errorCode: (err.message || 'NetworkError').slice(0, 100)
-            };
-        }
+    if (!apiKey || !secretKey) {
+        return providerFailure({ status: 'provider_unconfigured', errorCode: 'EmailProviderNotConfigured' });
     }
 
-    // Fallback: Provider unconfigured when Mailjet credentials are not set
-    return {
-        success: false,
-        retryable: true,
-        status: 'provider_unconfigured',
-        provider: null,
-        providerMessageId: null,
-        error: 'EmailProviderNotConfigured'
-    };
+    try {
+        const auth = 'Basic ' + (typeof btoa === 'function' ? btoa(`${apiKey}:${secretKey}`) : Buffer.from(`${apiKey}:${secretKey}`).toString('base64'));
+        const message = {
+            From: { Email: sender.email, Name: sender.name },
+            To: [{ Email: to }],
+            Subject: subject,
+            HTMLPart: html,
+            TextPart: text || ''
+        };
+        if (customId) message.CustomID = String(customId).slice(0, 255);
+
+        const res = await fetch('https://api.mailjet.com/v3.1/send', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': auth
+            },
+            body: JSON.stringify({ Messages: [message] })
+        });
+
+        let data = {};
+        try {
+            data = await readJsonResponse(res);
+        } catch (err) {
+            return providerFailure({ errorCode: err?.message || 'InvalidProviderResponse', retryable: res.status === 429 || res.status >= 500 });
+        }
+
+        if (!res.ok) {
+            const code = data?.ErrorCode || data?.ErrorMessage || data?.StatusCode || `HTTP_${res.status}`;
+            return providerFailure({ errorCode: code, retryable: res.status === 429 || res.status >= 500 });
+        }
+
+        const firstMessage = data?.Messages?.[0];
+        if (String(firstMessage?.Status || '').toLowerCase() !== 'success') {
+            const firstError = firstMessage?.Errors?.[0];
+            return providerFailure({
+                errorCode: firstError?.ErrorCode || firstError?.ErrorMessage || 'ProviderMessageRejected',
+                retryable: Number(firstError?.StatusCode || 0) === 429 || Number(firstError?.StatusCode || 0) >= 500
+            });
+        }
+
+        const msgId = firstMessage?.To?.[0]?.MessageID || firstMessage?.To?.[0]?.MessageUUID;
+        if (!msgId) return providerFailure({ errorCode: 'ProviderMessageIdMissing', retryable: true });
+
+        return {
+            success: true,
+            retryable: false,
+            status: 'sent',
+            provider: 'mailjet',
+            providerMessageId: String(msgId),
+            id: String(msgId),
+            errorCode: null
+        };
+    } catch (err) {
+        return providerFailure({ errorCode: err?.message || 'NetworkError', retryable: true });
+    }
 }

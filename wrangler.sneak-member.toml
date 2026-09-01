@@ -3,7 +3,7 @@
 
 name = "sneak-idx-member-staging"
 main = "sneak-member/worker.js"
-compatibility_date = "2026-08-31"
+compatibility_date = "2026-09-01"
 
 [observability]
 enabled = true
@@ -11,6 +11,7 @@ head_sampling_rate = 1
 
 [vars]
 SNEAK_ENV = "staging"
+EMAIL_FROM = "CCOR IDX Plug-in <no-reply@ccorealtors.org>"
 
 [[d1_databases]]
 binding = "DB"

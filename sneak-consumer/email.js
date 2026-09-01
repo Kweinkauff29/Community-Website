@@ -2,8 +2,10 @@
  * sneak-consumer/email.js
  * 
  * Transactional Email Adapter for Consumer Authentication (Property Buyers).
- * Supports Mailjet API v3.1 and Simulated Staging Adapter.
+ * Uses the shared fail-closed Mailjet API v3.1 adapter.
  */
+
+import { sendTransactionalEmail } from '../sneak-shared/email-provider.js';
 
 const DEFAULT_FROM = 'CCOR Property Search <no-reply@ccorealtors.org>';
 
@@ -72,76 +74,14 @@ export function renderConsumerMagicLinkTemplate({ verifyUrl, expiresMinutes = 15
  * Dispatches consumer transactional email.
  */
 export async function sendConsumerTransactionalEmail(env, { to, subject, html, text }) {
-    const from = env?.EMAIL_FROM || DEFAULT_FROM;
-
-    // Mailjet Adapter (v3.1)
-    const mailjetApiKey = env?.MAILJET_API_KEY || env?.MJ_API_KEY;
-    const mailjetSecretKey = env?.MAILJET_SECRET_KEY || env?.MJ_API_SECRET;
-    if (mailjetApiKey && mailjetSecretKey) {
-        try {
-            let fromEmail = 'no-reply@ccorealtors.org';
-            let fromName = 'CCOR Property Search';
-            const fromStr = env?.EMAIL_FROM || env?.FROM_EMAIL || DEFAULT_FROM;
-            const fromMatch = fromStr.match(/^(?:(.*)<)?([^>]+)>?$/);
-            if (fromMatch) {
-                fromName = (fromMatch[1] || 'CCOR Property Search').trim();
-                fromEmail = fromMatch[2].trim();
-            }
-
-            const auth = 'Basic ' + btoa(`${mailjetApiKey}:${mailjetSecretKey}`);
-            const payload = {
-                Messages: [
-                    {
-                        From: {
-                            Email: fromEmail,
-                            Name: fromName
-                        },
-                        To: [
-                            {
-                                Email: to,
-                                Name: ''
-                            }
-                        ],
-                        Subject: subject,
-                        TextPart: text || '',
-                        HTMLPart: html,
-                        CustomID: 'SNEAK-CONSUMER-AUTH'
-                    }
-                ]
-            };
-
-            const res = await fetch('https://api.mailjet.com/v3.1/send', {
-                method: 'POST',
-                headers: {
-                    'Authorization': auth,
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(payload)
-            });
-
-            if (!res.ok) {
-                const errText = await res.text();
-                console.error('[CONSUMER EMAIL MAILJET ERROR]', res.status, errText);
-                return { success: false, error: `Mailjet HTTP ${res.status}` };
-            }
-
-            const data = await res.json();
-            const messageId = data?.Messages?.[0]?.To?.[0]?.MessageID || data?.Messages?.[0]?.CustomID || 'mj_sent';
-            return { success: true, id: String(messageId), provider: 'mailjet' };
-        } catch (err) {
-            console.error('[CONSUMER EMAIL MAILJET EXCEPTION]', err.message);
-            return { success: false, error: err.message };
-        }
-    }
-
-    // Simulated Staging Adapter
-    return {
-        success: true,
-        provider: 'simulated',
+    return sendTransactionalEmail(env, {
         to,
         subject,
-        timestamp: new Date().toISOString()
-    };
+        html,
+        text,
+        from: env?.EMAIL_FROM || env?.FROM_EMAIL || DEFAULT_FROM,
+        customId: 'SNEAK-CONSUMER-AUTH'
+    });
 }
 
 export async function sendConsumerMagicLinkEmail(env, { email, verifyUrl, expiresMinutes = 15, agentName, brokerage }) {

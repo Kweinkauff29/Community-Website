@@ -84,6 +84,7 @@ Every participant must complete all verification gates before being marked **Lau
   * Phase 7.3C3A.1 Recently Viewed Retention, Migration Safety & Browser Sign-Off: 2026-08-31 (COMPLETE; deployed and all acceptance gates pass)
   * Phase 7.3C3B Safe Property Sharing + Consumer Shareable Property Lists: 2026-08-31 (COMPLETE; deployed, independent anonymous recipient and revocation browser QA pass)
   * Phase 7.4A Launch Readiness Control Plane + Staff Provisioning: 2026-08-31 (COMPLETE; deployed; automated, live API/detail, D1, and mandatory actual-browser gates pass)
+  * Phase 7.4B1 Transactional Email Readiness + GrowthZone Reconciliation: 2026-09-01 (IMPLEMENTED and staging deployed; controlled-inbox/GrowthZone credentials and evidence pending)
 * **Phase 7.3C2B Agent Client Activity Dashboard & Authenticated Buyer Timeline:**
   * *Privacy-Preserving Activity Ledger:* D1 table `sneak_consumer_activity_events` (migration 0030) records authenticated buyer events (`listing_view`, `favorite_*`, `saved_search_*`, `alert_*`, `inquiry_submitted`). Zero anonymous tracking, zero fingerprinting, zero geolocation tracking.
   * *Consumer Ingestion Protection:* `POST /api/consumer/activity` enforces authentication, strict browser allowlist (`listing_view`, `inquiry_submitted`), 30-minute deduplication on listing views, lead email match verification, and 120 events/hr rate limiting.
@@ -94,11 +95,18 @@ Every participant must complete all verification gates before being marked **Lau
   * *Staff Workflow:* Guided provisioning persists account/site, entitlement, member invitation, pending domain, branding, widget, and readiness state. Account Detail is the resume point.
   * *Lifecycle Safety:* Suspend/cancel/reactivate and site/domain impact actions use deliberate modals and preserve site key, domain records where applicable, configuration, consumer data, leads, and audit history.
   * *Capability Split:* Core search/custom domain/member/admin readiness is reported separately from consumer magic-link delivery and optional saved-search alert email.
-  * *Current Email Finding:* Member staging has both Mailjet secret names and selects the real adapter, but current inbox delivery/consumption is not re-verified. Consumer staging has no provider secrets and uses simulation. Alert delivery has neither Mailjet nor unsubscribe-signing secrets and remains not ready.
+  * *Current Email Finding:* Member staging has both Mailjet secret names and selects the strict shared adapter, but current inbox delivery/consumption is not re-verified. Consumer staging now uses the same real-provider model with no simulation, but has no provider secrets and fails closed. Alert delivery has neither Mailjet nor unsubscribe-signing secrets and remains not ready.
   * *Consumer Detail Correction:* Search cards, map/deep links, Recently Viewed, Compare, shared lists, and Saved Homes now converge on one authoritative listing hydration path. D1 `MediaJSON`, detail `Media`, and `/media` counts agreed for 10 real listings (26–39 photos each); the post-deploy live check passed 65/65.
   * *Final Browser Sign-Off:* PASS — actual local Google Chrome/Playwright staging acceptance passed 748/748 checks at 1440×900, 1024×768, and 390×844. The matrix covered five Residential, two Rental, two Land, two Commercial, eight listings with more than 20 photos, explicit current price/address/status/type/subtype/city/attribution and meaningful filter-field parity, thumbnail/previous/next interaction, all current detail origins, rapid A→B, anonymous Recent/Compare privacy, authenticated guided Admin provisioning/lifecycle/readiness, and complete authenticated Member navigation plus C2B Clients/KPIs/search/sort/detail/Saved Homes/Saved Searches/Activity/Inquiries with no clipping or protected API errors.
   * *Final Regression and Data Gates:* PASS — 246/246 automated tests across 13 suites, 17/17 live Phase 7.4A health/auth checks, no pending remote migrations, and zero D1 foreign-key violations.
   * *Operator Reference:* See `docs/ccor-idx-launch-readiness.md` and `docs/operations/member-provisioning.md`.
+* **Phase 7.4B1 Email + GrowthZone Operationalization:**
+  * *Shared Email Contract:* Member, Consumer, and Alerts converge on one Mailjet adapter. A send is successful only after HTTP success, Mailjet message-level `success`, and a provider message ID; missing credentials and message-level/provider failures never become successful delivery.
+  * *Current Email Evidence:* Member provider CONFIGURED, real inbox NOT RE-VERIFIED, link consumption NOT RE-VERIFIED. Consumer provider NOT CONFIGURED. Alerts provider and signing secret NOT CONFIGURED. ASAP, Daily, and unsubscribe controlled-inbox tests were not attempted. Capability readiness remains fail closed.
+  * *GrowthZone:* Migration 0034 and Admin reconciliation are deployed. Automatic mutation requires an explicit `person:`/`org:` durable reference; documented membership states normalize into the existing canonical statuses. Manual source is protected, ambiguity fails closed, and timeout/outage preserves the last canonical entitlement and `last_verified_at`.
+  * *Schedule and Authority:* Daily 11:15 UTC, default batch 25/hard maximum 50. `sneak_account_entitlements` remains the only Serving Worker authority; no public path calls GrowthZone or Bridge.
+  * *Verification:* PASS — 262/262 automated, 22/22 live staging, 748/748 full actual-Chrome regression, and 123/123 focused 7.4B1 actual-Chrome acceptance. Admin/Member/Consumer/Alerts report build `2026.09.01.7.4b1`; migration 0034 has no pending staging work.
+  * *Deployment Boundary:* Production environment/cutover is Phase 7.4B2 and has not started. SEO remains deferred.
 * **Live Validation Evidence:**
   * Live Public URL: `https://coconutcoastrealtors.org/idx-test/` (HTTP 200 OK)
   * Live Static UI Build: PASS — `data-ui-build="2026.08.30.7.3c2b"`, `CCOR_IDX_UI_BUILD = '2026.08.30.7.3c2b'`, `embed.js &v=2026.08.30.7.3c2b`
@@ -139,7 +147,7 @@ Every participant must complete all verification gates before being marked **Lau
   * Member Implementation Time: ~2 minutes (HTML snippet paste in WordPress)
   * Staff Interventions Required: 15 (Identity reconciliation, Phase 7.1 model correction, Phase 7.2 product corrections, Phase 7.3A search parity, Phase 7.3B1 interactive map synchronization, Phase 7.3B2A radius search, Phase 7.3B2B polygon search, Phase 7.3C1A buyer auth, Phase 7.3C1B saved searches, Phase 7.3C1B.1 embed layout hotfix, Phase 7.3C2A email alert engine, Phase 7.3C2A.1 delivery hardening, Phase 7.3C2B client activity dashboard, Phase 7.3C3A.1 corrective sign-off, Phase 7.3C3B safe sharing/public lists)
   * Support Questions Logged: 0
-* **Final Status:** **ACTIVE PILOT (Phase 7.3C2B, 7.3C3A.1, and 7.3C3B complete; automated, live API, independent-recipient revocation, and mandatory browser QA pass)**
+* **Final Status:** **ACTIVE PILOT (Phase 7.4B1 implementation deployed; email/GrowthZone operational evidence remains fail-closed and pending before 7.4B2)**
 
 ---
 

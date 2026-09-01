@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Phase 7.4A final browser sign-off.
+ * Phase 7.4A full regression plus Phase 7.4B1 focused browser sign-off.
  *
  * Uses a locally installed Playwright/Chromium engine against live staging. It creates
  * short-lived hashed Admin/Member sessions plus one isolated account/client fixture,
@@ -17,6 +17,7 @@ import process from 'node:process';
 
 const ADMIN = 'https://sneak-idx-admin-staging.bonitaspringsrealtors.workers.dev';
 const MEMBER = 'https://sneak-idx-member-staging.bonitaspringsrealtors.workers.dev';
+const CONSUMER = 'https://sneak-idx-consumer-staging.bonitaspringsrealtors.workers.dev';
 const SERVING = 'https://sneak-idx-worker-staging.bonitaspringsrealtors.workers.dev';
 const SITE = process.env.SNEAK_DETAIL_SITE_KEY || 'ursula-weinkauff-pilot';
 const SITE_ORIGIN = process.env.SNEAK_DETAIL_ORIGIN || 'https://coconutcoastrealtors.org';
@@ -37,6 +38,8 @@ let failed = 0;
 let browser = null;
 let adminSessionId = null;
 let memberSessionId = null;
+let consumerSessionId = null;
+let memberRequestEmailHash = null;
 let fixture = null;
 let listingSurfaceFixture = null;
 
@@ -409,10 +412,12 @@ async function runListingBrowserQa(playwright, executablePath, servingSession, m
   check(await page.locator('#detailListingInfoFacts').innerText().then(text => text.includes(second.detail.ListingId || second.key)), 'rapid A-to-B selection leaves B authoritative');
 
   await page.click('#detailCompareBtn');
+  await page.waitForFunction(site => JSON.parse(localStorage.getItem('ccor_compare_' + site) || '[]').length === 1, SITE);
   await page.click('#detailClose');
   await page.evaluate(key => window.openDetailByKey(key), matrix[2].key);
   await page.waitForFunction(expected => [...document.querySelectorAll('#detailListingInfoFacts dd')].some(node => node.textContent === expected), matrix[2].detail.ListingId || matrix[2].key);
   await page.click('#detailCompareBtn');
+  await page.waitForFunction(site => JSON.parse(localStorage.getItem('ccor_compare_' + site) || '[]').length === 2, SITE);
   await page.click('#detailClose');
   check(await page.locator('#compareTray').isVisible(), 'anonymous Compare tray is visible after two selections');
   await page.click('#compareTrayOpen');
@@ -452,7 +457,9 @@ async function runAdminBrowserQa(adminToken) {
   const page = await context.newPage();
   const apiFailures = [];
   page.on('response', response => {
-    if (response.url().includes('/api/admin/') && response.status() >= 400) apiFailures.push(`${response.status()} ${response.url()}`);
+    const pathname = new URL(response.url()).pathname;
+    const expectedUnavailableReconcile = response.status() === 503 && pathname.endsWith('/reconcile');
+    if (response.url().includes('/api/admin/') && response.status() >= 400 && !expectedUnavailableReconcile) apiFailures.push(`${response.status()} ${response.url()}`);
   });
   await page.goto(ADMIN, { waitUntil: 'domcontentloaded', timeout: 30000 });
   await page.waitForFunction(() => document.querySelector('.grid-stats') || document.getElementById('adminPassword'), null, { timeout: 30000 });
@@ -474,7 +481,7 @@ async function runAdminBrowserQa(adminToken) {
   await page.fill('#obAgentMls', 'B3650316');
   await page.selectOption('#obPlan', 'pro');
   await page.selectOption('#obEntSource', 'growthzone');
-  await page.fill('#obReference', `GZ-BROWSER-${suffix}`);
+  await page.fill('#obReference', `person:900001:membership:800001`);
   await page.fill('#obSiteName', accountName);
   await page.fill('#obSiteKey', siteKey);
   await page.selectOption('#obScopeType', 'market');
@@ -499,9 +506,19 @@ async function runAdminBrowserQa(adminToken) {
   };
   requireCheck(Boolean(fixture.siteId && fixture.memberUserId), 'guided Admin fixture persisted site and member');
 
-  for (const heading of ['Account', 'Entitlement', 'Member Users', 'Client / Lead Summary', 'IDX Site', 'Domains', 'Branding', 'Responsive Embed', 'Readiness Checklist', 'Audit History']) {
+  for (const heading of ['Account', 'Entitlement', 'GrowthZone Reconciliation', 'Member Users', 'Client / Lead Summary', 'IDX Site', 'Domains', 'Branding', 'Responsive Embed', 'Readiness Checklist', 'Audit History']) {
     check(await page.getByRole('heading', { name: heading, exact: true }).isVisible(), `Admin account detail ${heading}`);
   }
+  const reconciliationCard = page.locator('section').filter({ has: page.getByRole('heading', { name: 'GrowthZone Reconciliation', exact: true }) });
+  check(await reconciliationCard.innerText().then(text => ['Entitlement Source:', 'GrowthZone Reference:', 'Canonical Status:', 'Last Verified:', 'Reconciliation Status:', 'Last Attempt:', 'Difference / Action:'].every(label => text.includes(label))), 'Admin reconciliation status fields are visible');
+  check(await reconciliationCard.getByRole('button', { name: 'Reconcile Now' }).isEnabled(), 'Admin Reconcile Now is enabled for GrowthZone authority');
+  const reconcileResponse = page.waitForResponse(response => response.request().method() === 'POST' && new URL(response.url()).pathname === `/api/admin/accounts/${accountId}/reconcile`);
+  const reconcileRefresh = page.waitForResponse(response => response.request().method() === 'GET' && new URL(response.url()).pathname === `/api/admin/accounts/${accountId}`);
+  await reconciliationCard.getByRole('button', { name: 'Reconcile Now' }).click();
+  const [unavailableReconcile] = await Promise.all([reconcileResponse, reconcileRefresh]);
+  check(unavailableReconcile.status() === 503, 'Admin Reconcile Now fails closed when GrowthZone secret is absent', String(unavailableReconcile.status()));
+  await page.waitForFunction(() => [...document.querySelectorAll('section')].some(section => section.textContent.includes('GrowthZone Reconciliation') && section.textContent.toLowerCase().includes('not configured')));
+  check(runD1(`SELECT status FROM sneak_account_entitlements WHERE account_id=${sqlString(accountId)}`)[0]?.status === 'active', 'GrowthZone configuration failure preserves canonical entitlement');
   check(await page.locator('.audit-item').count() > 0, 'Admin account audit history contains fixture operations');
   const domainsSection = page.locator('section').filter({ has: page.getByRole('heading', { name: 'Domains', exact: true }) });
   await domainsSection.getByRole('button', { name: 'Authorize' }).click();
@@ -510,9 +527,23 @@ async function runAdminBrowserQa(adminToken) {
   await page.waitForTimeout(500);
   check(await page.locator('#app').innerText().then(text => text.includes('READY TO LAUNCH')), 'Admin readiness reaches READY TO LAUNCH after domain authorization');
 
-  await page.fill('#entReference', `GZ-BROWSER-VERIFIED-${suffix}`);
+  await page.fill('#entReference', `person:900001:membership:800001`);
   await page.getByRole('button', { name: 'Save Entitlement' }).click();
   await page.waitForFunction(() => document.querySelector('#adminToast')?.textContent.includes('Entitlement saved'));
+  await page.selectOption('#entSource', 'manual');
+  const manualSave = page.waitForResponse(response => response.request().method() === 'PUT' && new URL(response.url()).pathname === `/api/admin/accounts/${accountId}/entitlement`);
+  const manualRefresh = page.waitForResponse(response => response.request().method() === 'GET' && new URL(response.url()).pathname === `/api/admin/accounts/${accountId}`);
+  await page.getByRole('button', { name: 'Save Entitlement' }).click();
+  await Promise.all([manualSave, manualRefresh]);
+  await page.waitForFunction(() => document.getElementById('entSource')?.value === 'manual' && [...document.querySelectorAll('button')].some(button => button.textContent.trim() === 'Reconcile Now' && button.disabled));
+  check(await page.getByRole('button', { name: 'Reconcile Now' }).isDisabled(), 'Admin manual entitlement disables automatic reconciliation');
+  await page.selectOption('#entSource', 'growthzone');
+  const growthZoneSave = page.waitForResponse(response => response.request().method() === 'PUT' && new URL(response.url()).pathname === `/api/admin/accounts/${accountId}/entitlement`);
+  const growthZoneRefresh = page.waitForResponse(response => response.request().method() === 'GET' && new URL(response.url()).pathname === `/api/admin/accounts/${accountId}`);
+  await page.getByRole('button', { name: 'Save Entitlement' }).click();
+  await Promise.all([growthZoneSave, growthZoneRefresh]);
+  await page.waitForFunction(() => document.getElementById('entSource')?.value === 'growthzone' && [...document.querySelectorAll('button')].some(button => button.textContent.trim() === 'Reconcile Now' && !button.disabled));
+  check(await page.getByRole('button', { name: 'Reconcile Now' }).isEnabled(), 'Admin explicit source change restores GrowthZone reconciliation');
   await page.fill('#brandPhone', '239-555-0199');
   await page.getByRole('button', { name: 'Save Branding' }).click();
   await page.waitForFunction(() => document.querySelector('#adminToast')?.textContent.includes('Branding saved'));
@@ -558,6 +589,9 @@ async function runAdminBrowserQa(adminToken) {
   await page.getByText('Launch Readiness', { exact: true }).click();
   await page.waitForFunction(() => document.querySelector('#app')?.textContent.includes('Launch Readiness Control Plane'));
   check(await page.locator('#app').innerText().then(text => text.includes('Core capability') && text.includes('Optional capability')), 'Admin global readiness separates core and optional capabilities');
+  const readinessText = (await page.locator('#app').innerText()).toLowerCase().replace(/\s+/g, ' ');
+  check(['core idx', 'member magic link email', 'consumer magic link email', 'saved search email alerts', 'growth zone reconciliation'].every(label => readinessText.includes(label)), 'Admin readiness exposes separate 7.4B1 capabilities');
+  check(await page.getByRole('button', { name: 'Reconcile GrowthZone' }).isVisible(), 'Admin bounded bulk reconciliation control is visible');
 
   for (const viewport of viewports) {
     await page.setViewportSize({ width: viewport.width, height: viewport.height });
@@ -582,6 +616,10 @@ function seedMemberClientFixture(listingSamples) {
   const state = JSON.stringify({ version: 1, propertyType: 'sale', filters: { city: 'Bonita Springs', waterfront: true } });
   runD1(`UPDATE sneak_member_users SET status='active',activated_at=${sqlString(now)},updated_at=${sqlString(now)} WHERE id=${sqlString(fixture.memberUserId)}`, 'wrangler.sneak-member.toml');
   runD1(`INSERT INTO sneak_consumer_users (id,site_id,email,status,created_at,activated_at,last_login_at,updated_at,last_activity_at) VALUES (${sqlString(consumerId)},${sqlString(fixture.siteId)},${sqlString(email)},'active',${sqlString(now)},${sqlString(now)},${sqlString(now)},${sqlString(now)},${sqlString(now)})`, 'wrangler.sneak-member.toml');
+  const rawConsumerToken = crypto.randomBytes(32).toString('hex');
+  const consumerTokenHash = crypto.createHash('sha256').update(rawConsumerToken).digest('hex');
+  consumerSessionId = `csess_browser_${suffix}`.replaceAll('-', '_');
+  runD1(`INSERT INTO sneak_consumer_sessions (id,user_id,site_id,token_hash,created_at,expires_at,last_seen_at,revoked_at) VALUES (${sqlString(consumerSessionId)},${sqlString(consumerId)},${sqlString(fixture.siteId)},${sqlString(consumerTokenHash)},${sqlString(now)},${sqlString(new Date(Date.now() + 2 * 60 * 60 * 1000).toISOString())},${sqlString(now)},NULL)`, 'wrangler.sneak-consumer.toml');
   runD1(`INSERT INTO sneak_consumer_favorites (id,site_id,user_id,listing_key,created_at) VALUES (${sqlString(favoriteId)},${sqlString(fixture.siteId)},${sqlString(consumerId)},${sqlString(listingA)},${sqlString(now)}); INSERT INTO sneak_consumer_favorites (id,site_id,user_id,listing_key,created_at) VALUES (${sqlString(favoriteId + '_2')},${sqlString(fixture.siteId)},${sqlString(consumerId)},${sqlString(listingB)},${sqlString(now)})`, 'wrangler.sneak-member.toml');
   runD1(`INSERT INTO sneak_consumer_saved_searches (id,site_id,user_id,name,state_version,state_json,state_hash,created_at,updated_at) VALUES (${sqlString(searchId)},${sqlString(fixture.siteId)},${sqlString(consumerId)},'Browser QA Waterfront Homes',1,${sqlString(state)},${sqlString(crypto.createHash('sha256').update(state).digest('hex'))},${sqlString(now)},${sqlString(now)})`, 'wrangler.sneak-member.toml');
   runD1(`INSERT INTO sneak_consumer_search_alerts (id,saved_search_id,site_id,user_id,frequency,enabled,enabled_at,timezone,created_at,updated_at) VALUES (${sqlString(alertId)},${sqlString(searchId)},${sqlString(fixture.siteId)},${sqlString(consumerId)},'daily',1,${sqlString(now)},'America/New_York',${sqlString(now)},${sqlString(now)})`, 'wrangler.sneak-member.toml');
@@ -599,6 +637,7 @@ function seedMemberClientFixture(listingSamples) {
   }
   fixture.consumerId = consumerId;
   fixture.consumerEmail = email;
+  fixture.consumerSessionToken = rawConsumerToken;
 }
 
 async function runMemberBrowserQa(memberToken) {
@@ -704,6 +743,73 @@ async function runMemberBrowserQa(memberToken) {
   await context.close();
 }
 
+async function runMemberEmailRequestBrowserQa() {
+  const context = await browser.newContext({ viewport: viewports[0] });
+  const page = await context.newPage();
+  const email = `unregistered-${suffix}@example.invalid`;
+  memberRequestEmailHash = crypto.createHash('sha256').update(email).digest('hex');
+  await page.goto(MEMBER, { waitUntil: 'domcontentloaded', timeout: 30000 });
+  await page.fill('#memberEmail', email);
+  const requestResponse = page.waitForResponse(response => response.request().method() === 'POST' && new URL(response.url()).pathname === '/api/member/auth/magic-link');
+  await page.getByRole('button', { name: 'Send Magic Sign-In Link' }).click();
+  const response = await requestResponse;
+  const payload = await response.json();
+  check(response.status() === 200 && payload.success === true, 'Member magic-link request browser returns enumeration-safe response');
+  check(!JSON.stringify(payload).match(/token|userId|accountId/i), 'Member magic-link request browser exposes no token or identity material');
+  check(await page.locator('#loginMsg').innerText().then(text => text.includes('If an account exists')), 'Member magic-link service state is visible in login UI');
+  for (const viewport of [viewports[0], viewports[2]]) {
+    await page.setViewportSize({ width: viewport.width, height: viewport.height });
+    check(await documentFits(page), `Member login ${viewport.name} has no horizontal overflow`);
+  }
+  const invalidResponse = await page.goto(`${MEMBER}/api/member/auth/verify?token=${'x'.repeat(40)}`, { waitUntil: 'domcontentloaded', timeout: 30000 });
+  check(invalidResponse?.status() === 401 && (await page.locator('body').innerText()).includes('InvalidToken'), 'Member invalid/expired magic link fails closed in browser');
+  await context.close();
+}
+
+async function runConsumerBrowserQa(consumerToken) {
+  const directMe = await fetch(`${CONSUMER}/api/consumer/auth/me?site=${encodeURIComponent(fixture.siteKey)}`, { headers: { Authorization: `Bearer ${consumerToken}` } });
+  requireCheck(directMe.status === 200, 'temporary Consumer session accepted by protected API', String(directMe.status));
+  const context = await browser.newContext({ viewport: viewports[0] });
+  await context.addInitScript(({ site, token }) => localStorage.setItem('ccor_consumer_session_' + site, token), { site: fixture.siteKey, token: consumerToken });
+  const page = await context.newPage();
+  const searchUrl = `${SERVING}/search/?site=${encodeURIComponent(fixture.siteKey)}`;
+  const browserMeResponse = page.waitForResponse(response => new URL(response.url()).pathname === '/api/consumer/auth/me');
+  await page.goto(searchUrl, { waitUntil: 'domcontentloaded', timeout: 45000 });
+  const browserMe = await browserMeResponse;
+  requireCheck(browserMe.status() === 200, 'Consumer browser session accepted by service', String(browserMe.status()));
+  await page.waitForFunction(() => getComputedStyle(document.getElementById('consumerUserNavItem')).display !== 'none', null, { timeout: 30000 });
+  check(true, 'authenticated Consumer session established in browser');
+  await page.click('#consumerUserBtn');
+  await page.waitForSelector('#consumerAccountModal.open');
+  check(await page.locator('#consumerAccountEmail').innerText().then(text => text.includes(fixture.consumerEmail)), 'Consumer Account shows site-scoped identity');
+  await page.click('#consumerOpenSearchesBtn');
+  await page.waitForFunction(() => document.querySelector('#savedSearchesList')?.textContent.includes('Browser QA Waterfront Homes'));
+  check(await page.locator('#savedSearchesList').innerText().then(text => text.includes('Browser QA Waterfront Homes')), 'Consumer saved search is visible');
+  check(await page.locator('.saved-search-alert-select').inputValue() === 'daily', 'Consumer saved-search Daily alert preference is visible');
+  for (const viewport of [viewports[0], viewports[2]]) {
+    await page.setViewportSize({ width: viewport.width, height: viewport.height });
+    check(await documentFits(page), `Consumer account ${viewport.name} has no horizontal overflow`);
+  }
+  await context.close();
+
+  const requestContext = await browser.newContext({ viewport: viewports[0] });
+  const requestPage = await requestContext.newPage();
+  await requestPage.goto(`${CONSUMER}/api/consumer/version`, { waitUntil: 'domcontentloaded', timeout: 30000 });
+  const consumerService = JSON.parse(await requestPage.locator('body').innerText());
+  check(consumerService.build === '2026.09.01.7.4b1' && consumerService.emailProviderConfigured === false, 'Consumer browser exposes current fail-closed email service state');
+  const magicRequest = await requestPage.evaluate(async ({ site, email }) => {
+    const response = await fetch('/api/consumer/auth/magic-link', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ site, email, returnUrl: 'https://unauthorized.example.invalid/' })
+    });
+    return { status: response.status, payload: await response.json() };
+  }, { site: `missing-${suffix}`, email: `unregistered-${suffix}@example.invalid` });
+  check(magicRequest.status === 200 && magicRequest.payload.success === true, 'Consumer magic-link request browser returns generic response');
+  check(!JSON.stringify(magicRequest.payload).match(/token|consumerSession|auth_code/i), 'Consumer magic-link request browser exposes no token or session material');
+  await requestContext.close();
+}
+
 function cleanup() {
   if (listingSurfaceFixture?.userId) {
     try {
@@ -715,12 +821,19 @@ function cleanup() {
   if (memberSessionId) {
     try { runD1(`DELETE FROM sneak_member_sessions WHERE id=${sqlString(memberSessionId)}`, 'wrangler.sneak-member.toml'); } catch (error) { check(false, 'temporary Member session cleanup', error.message); }
   }
+  if (memberRequestEmailHash) {
+    try { runD1(`DELETE FROM sneak_member_login_attempts WHERE email_hash=${sqlString(memberRequestEmailHash)}`, 'wrangler.sneak-member.toml'); } catch (error) { check(false, 'Member request-attempt cleanup', error.message); }
+  }
+  if (consumerSessionId) {
+    try { runD1(`DELETE FROM sneak_consumer_sessions WHERE id=${sqlString(consumerSessionId)}`, 'wrangler.sneak-consumer.toml'); } catch (error) { check(false, 'temporary Consumer session cleanup', error.message); }
+  }
   if (fixture?.accountId && /^acc_[A-Za-z0-9_-]+$/.test(fixture.accountId)) {
     const id = sqlString(fixture.accountId);
     const statements = [
       `DELETE FROM sneak_member_sessions WHERE account_id=${id}`,
       `DELETE FROM sneak_member_audit WHERE account_id=${id}`,
       `DELETE FROM sneak_admin_audit WHERE entity_id=${id} OR entity_id IN (SELECT id FROM sneak_sites WHERE account_id=${id}) OR entity_id IN (SELECT id FROM sneak_member_users WHERE account_id=${id}) OR entity_id IN (SELECT d.id FROM sneak_domains d JOIN sneak_sites s ON s.id=d.site_id WHERE s.account_id=${id})`,
+      `DELETE FROM sneak_growthzone_reconciliation WHERE account_id=${id}`,
       `DELETE FROM sneak_account_entitlements WHERE account_id=${id}`,
       `DELETE FROM sneak_accounts WHERE id=${id}`
     ];
@@ -759,6 +872,8 @@ try {
   const memberSession = insertTemporarySession('sneak_member_sessions', 'msess_browser', { userId: fixture.memberUserId, accountId: fixture.accountId });
   memberSessionId = memberSession.id;
   await runMemberBrowserQa(memberSession.rawToken);
+  await runMemberEmailRequestBrowserQa();
+  await runConsumerBrowserQa(fixture.consumerSessionToken);
 } catch (error) {
   check(false, 'browser QA harness completed', error.stack || error.message);
 } finally {

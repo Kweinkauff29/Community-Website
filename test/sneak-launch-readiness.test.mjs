@@ -203,7 +203,7 @@ describe('Phase 7.4A — Launch Readiness and Staff Provisioning', () => {
     });
     test('29. Admin health is deterministic and secret-free', async () => {
         const response=await adminWorker.fetch(new Request('https://admin.example/health'),{SNEAK_ENV:'staging'},{}); const body=await response.json();
-        assert.deepEqual(body,{service:'sneak-idx-admin-staging',status:'ok',build:'2026.08.31.7.4a',environment:'staging'}); assert.doesNotMatch(JSON.stringify(body),/secret|password|token_hash/i);
+        assert.deepEqual(body,{service:'sneak-idx-admin-staging',status:'ok',build:'2026.09.01.7.4b1',environment:'staging',growthZoneConfigured:false}); assert.doesNotMatch(JSON.stringify(body),/secret|password|token_hash/i);
     });
     test('30. runtime source has no preview fallback secret or Stripe authority query', () => {
         const sources=['sneak-admin/api.js','sneak-admin/readiness.js','sneak-sites/worker.js','SneakIDXWorker.js'].map(file=>fs.readFileSync(new URL('../'+file,import.meta.url),'utf8')).join('\n');
