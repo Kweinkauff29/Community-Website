@@ -17,6 +17,5 @@ database_name = "sneak-idx-production"
 database_id = "9d3c529d-a769-4ab3-9385-d9c8bc5e937d"
 migrations_dir = "migrations"
 
-# Enable only after BRIDGE_TOKEN is configured and the controlled initial sync passes.
-# [triggers]
-# crons = ["*/15 * * * *", "7 * * * *", "23 7 * * *"]
+[triggers]
+crons = ["*/15 * * * *", "7 * * * *", "23 7 * * *"]
