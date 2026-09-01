@@ -14,6 +14,8 @@ import { runListingDelta } from './listing-sync.js';
 import { runOpenHouseSync } from './open-house-sync.js';
 import { runListingReconciliation } from './reconciliation.js';
 
+export const SNEAK_SYNC_BUILD = '2026.09.01.7.4b2';
+
 export default {
     /**
      * Public HTTP fetch handler (Read-Only Health Check).
@@ -23,7 +25,8 @@ export default {
 
         if (url.pathname === '/' || url.pathname === '/health') {
             return new Response(JSON.stringify({
-                service: 'sneak-idx-sync-staging',
+                service: env?.SNEAK_SERVICE_NAME || 'sneak-idx-sync-staging',
+                build: SNEAK_SYNC_BUILD,
                 status: 'ok',
                 env: env.SNEAK_ENV || 'staging',
                 timestamp: new Date().toISOString()

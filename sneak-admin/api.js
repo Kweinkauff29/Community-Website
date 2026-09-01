@@ -42,6 +42,11 @@ function error(message, status = 400, code = 'BadRequest') {
     return json({ error: code, message }, status);
 }
 
+function capabilityEnabled(value, defaultValue = true) {
+    if (value === undefined || value === null || value === '') return defaultValue;
+    return ['1', 'true', 'yes', 'on'].includes(String(value).trim().toLowerCase());
+}
+
 async function readServiceHealth(binding, path) {
     if (!binding || typeof binding.fetch !== 'function') return { reachable: false, data: {} };
     try {
@@ -239,7 +244,7 @@ function withLaunchCheckType(check) {
 /**
  * POST /api/admin/accounts (Atomic Provisioning)
  */
-export async function handleCreateAccount(db, body, actor) {
+export async function handleCreateAccount(db, body, actor, env = {}) {
     const {
         account_name,
         member_id,
@@ -360,7 +365,7 @@ export async function handleCreateAccount(db, body, actor) {
 
     await logAudit(db, actor, 'CREATE_ACCOUNT', 'account', accountId, `Provisioned account '${account_name}' with site '${finalSiteKey}' (${scope_type})`);
 
-    const embed = generateEmbedSnippets(finalSiteKey, cleanDomain ? [cleanDomain] : [], branding);
+    const embed = generateEmbedSnippets(finalSiteKey, cleanDomain ? [cleanDomain] : [], branding, env);
 
     return json({
         success: true,
@@ -418,7 +423,7 @@ export async function handleGetAccount(db, accountId, env = {}) {
         const leads = await db.prepare("SELECT * FROM sneak_leads WHERE site_id = ? ORDER BY created_at DESC LIMIT 10").bind(site.id).all();
 
         const allowedDomains = (domains.results || []).filter(d => d.status === 'active' && d.verified === 1).map(d => d.domain);
-        const embed = generateEmbedSnippets(site.site_key, allowedDomains, branding || {});
+        const embed = generateEmbedSnippets(site.site_key, allowedDomains, branding || {}, env);
 
         siteList.push({
             ...site,
@@ -924,7 +929,7 @@ export async function handleCreateAccountMemberInvite(db, accountId, body, actor
 /**
  * GET /api/admin/sites/:id/embed
  */
-export async function handleGetEmbed(db, siteId) {
+export async function handleGetEmbed(db, siteId, env = {}) {
     const site = await db.prepare("SELECT * FROM sneak_sites WHERE id = ?").bind(siteId).first();
     if (!site) return error('Site not found', 404);
 
@@ -932,7 +937,7 @@ export async function handleGetEmbed(db, siteId) {
     const branding = await db.prepare("SELECT * FROM sneak_branding WHERE site_id = ?").bind(siteId).first();
 
     const allowed = (domains.results || []).map(d => d.domain);
-    const embed = generateEmbedSnippets(site.site_key, allowed, branding || {});
+    const embed = generateEmbedSnippets(site.site_key, allowed, branding || {}, env);
 
     return json(embed);
 }
@@ -1443,16 +1448,20 @@ export async function handleGetReadiness(db, env) {
     } catch {}
 
     const checkPassed = key => launchChecks.find(item => item.check_key === key)?.status === 'pass';
+    const consumerAuthEnabled = capabilityEnabled(env?.CONSUMER_AUTH_ENABLED, true);
+    const alertsEnabled = capabilityEnabled(env?.EMAIL_ALERTS_ENABLED, true);
+    const growthZoneAutomationEnabled = capabilityEnabled(env?.GROWTHZONE_RECONCILIATION_ENABLED, true);
+    const customHostEnabled = capabilityEnabled(env?.CUSTOM_HOST_ENABLED, true);
     const memberProviderConfigured = memberHealth.data?.emailProviderConfigured === true;
     const consumerProviderConfigured = consumerHealth.data?.emailProviderConfigured === true;
     const alertDeliveryConfigured = alertHealth.data?.deliveryReady === true;
     const memberEmailReady = memberProviderConfigured && checkPassed('member_magic_link_e2e');
     const consumerEmailReady = consumerProviderConfigured && checkPassed('consumer_magic_link_e2e');
-    const alertsReady = alertDeliveryConfigured
+    const alertsReady = alertsEnabled && alertDeliveryConfigured
         && checkPassed('alerts_asap_e2e')
         && checkPassed('alerts_daily_e2e')
         && checkPassed('alerts_unsubscribe_e2e');
-    const growthZoneConfigured = Boolean(env?.GROWTHZONE_BASE_URL && env?.GROWTHZONE_API_KEY);
+    const growthZoneConfigured = Boolean(growthZoneAutomationEnabled && env?.GROWTHZONE_BASE_URL && env?.GROWTHZONE_API_KEY);
     const growthZoneReady = growthZoneConfigured && checkPassed('growthzone_reconciliation_e2e');
 
     let growthZoneSummary = { accounts: 0, verified: 0, needsAttention: 0, stale: 0 };
@@ -1475,13 +1484,13 @@ export async function handleGetReadiness(db, env) {
     } catch {}
 
     const blockers = [];
-    if (!saasDiag.zoneConfigured || saasDiag.mode !== 'live') {
+    if (customHostEnabled && (!saasDiag.zoneConfigured || saasDiag.mode !== 'live')) {
         blockers.push({ code: 'CUSTOM_DOMAIN_PROVIDER_REQUIRED', message: 'Cloudflare for SaaS provider configuration is required.', capability: 'custom_domain' });
     }
     if (!memberEmailReady) blockers.push({ code: 'MEMBER_EMAIL_NOT_VERIFIED', message: 'Member magic-link delivery and consumption require controlled-inbox evidence.', capability: 'member_email' });
-    if (!consumerEmailReady) blockers.push({ code: 'CONSUMER_EMAIL_NOT_VERIFIED', message: 'Consumer magic-link delivery and consumption require controlled-inbox evidence.', capability: 'consumer_email' });
-    if (!alertsReady) blockers.push({ code: 'ALERT_EMAIL_NOT_VERIFIED', message: 'ASAP, Daily, and unsubscribe controlled-inbox evidence is incomplete.', capability: 'saved_search_alerts' });
-    if (!growthZoneReady) blockers.push({ code: 'GROWTHZONE_NOT_VERIFIED', message: 'GrowthZone API configuration and an authenticated reconciliation proof are required.', capability: 'growthzone' });
+    if (consumerAuthEnabled && !consumerEmailReady) blockers.push({ code: 'CONSUMER_EMAIL_NOT_VERIFIED', message: 'Consumer magic-link delivery and consumption require controlled-inbox evidence.', capability: 'consumer_email' });
+    if (alertsEnabled && !alertsReady) blockers.push({ code: 'ALERT_EMAIL_NOT_VERIFIED', message: 'ASAP, Daily, and unsubscribe controlled-inbox evidence is incomplete.', capability: 'saved_search_alerts' });
+    if (growthZoneAutomationEnabled && !growthZoneReady) blockers.push({ code: 'GROWTHZONE_NOT_VERIFIED', message: 'GrowthZone API configuration and an authenticated reconciliation proof are required.', capability: 'growthzone' });
 
     let readinessCategory = 'Development Ready';
     if (mlsStatus === 'Healthy' && allChecksPassed) {
@@ -1526,8 +1535,9 @@ export async function handleGetReadiness(db, env) {
         memberPortal: 'Healthy',
         websiteEngine: 'Healthy',
         growthZone: {
+            enabled: growthZoneAutomationEnabled,
             configured: growthZoneConfigured,
-            cadence: 'daily at 11:15 UTC',
+            cadence: growthZoneAutomationEnabled ? 'daily at 11:15 UTC' : 'disabled',
             ...growthZoneSummary
         },
         launchChecks: launchChecks.map(withLaunchCheckType),
@@ -1535,12 +1545,12 @@ export async function handleGetReadiness(db, env) {
         capabilities: {
             coreSearch: { status: mlsStatus === 'Healthy' ? 'READY' : 'NOT_READY', core: true },
             coreIdx: { status: mlsStatus === 'Healthy' ? 'READY' : 'NOT_READY', core: true },
-            memberMagicLinkEmail: { status: memberEmailReady ? 'READY' : (memberProviderConfigured ? 'NOT_VERIFIED' : 'NOT_READY'), core: false },
-            consumerLogin: { status: consumerEmailReady ? 'READY' : (consumerProviderConfigured ? 'NOT_VERIFIED' : 'NOT_READY'), core: false },
-            consumerMagicLinkEmail: { status: consumerEmailReady ? 'READY' : (consumerProviderConfigured ? 'NOT_VERIFIED' : 'NOT_READY'), core: false },
-            savedSearchEmailAlerts: { status: alertsReady ? 'READY' : (alertDeliveryConfigured ? 'NOT_VERIFIED' : 'NOT_READY'), core: false },
-            growthZoneReconciliation: { status: growthZoneSummary.stale > 0 ? 'VERIFICATION_STALE' : (growthZoneReady ? 'READY' : (growthZoneConfigured ? 'NOT_VERIFIED' : 'NOT_READY')), core: false },
-            customDomain: { status: saasDiag.mode === 'live' && saasDiag.zoneConfigured ? 'READY' : 'NOT_READY', core: true },
+            memberMagicLinkEmail: { status: memberEmailReady ? 'READY' : (memberProviderConfigured ? 'NOT_VERIFIED' : 'NOT_READY'), core: true },
+            consumerLogin: { status: !consumerAuthEnabled ? 'DISABLED' : (consumerEmailReady ? 'READY' : (consumerProviderConfigured ? 'NOT_VERIFIED' : 'NOT_READY')), core: false },
+            consumerMagicLinkEmail: { status: !consumerAuthEnabled ? 'DISABLED' : (consumerEmailReady ? 'READY' : (consumerProviderConfigured ? 'NOT_VERIFIED' : 'NOT_READY')), core: false },
+            savedSearchEmailAlerts: { status: !alertsEnabled ? 'DISABLED' : (alertsReady ? 'READY' : (alertDeliveryConfigured ? 'NOT_VERIFIED' : 'NOT_READY')), core: false },
+            growthZoneReconciliation: { status: !growthZoneAutomationEnabled ? 'MANUAL_MODE' : (growthZoneSummary.stale > 0 ? 'VERIFICATION_STALE' : (growthZoneReady ? 'READY' : (growthZoneConfigured ? 'NOT_VERIFIED' : 'NOT_READY'))), core: false },
+            customDomain: { status: !customHostEnabled ? 'NOT_USED' : (saasDiag.mode === 'live' && saasDiag.zoneConfigured ? 'READY' : 'NOT_READY'), core: false },
             memberPortal: { status: 'READY', core: true },
             adminPortal: { status: 'READY', core: true }
         },

@@ -32,7 +32,7 @@ import {
     handleGetMemberClientActivity
 } from './api.js';
 
-export const SNEAK_MEMBER_BUILD = '2026.09.01.7.4b1';
+export const SNEAK_MEMBER_BUILD = '2026.09.01.7.4b2';
 
 const SECURITY_HEADERS = {
     'Content-Security-Policy': "default-src 'self'; script-src 'self' 'unsafe-inline' https://fonts.googleapis.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; connect-src 'self'; frame-ancestors 'none';",
@@ -68,7 +68,7 @@ export default {
         if (path === '/health' || (path === '/' && request.headers.get('Accept') === 'application/json')) {
             return json({
                 status: 'healthy',
-                worker: 'sneak-idx-member-staging',
+                worker: env?.SNEAK_SERVICE_NAME || 'sneak-idx-member-staging',
                 build: SNEAK_MEMBER_BUILD,
                 emailProviderConfigured: Boolean(
                     (env?.MAILJET_API_KEY || env?.MJ_API_KEY)
@@ -160,7 +160,7 @@ export default {
 
             // Route protected requests
             if (path === '/api/member/overview' && method === 'GET') {
-                return handleMemberOverview(env.DB, memberContext);
+                return handleMemberOverview(env.DB, memberContext, env);
             }
 
             if (path === '/api/member/domains' && method === 'GET') {
@@ -197,7 +197,7 @@ export default {
             }
 
             if (path === '/api/member/embed' && method === 'GET') {
-                return handleGetMemberEmbed(env.DB, memberContext);
+                return handleGetMemberEmbed(env.DB, memberContext, env);
             }
 
             if (path === '/api/member/leads' && method === 'GET') {

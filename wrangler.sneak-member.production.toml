@@ -1,0 +1,20 @@
+name = "sneak-idx-member"
+main = "sneak-member/worker.js"
+compatibility_date = "2026-09-01"
+workers_dev = true
+
+[observability]
+enabled = true
+head_sampling_rate = 1
+
+[vars]
+SNEAK_ENV = "production"
+SNEAK_SERVICE_NAME = "sneak-idx-member"
+SNEAK_SERVING_URL = "https://sneak-idx-worker.bonitaspringsrealtors.workers.dev"
+EMAIL_FROM = "CCOR IDX Plug-in <no-reply@ccorealtors.org>"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "sneak-idx-production"
+database_id = "9d3c529d-a769-4ab3-9385-d9c8bc5e937d"
+migrations_dir = "migrations"

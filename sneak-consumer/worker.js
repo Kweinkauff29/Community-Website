@@ -45,7 +45,19 @@ import {
     handleDisableSharedListShare
 } from './api.js';
 
-const CONSUMER_BUILD = '2026.09.01.7.4b1';
+const CONSUMER_BUILD = '2026.09.01.7.4b2';
+
+function consumerAuthEnabled(env) {
+    const value = env?.CONSUMER_AUTH_ENABLED;
+    if (value === undefined || value === null || value === '') return true;
+    return ['1', 'true', 'yes', 'on'].includes(String(value).trim().toLowerCase());
+}
+
+function emailAlertsEnabled(env) {
+    const value = env?.EMAIL_ALERTS_ENABLED;
+    if (value === undefined || value === null || value === '') return true;
+    return ['1', 'true', 'yes', 'on'].includes(String(value).trim().toLowerCase());
+}
 
 /**
  * Validates request origin against authorized sites/domains in D1.
@@ -91,16 +103,26 @@ export default {
 
         // 1. Health / Version check
         if (url.pathname === '/' || url.pathname === '/api/consumer/version') {
+            const authEnabled = consumerAuthEnabled(env);
             return jsonResponse({
                 service: 'sneak-consumer-worker',
                 build: CONSUMER_BUILD,
                 status: 'healthy',
+                authEnabled,
+                emailAlertsEnabled: emailAlertsEnabled(env),
                 emailProviderConfigured: Boolean(
                     (env?.MAILJET_API_KEY || env?.MJ_API_KEY)
                     && (env?.MAILJET_SECRET_KEY || env?.MJ_API_SECRET)
                 ),
                 timestamp: new Date().toISOString()
             }, 200, '*');
+        }
+
+        if (!consumerAuthEnabled(env) && url.pathname.startsWith('/api/consumer/')) {
+            return jsonResponse({
+                error: 'CapabilityDisabled',
+                message: 'Consumer account features are disabled for this launch profile.'
+            }, 503, '*');
         }
 
         // 2. Magic Link Verification (Direct browser navigation / redirect)
@@ -174,6 +196,12 @@ export default {
 
             // Alert Preferences for Saved Search (Phase 7.3C2A)
             if (url.pathname.startsWith('/api/consumer/saved-searches/') && url.pathname.endsWith('/alert')) {
+                if (!emailAlertsEnabled(env)) {
+                    return jsonResponse({
+                        error: 'CapabilityDisabled',
+                        message: 'Saved-search email alerts are disabled for this launch profile.'
+                    }, 503, allowedOrigin);
+                }
                 const parts = url.pathname.split('/');
                 // /api/consumer/saved-searches/:id/alert
                 const searchId = decodeURIComponent(parts[4]);

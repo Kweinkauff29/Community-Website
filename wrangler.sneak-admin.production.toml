@@ -1,0 +1,48 @@
+name = "sneak-idx-admin"
+main = "sneak-admin/worker.js"
+compatibility_date = "2026-09-01"
+workers_dev = true
+
+[observability]
+enabled = true
+head_sampling_rate = 1
+
+[vars]
+SNEAK_ENV = "production"
+SNEAK_SERVICE_NAME = "sneak-idx-admin"
+SNEAK_SERVING_URL = "https://sneak-idx-worker.bonitaspringsrealtors.workers.dev"
+CONSUMER_AUTH_ENABLED = "false"
+EMAIL_ALERTS_ENABLED = "false"
+GROWTHZONE_RECONCILIATION_ENABLED = "false"
+CUSTOM_HOST_ENABLED = "false"
+GROWTHZONE_BASE_URL = "https://bonitaspringsesterorealtorsfl.growthzoneapp.com"
+GROWTHZONE_PLAN_MAP_JSON = "{}"
+GROWTHZONE_BATCH_LIMIT = "25"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "sneak-idx-production"
+database_id = "9d3c529d-a769-4ab3-9385-d9c8bc5e937d"
+migrations_dir = "migrations"
+
+[[services]]
+binding = "MEMBER_WORKER"
+service = "sneak-idx-member"
+
+[[services]]
+binding = "SERVING_WORKER"
+service = "sneak-idx-worker"
+
+[[services]]
+binding = "CONSUMER_WORKER"
+service = "sneak-idx-consumer"
+
+[[services]]
+binding = "SITES_WORKER"
+service = "sneak-idx-sites"
+
+[[services]]
+binding = "ALERT_WORKER"
+service = "sneak-idx-alerts"
+
+# No GrowthZone cron while manual entitlement mode is selected.

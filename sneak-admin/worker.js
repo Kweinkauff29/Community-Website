@@ -19,7 +19,13 @@ import {
 import * as api from './api.js';
 import { reconcileGrowthZoneBatch } from './growthzone.js';
 
-export const SNEAK_ADMIN_BUILD = '2026.09.01.7.4b1';
+export const SNEAK_ADMIN_BUILD = '2026.09.01.7.4b2';
+
+function growthZoneEnabled(env) {
+    const value = env?.GROWTHZONE_RECONCILIATION_ENABLED;
+    if (value === undefined || value === null || value === '') return true;
+    return ['1', 'true', 'yes', 'on'].includes(String(value).trim().toLowerCase());
+}
 
 const SECURITY_HEADERS = {
     'Content-Security-Policy': "default-src 'self'; script-src 'self' 'unsafe-inline' https://fonts.googleapis.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; connect-src 'self' https://sneak-idx-worker-staging.bonitaspringsrealtors.workers.dev; frame-ancestors 'none';",
@@ -84,11 +90,12 @@ export default {
         // 2. Health check
         if (method === 'GET' && path === '/health') {
             return json({
-                service: 'sneak-idx-admin-staging',
+                service: env?.SNEAK_SERVICE_NAME || 'sneak-idx-admin-staging',
                 status: 'ok',
                 build: SNEAK_ADMIN_BUILD,
                 environment: env.SNEAK_ENV || 'staging',
-                growthZoneConfigured: Boolean(env?.GROWTHZONE_BASE_URL && env?.GROWTHZONE_API_KEY)
+                growthZoneEnabled: growthZoneEnabled(env),
+                growthZoneConfigured: Boolean(growthZoneEnabled(env) && env?.GROWTHZONE_BASE_URL && env?.GROWTHZONE_API_KEY)
             });
         }
 
@@ -194,7 +201,7 @@ export default {
 
             if (path === '/api/admin/accounts' && method === 'POST') {
                 const body = await request.json();
-                return await api.handleCreateAccount(db, body, actor);
+                    return await api.handleCreateAccount(db, body, actor, env);
             }
 
             // /api/admin/accounts/:id
@@ -346,7 +353,7 @@ export default {
             const embedMatch = path.match(/^\/api\/admin\/sites\/([^\/]+)\/embed$/);
             if (embedMatch && method === 'GET') {
                 const siteId = embedMatch[1];
-                return await api.handleGetEmbed(db, siteId);
+                return await api.handleGetEmbed(db, siteId, env);
             }
 
             // /api/admin/accounts/:id/entitlement
@@ -419,6 +426,10 @@ export default {
     },
 
     async scheduled(controller, env) {
+        if (!growthZoneEnabled(env)) {
+            console.log(JSON.stringify({ event: 'growthzone_reconciliation_skipped', reason: 'capability_disabled' }));
+            return;
+        }
         const result = await reconcileGrowthZoneBatch(env.DB, env, {
             actor: 'system:growthzone-cron',
             limit: Number(env?.GROWTHZONE_BATCH_LIMIT || 25),

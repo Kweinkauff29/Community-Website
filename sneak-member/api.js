@@ -40,7 +40,7 @@ async function logMemberAudit(db, userId, accountId, action, entityType, entityI
 /**
  * GET /api/member/overview
  */
-export async function handleMemberOverview(db, memberContext) {
+export async function handleMemberOverview(db, memberContext, env = {}) {
     const { account_id, user_id, member_email, account_name, account_plan } = memberContext;
 
     const sites = await db.prepare("SELECT * FROM sneak_sites WHERE account_id = ?").bind(account_id).all();
@@ -60,7 +60,7 @@ export async function handleMemberOverview(db, memberContext) {
         widgetConfigs = widRes.results || [];
 
         const allowed = domains.filter(d => d.status === 'active' && d.verified === 1).map(d => d.domain);
-        embed = generateEmbedSnippets(primarySite.site_key, allowed, branding || {});
+        embed = generateEmbedSnippets(primarySite.site_key, allowed, branding || {}, env);
     }
 
     const entitlement = await getAccountEntitlement(db, account_id);
@@ -307,7 +307,7 @@ export async function handleUpdateMemberWidget(db, memberContext, widgetType, bo
 /**
  * GET /api/member/embed
  */
-export async function handleGetMemberEmbed(db, memberContext) {
+export async function handleGetMemberEmbed(db, memberContext, env = {}) {
     const { account_id } = memberContext;
     const site = await db.prepare("SELECT id, site_key FROM sneak_sites WHERE account_id = ? LIMIT 1").bind(account_id).first();
     if (!site) return error('No site configured', 404);
@@ -316,7 +316,7 @@ export async function handleGetMemberEmbed(db, memberContext) {
     const branding = await db.prepare("SELECT * FROM sneak_branding WHERE site_id = ?").bind(site.id).first();
 
     const allowed = (domains.results || []).map(d => d.domain);
-    const embed = generateEmbedSnippets(site.site_key, allowed, branding || {});
+    const embed = generateEmbedSnippets(site.site_key, allowed, branding || {}, env);
 
     return json(embed);
 }

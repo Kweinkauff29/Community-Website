@@ -120,7 +120,7 @@ function executeReadOnlyPreflight(options) {
     const executeQuery = sql => {
         const commandSql = sql.replace(/\s+/g, ' ').trim();
         const wranglerArgs = [
-            '--yes', 'wrangler@latest', 'd1', 'execute', options.database,
+            'wrangler', 'd1', 'execute', options.database,
             '--config', options.config,
             options.mode,
             '--json',

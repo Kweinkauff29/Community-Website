@@ -1025,15 +1025,15 @@ describe('SNEAK IDX Phase 2.2 Test Suite', () => {
         assert.ok(Array.isArray(data.data));
     });
 
-    test('PHASE 7.4A: Serving and frontend build versions are uniformly bumped to 2026.08.31.7.4a', () => {
+    test('PHASE 7.4B2: Serving and frontend build versions are uniformly bumped to 2026.09.01.7.4b2', () => {
         const searchHtml = fs.readFileSync(path.join(rootDir, 'sneak-idx/search/index.html'), 'utf8');
         const embedJs = fs.readFileSync(path.join(rootDir, 'sneak-idx/embed.js'), 'utf8');
         const servingWorker = fs.readFileSync(path.join(rootDir, 'SneakIDXWorker.js'), 'utf8');
 
-        assert.ok(searchHtml.includes('data-ui-build="2026.08.31.7.4a"'), 'search/index.html must have data-ui-build="2026.08.31.7.4a"');
-        assert.ok(searchHtml.includes("CCOR_IDX_UI_BUILD = '2026.08.31.7.4a'"), "search/index.html must have CCOR_IDX_UI_BUILD = '2026.08.31.7.4a'");
-        assert.ok(embedJs.includes("const buildVersion = '2026.08.31.7.4a'"), "embed.js must have buildVersion = '2026.08.31.7.4a'");
-        assert.ok(servingWorker.includes("SNEAK_IDX_BUILD = '2026.08.31.7.4a'"), 'SneakIDXWorker.js must expose the 7.4A build');
+        assert.ok(searchHtml.includes('data-ui-build="2026.09.01.7.4b2"'), 'search/index.html must have data-ui-build="2026.09.01.7.4b2"');
+        assert.ok(searchHtml.includes("CCOR_IDX_UI_BUILD = '2026.09.01.7.4b2'"), "search/index.html must have CCOR_IDX_UI_BUILD = '2026.09.01.7.4b2'");
+        assert.ok(embedJs.includes("const buildVersion = '2026.09.01.7.4b2'"), "embed.js must have buildVersion = '2026.09.01.7.4b2'");
+        assert.ok(servingWorker.includes("SNEAK_IDX_BUILD = '2026.09.01.7.4b2'"), 'SneakIDXWorker.js must expose the 7.4B2 build');
         assert.ok(embedJs.includes('ccor_listing'), 'embed.js must forward ccor_listing deep link parameter');
         assert.ok(searchHtml.includes('initialDeepListingKey'), 'search/index.html must parse initialDeepListingKey');
         assert.ok(searchHtml.includes('updateSavedSearchAlert'), 'search/index.html must implement updateSavedSearchAlert');

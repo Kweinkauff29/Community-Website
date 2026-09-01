@@ -18,7 +18,13 @@ import { findDueAlerts, matchNewListingsForAlert } from './matcher.js';
 import { renderSavedSearchAlertEmail, escapeHtml } from './email.js';
 import { sendTransactionalEmail, createUnsubscribeToken, verifyUnsubscribeToken } from '../sneak-shared/email-provider.js';
 
-export const ALERT_BUILD = '2026.09.01.7.4b1';
+export const ALERT_BUILD = '2026.09.01.7.4b2';
+
+function alertDeliveryEnabled(env) {
+    const value = env?.EMAIL_ALERTS_ENABLED;
+    if (value === undefined || value === null || value === '') return true;
+    return ['1', 'true', 'yes', 'on'].includes(String(value).trim().toLowerCase());
+}
 
 export function jsonResponse(data, status = 200, origin = null) {
     const headers = new Headers();
@@ -37,6 +43,9 @@ export function jsonResponse(data, status = 200, origin = null) {
  * Core alert processing engine executed by scheduled cron or test dry-runs.
  */
 export async function processAlerts({ db, env, dryRun = false, now = new Date() }) {
+    if (!alertDeliveryEnabled(env) && !dryRun) {
+        return { skipped: true, reason: 'CapabilityDisabled', deliveryReady: false };
+    }
     const signingSecret = env?.SNEAK_ALERT_UNSUBSCRIBE_SECRET || env?.SNEAK_SIGNING_SECRET;
     const providerReady = Boolean(env?.MAILJET_API_KEY && env?.MAILJET_SECRET_KEY);
     const signingReady = Boolean(signingSecret && typeof signingSecret === 'string' && signingSecret.length >= 16);
@@ -406,6 +415,7 @@ export default {
         const signingSecret = env?.SNEAK_ALERT_UNSUBSCRIBE_SECRET || env?.SNEAK_SIGNING_SECRET;
         const emailConfigured = Boolean(env?.MAILJET_API_KEY && env?.MAILJET_SECRET_KEY);
         const secretConfigured = Boolean(signingSecret && typeof signingSecret === 'string' && signingSecret.length >= 16);
+        const deliveryEnabled = alertDeliveryEnabled(env);
 
         // 1. Health & Version Check
         if (url.pathname === '/' || url.pathname === '/health' || url.pathname === '/api/alerts/version') {
@@ -413,11 +423,19 @@ export default {
                 service: 'sneak-alerts-worker',
                 build: ALERT_BUILD,
                 status: 'healthy',
+                enabled: deliveryEnabled,
                 emailProviderConfigured: emailConfigured,
                 signingSecretConfigured: secretConfigured,
-                deliveryReady: Boolean(emailConfigured && secretConfigured),
+                deliveryReady: Boolean(deliveryEnabled && emailConfigured && secretConfigured),
                 timestamp: new Date().toISOString()
             }, 200, '*');
+        }
+
+        if (!deliveryEnabled) {
+            return jsonResponse({
+                error: 'CapabilityDisabled',
+                message: 'Saved-search email alerts are disabled for this launch profile.'
+            }, 503, '*');
         }
 
         // 2. Unsubscribe Route (Public GET with signed token)
@@ -476,6 +494,10 @@ export default {
     },
 
     async scheduled(event, env, ctx) {
+        if (!alertDeliveryEnabled(env)) {
+            console.log('[ALERT WORKER] Capability disabled; scheduled delivery skipped.');
+            return;
+        }
         console.log(`[ALERT CRON TRIGGERED] Cron: ${event?.cron || 'scheduled'}`);
         const result = await processAlerts({ db: env.DB, env, dryRun: false });
         console.log(`[ALERT CRON FINISHED] Evaluated: ${result.searchesEvaluated}, Sent: ${result.emailsSent}, Deferred: ${result.emailsDeferred}, Failed: ${result.emailsFailed}`);

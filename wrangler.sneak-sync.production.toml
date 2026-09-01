@@ -1,0 +1,22 @@
+name = "sneak-idx-sync"
+main = "sneak-sync/worker.js"
+compatibility_date = "2026-09-01"
+workers_dev = true
+
+[observability]
+enabled = true
+head_sampling_rate = 1
+
+[vars]
+SNEAK_ENV = "production"
+SNEAK_SERVICE_NAME = "sneak-idx-sync"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "sneak-idx-production"
+database_id = "9d3c529d-a769-4ab3-9385-d9c8bc5e937d"
+migrations_dir = "migrations"
+
+# Enable only after BRIDGE_TOKEN is configured and the controlled initial sync passes.
+# [triggers]
+# crons = ["*/15 * * * *", "7 * * * *", "23 7 * * *"]

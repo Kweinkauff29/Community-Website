@@ -4,12 +4,24 @@
  * Embed snippet generator for tenant sites.
  */
 
-const STAGING_SERVING_URL = "https://sneak-idx-worker-staging.bonitaspringsrealtors.workers.dev";
-const EMBED_BUILD = '2026.08.31.7.4a';
+const DEFAULT_SERVING_URL = "https://sneak-idx-worker-staging.bonitaspringsrealtors.workers.dev";
+const EMBED_BUILD = '2026.09.01.7.4b2';
 
-export function generateEmbedSnippets(siteKey, allowedDomains = [], branding = {}) {
+function resolveServingUrl(env = {}) {
+    const candidate = env?.SNEAK_SERVING_URL || DEFAULT_SERVING_URL;
+    try {
+        const parsed = new URL(candidate);
+        if (parsed.protocol !== 'https:') throw new Error('Serving URL must use HTTPS.');
+        return parsed.origin;
+    } catch {
+        return DEFAULT_SERVING_URL;
+    }
+}
+
+export function generateEmbedSnippets(siteKey, allowedDomains = [], branding = {}, env = {}) {
     const primaryColor = branding.primary_color || '#1a365d';
-    const scriptUrl = `${STAGING_SERVING_URL}/embed.js?v=${EMBED_BUILD}`;
+    const servingUrl = resolveServingUrl(env);
+    const scriptUrl = `${servingUrl}/embed.js?v=${EMBED_BUILD}`;
 
     const definitions = [
         {
@@ -62,7 +74,7 @@ export function generateEmbedSnippets(siteKey, allowedDomains = [], branding = {
 
     return {
         siteKey,
-        servingHost: STAGING_SERVING_URL,
+        servingHost: servingUrl,
         embedBuild: EMBED_BUILD,
         allowedDomains,
         snippets,

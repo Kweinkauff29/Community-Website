@@ -19,7 +19,22 @@ import {
 } from './sneak-shared/idx-query.js';
 import { isAccountEntitled } from './sneak-shared/entitlement.js';
 
-export const SNEAK_IDX_BUILD = '2026.08.31.7.4a';
+export const SNEAK_IDX_BUILD = '2026.09.01.7.4b2';
+
+function capabilityEnabled(value, defaultValue = true) {
+    if (value === undefined || value === null || value === '') return defaultValue;
+    return ['1', 'true', 'yes', 'on'].includes(String(value).trim().toLowerCase());
+}
+
+function safePublicWorkerUrl(value) {
+    if (!value) return '';
+    try {
+        const parsed = new URL(String(value));
+        return parsed.protocol === 'https:' ? parsed.origin : '';
+    } catch {
+        return '';
+    }
+}
 
 export default {
     async fetch(req, env, ctx) {
@@ -809,8 +824,13 @@ async function handleGetConfig(url, site, branding, env, allowedOrigin) {
             savedListings: true,
             openHouses: true,
             featuredListings: true,
-            leadCapture: true
+            leadCapture: true,
+            consumerAuth: capabilityEnabled(env.CONSUMER_AUTH_ENABLED, true),
+            savedSearches: capabilityEnabled(env.CONSUMER_AUTH_ENABLED, true),
+            sharedLists: capabilityEnabled(env.CONSUMER_AUTH_ENABLED, true),
+            emailAlerts: capabilityEnabled(env.EMAIL_ALERTS_ENABLED, true)
         },
+        consumerApiBase: safePublicWorkerUrl(env.CONSUMER_WORKER_URL),
         widgets
     };
 

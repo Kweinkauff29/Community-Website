@@ -21,6 +21,11 @@ function launchBlocker(code, message, capability = 'core_idx') {
     return { code, message, capability };
 }
 
+function capabilityEnabled(value, defaultValue = true) {
+    if (value === undefined || value === null || value === '') return defaultValue;
+    return ['1', 'true', 'yes', 'on'].includes(String(value).trim().toLowerCase());
+}
+
 function parseD1Date(value) {
     if (!value) return null;
     const text = String(value);
@@ -99,7 +104,8 @@ export async function calculateAccountReadiness(db, accountId, env = {}) {
     const embedReady = Boolean(site?.site_key && generateEmbedSnippets(
         site.site_key,
         domains.filter(item => item.status === 'active' && item.verified === 1).map(item => item.domain),
-        branding || {}
+        branding || {},
+        env
     ).snippets.search?.htmlSnippet);
     const syncDate = parseD1Date(syncState?.last_successful_sync || syncState?.updated_at);
     const syncAgeMinutes = syncDate ? Math.max(0, Math.round((Date.now() - syncDate.getTime()) / 60000)) : null;
@@ -138,15 +144,21 @@ export async function calculateAccountReadiness(db, accountId, env = {}) {
     const launchChecksByKey = new Map((launchChecksResult.results || []).map(item => [item.check_key, item]));
     const passed = key => launchChecksByKey.get(key)?.status === 'pass';
     const memberEmailReady = memberHealth.data?.emailProviderConfigured === true && passed('member_magic_link_e2e');
+    const consumerAuthEnabled = capabilityEnabled(env?.CONSUMER_AUTH_ENABLED, true);
+    const alertsEnabled = capabilityEnabled(env?.EMAIL_ALERTS_ENABLED, true);
+    const growthZoneAutomationEnabled = capabilityEnabled(env?.GROWTHZONE_RECONCILIATION_ENABLED, true);
+    const customHostEnabled = capabilityEnabled(env?.CUSTOM_HOST_ENABLED, true);
     const consumerEmailReady = consumerHealth.data?.emailProviderConfigured === true && passed('consumer_magic_link_e2e');
-    const savedSearchAlertsReady = alertReady
+    const savedSearchAlertsReady = alertsEnabled && alertReady
         && passed('alerts_asap_e2e')
         && passed('alerts_daily_e2e')
         && passed('alerts_unsubscribe_e2e');
     const reconciliationSuccess = ['verified_no_change', 'entitlement_changed'].includes(reconciliation?.status);
     const reconciliationAge = parseD1Date(reconciliation?.last_success_at);
     const reconciliationStale = Boolean(reconciliationSuccess && (!reconciliationAge || Date.now() - reconciliationAge.getTime() > 36 * 60 * 60 * 1000));
-    const growthZoneStatus = entitlement?.source === 'manual'
+    const growthZoneStatus = !growthZoneAutomationEnabled
+        ? 'MANUAL_MODE'
+        : entitlement?.source === 'manual'
         ? 'MANUAL_OVERRIDE'
         : (!env?.GROWTHZONE_BASE_URL || !env?.GROWTHZONE_API_KEY
             ? 'NOT_READY'
@@ -172,12 +184,13 @@ export async function calculateAccountReadiness(db, accountId, env = {}) {
         },
         capabilities: {
             coreSearch: { status: launchReady ? 'READY' : 'NOT_READY', core: true },
-            memberMagicLinkEmail: { status: memberEmailReady ? 'READY' : (memberHealth.data?.emailProviderConfigured ? 'NOT_VERIFIED' : 'NOT_READY'), core: false },
-            consumerLogin: { status: consumerEmailReady ? 'READY' : (consumerHealth.data?.emailProviderConfigured ? 'NOT_VERIFIED' : 'NOT_READY'), core: false },
-            consumerMagicLinkEmail: { status: consumerEmailReady ? 'READY' : (consumerHealth.data?.emailProviderConfigured ? 'NOT_VERIFIED' : 'NOT_READY'), core: false },
-            savedSearchEmailAlerts: { status: savedSearchAlertsReady ? 'READY' : (alertReady ? 'NOT_VERIFIED' : 'NOT_READY'), core: false },
+            memberMagicLinkEmail: { status: memberEmailReady ? 'READY' : (memberHealth.data?.emailProviderConfigured ? 'NOT_VERIFIED' : 'NOT_READY'), core: true },
+            consumerLogin: { status: !consumerAuthEnabled ? 'DISABLED' : (consumerEmailReady ? 'READY' : (consumerHealth.data?.emailProviderConfigured ? 'NOT_VERIFIED' : 'NOT_READY')), core: false },
+            consumerMagicLinkEmail: { status: !consumerAuthEnabled ? 'DISABLED' : (consumerEmailReady ? 'READY' : (consumerHealth.data?.emailProviderConfigured ? 'NOT_VERIFIED' : 'NOT_READY')), core: false },
+            savedSearchEmailAlerts: { status: !alertsEnabled ? 'DISABLED' : (savedSearchAlertsReady ? 'READY' : (alertReady ? 'NOT_VERIFIED' : 'NOT_READY')), core: false },
             growthZoneReconciliation: { status: growthZoneStatus, core: false },
-            customDomain: { status: domainAuthorized && bootstrap.reachable ? 'READY' : 'NOT_READY', core: true },
+            customDomain: { status: !customHostEnabled ? 'NOT_USED' : (domainAuthorized && bootstrap.reachable ? 'READY' : 'NOT_READY'), core: false },
+            authorizedMemberDomain: { status: domainAuthorized && bootstrap.reachable ? 'READY' : 'NOT_READY', core: true },
             memberPortal: { status: memberHealth.reachable && memberExists ? 'READY' : 'NOT_READY', core: true },
             adminPortal: { status: 'READY', core: true }
         },

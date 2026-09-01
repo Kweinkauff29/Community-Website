@@ -85,6 +85,7 @@ Every participant must complete all verification gates before being marked **Lau
   * Phase 7.3C3B Safe Property Sharing + Consumer Shareable Property Lists: 2026-08-31 (COMPLETE; deployed, independent anonymous recipient and revocation browser QA pass)
   * Phase 7.4A Launch Readiness Control Plane + Staff Provisioning: 2026-08-31 (COMPLETE; deployed; automated, live API/detail, D1, and mandatory actual-browser gates pass)
   * Phase 7.4B1 Transactional Email Readiness + GrowthZone Reconciliation: 2026-09-01 (IMPLEMENTED and staging deployed; controlled-inbox/GrowthZone credentials and evidence pending)
+  * Phase 7.4B2 Production Environment + First Controlled Member Cutover: 2026-09-01 (FOUNDATION IMPLEMENTED; CUTOVER BLOCKED)
 * **Phase 7.3C2B Agent Client Activity Dashboard & Authenticated Buyer Timeline:**
   * *Privacy-Preserving Activity Ledger:* D1 table `sneak_consumer_activity_events` (migration 0030) records authenticated buyer events (`listing_view`, `favorite_*`, `saved_search_*`, `alert_*`, `inquiry_submitted`). Zero anonymous tracking, zero fingerprinting, zero geolocation tracking.
   * *Consumer Ingestion Protection:* `POST /api/consumer/activity` enforces authentication, strict browser allowlist (`listing_view`, `inquiry_submitted`), 30-minute deduplication on listing views, lead email match verification, and 120 events/hr rate limiting.
@@ -107,6 +108,13 @@ Every participant must complete all verification gates before being marked **Lau
   * *Schedule and Authority:* Daily 11:15 UTC, default batch 25/hard maximum 50. `sneak_account_entitlements` remains the only Serving Worker authority; no public path calls GrowthZone or Bridge.
   * *Verification:* PASS — 262/262 automated, 22/22 live staging, 748/748 full actual-Chrome regression, and 123/123 focused 7.4B1 actual-Chrome acceptance. Admin/Member/Consumer/Alerts report build `2026.09.01.7.4b1`; migration 0034 has no pending staging work.
   * *Deployment Boundary:* Production environment/cutover is Phase 7.4B2 and has not started. SEO remains deferred.
+* **Phase 7.4B2 Production Foundation + Cutover Gate:**
+  * *Production Isolation:* D1 `sneak-idx-production` is created separately, clean, migrated through 0035, canonical, and at zero FK violations. Seven production configs reference only production D1 and contain no secret values. No staging data was copied.
+  * *Pilot Capability Profile:* Core IDX/Admin/Member/Member email/Sync/existing-site embed are required. Consumer accounts and email alerts are disabled. GrowthZone uses manual entitlement mode. SNEAK custom hosting is not used.
+  * *First Member:* PILOT-01 / agent identity `633942` remains the single approved participant. No production account/site/member/domain/entitlement row or production embed has been created, and the existing staging pilot was not overwritten.
+  * *Verification:* PASS — 269/269 automated, 14/14 Wrangler config dry-runs, 12/12 JavaScript syntax checks, production migrations/FK/clean-data checks, and D1 Time Travel bookmark retrieval. Protected legacy remains zero-diff.
+  * *Blocked Evidence:* Production Bridge/signing/Admin/Member secrets, verified sender and controlled approved-mailbox consumption, initial/incremental Sync, member-page access, connected-Chrome production desktop/tablet/mobile QA, tenant negative test, tested rollback, and monitoring window are absent. Production Workers/routes/schedules remain undeployed.
+  * *Launch Decision:* **BLOCKED**. Do not onboard another member or begin SEO. Follow `docs/operations/production-cutover.md`.
 * **Live Validation Evidence:**
   * Live Public URL: `https://coconutcoastrealtors.org/idx-test/` (HTTP 200 OK)
   * Live Static UI Build: PASS — `data-ui-build="2026.08.30.7.3c2b"`, `CCOR_IDX_UI_BUILD = '2026.08.30.7.3c2b'`, `embed.js &v=2026.08.30.7.3c2b`
@@ -147,7 +155,7 @@ Every participant must complete all verification gates before being marked **Lau
   * Member Implementation Time: ~2 minutes (HTML snippet paste in WordPress)
   * Staff Interventions Required: 15 (Identity reconciliation, Phase 7.1 model correction, Phase 7.2 product corrections, Phase 7.3A search parity, Phase 7.3B1 interactive map synchronization, Phase 7.3B2A radius search, Phase 7.3B2B polygon search, Phase 7.3C1A buyer auth, Phase 7.3C1B saved searches, Phase 7.3C1B.1 embed layout hotfix, Phase 7.3C2A email alert engine, Phase 7.3C2A.1 delivery hardening, Phase 7.3C2B client activity dashboard, Phase 7.3C3A.1 corrective sign-off, Phase 7.3C3B safe sharing/public lists)
   * Support Questions Logged: 0
-* **Final Status:** **ACTIVE PILOT (Phase 7.4B1 implementation deployed; email/GrowthZone operational evidence remains fail-closed and pending before 7.4B2)**
+* **Final Status:** **ACTIVE STAGING PILOT / PRODUCTION CUTOVER BLOCKED (Phase 7.4B2 foundation is ready; required production secrets, sync, email, Chrome QA, rollback, and monitoring evidence remain pending)**
 
 ---
 

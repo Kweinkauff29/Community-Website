@@ -1,14 +1,14 @@
-# CCOR IDX Phase 7.4B1 Launch Readiness
+# CCOR IDX Phase 7.4B2 Launch Readiness
 
-Current 7.4B1 implementation gate: **PASS**. Shared provider hardening, GrowthZone reconciliation, migration, staging deployment, automated regression, live checks, and actual-browser Admin/Member/Consumer acceptance pass.
+Current 7.4B2 foundation gate: **PASS**. Production capability gates, isolated configs, clean production D1, migration 0035, automated regression, and fail-closed optional-feature behavior are implemented.
 
-Operational launch gate: **NOT READY**. Member has provider credentials but lacks current controlled-inbox proof. Consumer, Alerts, alert signing, and GrowthZone credentials are absent. Readiness remains fail closed until an authorized operator supplies those values and controlled-inbox/API evidence is recorded.
+First-member launch gate: **BLOCKED**. Production Workers/routes/schedules and the member record were deliberately not created because production Bridge, Serving/Admin/Member secrets, sender verification, approved controlled-mailbox evidence, production sync, member-page access, and required connected-Chrome QA are unavailable. Optional Consumer accounts, Alerts, GrowthZone automation, and custom hosting are explicitly disabled rather than presented as broken features.
 
-Build: `2026.09.01.7.4b1` for Admin, Member, Consumer, and Alerts. The untouched Serving/IDX build remains `2026.08.31.7.4a`.
+Build: `2026.09.01.7.4b2` for shared Serving, Sync, Consumer, Member, Admin, Sites, Alerts, embed, and search sources.
 
-Environment assessed: staging
+Environments assessed: staging and isolated production foundation
 
-Production cutover: not started
+Production cutover: **BLOCKED; D1/config foundation only, no production Worker deployment or member activation**
 
 ## Control-plane audit
 
@@ -27,7 +27,7 @@ Existing canonical records naturally preserve workflow progress; no wizard-state
 | Readiness | Global launch checks/readiness existed | Per-account serving and launch results reuse the same infrastructure | External/manual launch evidence |
 | Audit | Bounded global recent history | Bounded latest-50 account/site/member/domain history | Retention policy is future work |
 
-No D1 migration was required. Migrations `0001`–`0005`, `0013`–`0016`, and `0018`–`0021` already contain the canonical lifecycle state.
+Migration `0035_sneak_growthzone_reconciliation_fk.sql` rebuilds reconciliation state with the canonical `account_id REFERENCES sneak_accounts(id) ON DELETE CASCADE`. It refuses orphan preservation, copies every valid field, recreates the status index, and finishes with `PRAGMA foreign_key_check`.
 
 ## Billing authority
 
@@ -119,6 +119,18 @@ Unknown or unavailable fields are omitted. The UI never invents bedrooms for Lan
 
 ## Acceptance evidence
 
+Phase 7.4B2 foundation evidence:
+
+- Automated regression: `269/269` tests passing across 15 suites.
+- Production/staging Wrangler config dry-runs: `14/14` pass; production files contain no secret values and bind only production D1.
+- JavaScript syntax: `12/12` changed entry points pass `node --check`.
+- Migration 0035: populated-row preservation and account-delete cascade pass; fresh migration chain passes; remote staging and production FK checks return zero rows.
+- Production D1: `sneak-idx-production` (`9d3c529d-a769-4ab3-9385-d9c8bc5e937d`), migrations 0001–0035 current, counts 0 accounts / 0 consumers / 0 listings / 0 reconciliation rows. Staging data was not copied.
+- D1 Time Travel: live bookmark retrieval passes; no destructive restore was attempted.
+- Protected legacy: `ListingsWorker.js`, `home-search/index.html`, `open-house/index.html`, and `wrangler.toml` remain zero-diff from `origin/main`.
+- Required production browser/email/sync/tenant/rollback evidence: **not passed**. Chrome control lacks the Browser extension/native host, the approved mailbox is not connected, required production secrets are unavailable, and production Workers/member are not deployed. No substitute browser or inferred result is reported.
+- Full operator state and recovery sequence: `docs/operations/production-cutover.md`.
+
 Phase 7.4B1 evidence:
 
 - Automated regression: `262/262` tests passing across 14 suites.
@@ -180,15 +192,14 @@ Domain UI translates provider state into operator language: DNS/ownership missin
 - No raw password, token, session hash, Cloudflare credential, or email credential appears in UI/readiness output.
 - The hard-coded website preview fallback secret was removed; preview signing now fails closed when unconfigured.
 
-## Production plan for Phase 7.4B2 (document only)
+## Phase 7.4B2 production state
 
-1. Create distinct production Worker names and a new production D1 database; do not copy staging consumer/member data by default.
-2. Apply the full ordered migration set after the FK compatibility preflight; record migration output.
-3. Provision secret names per the matrix through Wrangler/Cloudflare secret storage and verify no values are committed.
-4. Configure production Cloudflare for SaaS zone, fallback origin, customer CNAME, routes, certificates, and DNS.
-5. Configure production sync and alert cron schedules only after Bridge/email/signing verification.
-6. Configure and verify GrowthZone-to-generic-entitlement reconciliation, retaining manual override/audit procedures.
-7. Run isolated production fixtures, authenticated Admin/Member QA, responsive consumer regression, real inbox tests, custom-host TLS/bootstrap tests, and legacy zero-diff.
-8. Cut traffic gradually. Roll back by restoring prior Worker deployments/routes; do not roll back D1 destructively. Suspend affected entitlements if serving safety is uncertain.
+Created: the isolated production D1 and seven secret-free production Wrangler configs. The complete migration chain is current, FK compatibility is canonical, Time Travel is available, and the database is clean. No test or staging buyer/member data was copied.
+
+Not created or activated: production Workers, routes, schedules, account/site/member/domain/entitlement rows, production embed, initial/incremental Bridge sync, or monitoring window. This is intentional fail-closed behavior, not a completed cutover.
+
+Required profile: Core IDX, Admin, Member Portal, Member magic-link email, Sync, and the existing member-site embed. Disabled optional profile: Consumer accounts/server state/shared lists and saved-search Alerts. GrowthZone uses manual entitlement mode. SNEAK custom hosting is not used.
+
+Launch blockers are production `BRIDGE_TOKEN`, Serving/Admin/Member secrets, verified Mailjet sender and real controlled-inbox consumption, access to the approved mailbox and member page, initial/incremental sync, tenant provisioning/scope proof, connected-Chrome desktop/tablet/mobile QA, and tested non-destructive rollback. The exact runbook is `docs/operations/production-cutover.md`.
 
 SEO Phase 7.3D remains deferred/post-launch.

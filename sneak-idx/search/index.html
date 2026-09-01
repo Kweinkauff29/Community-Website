@@ -2698,6 +2698,15 @@
       cursor: pointer;
     }
     .cart-add-list-btn { border: 0; background: transparent; color: #7c3aed; cursor: pointer; padding: 4px; }
+    body.consumer-auth-disabled #consumerAuthNavItem,
+    body.consumer-auth-disabled #consumerUserNavItem,
+    body.consumer-auth-disabled #saveSearchBtn,
+    body.consumer-auth-disabled #consumerOpenSearchesBtn,
+    body.consumer-auth-disabled #consumerOpenSharedListsBtn,
+    body.consumer-auth-disabled #detailAddToListBtn,
+    body.consumer-auth-disabled #compareSaveListBtn,
+    body.consumer-auth-disabled .recent-add-list-btn,
+    body.consumer-auth-disabled .cart-add-list-btn { display: none !important; }
     .public-shared-list-overlay { z-index: 11000; }
     .public-shared-list-card {
       max-width: 1080px;
@@ -2760,7 +2769,7 @@
   </style>
 </head>
 
-<body data-ui-build="2026.08.31.7.4a">
+<body data-ui-build="2026.09.01.7.4b2">
 
   <!-- Loading Overlay -->
   <div class="loading-overlay" id="loadingOverlay" style="display:none">
@@ -3483,12 +3492,12 @@
   <!-- Leaflet Scripts -->
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.5.3/leaflet.markercluster.js"></script>
-  <script src="/detail-hydration.js?v=7.4a"></script>
+  <script src="/detail-hydration.js?v=7.4b2"></script>
 
   <!-- CCOR IDX Plug-in Application Logic -->
   <script>
     // Telemetry & Build Identifier
-        const CCOR_IDX_UI_BUILD = '2026.08.31.7.4a';
+        const CCOR_IDX_UI_BUILD = '2026.09.01.7.4b2';
     console.log('[CCOR IDX Plug-in] UI build:', CCOR_IDX_UI_BUILD);
 
     // XSS Hardening & URL Sanitization Helpers (Phase 7.3C1A)
@@ -3556,6 +3565,8 @@
     }
 
     let consumerUser = null;
+    let consumerAuthEnabled = true;
+    let emailAlertsEnabled = true;
     let consumerSessionToken = localStorage.getItem('ccor_consumer_session_' + SITE_KEY) || '';
     const COMPARE_STORAGE_KEY = 'ccor_compare_' + SITE_KEY;
     const RECENT_STORAGE_KEY = 'ccor_recently_viewed_' + SITE_KEY;
@@ -4406,6 +4417,12 @@
 
     function applyTenantBranding(cfg) {
       if (!cfg) return;
+      consumerAuthEnabled = cfg.features?.consumerAuth !== false;
+      emailAlertsEnabled = cfg.features?.emailAlerts !== false;
+      if (cfg.consumerApiBase && /^https:\/\/[a-z0-9.-]+$/i.test(cfg.consumerApiBase)) {
+        CONSUMER_API_BASE = cfg.consumerApiBase;
+      }
+      document.body.classList.toggle('consumer-auth-disabled', !consumerAuthEnabled);
       if (cfg.primaryColor) document.documentElement.style.setProperty('--primary', cfg.primaryColor);
       if (cfg.secondaryColor) {
         document.documentElement.style.setProperty('--accent', cfg.secondaryColor);
@@ -5911,6 +5928,7 @@
     }
 
     async function openAddToListModal(keys) {
+      if (!consumerAuthEnabled) return;
       const cleanKeys = [...new Set((keys || []).filter(Boolean))].slice(0, 25);
       if (!cleanKeys.length) return;
       if (!consumerUser || !consumerSessionToken) {
@@ -6556,6 +6574,14 @@
     let savedSearches = [];
 
     async function initConsumerAuth(authCode) {
+      if (!consumerAuthEnabled) {
+        consumerSessionToken = '';
+        consumerUser = null;
+        localStorage.removeItem('ccor_consumer_session_' + SITE_KEY);
+        updateConsumerNavUI();
+        updateCartUI();
+        return;
+      }
       if (authCode) {
         try {
           const res = await fetch(`${CONSUMER_API_BASE}/api/consumer/auth/exchange`, {
@@ -6623,6 +6649,7 @@
     }
 
     function openConsumerAuthModal() {
+      if (!consumerAuthEnabled) return;
       if (!sessionStorage.getItem('ccor_pending_list_action_' + SITE_KEY)) {
         const title = document.getElementById('consumerAuthTitle');
         const sub = document.getElementById('consumerAuthSub');
@@ -6789,7 +6816,11 @@
       if (accountSharedListsCountEl) accountSharedListsCountEl.textContent = sharedLists.length;
       if (accountRecentCountEl) accountRecentCountEl.textContent = recentlyViewedEntries.length;
 
-      if (consumerUser && consumerSessionToken) {
+      if (!consumerAuthEnabled) {
+        if (authNavItem) authNavItem.style.display = 'none';
+        if (savedNavItem) savedNavItem.style.display = 'none';
+        if (userNavItem) userNavItem.style.display = 'none';
+      } else if (consumerUser && consumerSessionToken) {
         if (authNavItem) authNavItem.style.display = 'none';
         if (savedNavItem) savedNavItem.style.display = 'inline-block';
         if (userNavItem) userNavItem.style.display = 'inline-block';
@@ -7080,6 +7111,7 @@
     }
 
     function handleSaveSearchClick() {
+      if (!consumerAuthEnabled) return;
       if (!consumerUser || !consumerSessionToken) {
         // Save pending intent in sessionStorage
         sessionStorage.setItem('ccor_pending_saved_search_' + SITE_KEY, JSON.stringify(serializeSearchState()));
@@ -7217,7 +7249,7 @@
             <span style="font-size:0.72rem;color:#94a3b8;white-space:nowrap;">${escapeHtml(updatedDate)}</span>
           </div>
           <div class="saved-search-criteria">${summary}</div>
-          <div class="saved-search-alert-row" style="margin-top:10px;padding-top:8px;border-top:1px solid rgba(255,255,255,0.06);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:6px;">
+          ${emailAlertsEnabled ? `<div class="saved-search-alert-row" style="margin-top:10px;padding-top:8px;border-top:1px solid rgba(255,255,255,0.06);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:6px;">
             <div style="display:flex;align-items:center;gap:6px;font-size:0.75rem;color:#cbd5e1;">
               <i class="fas fa-bell" style="color:${freq !== 'off' ? '#38bdf8' : '#64748b'}"></i>
               <span style="font-weight:600;">Email Alerts:</span>
@@ -7228,7 +7260,7 @@
               </select>
             </div>
             <div style="font-size:0.7rem;color:#94a3b8;width:100%;">${escapeHtml(helperText)}</div>
-          </div>
+          </div>` : ''}
           <div class="saved-search-actions" style="margin-top:10px;">
             <button class="saved-search-btn-action restore-btn" onclick="restoreSavedSearch('${escapeHtml(s.id)}')"><i class="fas fa-search"></i> View Search</button>
             <button class="saved-search-btn-action" onclick="renameSavedSearch('${escapeHtml(s.id)}', '${escapeHtml(s.name)}')"><i class="fas fa-edit"></i> Rename</button>
@@ -7240,6 +7272,7 @@
     }
 
     window.updateSavedSearchAlert = async function(id, frequency) {
+      if (!emailAlertsEnabled) return;
       const s = savedSearches.find(x => x.id === id);
       if (!s) return;
 

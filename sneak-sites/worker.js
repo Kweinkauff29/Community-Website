@@ -13,7 +13,7 @@ import {
 } from './data.js';
 import { handleContactSubmission } from './contact.js';
 
-export const SNEAK_SITES_BUILD = '2026.08.31.7.4a';
+export const SNEAK_SITES_BUILD = '2026.09.01.7.4b2';
 import {
     renderEssentialHome,
     renderEssentialSearch,
@@ -114,7 +114,7 @@ export default {
         if (path === '/health') {
             return new Response(JSON.stringify({
                 status: 'healthy',
-                worker: 'sneak-idx-sites-staging',
+                worker: env?.SNEAK_SERVICE_NAME || 'sneak-idx-sites-staging',
                 build: SNEAK_SITES_BUILD,
                 timestamp: new Date().toISOString()
             }), {
