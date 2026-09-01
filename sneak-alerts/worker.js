@@ -106,7 +106,11 @@ export async function processAlerts({ db, env, dryRun = false, now = new Date() 
         const dueAlerts = await findDueAlerts(db, { limit: 150, now });
         stats.searchesEvaluated = dueAlerts.length;
 
-        const alertsWorkerUrl = env?.ALERTS_WORKER_URL || 'https://sneak-idx-alerts-staging.bonitaspringsrealtors.workers.dev';
+        const isProd = (env?.SNEAK_ENV || '').toLowerCase() === 'production';
+        const defaultAlertsUrl = isProd
+            ? 'https://sneak-idx-alerts.bonitaspringsrealtors.workers.dev'
+            : 'https://sneak-idx-alerts-staging.bonitaspringsrealtors.workers.dev';
+        const alertsWorkerUrl = env?.ALERTS_WORKER_URL || defaultAlertsUrl;
 
         for (const alert of dueAlerts) {
             // 3. Match candidate listings

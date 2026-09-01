@@ -114,7 +114,7 @@ export default {
         if (path === '/health') {
             return new Response(JSON.stringify({
                 status: 'healthy',
-                worker: env?.SNEAK_SERVICE_NAME || 'sneak-idx-sites-staging',
+                worker: env?.SNEAK_SERVICE_NAME || (env?.SNEAK_ENV === 'production' ? 'sneak-idx-sites' : 'sneak-idx-sites-staging'),
                 build: SNEAK_SITES_BUILD,
                 timestamp: new Date().toISOString()
             }), {
@@ -172,9 +172,10 @@ export default {
             const isStagingWorkerHost = host.includes('workers.dev') || host.includes('localhost') || host === '127.0.0.1';
             
             if (isStagingWorkerHost && path === '/') {
+                const isProd = (env?.SNEAK_ENV || '').toLowerCase() === 'production';
                 return htmlResponse(`
                     <div style="font-family: sans-serif; text-align: center; padding: 80px 20px;">
-                        <h1>SNEAK IDX Website Engine (Staging)</h1>
+                        <h1>SNEAK IDX Website Engine (${isProd ? 'Production' : 'Staging'})</h1>
                         <p style="color: #64748b; margin-top: 12px;">Use a signed preview URL (<code>/preview/:siteKey?token=...</code>) or custom tenant domain.</p>
                     </div>
                 `);

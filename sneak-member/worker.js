@@ -68,7 +68,7 @@ export default {
         if (path === '/health' || (path === '/' && request.headers.get('Accept') === 'application/json')) {
             return json({
                 status: 'healthy',
-                worker: env?.SNEAK_SERVICE_NAME || 'sneak-idx-member-staging',
+                worker: env?.SNEAK_SERVICE_NAME || (env?.SNEAK_ENV === 'production' ? 'sneak-idx-member' : 'sneak-idx-member-staging'),
                 build: SNEAK_MEMBER_BUILD,
                 emailProviderConfigured: Boolean(
                     (env?.MAILJET_API_KEY || env?.MJ_API_KEY)

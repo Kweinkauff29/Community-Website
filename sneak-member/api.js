@@ -377,7 +377,9 @@ export async function handleGetMemberWebsiteConfig(db, memberContext, env) {
 
     try {
         previewToken = await createPreviewToken(site.site_key, site.id, secret, 1800);
-        previewUrl = `https://sneak-idx-sites-staging.bonitaspringsrealtors.workers.dev/preview/${site.site_key}?token=${encodeURIComponent(previewToken)}`;
+        const isProd = (env?.SNEAK_ENV || '').toLowerCase() === 'production';
+        const sitesHost = env?.SNEAK_SITES_URL || (isProd ? 'https://sneak-idx-sites.bonitaspringsrealtors.workers.dev' : 'https://sneak-idx-sites-staging.bonitaspringsrealtors.workers.dev');
+        previewUrl = `${sitesHost}/preview/${site.site_key}?token=${encodeURIComponent(previewToken)}`;
     } catch {}
 
     return json({
@@ -496,7 +498,9 @@ export async function handleUpdateMemberWebsiteConfig(db, memberContext, body, e
     let previewUrl = null;
     try {
         const previewToken = await createPreviewToken(site.site_key, site.id, secret, 1800);
-        previewUrl = `https://sneak-idx-sites-staging.bonitaspringsrealtors.workers.dev/preview/${site.site_key}?token=${encodeURIComponent(previewToken)}`;
+        const isProd = (env?.SNEAK_ENV || '').toLowerCase() === 'production';
+        const sitesHost = env?.SNEAK_SITES_URL || (isProd ? 'https://sneak-idx-sites.bonitaspringsrealtors.workers.dev' : 'https://sneak-idx-sites-staging.bonitaspringsrealtors.workers.dev');
+        previewUrl = `${sitesHost}/preview/${site.site_key}?token=${encodeURIComponent(previewToken)}`;
     } catch {}
 
     return json({ success: true, website: updated, previewUrl });
@@ -512,7 +516,9 @@ export async function handleCreateMemberWebsitePreviewToken(db, memberContext, e
 
     const secret = env?.SNEAK_WEBSITE_PREVIEW_SECRET || 'dev_preview_secret_ccor_2026';
     const previewToken = await createPreviewToken(site.site_key, site.id, secret, 1800);
-    const previewUrl = `https://sneak-idx-sites-staging.bonitaspringsrealtors.workers.dev/preview/${site.site_key}?token=${encodeURIComponent(previewToken)}`;
+    const isProd = (env?.SNEAK_ENV || '').toLowerCase() === 'production';
+    const sitesHost = env?.SNEAK_SITES_URL || (isProd ? 'https://sneak-idx-sites.bonitaspringsrealtors.workers.dev' : 'https://sneak-idx-sites-staging.bonitaspringsrealtors.workers.dev');
+    const previewUrl = `${sitesHost}/preview/${site.site_key}?token=${encodeURIComponent(previewToken)}`;
 
     return json({ success: true, siteKey: site.site_key, previewToken, previewUrl, expiresIn: 1800 });
 }

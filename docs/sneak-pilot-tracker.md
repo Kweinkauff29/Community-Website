@@ -14,7 +14,7 @@
 
 | Pilot ID | Member Name | MLS ID | Email | Website / Custom Domain | Account ID | Site ID | Plan | Product Type | Template | Status |
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
-| **PILOT-01** | Ursula Weinkauff | `633942` | `kmwcollegeapps@gmail.com` | `https://coconutcoastrealtors.org` | `acc_1787583729221_cv3ma` | `site_1787583729221_rzxfa` | `standard` | IDX Embed Only | N/A / embed | Launched |
+| **PILOT-01** | Ursula Weinkauff | `633942` | `kmwcollegeapps@gmail.com` | `https://coconutcoastrealtors.org` | `acc_1787583729221_cv3ma` *(staging)* / *pending (prod)* | `site_1787583729221_rzxfa` *(staging)* / *pending (prod)* | `standard` | IDX Embed Only | N/A / embed | Staging Verified / Prod Activation Blocked (7.4B2B) |
 | **PILOT-02** | *Pending Operator Input* | *Pending* | *Pending* | *Real Custom Domain* | *Pending* | *Pending* | `pro` | Turnkey Website | `essential` | Planned |
 | **PILOT-03** | *Pending Operator Input* | *Pending* | *Pending* | *Real Custom Domain* | *Pending* | *Pending* | `pro` | Turnkey Website | `coastal` | Planned |
 | **PILOT-04** *(Opt)* | *Pending Operator Input* | *Pending Office ID* | *Pending* | *Real Custom Domain* | *Pending* | *Pending* | `brokerage` | Brokerage Website | `brokerage` | Deferred |
@@ -85,7 +85,10 @@ Every participant must complete all verification gates before being marked **Lau
   * Phase 7.3C3B Safe Property Sharing + Consumer Shareable Property Lists: 2026-08-31 (COMPLETE; deployed, independent anonymous recipient and revocation browser QA pass)
   * Phase 7.4A Launch Readiness Control Plane + Staff Provisioning: 2026-08-31 (COMPLETE; deployed; automated, live API/detail, D1, and mandatory actual-browser gates pass)
   * Phase 7.4B1 Transactional Email Readiness + GrowthZone Reconciliation: 2026-09-01 (IMPLEMENTED and staging deployed; controlled-inbox/GrowthZone credentials and evidence pending)
-  * Phase 7.4B2 Production Environment + First Controlled Member Cutover: 2026-09-01 (FOUNDATION IMPLEMENTED; CUTOVER BLOCKED)
+  * Phase 7.4B2 Production Environment + First Controlled Member Cutover: 2026-09-01
+    * PHASE 7.4B2A — PRODUCTION FOUNDATION: COMPLETE (clean isolated production D1, migrations 0001–0035, 7 production Wrangler configs, Admin CSP isolation, zero staging leaks, 280/280 passing tests).
+    * PHASE 7.4B2B — FIRST MEMBER ACTIVATION: BLOCKED / NOT STARTED (awaiting operator-assisted activation, secrets, Bridge sync, and member-page verification).
+    * Production PILOT-01 Model: Site search scope is 'market' (full authorized MLS market inventory, scope_value: null); Participant identity is agent 633942 for participant-scoped featured listings and lead capture. Production account/site records NOT yet created.
 * **Phase 7.3C2B Agent Client Activity Dashboard & Authenticated Buyer Timeline:**
   * *Privacy-Preserving Activity Ledger:* D1 table `sneak_consumer_activity_events` (migration 0030) records authenticated buyer events (`listing_view`, `favorite_*`, `saved_search_*`, `alert_*`, `inquiry_submitted`). Zero anonymous tracking, zero fingerprinting, zero geolocation tracking.
   * *Consumer Ingestion Protection:* `POST /api/consumer/activity` enforces authentication, strict browser allowlist (`listing_view`, `inquiry_submitted`), 30-minute deduplication on listing views, lead email match verification, and 120 events/hr rate limiting.

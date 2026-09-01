@@ -25,7 +25,7 @@ export default {
 
         if (url.pathname === '/' || url.pathname === '/health') {
             return new Response(JSON.stringify({
-                service: env?.SNEAK_SERVICE_NAME || 'sneak-idx-sync-staging',
+                service: env?.SNEAK_SERVICE_NAME || (env?.SNEAK_ENV === 'production' ? 'sneak-idx-sync' : 'sneak-idx-sync-staging'),
                 build: SNEAK_SYNC_BUILD,
                 status: 'ok',
                 env: env.SNEAK_ENV || 'staging',

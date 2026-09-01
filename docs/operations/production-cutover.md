@@ -2,7 +2,7 @@
 
 Build: `2026.09.01.7.4b2`
 
-Decision recorded 2026-09-01: **BLOCKED — production resource foundation exists, but the first member is not live.** Do not deploy production Workers, activate routes or schedules, provision the member, or replace the current staging embed until every required core gate below has current evidence.
+Decision recorded 2026-09-01: **PHASE 7.4B2A — PRODUCTION FOUNDATION: COMPLETE | PHASE 7.4B2B — FIRST MEMBER ACTIVATION: BLOCKED / NOT STARTED.** Do not deploy production Workers, activate routes or schedules, provision the member, or replace the current staging embed until every required core gate below has current evidence.
 
 ## Isolated production resources
 
@@ -25,7 +25,17 @@ Approved participant: PILOT-01, MLS agent identity `633942`. Controlled operator
 
 Member-facing site: `https://coconutcoastrealtors.org`, target page `/idx-test/`. The existing website embed is the pilot delivery surface; a SNEAK-hosted custom website/hostname is not used.
 
-No production account, site, site key, member user, entitlement, or domain row has been created. Provision those only after the required gates pass. The participant identity/featured-listing scope is `agent`/`633942`. The established consumer product model is full-market IDX search with participant-scoped featured listings and lead routing; this is an intentional business rule, not a QA shortcut. Confirm that rule during Admin provisioning and record both display and participant scopes explicitly.
+No production account, site, site key, member user, entitlement, or domain row has been created. Provision those only after the required gates pass.
+
+### Authoritative pilot search & scope model
+- **Site Search Scope:** `market` (full authorized MLS market inventory; `scope_value` is null/empty)
+- **Participant Agent Identity:** `account.agent_mls_id = '633942'` (used for participant-scoped "My Listings" and lead routing)
+- **Participant Brokerage / Office:** `Local Real Estate LLC`
+- **Featured / Participant Listings:** Agent MLS ID `633942` via `/idx/v1/agent/633942/listings`
+- **Lead Ownership:** The pilot member account/site (`site_id = site.site_id`)
+- **Main Consumer Search:** Full eligible MLS market inventory (`scope_type = 'market'`, SQL clause `1=1`)
+- **Display Compliance:** Strictly enforced (`InternetEntireListingDisplayYN = 1`, address suppression if `InternetAddressDisplayYN = 0`, eligible status rules)
+- **Critical Architecture Rule:** Do NOT configure site scope as `agent` merely because the participant is an individual agent. Participant identity and IDX inventory/search scope are distinct concepts. An `agent` site scope would restrict the consumer's entire MLS search to only that agent's own listings.
 
 | Capability | Classification | Current status |
 | --- | --- | --- |
@@ -47,7 +57,7 @@ Store values only as Cloudflare Worker secrets. Never put values in Wrangler con
 - Serving: `SNEAK_SIGNING_SECRET`
 - Sync: `BRIDGE_TOKEN`
 - Member: `MAILJET_API_KEY`, `MAILJET_SECRET_KEY`, `SNEAK_WEBSITE_PREVIEW_SECRET`
-- Admin: `SNEAK_ADMIN_PASSWORD_HASH`, `SNEAK_ADMIN_SESSION_SECRET`, `SNEAK_WEBSITE_PREVIEW_SECRET`
+- Admin: `SNEAK_ADMIN_PASSWORD_HASH`, `SNEAK_WEBSITE_PREVIEW_SECRET` *(Note: `SNEAK_ADMIN_SESSION_SECRET` is NOT consumed by runtime; session tokens are generated via WebCrypto, hashed with SHA-256, and verified directly against D1)*
 - Sites: `SNEAK_WEBSITE_PREVIEW_SECRET`
 - Consumer, only when enabled later: `MAILJET_API_KEY`, `MAILJET_SECRET_KEY`
 - Alerts, only when enabled later: `MAILJET_API_KEY`, `MAILJET_SECRET_KEY`, `SNEAK_ALERT_UNSUBSCRIBE_SECRET`

@@ -260,11 +260,13 @@ graph TD
 
 ### Phase 7.4B2 — Production Environment + First Member Cutover
 * **Goal:** Supply and verify remaining operational credentials/evidence, create isolated production Workers and D1, and perform the first controlled member cutover with rollback readiness.
-* **Status:** `PRODUCTION FOUNDATION IMPLEMENTED / FIRST MEMBER CUTOVER BLOCKED`
+* **Status:**
+  * **PHASE 7.4B2A — PRODUCTION FOUNDATION:** `COMPLETE` (Clean isolated production D1, migrations 0001–0035, 7 production Wrangler configs, hardened pre-flight corrections, Admin CSP environment isolation, zero-staging runtime leak, full-market pilot scope model, and fail-closed gates).
+  * **PHASE 7.4B2B — FIRST MEMBER ACTIVATION:** `BLOCKED / NOT STARTED` (Awaiting operator-supplied production secrets, Bridge sync, Mailjet inbox delivery proof, and connected-Chrome member-page verification).
 * **Implemented:** Migration 0035 adds the missing reconciliation account FK/cascade without silent orphan loss. Production capability switches fail closed, production embed generation is environment-aware, seven production Wrangler configs isolate D1 and omit secret values, and `scripts/verify-production-launch.mjs` provides a safe launch smoke.
 * **Production D1:** `sneak-idx-production` is created, clean, migrated through 0035, canonical, and has zero FK violations. No staging consumers, sessions, saved state, members, alerts, listings, or fixtures were copied.
-* **Launch Profile:** Core IDX/Admin/Member/Member email/Sync/existing-site embed are required. Consumer accounts and saved-search email alerts are disabled for the pilot. GrowthZone is manual entitlement mode. Custom hosted website/hostname is not used.
-* **Verification:** Automated regression passes 269/269 across 15 suites; all 14 Wrangler dry-runs and 12 JavaScript syntax checks pass; production D1 Time Travel bookmark retrieval passes. Production Workers/version IDs, Sync, email, tenant scope, member-page browser QA, rollback test, and monitoring are absent.
+* **Launch Profile:** Core IDX/Admin/Member/Member email/Sync/existing-site embed are required. Authoritative pilot model for PILOT-01 uses site search scope `market` (full MLS market inventory) and participant agent MLS ID `633942` for featured listings and lead capture. Consumer accounts and saved-search email alerts are disabled for the pilot. GrowthZone is manual entitlement mode. Custom hosted website/hostname is not used.
+* **Verification:** Automated regression passes 280/280 across 16 suites; all 14 Wrangler dry-runs and 12 JavaScript syntax checks pass; production D1 Time Travel bookmark retrieval passes. Production Workers/version IDs, Sync, email, tenant scope, member-page browser QA, rollback test, and monitoring are absent.
 * **Decision:** `BLOCKED`. Required production secrets, verified sender/approved mailbox evidence, member-page access, and connected Chrome Browser extension/native host are unavailable. No production Worker, route, schedule, member account/site, or cutover was created or falsely labeled ready. See `docs/operations/production-cutover.md`.
 * **Boundary:** Do not onboard additional members or begin SEO until the first-member monitoring gate is reviewed.
 

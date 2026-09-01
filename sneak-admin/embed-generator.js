@@ -4,17 +4,23 @@
  * Embed snippet generator for tenant sites.
  */
 
-const DEFAULT_SERVING_URL = "https://sneak-idx-worker-staging.bonitaspringsrealtors.workers.dev";
+const STAGING_SERVING_URL = "https://sneak-idx-worker-staging.bonitaspringsrealtors.workers.dev";
+const PRODUCTION_SERVING_URL = "https://sneak-idx-worker.bonitaspringsrealtors.workers.dev";
 const EMBED_BUILD = '2026.09.01.7.4b2';
 
 function resolveServingUrl(env = {}) {
-    const candidate = env?.SNEAK_SERVING_URL || DEFAULT_SERVING_URL;
+    const isProd = (env?.SNEAK_ENV || '').toLowerCase() === 'production';
+    const defaultServing = isProd ? PRODUCTION_SERVING_URL : STAGING_SERVING_URL;
+    const candidate = env?.SNEAK_SERVING_URL || defaultServing;
     try {
         const parsed = new URL(candidate);
         if (parsed.protocol !== 'https:') throw new Error('Serving URL must use HTTPS.');
+        if (isProd && parsed.origin.includes('staging')) {
+            return PRODUCTION_SERVING_URL;
+        }
         return parsed.origin;
     } catch {
-        return DEFAULT_SERVING_URL;
+        return defaultServing;
     }
 }
 

@@ -27,28 +27,48 @@ function growthZoneEnabled(env) {
     return ['1', 'true', 'yes', 'on'].includes(String(value).trim().toLowerCase());
 }
 
-const SECURITY_HEADERS = {
-    'Content-Security-Policy': "default-src 'self'; script-src 'self' 'unsafe-inline' https://fonts.googleapis.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; connect-src 'self' https://sneak-idx-worker-staging.bonitaspringsrealtors.workers.dev; frame-ancestors 'none';",
-    'X-Frame-Options': 'DENY',
-    'X-Content-Type-Options': 'nosniff',
-    'Referrer-Policy': 'strict-origin-when-cross-origin',
-    'Permissions-Policy': 'accelerometer=(), camera=(), geolocation=(), gyroscope=(), magnetometer=(), microphone=(), payment=(), usb=()'
-};
+export function getSecurityHeaders(env = {}) {
+    const isProd = (env?.SNEAK_ENV || '').toLowerCase() === 'production';
+    let connectSrc = "'self'";
+    if (env?.SNEAK_SERVING_URL) {
+        try {
+            const parsed = new URL(env.SNEAK_SERVING_URL);
+            if (isProd) {
+                // Production Admin CSP must contain NO staging worker hostname
+                if (!parsed.origin.includes('staging') && parsed.protocol === 'https:') {
+                    connectSrc = `'self' ${parsed.origin}`;
+                }
+            } else {
+                connectSrc = `'self' ${parsed.origin}`;
+            }
+        } catch {}
+    } else if (!isProd) {
+        connectSrc = "'self' https://sneak-idx-worker-staging.bonitaspringsrealtors.workers.dev";
+    }
 
-function json(data, status = 200, headers = {}) {
+    return {
+        'Content-Security-Policy': `default-src 'self'; script-src 'self' 'unsafe-inline' https://fonts.googleapis.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; connect-src ${connectSrc}; frame-ancestors 'none';`,
+        'X-Frame-Options': 'DENY',
+        'X-Content-Type-Options': 'nosniff',
+        'Referrer-Policy': 'strict-origin-when-cross-origin',
+        'Permissions-Policy': 'accelerometer=(), camera=(), geolocation=(), gyroscope=(), magnetometer=(), microphone=(), payment=(), usb=()'
+    };
+}
+
+function json(data, status = 200, headers = {}, env = {}) {
     return new Response(JSON.stringify(data), {
         status,
         headers: {
             'Content-Type': 'application/json',
             'Cache-Control': 'no-store',
-            ...SECURITY_HEADERS,
+            ...getSecurityHeaders(env),
             ...headers
         }
     });
 }
 
-function error(message, status = 400, code = 'BadRequest') {
-    return json({ error: code, message }, status);
+function error(message, status = 400, code = 'BadRequest', env = {}) {
+    return json({ error: code, message }, status, {}, env);
 }
 
 async function logAuthAudit(db, actor, action, summary) {
@@ -77,12 +97,12 @@ export default {
 
         // 1. Static UI Route
         if (method === 'GET' && (path === '/' || path === '/admin' || path === '/index.html')) {
-            return new Response(renderAdminHtml(), {
+            return new Response(renderAdminHtml(env), {
                 status: 200,
                 headers: {
                     'Content-Type': 'text/html; charset=utf-8',
                     'Cache-Control': 'no-store',
-                    ...SECURITY_HEADERS
+                    ...getSecurityHeaders(env)
                 }
             });
         }
@@ -90,13 +110,13 @@ export default {
         // 2. Health check
         if (method === 'GET' && path === '/health') {
             return json({
-                service: env?.SNEAK_SERVICE_NAME || 'sneak-idx-admin-staging',
+                service: env?.SNEAK_SERVICE_NAME || (env?.SNEAK_ENV === 'production' ? 'sneak-idx-admin' : 'sneak-idx-admin-staging'),
                 status: 'ok',
                 build: SNEAK_ADMIN_BUILD,
                 environment: env.SNEAK_ENV || 'staging',
                 growthZoneEnabled: growthZoneEnabled(env),
                 growthZoneConfigured: Boolean(growthZoneEnabled(env) && env?.GROWTHZONE_BASE_URL && env?.GROWTHZONE_API_KEY)
-            });
+            }, 200, {}, env);
         }
 
         // 3. Admin Login (POST /api/admin/login)
@@ -419,10 +439,10 @@ export default {
                 return await api.handleGetDomainDiagnostic(env);
             }
 
-            return error('API endpoint not found', 404);
+            return error('API endpoint not found', 404, 'NotFound', env);
         }
 
-        return new Response('Not Found', { status: 404, headers: SECURITY_HEADERS });
+        return new Response('Not Found', { status: 404, headers: getSecurityHeaders(env) });
     },
 
     async scheduled(controller, env) {

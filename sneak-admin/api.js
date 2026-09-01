@@ -883,7 +883,10 @@ export async function handleCreateAccountMemberInvite(db, accountId, body, actor
     let invitationRequested = false;
     let invitationError = null;
     try {
-        const memberUrl = env?.MEMBER_PORTAL_URL || 'https://sneak-idx-member-staging.bonitaspringsrealtors.workers.dev';
+        const isProd = (env?.SNEAK_ENV || '').toLowerCase() === 'production';
+        const memberUrl = env?.MEMBER_PORTAL_URL || (isProd
+            ? 'https://sneak-idx-member.bonitaspringsrealtors.workers.dev'
+            : 'https://sneak-idx-member-staging.bonitaspringsrealtors.workers.dev');
         const requestPayload = JSON.stringify({ email: cleanEmail });
         const requestHeaders = {
             'Content-Type': 'application/json',
@@ -1097,7 +1100,9 @@ export async function handleGetWebsiteConfig(db, siteId, env) {
     try {
         if (!secret) throw new Error('Preview signing secret is not configured.');
         previewToken = await createPreviewToken(site.site_key, site.id, secret, 1800);
-        previewUrl = `https://sneak-idx-sites-staging.bonitaspringsrealtors.workers.dev/preview/${site.site_key}?token=${encodeURIComponent(previewToken)}`;
+        const isProd = (env?.SNEAK_ENV || '').toLowerCase() === 'production';
+        const sitesHost = env?.SNEAK_SITES_URL || (isProd ? 'https://sneak-idx-sites.bonitaspringsrealtors.workers.dev' : 'https://sneak-idx-sites-staging.bonitaspringsrealtors.workers.dev');
+        previewUrl = `${sitesHost}/preview/${site.site_key}?token=${encodeURIComponent(previewToken)}`;
     } catch {}
 
     return json({
@@ -1219,7 +1224,9 @@ export async function handleUpdateWebsiteConfig(db, siteId, body, actor, env) {
     try {
         if (!secret) throw new Error('Preview signing secret is not configured.');
         const previewToken = await createPreviewToken(site.site_key, site.id, secret, 1800);
-        previewUrl = `https://sneak-idx-sites-staging.bonitaspringsrealtors.workers.dev/preview/${site.site_key}?token=${encodeURIComponent(previewToken)}`;
+        const isProd = (env?.SNEAK_ENV || '').toLowerCase() === 'production';
+        const sitesHost = env?.SNEAK_SITES_URL || (isProd ? 'https://sneak-idx-sites.bonitaspringsrealtors.workers.dev' : 'https://sneak-idx-sites-staging.bonitaspringsrealtors.workers.dev');
+        previewUrl = `${sitesHost}/preview/${site.site_key}?token=${encodeURIComponent(previewToken)}`;
     } catch {}
 
     return json({ success: true, website: updated, previewUrl });
@@ -1235,7 +1242,9 @@ export async function handleCreateWebsitePreviewToken(db, siteId, env) {
     const secret = env?.SNEAK_WEBSITE_PREVIEW_SECRET;
     if (!secret) return error('Website preview signing is not configured.', 503, 'ConfigurationError');
     const previewToken = await createPreviewToken(site.site_key, site.id, secret, 1800);
-    const previewUrl = `https://sneak-idx-sites-staging.bonitaspringsrealtors.workers.dev/preview/${site.site_key}?token=${encodeURIComponent(previewToken)}`;
+    const isProd = (env?.SNEAK_ENV || '').toLowerCase() === 'production';
+    const sitesHost = env?.SNEAK_SITES_URL || (isProd ? 'https://sneak-idx-sites.bonitaspringsrealtors.workers.dev' : 'https://sneak-idx-sites-staging.bonitaspringsrealtors.workers.dev');
+    const previewUrl = `${sitesHost}/preview/${site.site_key}?token=${encodeURIComponent(previewToken)}`;
 
     return json({ success: true, siteKey: site.site_key, previewToken, previewUrl, expiresIn: 1800 });
 }

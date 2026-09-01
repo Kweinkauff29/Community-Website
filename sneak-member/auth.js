@@ -128,7 +128,11 @@ export async function requestPublicMagicLink(db, email, ipHash, env = {}) {
         const ttlSeconds = isInvited ? 86400 : 900; // 24 hours for invitation, 15 minutes for login
         const rawToken = await createMagicLinkRecord(db, user.id, purpose, ttlSeconds);
         if (rawToken) {
-            const baseUrl = env?.MEMBER_PORTAL_URL || 'https://sneak-idx-member-staging.bonitaspringsrealtors.workers.dev';
+            const isProd = (env?.SNEAK_ENV || '').toLowerCase() === 'production';
+            const defaultBaseUrl = isProd
+                ? 'https://sneak-idx-member.bonitaspringsrealtors.workers.dev'
+                : 'https://sneak-idx-member-staging.bonitaspringsrealtors.workers.dev';
+            const baseUrl = env?.MEMBER_PORTAL_URL || defaultBaseUrl;
             const verifyUrl = `${baseUrl}/api/member/auth/verify?token=${encodeURIComponent(rawToken)}`;
             if (isInvited) {
                 await sendInvitationEmail(env, { email: cleanEmail, inviteUrl: verifyUrl, accountName: user.account_name });

@@ -263,7 +263,11 @@ export async function requestConsumerMagicLink(db, { siteKey, email, returnUrl, 
     `).bind(linkId, user.id, site.site_id, tokenHash, validatedReturn, now, expiresAt).run();
 
     // 6. Send transactional email
-    const consumerWorkerUrl = env?.CONSUMER_WORKER_URL || 'https://sneak-idx-consumer-staging.bonitaspringsrealtors.workers.dev';
+    const isProd = (env?.SNEAK_ENV || '').toLowerCase() === 'production';
+    const defaultConsumerUrl = isProd
+        ? 'https://sneak-idx-consumer.bonitaspringsrealtors.workers.dev'
+        : 'https://sneak-idx-consumer-staging.bonitaspringsrealtors.workers.dev';
+    const consumerWorkerUrl = env?.CONSUMER_WORKER_URL || defaultConsumerUrl;
     const verifyUrl = `${consumerWorkerUrl}/api/consumer/auth/verify?token=${encodeURIComponent(rawToken)}`;
 
     await sendConsumerMagicLinkEmail(env, {
