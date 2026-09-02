@@ -85,11 +85,21 @@ Every participant must complete all verification gates before being marked **Lau
   * Phase 7.3C3B Safe Property Sharing + Consumer Shareable Property Lists: 2026-08-31 (COMPLETE; deployed, independent anonymous recipient and revocation browser QA pass)
   * Phase 7.4A Launch Readiness Control Plane + Staff Provisioning: 2026-08-31 (COMPLETE; deployed; automated, live API/detail, D1, and mandatory actual-browser gates pass)
   * Phase 7.4B1 Transactional Email Readiness + GrowthZone Reconciliation: 2026-09-01 (IMPLEMENTED and staging deployed; controlled-inbox/GrowthZone credentials and evidence pending)
-  * Phase 7.4B2 Production Environment + First Controlled Member Cutover: 2026-09-01
+  * Phase 7.4B2 Production Environment + First Controlled Member Cutover: 2026-09-01 / 2026-09-02
     * PHASE 7.4B2A — PRODUCTION FOUNDATION: COMPLETE (clean isolated production D1, migrations 0001–0035, 7 production Wrangler configs, Admin CSP isolation, zero staging leaks, production full-inventory bootstrap architecture with self-healing reconciliation, bounded-memory streamed writes, renewable lock leases, 301/301 passing tests across 21 suites).
-    * Production Synchronization Architecture (Phase 7.4B2A.4 Hardened): Initial production listing sync performs authoritative Full Inventory Bootstrap without lookback limitation (`FINAL_SNEAK_LISTING_FILTER and ModificationTimestamp lt syncUpperBound`), enforces strict completeness guards (`@odata.count == fetched == unique keys`), streams D1 batch writes per Bridge page in bounded memory, renews lock lease periodically (`renewLock`), prunes stale rows only after complete scan, and commits cursor. Normal sync runs 15-minute delta with 5-minute overlap; delta failure preserves cursor and retries delta mode. Reconciliation runs daily and is self-healing (streams repairs in bounded batches with renewable lock). Open houses run 60-day forward horizon sync after listing bootstrap. Production listing bootstrap has NOT run yet; production D1 inventory remains 0.
-    * PHASE 7.4B2B — FIRST MEMBER ACTIVATION: BLOCKED / NOT STARTED (Awaiting operator-supplied production secrets, Bridge sync bootstrap, Mailjet inbox delivery proof, and connected-Chrome member-page verification).
-    * Production PILOT-01 Model: Site search scope is 'market' (full authorized MLS market inventory, scope_value: null); Participant identity is agent 633942 for participant-scoped featured listings and lead capture. Production account/site records NOT yet created.
+    * Production Synchronization Architecture: Authoritative bootstrap completed (36,369 fetched/upserted, pruned 129, 182 Bridge pages, 0 FK violations, 1,232 open houses). 15-minute deltas, hourly open houses, and daily reconciliation active and healthy.
+    * PHASE 7.4B2B — FIRST MEMBER ACTIVATION (PILOT-01): COMPLETE & VERIFIED OPERATIONAL (2026-09-02).
+      * Production Account ID: `acc_6023a5d9-d6fb-446f-bdbe-7924999f003c`
+      * Production Site ID: `site_4ab2b04f-7e43-4c58-9f79-2f6ddc5d5328` (Site Key: `ursula-weinkauff-pilot`)
+      * Participant MLS Identity: `633942` (Ursula Weinkauff)
+      * Scope Configuration: `scope_type = 'market'` (full market inventory, 15,166 active listings, 1,232 open houses); `scope_value = null`; participant-scoped featured listings (`/idx/v1/agent/633942/listings`).
+      * Production Entitlement: `source = 'manual'`, `plan = 'standard'`, `status = 'active'`, `external_reference = 'PILOT-01-INTERNAL'`.
+      * Authorized Hostname: `coconutcoastrealtors.org` (ID: `dom_480e71b5-a390-4aaf-ab6d-4f1831fff8a7`, verified: 1, status: active).
+      * Mailjet Delivery & Auth: Sender `no-reply@ccorealtors.org` verified active with DKIM OK and SPF OK; invitation magic link dispatched to controlled pilot mailbox `kmwcollegeapps@gmail.com` (D1 record: `ml_1788363893716_1yihs`); single-use token consumption, authenticated Member session, replay rejection (HTTP 401), and invalid token rejection (HTTP 401) verified.
+      * Production Launch Smoke: 38/38 PASS on `scripts/verify-production-launch.mjs` across all 7 production Workers, sync state, and tenant bootstrap.
+      * Actual Chrome QA: 23/23 PASS on `scripts/qa-production-browser.mjs` using local Google Chrome across Desktop (1440×900), Tablet (1024×768), and Mobile (390×844) viewports with zero horizontal overflow, full card rendering, detail modal attribution, and zero page errors.
+      * Member & Admin Portal QA: PASS in real browser sessions; suspend/reactivate lifecycle actions verified operational (denies serving with 403 on suspend, cleanly restores with 200 on reactivate).
+      * Rollback Snapshot: Prior staging embed on `https://coconutcoastrealtors.org/idx-test/` captured and preserved in cutover documentation. Ready for operator embed replacement.
 * **Phase 7.3C2B Agent Client Activity Dashboard & Authenticated Buyer Timeline:**
   * *Privacy-Preserving Activity Ledger:* D1 table `sneak_consumer_activity_events` (migration 0030) records authenticated buyer events (`listing_view`, `favorite_*`, `saved_search_*`, `alert_*`, `inquiry_submitted`). Zero anonymous tracking, zero fingerprinting, zero geolocation tracking.
   * *Consumer Ingestion Protection:* `POST /api/consumer/activity` enforces authentication, strict browser allowlist (`listing_view`, `inquiry_submitted`), 30-minute deduplication on listing views, lead email match verification, and 120 events/hr rate limiting.
@@ -262,3 +272,4 @@ Every participant must complete all verification gates before being marked **Lau
 | Date | Time (UTC) | MLS Sync Freshness | Active Listings | Open Houses | Serving Worker | Cloudflare SaaS | Mailjet Status | Launch Blockers | Auditor |
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
 | **2026-08-24** | 17:25 | 10 min | 32,069 | 942 | Healthy | Live / Active | Verified | None (0) | System Preflight |
+| **2026-09-02** | 15:48 | 0 min | 36,292 | 1,232 | Healthy | Deferred (Manual) | Verified Active (DKIM/SPF OK) | None (0) | Cutover Automation (Gates 16-25 PASS) |

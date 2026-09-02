@@ -112,9 +112,10 @@ if (!siteKey || !memberOrigin) {
         if (first?.ListingKey) {
             const key = encodeURIComponent(first.ListingKey);
             const detail = await readJson(`${urls.serving}/idx/v1/listing/${key}?site=${encodeURIComponent(siteKey)}`, { headers });
-            check(detail.response?.ok === true && detail.data?.ListingKey === first.ListingKey, 'Production listing detail');
+            const listingRecord = detail.data?.ListingKey ? detail.data : detail.data?.data;
+            check(detail.response?.ok === true && listingRecord?.ListingKey === first.ListingKey, 'Production listing detail');
             const media = await readJson(`${urls.serving}/idx/v1/listing/${key}/media?site=${encodeURIComponent(siteKey)}`, { headers });
-            const mediaItems = Array.isArray(media.data) ? media.data : media.data?.data;
+            const mediaItems = Array.isArray(media.data) ? media.data : (media.data?.media || media.data?.data);
             check(media.response?.ok === true && Array.isArray(mediaItems) && mediaItems.length > 0, 'Production listing media');
         }
 
