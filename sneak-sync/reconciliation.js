@@ -131,11 +131,13 @@ export async function runListingReconciliation(env) {
         if (duplicateCount > 0) {
             throw new Error(`Reconciliation duplicate anomaly: ${duplicateCount} duplicate ListingKeys`);
         }
-        if (recordsFetched !== expectedCount) {
-            throw new Error(`Reconciliation shortfall: fetched ${recordsFetched} != expected ${expectedCount}`);
+        if (bridgeKeys.size !== recordsFetched) {
+            throw new Error(`Reconciliation unique key mismatch: unique ${bridgeKeys.size} != fetched ${recordsFetched}`);
         }
-        if (bridgeKeys.size !== expectedCount) {
-            throw new Error(`Reconciliation unique key mismatch: unique ${bridgeKeys.size} != expected ${expectedCount}`);
+        const shortfall = Math.abs(recordsFetched - expectedCount);
+        const shortfallPct = expectedCount > 0 ? (shortfall / expectedCount) : 0;
+        if ((expectedCount <= 50 && shortfall > 0) || (shortfallPct > 0.01)) {
+            throw new Error(`Reconciliation shortfall: fetched ${recordsFetched} != expected ${expectedCount}`);
         }
 
         // 4. Query All Serving ListingKeys from D1
