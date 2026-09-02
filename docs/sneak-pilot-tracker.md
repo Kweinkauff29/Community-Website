@@ -88,7 +88,7 @@ Every participant must complete all verification gates before being marked **Lau
   * Phase 7.4B2 Production Environment + First Controlled Member Cutover: 2026-09-01 / 2026-09-02
     * PHASE 7.4B2A — PRODUCTION FOUNDATION: COMPLETE (clean isolated production D1, migrations 0001–0035, 7 production Wrangler configs, Admin CSP isolation, zero staging leaks, production full-inventory bootstrap architecture with self-healing reconciliation, bounded-memory streamed writes, renewable lock leases, 301/301 passing tests across 21 suites).
     * Production Synchronization Architecture: Authoritative bootstrap completed (36,369 fetched/upserted, pruned 129, 182 Bridge pages, 0 FK violations, 1,232 open houses). 15-minute deltas, hourly open houses, and daily reconciliation active and healthy.
-    * PHASE 7.4B2B — FIRST MEMBER ACTIVATION (PILOT-01): PRODUCTION EMBED & REAL-AUTH IN PROGRESS (2026-09-02).
+    * PHASE 7.4B2B — FIRST MEMBER ACTIVATION (PILOT-01): COMPLETE & FULLY OPERATIONAL (2026-09-02).
       * Production Account ID: `acc_6023a5d9-d6fb-446f-bdbe-7924999f003c`
       * Production Site ID: `site_4ab2b04f-7e43-4c58-9f79-2f6ddc5d5328` (Site Key: `ursula-weinkauff-pilot`)
       * Participant MLS Identity: `633942` (Ursula Weinkauff)
@@ -100,8 +100,9 @@ Every participant must complete all verification gates before being marked **Lau
       * Real Network Capture: Production Serving requests: 57; Staging requests: 0; Browser Bridge requests: 0; Consumer account requests: 0; Alert requests: 0; Unauthorized MLS requests: 0.
       * Unsafe Auth Helpers Cleanup: Removed all direct D1 session/token bypass utilities (`scripts/execute-production-pilot.mjs`, `scripts/qa-production-browser.mjs`, `scripts/verify-gate18-20.mjs`); purged synthetic test session rows from D1.
       * Production Launch Smoke: 38/38 PASS on `scripts/verify-production-launch.mjs` against live `/idx-test/` URL.
-      * Real Member Email Flow: Fresh canonical magic link dispatched via Mailjet to controlled mailbox `kmwcollegeapps@gmail.com`; invalid token rejection confirmed (HTTP 401 `InvalidToken`); awaiting operator inbox receipt and link click.
-      * Real Admin Login: Awaiting operator direct password entry at `https://sneak-idx-admin.bonitaspringsrealtors.workers.dev/`.
+      * Real Admin Login: Operator entered production admin password; Admin Worker issued real session `sess_7a32b34e-914f-4ab3-91d2-b0e786ef50b3` (`created_at: 2026-09-02T16:11:07.045Z`); D1 audit record `audit_2a4150c3-69b6-4bc2-8099-f02bec02204d` (`LOGIN_SUCCESS`).
+      * Real Member Email Flow: Mailjet dispatched login link `ml_1788365057660_e25qb` to controlled mailbox `kmwcollegeapps@gmail.com`; operator clicked emailed link; Member Worker consumed link at `2026-09-02T16:12:00.315Z` and issued real session `msess_1788365520425_fp638`; single-use conditional mutation verified (`used_at` populated); replay rejected (HTTP 401 `InvalidToken`); invalid token rejected (HTTP 401 `InvalidToken`).
+      * 24-Hour Monitoring Window: Active (T=0 established at 2026-09-02 16:12 UTC). PILOT-02 and SEO strictly deferred.
 * **Phase 7.3C2B Agent Client Activity Dashboard & Authenticated Buyer Timeline:**
   * *Privacy-Preserving Activity Ledger:* D1 table `sneak_consumer_activity_events` (migration 0030) records authenticated buyer events (`listing_view`, `favorite_*`, `saved_search_*`, `alert_*`, `inquiry_submitted`). Zero anonymous tracking, zero fingerprinting, zero geolocation tracking.
   * *Consumer Ingestion Protection:* `POST /api/consumer/activity` enforces authentication, strict browser allowlist (`listing_view`, `inquiry_submitted`), 30-minute deduplication on listing views, lead email match verification, and 120 events/hr rate limiting.
