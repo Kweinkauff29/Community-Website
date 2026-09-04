@@ -1817,7 +1817,7 @@
       </a>
       <div class="navbar-expand-md"
         style="font-weight:700; color:#fff; font-size:1.1rem; flex-grow:1; text-align:center; margin: 0 0 0 5px;">
-        Open House Weekend - May 1st - 3rd
+        Open House Weekend - Sept 25th - 27th
       </div>
       <div class="navbar-expand-md" style="display:flex; gap:8px;">
         <a href="https://coconutcoastopenhouses.com/home-search/" class="promo-cta blue"><i class="fas fa-search"></i>
@@ -1832,7 +1832,7 @@
   <div class="mobile-menu" id="mobileMenu">
     <div
       style="padding: 15px; text-align: center; font-weight: bold; color: #fff; border-bottom: 1px solid rgba(255,255,255,0.1); margin-bottom: 5px;">
-      Open House Weekend - May 1st - 3rd
+      Open House Weekend - Sept 25th - 27th
     </div>
     <a href="https://coconutcoastopenhouses.com/home-search/"><i class="fas fa-search"></i> Search All Homes</a>
     <a href="https://bonitaesterorealtors.com/realtor-directory/"><i class="fas fa-user-tie"></i> Find a REALTOR®</a>
@@ -1998,7 +1998,7 @@
         </div>
 
         <div style="margin-top: 25px; text-align: center; border-top: 1px solid #eee; padding-top: 20px;">
-          <h4 style="margin-bottom: 15px; font-size: 1.1rem; color: #333;">May Open House Weekend - Sponsored by:</h4>
+          <h4 style="margin-bottom: 15px; font-size: 1.1rem; color: #333;">September Open House Weekend - Sponsored by:</h4>
           <a href="https://www.saadlegal.com" target="_blank" rel="noopener">
             <img src="https://bonitaesterorealtors.com/wp-content/uploads/2026/04/BSER-Header.jpg"
               alt="Saad Legal"
@@ -2101,8 +2101,8 @@
     const ODATA_OH = `${API_BASE}/api/v2/OData/${MLS}/OpenHouse`;
     const ODATA_PROP = `${API_BASE}/api/v2/OData/${MLS}/Property`;
     const ODATA_MEDIA = `${API_BASE}/api/v2/OData/${MLS}/Media`;
-    const EVENT_START = '2026-05-01', EVENT_END = '2026-05-03';
-    const EVENT_DAYS = ['2026-05-01', '2026-05-02', '2026-05-03'];
+    const EVENT_START = '2026-09-25', EVENT_END = '2026-09-27';
+    const EVENT_DAYS = ['2026-09-25', '2026-09-26', '2026-09-27'];
     const PROP_SEL = 'ListingKey,ListingId,UnparsedAddress,City,PostalCode,ListPrice,PropertyType,PropertySubType,BedroomsTotal,BathroomsTotalInteger,LivingArea,LotSizeAcres,YearBuilt,StandardStatus,SubdivisionName,ListAgentFullName,ListAgentEmail,ListAgentDirectPhone,ListAgentKey,ListOfficeName,ListOfficePhone,PublicRemarks,Coordinates,Media';
 
     let map, markerCluster, allMerged = [], filteredList = [], mediaCache = new Map(), currentDetail = null, detailIdx = 0;
@@ -2118,7 +2118,10 @@
 
     function initMap() {
       map = L.map('map').setView([26.34, -81.78], 12);
-      L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png', { attribution: '&copy; OSM &copy; CARTO', subdomains: 'abcd', maxZoom: 20 }).addTo(map);
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+        maxZoom: 19
+      }).addTo(map);
       markerCluster = L.markerClusterGroup({ showCoverageOnHover: false, maxClusterRadius: 40, iconCreateFunction: c => L.divIcon({ html: '<div>' + c.getChildCount() + '</div>', className: 'marker-cluster', iconSize: L.point(40, 40) }) });
       map.addLayer(markerCluster);
     }
@@ -2497,6 +2500,10 @@
         if (!res.ok) throw new Error("Failed to fetch open houses cache");
 
         allMerged = await res.json();
+        allMerged = allMerged.filter(({ oh }) => {
+          const d = (oh?.OpenHouseDate || oh?.OpenHouseStartTime || '').slice(0, 10);
+          return d >= EVENT_START && d <= EVENT_END;
+        });
         const properties = allMerged.map(d => d.property).filter(Boolean);
         extractInlineMedia(properties);
 

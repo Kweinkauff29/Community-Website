@@ -46,6 +46,11 @@ export default {
             return new Response('Sync Triggered', { status: 200 });
         }
 
+        if (url.pathname === '/api/sync-openhouses') {
+            await this.syncOpenHouses(env);
+            return new Response('Open houses synced successfully', { status: 200 });
+        }
+
         // Allow basic API access
         if (!url.pathname.startsWith('/api/v2/') && url.pathname !== '/api/debug-keys') {
             return new Response('Not allowed', { status: 403 });
@@ -203,8 +208,8 @@ export default {
     },
 
     async syncOpenHouses(env) {
-        const EVENT_START = '2026-05-01';
-        const EVENT_END = '2026-05-03';
+        const EVENT_START = '2026-09-25';
+        const EVENT_END = '2026-09-27';
         const ohFilter = `OpenHouseStatus eq 'Active' and OriginatingSystemName eq 'Bonita Springs' and OpenHouseDate ge ${EVENT_START} and OpenHouseDate le ${EVENT_END}`;
         const ohURL = `https://api.bridgedataoutput.com/api/v2/OData/bsaor/OpenHouse?$filter=${encodeURIComponent(ohFilter)}&$top=200&$orderby=OpenHouseStartTime asc&access_token=${env.BRIDGE_TOKEN}`;
         
@@ -228,7 +233,7 @@ export default {
         for (let i = 0; i < listingKeys.length; i += 25) {
             const chunk = listingKeys.slice(i, i + 25);
             const batchFilter = chunk.map(k => `ListingKey eq '${k}'`).join(' or ');
-            const pURL = `https://api.bridgedataoutput.com/api/v2/OData/bsaor/Property?$filter=${encodeURIComponent(`(${batchFilter}) and OriginatingSystemName eq 'Bonita Springs'`)}&$top=100&$select=${PROP_SEL}&access_token=${env.BRIDGE_TOKEN}`;
+            const pURL = `https://api.bridgedataoutput.com/api/v2/OData/bsaor/Property?$filter=${encodeURIComponent(`(${batchFilter})`)}&$top=100&$select=${PROP_SEL}&access_token=${env.BRIDGE_TOKEN}`;
             const pres = await fetch(pURL);
             if (pres.ok) {
                 const pd = await pres.json();
