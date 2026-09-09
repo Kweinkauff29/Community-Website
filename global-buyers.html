@@ -1,3 +1,4 @@
+<meta charset="UTF-8">
 <!-- ==========================================================================
      CCOR / COCONUT COAST LIFESTYLES — GLOBAL BUYERS INTERACTIVE PAGE
      Phase 03: Flowing Editorial Redesign + Real Remote Photography + Lifestyle Story
@@ -4548,6 +4549,1237 @@
         scroll-behavior: auto !important;
     }
 }
+
+/* ==========================================================================
+   PERSONALIZATION 2.0 THEME SYSTEM & ACCENTS
+   ========================================================================== */
+#ccor-global-buyers {
+    --gb-market-accent: var(--gb-teal);
+    --gb-market-accent-secondary: var(--gb-orange);
+}
+
+#ccor-global-buyers[data-gb-market="canada"] {
+    --gb-market-accent: #D52B1E;
+    --gb-market-accent-secondary: #8B0000;
+}
+#ccor-global-buyers[data-gb-market="germany"] {
+    --gb-market-accent: #FFCC00;
+    --gb-market-accent-secondary: #DD0000;
+}
+#ccor-global-buyers[data-gb-market="brazil"] {
+    --gb-market-accent: #009B3A;
+    --gb-market-accent-secondary: #FFDF00;
+}
+#ccor-global-buyers[data-gb-market="uk"] {
+    --gb-market-accent: #012169;
+    --gb-market-accent-secondary: #C8102E;
+}
+#ccor-global-buyers[data-gb-market="colombia"] {
+    --gb-market-accent: #FCD116;
+    --gb-market-accent-secondary: #003893;
+}
+#ccor-global-buyers[data-gb-market="argentina"] {
+    --gb-market-accent: #74ACDF;
+    --gb-market-accent-secondary: #F6B40E;
+}
+#ccor-global-buyers[data-gb-market="mexico"] {
+    --gb-market-accent: #006847;
+    --gb-market-accent-secondary: #CE1126;
+}
+
+/* Flag SVG Graphic Styling */
+#ccor-global-buyers .gb-flag-svg {
+    width: 22px;
+    height: 14px;
+    display: inline-block;
+    vertical-align: middle;
+    border-radius: 2px;
+    box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.15);
+    flex-shrink: 0;
+}
+#ccor-global-buyers .gb-flag-svg--lg {
+    width: 34px;
+    height: 22px;
+    border-radius: 3px;
+    box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.2);
+}
+
+/* Persistent Nav Personalization Pill */
+#ccor-global-buyers .gb-nav__profile-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(255, 255, 255, 0.12);
+    border: 1px solid rgba(255, 255, 255, 0.22);
+    border-radius: 9999px;
+    padding: 3px 10px 3px 8px;
+    font-family: var(--gb-font-display);
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    color: var(--gb-sand-warm);
+    text-transform: uppercase;
+    transition: all 0.2s ease;
+    margin-left: 12px;
+}
+#ccor-global-buyers .gb-nav__profile-change {
+    background: transparent;
+    border: none;
+    color: var(--gb-orange);
+    font-family: var(--gb-font-display);
+    font-size: 0.65rem;
+    font-weight: 800;
+    letter-spacing: 0.1em;
+    cursor: pointer;
+    text-decoration: underline;
+    padding: 0 2px;
+    margin-left: 4px;
+}
+#ccor-global-buyers .gb-nav__profile-change:hover {
+    color: #ffffff;
+}
+
+/* Mobile Profile Pill in Drawer */
+#ccor-global-buyers .gb-nav__mobile-profile {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: rgba(255, 255, 255, 0.08);
+    border-radius: 6px;
+    padding: 8px 12px;
+    margin: 8px 12px 14px;
+    font-size: 0.78rem;
+    color: var(--gb-sand-warm);
+    border-left: 3px solid var(--gb-market-accent);
+}
+
+/* Latin America sub-options reveal */
+#ccor-global-buyers .gb-latam-subgroup {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 8px;
+    margin-top: 10px;
+    padding: 12px;
+    background: rgba(255, 255, 255, 0.65);
+    border-radius: 8px;
+    border: 1px solid rgba(7, 148, 166, 0.2);
+    animation: gbFadeIn 0.3s ease;
+}
+@keyframes gbFadeIn {
+    from { opacity: 0; transform: translateY(-4px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* Choice button flag presentation */
+#ccor-global-buyers .gb-choice-btn__meta {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+}
+#ccor-global-buyers .gb-choice-btn--active {
+    border-color: var(--gb-market-accent) !important;
+    box-shadow: 0 0 0 2px var(--gb-market-accent) !important;
+}
+
+/* ==========================================================================
+   PERSONALIZED BRIEF — SEAMLESS EDITORIAL REPORT REDESIGN
+   ========================================================================== */
+#ccor-global-buyers .gb-brief-module {
+    margin-top: 2.5rem;
+    background: #ffffff;
+    border-radius: 12px;
+    border: 1px solid rgba(11, 37, 69, 0.1);
+    border-top: 4px solid var(--gb-market-accent, var(--gb-teal));
+    box-shadow: 0 10px 30px -10px rgba(11, 37, 69, 0.06);
+    padding: 2.5rem;
+    animation: gbBriefReveal 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+@keyframes gbBriefReveal {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* 1. Header (Clean, Light, Editorial) */
+#ccor-global-buyers .gb-brief-header {
+    border-bottom: 1px solid rgba(11, 37, 69, 0.1);
+    padding-bottom: 1.5rem;
+    margin-bottom: 2rem;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1.25rem;
+}
+#ccor-global-buyers .gb-brief-eyebrow {
+    font-family: var(--gb-font-display);
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.15em;
+    color: var(--gb-sun-orange);
+    text-transform: uppercase;
+}
+#ccor-global-buyers .gb-brief-headline {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-top: 4px;
+    flex-wrap: wrap;
+}
+#ccor-global-buyers .gb-brief-country-name {
+    font-family: var(--gb-font-display);
+    font-size: clamp(1.4rem, 3.5vw, 2rem);
+    font-weight: 800;
+    color: var(--gb-navy);
+    letter-spacing: 0.03em;
+    line-height: 1.15;
+}
+#ccor-global-buyers .gb-brief-goal-name {
+    font-size: clamp(0.95rem, 2vw, 1.15rem);
+    font-weight: 600;
+    color: var(--gb-charcoal);
+    padding-left: 12px;
+    border-left: 2px solid rgba(11, 37, 69, 0.15);
+}
+#ccor-global-buyers .gb-brief-flourish {
+    display: inline-block;
+    background: rgba(0, 155, 58, 0.1);
+    border: 1px solid #009B3A;
+    color: #007a2e;
+    font-family: var(--gb-font-display);
+    font-size: 0.72rem;
+    font-weight: 800;
+    letter-spacing: 0.18em;
+    padding: 3px 10px;
+    border-radius: 4px;
+    text-transform: uppercase;
+    align-self: center;
+}
+
+/* 2. Top Asymmetric Layout: Left = Snapshot, Right = Currency */
+#ccor-global-buyers .gb-brief-top-grid {
+    display: grid;
+    grid-template-columns: 1.12fr 0.88fr;
+    gap: 2.75rem;
+    align-items: start;
+}
+
+/* Left: Market Snapshot */
+#ccor-global-buyers .gb-brief-snapshot {
+    display: flex;
+    flex-direction: column;
+}
+#ccor-global-buyers .gb-editorial-tag {
+    font-family: var(--gb-font-display);
+    font-size: 0.72rem;
+    font-weight: 800;
+    letter-spacing: 0.12em;
+    color: var(--gb-teal);
+    text-transform: uppercase;
+    margin-bottom: 0.75rem;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+#ccor-global-buyers .gb-snapshot-stat-hero {
+    margin-bottom: 1.25rem;
+}
+#ccor-global-buyers .gb-snapshot-stat-hero__num {
+    font-family: var(--gb-font-display);
+    font-size: clamp(2.2rem, 4.5vw, 3rem);
+    font-weight: 800;
+    color: var(--gb-navy);
+    line-height: 1.05;
+    letter-spacing: -0.02em;
+}
+#ccor-global-buyers .gb-snapshot-stat-hero__label {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--gb-charcoal);
+    line-height: 1.4;
+    margin-top: 4px;
+}
+#ccor-global-buyers .gb-snapshot-signals {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    margin: 1.25rem 0;
+    padding: 1.25rem 0;
+    border-top: 1px solid rgba(11, 37, 69, 0.08);
+    border-bottom: 1px solid rgba(11, 37, 69, 0.08);
+}
+#ccor-global-buyers .gb-snapshot-signal-item {
+    display: flex;
+    flex-direction: column;
+}
+#ccor-global-buyers .gb-snapshot-signal-item__val {
+    font-family: var(--gb-font-display);
+    font-size: 1.4rem;
+    font-weight: 800;
+    color: var(--gb-navy);
+    line-height: 1.1;
+}
+#ccor-global-buyers .gb-snapshot-signal-item__label {
+    font-size: 0.78rem;
+    color: #64748b;
+    line-height: 1.35;
+    margin-top: 3px;
+}
+#ccor-global-buyers .gb-snapshot-narrative {
+    font-size: 0.92rem;
+    line-height: 1.6;
+    color: var(--gb-charcoal);
+    margin-bottom: 0.75rem;
+}
+#ccor-global-buyers .gb-snapshot-source {
+    font-size: 0.75rem;
+    color: #94a3b8;
+    line-height: 1.4;
+    margin-top: 0.5rem;
+}
+#ccor-global-buyers .gb-brief-details {
+    margin-top: 1rem;
+}
+#ccor-global-buyers .gb-brief-details__summary {
+    font-family: var(--gb-font-display);
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    color: var(--gb-teal);
+    cursor: pointer;
+    user-select: none;
+    outline: none;
+}
+#ccor-global-buyers .gb-brief-details__grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.75rem;
+    margin-top: 0.75rem;
+    padding: 0.75rem;
+    background: #f8fafc;
+    border-radius: 6px;
+}
+
+/* Right: Integrated Currency Converter & FX History */
+#ccor-global-buyers .gb-brief-currency {
+    background: #f8fafc;
+    border: 1px solid rgba(11, 37, 69, 0.08);
+    border-radius: 10px;
+    padding: 1.5rem;
+}
+#ccor-global-buyers .gb-calc-rates-row {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: 0.75rem;
+    padding: 0.75rem 1rem;
+    background: #ffffff;
+    border-radius: 6px;
+    border: 1px solid rgba(11, 37, 69, 0.06);
+    margin: 0.75rem 0;
+}
+#ccor-global-buyers .gb-calc-rate-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.85rem;
+    color: var(--gb-navy);
+}
+#ccor-global-buyers .gb-calc-rate-sym {
+    font-weight: 700;
+}
+#ccor-global-buyers .gb-calc-rate-eq {
+    color: #94a3b8;
+}
+#ccor-global-buyers .gb-calc-rate-val {
+    font-family: var(--gb-font-display);
+    font-weight: 800;
+    color: var(--gb-teal);
+}
+#ccor-global-buyers .gb-calc-status-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.7rem;
+    color: #64748b;
+    margin-bottom: 1rem;
+}
+#ccor-global-buyers .gb-calc-status-badge {
+    font-size: 0.65rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    padding: 2px 6px;
+    border-radius: 4px;
+    text-transform: uppercase;
+}
+#ccor-global-buyers .gb-calc-status-badge--live {
+    background: #dcfce7;
+    color: #15803d;
+}
+#ccor-global-buyers .gb-calc-status-badge--verified {
+    background: #f1f5f9;
+    color: #475569;
+}
+
+/* Two-Way Currency Calculator */
+#ccor-global-buyers .gb-calc-card {
+    background: #ffffff;
+    border: 1px solid rgba(11, 37, 69, 0.1);
+    border-radius: 8px;
+    padding: 1.25rem;
+    margin-bottom: 1.25rem;
+}
+#ccor-global-buyers .gb-calc-fields-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+#ccor-global-buyers .gb-calc-input-group {
+    flex: 1;
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+#ccor-global-buyers .gb-calc-pill {
+    position: absolute;
+    left: 8px;
+    font-family: var(--gb-font-display);
+    font-size: 0.75rem;
+    font-weight: 800;
+    color: var(--gb-navy);
+    background: #f1f5f9;
+    padding: 4px 8px;
+    border-radius: 4px;
+    pointer-events: none;
+    line-height: 1;
+}
+#ccor-global-buyers .gb-calc-input {
+    width: 100%;
+    padding: 8px 10px 8px 64px;
+    font-family: var(--gb-font-display);
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: var(--gb-navy);
+    background: #ffffff;
+    border: 1px solid rgba(11, 37, 69, 0.15);
+    border-radius: 6px;
+    outline: none;
+    transition: border-color 0.2s ease;
+}
+#ccor-global-buyers .gb-calc-input:focus {
+    border-color: var(--gb-teal);
+    box-shadow: 0 0 0 2px rgba(7, 148, 166, 0.15);
+}
+#ccor-global-buyers .gb-calc-swap-btn {
+    background: #f1f5f9;
+    border: 1px solid rgba(11, 37, 69, 0.12);
+    border-radius: 6px;
+    width: 36px;
+    height: 36px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 1rem;
+    color: var(--gb-navy);
+    transition: all 0.2s ease;
+    flex-shrink: 0;
+}
+#ccor-global-buyers .gb-calc-swap-btn:hover {
+    background: var(--gb-teal);
+    color: #ffffff;
+    border-color: var(--gb-teal);
+}
+
+/* Presets */
+#ccor-global-buyers .gb-calc-presets {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 0.85rem;
+    align-items: center;
+}
+#ccor-global-buyers .gb-calc-preset-label {
+    font-size: 0.7rem;
+    font-weight: 700;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-right: 4px;
+}
+#ccor-global-buyers .gb-calc-preset-btn {
+    background: #f8fafc;
+    border: 1px solid rgba(11, 37, 69, 0.1);
+    color: var(--gb-navy);
+    padding: 3px 8px;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+#ccor-global-buyers .gb-calc-preset-btn:hover {
+    background: var(--gb-teal);
+    color: #ffffff;
+    border-color: var(--gb-teal);
+}
+#ccor-global-buyers .gb-calc-preset-btn--median {
+    background: rgba(245, 154, 22, 0.1);
+    border-color: var(--gb-sun-orange);
+    color: var(--gb-navy);
+}
+
+/* 5-Year Chart Box */
+#ccor-global-buyers .gb-fx-chart-box {
+    margin-top: 1rem;
+    padding-top: 0.85rem;
+    border-top: 1px solid rgba(11, 37, 69, 0.08);
+}
+#ccor-global-buyers .gb-fx-chart-box__header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.5rem;
+}
+#ccor-global-buyers .gb-fx-chart-box__title {
+    font-family: var(--gb-font-display);
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: var(--gb-navy);
+    text-transform: uppercase;
+}
+#ccor-global-buyers .gb-fx-chart-box__badge {
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: var(--gb-teal);
+}
+
+/* 3. Getting Here Teaser (Compact Row) */
+#ccor-global-buyers .gb-brief-teaser-row {
+    border-top: 1px solid rgba(11, 37, 69, 0.1);
+    padding-top: 1.5rem;
+    margin-top: 2rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 1.25rem;
+}
+#ccor-global-buyers .gb-brief-teaser-left {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+#ccor-global-buyers .gb-brief-teaser-route {
+    font-family: var(--gb-font-display);
+    font-size: 1.25rem;
+    font-weight: 800;
+    color: var(--gb-navy);
+    letter-spacing: 0.04em;
+}
+#ccor-global-buyers .gb-brief-teaser-badge {
+    font-size: 0.68rem;
+    font-weight: 800;
+    padding: 3px 8px;
+    border-radius: 4px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+}
+#ccor-global-buyers .gb-brief-teaser-badge--nonstop {
+    background: #dcfce7;
+    color: #15803d;
+}
+#ccor-global-buyers .gb-brief-teaser-badge--connecting {
+    background: #e0f2fe;
+    color: #0369a1;
+}
+#ccor-global-buyers .gb-brief-teaser-sub {
+    font-size: 0.8125rem;
+    color: #64748b;
+}
+#ccor-global-buyers .gb-brief-teaser-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-family: var(--gb-font-display);
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: var(--gb-teal);
+    text-decoration: none;
+    letter-spacing: 0.08em;
+    padding: 6px 12px;
+    border: 1px solid var(--gb-teal);
+    border-radius: 4px;
+    transition: all 0.2s ease;
+}
+#ccor-global-buyers .gb-brief-teaser-link:hover {
+    background: var(--gb-teal);
+    color: #ffffff;
+}
+
+/* 4. What This Changes For You (Compact Summary) */
+#ccor-global-buyers .gb-brief-changes {
+    border-top: 1px solid rgba(11, 37, 69, 0.1);
+    padding-top: 1.5rem;
+    margin-top: 1.5rem;
+}
+#ccor-global-buyers .gb-brief-changes__title {
+    font-family: var(--gb-font-display);
+    font-size: 0.75rem;
+    font-weight: 800;
+    color: var(--gb-sun-orange);
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    margin-bottom: 0.75rem;
+}
+#ccor-global-buyers .gb-brief-changes__grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 1rem;
+}
+#ccor-global-buyers .gb-brief-changes__item {
+    background: #f8fafc;
+    border-left: 3px solid var(--gb-market-accent, var(--gb-teal));
+    padding: 0.75rem 1rem;
+    border-radius: 0 6px 6px 0;
+}
+#ccor-global-buyers .gb-brief-changes__label {
+    font-size: 0.7rem;
+    font-weight: 800;
+    color: var(--gb-navy);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+}
+#ccor-global-buyers .gb-brief-changes__desc {
+    font-size: 0.8125rem;
+    color: var(--gb-charcoal);
+    margin-top: 2px;
+    line-height: 1.4;
+}
+
+/* 5. Official Resources List */
+#ccor-global-buyers .gb-brief-official-links {
+    border-top: 1px solid rgba(11, 37, 69, 0.1);
+    padding-top: 1.25rem;
+    margin-top: 1.5rem;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 1.25rem;
+    font-size: 0.8125rem;
+}
+#ccor-global-buyers .gb-brief-official-label {
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+}
+#ccor-global-buyers .gb-brief-official-link {
+    color: var(--gb-navy);
+    font-weight: 600;
+    text-decoration: underline;
+    text-decoration-color: rgba(11, 37, 69, 0.25);
+    transition: color 0.15s ease;
+}
+#ccor-global-buyers .gb-brief-official-link:hover {
+    color: var(--gb-teal);
+    text-decoration-color: var(--gb-teal);
+}
+
+/* 6. Optional Profile / Contact Capture Section */
+#ccor-global-buyers .gb-lead-section {
+    border-top: 1px solid rgba(11, 37, 69, 0.1);
+    padding-top: 1.75rem;
+    margin-top: 1.75rem;
+}
+#ccor-global-buyers .gb-lead-toggle-card {
+    background: #f8fafc;
+    border: 1px dashed rgba(11, 37, 69, 0.18);
+    border-radius: 8px;
+    padding: 1.25rem 1.5rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+#ccor-global-buyers .gb-lead-toggle-info {
+    max-width: 600px;
+}
+#ccor-global-buyers .gb-lead-toggle-title {
+    font-family: var(--gb-font-display);
+    font-size: 0.875rem;
+    font-weight: 700;
+    color: var(--gb-navy);
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+}
+#ccor-global-buyers .gb-lead-toggle-sub {
+    font-size: 0.8125rem;
+    color: #64748b;
+    margin-top: 2px;
+}
+#ccor-global-buyers .gb-lead-toggle-btn {
+    background: var(--gb-navy);
+    color: #ffffff;
+    border: none;
+    padding: 9px 18px;
+    border-radius: 6px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    cursor: pointer;
+    transition: background 0.2s ease;
+    white-space: nowrap;
+}
+#ccor-global-buyers .gb-lead-toggle-btn:hover {
+    background: var(--gb-teal);
+}
+
+/* Lead Form */
+#ccor-global-buyers .gb-lead-form-wrap {
+    background: #ffffff;
+    border: 1px solid rgba(11, 37, 69, 0.12);
+    border-radius: 10px;
+    padding: 2rem;
+    margin-top: 1rem;
+}
+#ccor-global-buyers .gb-lead-form-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 1.25rem;
+    margin-top: 1.25rem;
+}
+#ccor-global-buyers .gb-lead-field {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+#ccor-global-buyers .gb-lead-label {
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: var(--gb-navy);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+#ccor-global-buyers .gb-lead-input, #ccor-global-buyers .gb-lead-select {
+    padding: 10px 12px;
+    border: 1px solid rgba(11, 37, 69, 0.18);
+    border-radius: 6px;
+    font-size: 0.875rem;
+    color: var(--gb-navy);
+    background: #ffffff;
+    outline: none;
+    transition: border-color 0.2s ease;
+}
+#ccor-global-buyers .gb-lead-input:focus, #ccor-global-buyers .gb-lead-select:focus {
+    border-color: var(--gb-teal);
+    box-shadow: 0 0 0 2px rgba(7, 148, 166, 0.15);
+}
+#ccor-global-buyers .gb-lead-consent-group {
+    margin-top: 1.25rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    font-size: 0.8125rem;
+    color: #475569;
+}
+#ccor-global-buyers .gb-lead-checkbox-label {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    cursor: pointer;
+    line-height: 1.4;
+}
+#ccor-global-buyers .gb-lead-checkbox-label input[type="checkbox"] {
+    margin-top: 3px;
+    flex-shrink: 0;
+}
+#ccor-global-buyers .gb-lead-consent-group a {
+    color: var(--gb-teal);
+    text-decoration: underline;
+}
+#ccor-global-buyers .gb-lead-actions {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-top: 1.5rem;
+}
+#ccor-global-buyers .gb-lead-cancel-btn {
+    background: none;
+    border: none;
+    color: #64748b;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    cursor: pointer;
+    padding: 8px 12px;
+}
+#ccor-global-buyers .gb-lead-cancel-btn:hover {
+    color: var(--gb-navy);
+}
+#ccor-global-buyers .gb-lead-status {
+    margin-top: 1rem;
+    font-size: 0.8125rem;
+    display: none;
+}
+#ccor-global-buyers .gb-lead-status--error {
+    color: #dc2626;
+    display: block;
+}
+
+/* Success Card */
+#ccor-global-buyers .gb-lead-success-card {
+    background: #f8fafc;
+    border: 1px solid #86efac;
+    border-radius: 8px;
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+/* FX Module & Ticker Styles */
+#ccor-global-buyers .gb-fx-ticker-bar {
+    background: var(--gb-navy-deep);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    padding: 8px 0;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    white-space: nowrap;
+}
+#ccor-global-buyers .gb-fx-ticker-inner {
+    display: inline-flex;
+    align-items: center;
+    gap: 1.5rem;
+    padding: 0 1.5rem;
+}
+#ccor-global-buyers .gb-fx-ticker-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-family: var(--gb-font-display);
+    font-size: 0.75rem;
+    color: rgba(255, 255, 255, 0.7);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+#ccor-global-buyers .gb-fx-ticker-item:hover {
+    color: #ffffff;
+}
+#ccor-global-buyers .gb-fx-ticker-item--active {
+    color: #ffffff;
+    font-weight: 700;
+    background: rgba(255, 255, 255, 0.15);
+    padding: 3px 10px;
+    border-radius: 4px;
+    border: 1px solid var(--gb-market-accent);
+}
+#ccor-global-buyers .gb-fx-rate-val {
+    font-weight: 700;
+    color: var(--gb-sand-warm);
+}
+
+#ccor-global-buyers .gb-fx-display {
+    background: #ffffff;
+    border: 1px solid rgba(11, 37, 69, 0.1);
+    border-radius: 8px;
+    padding: 1.25rem;
+    margin-top: 0.75rem;
+}
+#ccor-global-buyers .gb-fx-rates-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    margin-bottom: 0.85rem;
+}
+#ccor-global-buyers .gb-fx-rate-box {
+    background: var(--gb-ivory-warm);
+    border-radius: 6px;
+    padding: 0.75rem 1rem;
+    border-left: 3px solid var(--gb-market-accent);
+}
+#ccor-global-buyers .gb-fx-rate-box__sub {
+    font-size: 0.68rem;
+    font-weight: 700;
+    color: #718096;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+}
+#ccor-global-buyers .gb-fx-rate-box__num {
+    font-family: var(--gb-font-display);
+    font-size: 1.15rem;
+    font-weight: 800;
+    color: var(--gb-navy);
+    margin-top: 2px;
+}
+
+#ccor-global-buyers .gb-fx-conversion-box {
+    background: rgba(245, 154, 22, 0.08);
+    border: 1px solid rgba(245, 154, 22, 0.25);
+    border-radius: 6px;
+    padding: 0.85rem 1rem;
+    margin-top: 0.75rem;
+}
+#ccor-global-buyers .gb-fx-conversion-title {
+    font-family: var(--gb-font-display);
+    font-size: 0.72rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    color: var(--gb-navy);
+    text-transform: uppercase;
+}
+#ccor-global-buyers .gb-fx-conversion-value {
+    font-family: var(--gb-font-display);
+    font-size: 1.3rem;
+    font-weight: 800;
+    color: var(--gb-navy);
+    margin: 3px 0;
+}
+#ccor-global-buyers .gb-fx-conversion-sub {
+    font-size: 0.72rem;
+    color: #64748b;
+    line-height: 1.4;
+}
+
+/* SVG Chart Styles */
+#ccor-global-buyers .gb-fx-chart-wrap {
+    margin-top: 1rem;
+    padding-top: 0.85rem;
+    border-top: 1px solid rgba(11, 37, 69, 0.08);
+}
+#ccor-global-buyers .gb-fx-chart-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.65rem;
+}
+#ccor-global-buyers .gb-fx-chart-title {
+    font-family: var(--gb-font-display);
+    font-size: 0.78rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    color: var(--gb-navy);
+    text-transform: uppercase;
+}
+#ccor-global-buyers .gb-fx-chart-pct {
+    font-family: var(--gb-font-display);
+    font-size: 0.75rem;
+    font-weight: 700;
+    padding: 2px 7px;
+    border-radius: 4px;
+    background: rgba(11, 37, 69, 0.06);
+    color: var(--gb-navy);
+}
+#ccor-global-buyers .gb-fx-svg-chart {
+    width: 100%;
+    height: 130px;
+    overflow: visible;
+}
+#ccor-global-buyers .gb-fx-chart-disclaimer {
+    font-size: 0.7rem;
+    color: #94a3b8;
+    margin-top: 0.4rem;
+    line-height: 1.4;
+}
+
+/* Dual County Visual Planes in More Than A Destination */
+#ccor-global-buyers .gb-county-planes {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 2rem;
+    margin-top: 2rem;
+}
+#ccor-global-buyers .gb-county-plane {
+    background: #ffffff;
+    border-radius: 12px;
+    overflow: hidden;
+    border: 1px solid rgba(11, 37, 69, 0.08);
+    box-shadow: 0 10px 25px -8px rgba(11, 37, 69, 0.06);
+    display: flex;
+    flex-direction: column;
+}
+#ccor-global-buyers .gb-county-plane__photo-wrap {
+    position: relative;
+    width: 100%;
+    height: 320px;
+    background: var(--gb-navy);
+    overflow: hidden;
+}
+#ccor-global-buyers .gb-county-plane__img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+}
+#ccor-global-buyers .gb-county-plane:hover .gb-county-plane__img {
+    transform: scale(1.03);
+}
+#ccor-global-buyers .gb-county-plane__overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg, rgba(11,37,69,0.15) 0%, rgba(11,37,69,0.85) 100%);
+    pointer-events: none;
+}
+#ccor-global-buyers .gb-county-plane__photo-badge {
+    position: absolute;
+    bottom: 14px;
+    left: 16px;
+    right: 16px;
+    color: #ffffff;
+}
+#ccor-global-buyers .gb-county-plane__tag {
+    font-family: var(--gb-font-display);
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    color: var(--gb-orange);
+    text-transform: uppercase;
+}
+#ccor-global-buyers .gb-county-plane__name {
+    font-family: var(--gb-font-display);
+    font-size: 1.8rem;
+    font-weight: 800;
+    line-height: 1.1;
+    color: #ffffff;
+    margin: 2px 0 4px;
+}
+#ccor-global-buyers .gb-county-plane__content {
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    flex-grow: 1;
+}
+#ccor-global-buyers .gb-county-plane__pop {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid rgba(11, 37, 69, 0.08);
+}
+#ccor-global-buyers .gb-county-plane__pop-num {
+    font-family: var(--gb-font-display);
+    font-size: 2.2rem;
+    font-weight: 800;
+    color: var(--gb-navy);
+    letter-spacing: -0.02em;
+}
+#ccor-global-buyers .gb-county-plane__pop-label {
+    font-size: 0.78rem;
+    line-height: 1.3;
+    color: #64748b;
+}
+#ccor-global-buyers .gb-county-plane__credit {
+    font-size: 0.7rem;
+    color: #94a3b8;
+    margin-top: 0.85rem;
+}
+
+/* Dynamic County Supporting Panel */
+#ccor-global-buyers .gb-county-supporting {
+    margin-top: 2rem;
+    padding: 1.75rem;
+    background: #ffffff;
+    border-radius: 8px;
+    border-left: 4px solid var(--gb-market-accent);
+    border: 1px solid rgba(11, 37, 69, 0.08);
+    border-left-width: 4px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.03);
+}
+
+/* Flight Planner Cards in Global Access */
+#ccor-global-buyers .gb-flight-planner-wrap {
+    margin-top: 2.5rem;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 12px;
+    padding: 2rem;
+}
+#ccor-global-buyers .gb-flight-planner-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1.5rem;
+    margin-top: 1.5rem;
+}
+#ccor-global-buyers .gb-flight-card {
+    background: rgba(11, 37, 69, 0.75);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 8px;
+    padding: 1.5rem;
+    color: #ffffff;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+#ccor-global-buyers .gb-flight-badge-nonstop {
+    background: #009B3A;
+    color: #ffffff;
+    font-family: var(--gb-font-display);
+    font-size: 0.68rem;
+    font-weight: 800;
+    padding: 3px 8px;
+    border-radius: 4px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    display: inline-block;
+}
+#ccor-global-buyers .gb-flight-badge-connecting {
+    background: var(--gb-teal);
+    color: #ffffff;
+    font-family: var(--gb-font-display);
+    font-size: 0.68rem;
+    font-weight: 800;
+    padding: 3px 8px;
+    border-radius: 4px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    display: inline-block;
+}
+#ccor-global-buyers .gb-flight-origin-selector {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin: 12px 0 16px;
+}
+#ccor-global-buyers .gb-flight-origin-chip {
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: #ffffff;
+    padding: 4px 12px;
+    border-radius: 9999px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+#ccor-global-buyers .gb-flight-origin-chip--active {
+    background: var(--gb-orange);
+    border-color: var(--gb-orange);
+    color: #ffffff;
+}
+#ccor-global-buyers .gb-flight-api-notice {
+    font-size: 0.72rem;
+    color: rgba(255, 255, 255, 0.55);
+    margin-top: 1rem;
+    line-height: 1.4;
+}
+
+/* Official Country Resources List */
+#ccor-global-buyers .gb-official-links {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    margin-top: 0.85rem;
+}
+#ccor-global-buyers .gb-official-link {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.75rem 1rem;
+    background: #ffffff;
+    border-radius: 6px;
+    border: 1px solid rgba(11, 37, 69, 0.1);
+    color: var(--gb-navy);
+    font-size: 0.825rem;
+    font-weight: 600;
+    text-decoration: none;
+    transition: all 0.2s ease;
+}
+#ccor-global-buyers .gb-official-link:hover {
+    border-color: var(--gb-teal);
+    color: var(--gb-teal);
+    transform: translateY(-1px);
+}
+#ccor-global-buyers .gb-official-country-wrap {
+    background: #ffffff;
+    border: 1px solid rgba(11, 37, 69, 0.12);
+    border-left: 4px solid var(--gb-market-accent, var(--gb-teal));
+    border-radius: 12px;
+    padding: 1.5rem 2rem;
+    box-shadow: 0 4px 20px rgba(11, 37, 69, 0.05);
+}
+
+/* ==========================================================================
+   PERSONALIZED BRIEF & LEAD CAPTURE RESPONSIVE OVERRIDES (<= 768px & <= 480px)
+   Placed at the end of the stylesheet to guarantee cascade priority
+   ========================================================================== */
+@media (max-width: 768px) {
+    #ccor-global-buyers .gb-brief-container {
+        padding: 1.5rem 1.25rem;
+    }
+    #ccor-global-buyers .gb-brief-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.85rem;
+    }
+    #ccor-global-buyers .gb-brief-top-grid {
+        grid-template-columns: 1fr;
+        gap: 2rem;
+    }
+    #ccor-global-buyers .gb-snapshot-signals {
+        grid-template-columns: 1fr;
+        gap: 0.85rem;
+    }
+    #ccor-global-buyers .gb-calc-rates-row {
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+    #ccor-global-buyers .gb-calc-fields-row {
+        flex-direction: column;
+        gap: 0.75rem;
+    }
+    #ccor-global-buyers .gb-calc-swap-btn {
+        align-self: center;
+        transform: rotate(90deg);
+    }
+    #ccor-global-buyers .gb-calc-input {
+        font-size: 1.1rem;
+        min-height: 48px;
+        padding-left: 64px;
+    }
+    #ccor-global-buyers .gb-brief-teaser-row {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 1rem;
+    }
+    #ccor-global-buyers .gb-brief-teaser-left {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.5rem;
+    }
+    #ccor-global-buyers .gb-lead-toggle-card {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 1rem;
+    }
+    #ccor-global-buyers .gb-lead-form-grid {
+        grid-template-columns: 1fr;
+    }
+    #ccor-global-buyers .gb-lead-field[style*="grid-column"] {
+        grid-column: span 1 !important;
+    }
+}
+
+@media (max-width: 480px) {
+    #ccor-global-buyers .gb-brief-container {
+        padding: 1.25rem 0.85rem;
+    }
+    #ccor-global-buyers .gb-snapshot-stat-hero__num {
+        font-size: 2.2rem;
+    }
+    #ccor-global-buyers .gb-calc-presets {
+        gap: 4px;
+    }
+    #ccor-global-buyers .gb-calc-preset-btn {
+        font-size: 0.7rem;
+        padding: 4px 6px;
+    }
+}
 </style>
 
 <!-- ==========================================================================
@@ -4655,6 +5887,12 @@
             <!-- Mobile Active Section Indicator (Clean Middle Item on Mobile) -->
             <div class="gb-nav__mobile-current" id="gb-nav-mobile-current" aria-live="polite">OVERVIEW</div>
 
+            <!-- Persistent Nav Active Personalization Pill -->
+            <div class="gb-nav__profile-pill" id="gb-nav-profile-pill" style="display: none;" aria-live="polite">
+                <span id="gb-nav-profile-content" style="display: inline-flex; align-items: center; gap: 6px;"></span>
+                <button type="button" class="gb-nav__profile-change" id="gb-nav-profile-change" aria-label="Change personalized market and focus">CHANGE</button>
+            </div>
+
             <!-- Right Controls: Realtor CTA on Desktop and Menu Toggle -->
             <div class="gb-nav__right">
                 <a href="https://coconutcoastrealtors.org/realtor-directory/?utm_source=global_buyers&utm_medium=website&utm_campaign=global_buyers&utm_content=persistent_nav" target="_blank" rel="noopener noreferrer" class="gb-nav__cta">
@@ -4669,6 +5907,12 @@
 
         <!-- Mobile Dropdown Menu -->
         <div class="gb-nav__mobile-menu" id="gb-nav-mobile-menu" aria-hidden="true">
+            <!-- Mobile Active Profile Indicator -->
+            <div class="gb-nav__mobile-profile" id="gb-nav-mobile-profile" style="display: none;">
+                <span id="gb-nav-mobile-profile-content" style="display: inline-flex; align-items: center; gap: 8px; font-weight: 700;"></span>
+                <button type="button" class="gb-nav__profile-change" id="gb-nav-mobile-profile-change">CHANGE</button>
+            </div>
+
             <a href="#gb-global-gateway" class="gb-nav__mobile-link gb-nav__mobile-link--active" data-nav-target="gb-global-gateway">01 Overview</a>
             <a href="#gb-global-market" class="gb-nav__mobile-link" data-nav-target="gb-global-market">02 Market</a>
             <a href="#gb-personalize" class="gb-nav__mobile-link" data-nav-target="gb-personalize">03 Your Goals</a>
@@ -4688,6 +5932,11 @@
             </div>
         </div>
     </nav>
+
+    <!-- Restrained Multi-Market Reference FX Ticker Strip -->
+    <div class="gb-fx-ticker-bar" id="gb-fx-ticker-bar" aria-label="International Currency Reference Rates">
+        <div class="gb-fx-ticker-inner" id="gb-fx-ticker-rail"></div>
+    </div>
 
     <!-- ----------------------------------------------------------------------
          02 — INTERNATIONAL BUYER STATISTICS (Flowing Editorial Redesign)
@@ -4912,28 +6161,96 @@
 
                     <div class="gb-choice-list" role="group" aria-label="Home Market Origin Options">
                         <button type="button" class="gb-choice-btn" data-market="canada" aria-pressed="false">
-                            <span class="gb-choice-btn__title">CANADA</span>
-                            <span class="gb-choice-btn__sub">Seasonal direct flight corridors &amp; snowbird community</span>
+                            <div class="gb-choice-btn__meta">
+                                <svg class="gb-flag-svg" viewBox="0 0 32 20" aria-label="Flag of Canada" role="img"><rect width="32" height="20" fill="#D52B1E"/><rect x="8" width="16" height="20" fill="#FFFFFF"/><path d="M16 4.5l.8 2.3 2.1-.8-.8 2.2 2.3.9-1.9 1.4.9 2-2.1-.5-.5 3.5h-1.6l-.5-3.5-2.1.5.9-2-1.9-1.4 2.3-.9-.8-2.2 2.1.8z" fill="#D52B1E"/></svg>
+                                <div>
+                                    <span class="gb-choice-btn__title">CANADA</span>
+                                    <span class="gb-choice-btn__sub">Seasonal direct flight corridors &amp; snowbird community</span>
+                                </div>
+                            </div>
                         </button>
                         <button type="button" class="gb-choice-btn" data-market="germany" aria-pressed="false">
-                            <span class="gb-choice-btn__title">DEUTSCHLAND</span>
-                            <span class="gb-choice-btn__sub">Direct Frankfurt–RSW corridor &amp; long-standing cultural ties</span>
+                            <div class="gb-choice-btn__meta">
+                                <svg class="gb-flag-svg" viewBox="0 0 32 20" aria-label="Flag of Germany" role="img"><rect width="32" height="6.67" fill="#000000"/><rect y="6.67" width="32" height="6.67" fill="#DD0000"/><rect y="13.34" width="32" height="6.66" fill="#FFCC00"/></svg>
+                                <div>
+                                    <span class="gb-choice-btn__title">DEUTSCHLAND</span>
+                                    <span class="gb-choice-btn__sub">Direct Frankfurt–RSW corridor &amp; long-standing cultural ties</span>
+                                </div>
+                            </div>
                         </button>
                         <button type="button" class="gb-choice-btn" data-market="brazil" aria-pressed="false">
-                            <span class="gb-choice-btn__title">BRASIL</span>
-                            <span class="gb-choice-btn__sub">Southwest Florida luxury, diversification &amp; primary ownership</span>
+                            <div class="gb-choice-btn__meta">
+                                <svg class="gb-flag-svg" viewBox="0 0 32 20" aria-label="Flag of Brazil" role="img"><rect width="32" height="20" fill="#009B3A"/><polygon points="16,2.5 29.5,10 16,17.5 2.5,10" fill="#FEDF01"/><circle cx="16" cy="10" r="4.2" fill="#002776"/><path d="M12.3 10.8a4.2 4.2 0 0 0 7.4-1.6 4.2 4.2 0 0 1-7.4 1.6z" fill="#FFFFFF"/></svg>
+                                <div>
+                                    <span class="gb-choice-btn__title">BRASIL</span>
+                                    <span class="gb-choice-btn__sub">Southwest Florida luxury, diversification &amp; primary ownership</span>
+                                </div>
+                            </div>
                         </button>
                         <button type="button" class="gb-choice-btn" data-market="uk" aria-pressed="false">
-                            <span class="gb-choice-btn__title">UNITED KINGDOM</span>
-                            <span class="gb-choice-btn__sub">Transatlantic sunshine escapes &amp; golfing lifestyle</span>
+                            <div class="gb-choice-btn__meta">
+                                <svg class="gb-flag-svg" viewBox="0 0 32 20" aria-label="Flag of United Kingdom" role="img"><clipPath id="gb-uk-clip"><rect width="32" height="20"/></clipPath><g clip-path="url(#gb-uk-clip)"><rect width="32" height="20" fill="#012169"/><path d="M0 0l32 20M32 0L0 20" stroke="#FFFFFF" stroke-width="4"/><path d="M0 0l32 20M32 0L0 20" stroke="#C8102E" stroke-width="2"/><path d="M16 0v20M0 10h32" stroke="#FFFFFF" stroke-width="6"/><path d="M16 0v20M0 10h32" stroke="#C8102E" stroke-width="3.5"/></g></svg>
+                                <div>
+                                    <span class="gb-choice-btn__title">UNITED KINGDOM</span>
+                                    <span class="gb-choice-btn__sub">Transatlantic sunshine escapes &amp; golfing lifestyle</span>
+                                </div>
+                            </div>
                         </button>
-                        <button type="button" class="gb-choice-btn" data-market="latam" aria-pressed="false">
-                            <span class="gb-choice-btn__title">LATIN AMERICA</span>
-                            <span class="gb-choice-btn__sub">Expanding commercial investment &amp; family sanctuaries</span>
+                        <button type="button" class="gb-choice-btn gb-choice-btn--latam" id="gb-btn-latam-toggle" aria-expanded="false" aria-controls="gb-latam-options">
+                            <div class="gb-choice-btn__meta">
+                                <svg class="gb-flag-svg" viewBox="0 0 32 20" aria-label="Latin America" role="img"><rect width="32" height="20" fill="#009B3A" rx="2"/><polygon points="16,3 28,10 16,17 4,10" fill="#FEDF01"/><circle cx="16" cy="10" r="4" fill="#002776"/></svg>
+                                <div style="flex-grow: 1;">
+                                    <span class="gb-choice-btn__title">LATIN AMERICA</span>
+                                    <span class="gb-choice-btn__sub">Select Colombia, Argentina, Mexico, or other region &blacktriangledown;</span>
+                                </div>
+                            </div>
                         </button>
+                        <div class="gb-latam-subgroup" id="gb-latam-options" style="display: none;">
+                            <button type="button" class="gb-choice-btn" data-market="colombia" aria-pressed="false">
+                                <div class="gb-choice-btn__meta">
+                                    <svg class="gb-flag-svg" viewBox="0 0 32 20" aria-label="Flag of Colombia" role="img"><rect width="32" height="10" fill="#FCD116"/><rect y="10" width="32" height="5" fill="#003893"/><rect y="15" width="32" height="5" fill="#CE1126"/></svg>
+                                    <div>
+                                        <span class="gb-choice-btn__title">COLOMBIA</span>
+                                        <span class="gb-choice-btn__sub">Miami/Orlando gateway &amp; rental property investment</span>
+                                    </div>
+                                </div>
+                            </button>
+                            <button type="button" class="gb-choice-btn" data-market="argentina" aria-pressed="false">
+                                <div class="gb-choice-btn__meta">
+                                    <svg class="gb-flag-svg" viewBox="0 0 32 20" aria-label="Flag of Argentina" role="img"><rect width="32" height="6.67" fill="#74ACDF"/><rect y="6.67" width="32" height="6.67" fill="#FFFFFF"/><rect y="13.34" width="32" height="6.66" fill="#74ACDF"/><circle cx="16" cy="10" r="2.2" fill="#F6B40E"/><circle cx="16" cy="10" r="1.3" fill="#843511"/></svg>
+                                    <div>
+                                        <span class="gb-choice-btn__title">ARGENTINA</span>
+                                        <span class="gb-choice-btn__sub">Strong cash purchase rates &amp; capital security</span>
+                                    </div>
+                                </div>
+                            </button>
+                            <button type="button" class="gb-choice-btn" data-market="mexico" aria-pressed="false">
+                                <div class="gb-choice-btn__meta">
+                                    <svg class="gb-flag-svg" viewBox="0 0 32 20" aria-label="Flag of Mexico" role="img"><rect width="10.67" height="20" fill="#006847"/><rect x="10.67" width="10.66" height="20" fill="#FFFFFF"/><rect x="21.33" width="10.67" height="20" fill="#CE1126"/><circle cx="16" cy="10" r="2.5" fill="#784B22"/></svg>
+                                    <div>
+                                        <span class="gb-choice-btn__title">MEXICO</span>
+                                        <span class="gb-choice-btn__sub">$489M Florida purchase volume &amp; trade connectivity</span>
+                                    </div>
+                                </div>
+                            </button>
+                            <button type="button" class="gb-choice-btn" data-market="otherLatam" aria-pressed="false">
+                                <div class="gb-choice-btn__meta">
+                                    <svg class="gb-flag-svg" viewBox="0 0 32 20" aria-label="Other Latin America" role="img"><rect width="32" height="20" fill="#FCD116" rx="2"/><circle cx="16" cy="10" r="5" fill="#003893"/></svg>
+                                    <div>
+                                        <span class="gb-choice-btn__title">OTHER LATIN AMERICA</span>
+                                        <span class="gb-choice-btn__sub">Central America, Caribbean &amp; South America</span>
+                                    </div>
+                                </div>
+                            </button>
+                        </div>
                         <button type="button" class="gb-choice-btn" data-market="other" aria-pressed="false">
-                            <span class="gb-choice-btn__title">SOMEWHERE ELSE</span>
-                            <span class="gb-choice-btn__sub">Global gateway welcoming international purchasers worldwide</span>
+                            <div class="gb-choice-btn__meta">
+                                <svg class="gb-flag-svg" viewBox="0 0 32 20" aria-label="Global Gateway" role="img"><rect width="32" height="20" fill="#0794a6" rx="2"/><circle cx="16" cy="10" r="6" fill="none" stroke="#FFFFFF" stroke-width="1.2"/><ellipse cx="16" cy="10" rx="3" ry="6" fill="none" stroke="#FFFFFF" stroke-width="1"/><line x1="10" y1="10" x2="22" y2="10" stroke="#FFFFFF" stroke-width="1"/></svg>
+                                <div>
+                                    <span class="gb-choice-btn__title">SOMEWHERE ELSE</span>
+                                    <span class="gb-choice-btn__sub">Global gateway welcoming international purchasers worldwide</span>
+                                </div>
+                            </div>
                         </button>
                     </div>
                 </div>
@@ -4950,6 +6267,9 @@
                 </div>
                 <button type="button" class="gb-personalize-reset-btn" id="gb-personalize-reset">CHANGE</button>
             </div>
+
+            <!-- Editorial Module: YOUR SOUTHWEST FLORIDA BRIEF -->
+            <div id="gb-personalized-brief" class="gb-brief-module" style="display: none;" aria-live="polite"></div>
         </div>
 
         <!-- Flow Transition: Warm Sand to Deep Navy (#gb-lifestyle) -->
@@ -5793,9 +7113,9 @@
                 </aside>
 
                 <!-- Right Stacked Editorial Disclosures -->
-                <div class="gb-essentials-list" role="region" aria-label="Buyer Questions and Answers">
+                <div class="gb-essentials-list" role="region" aria-label="Buyer Questions and Answers" id="gb-essentials-accordion-list">
                     <!-- Module 01: Financing -->
-                    <details class="gb-essential-module" open>
+                    <details class="gb-essential-module" data-mod="financing" open>
                         <summary class="gb-essential-summary">
                             <div class="gb-essential-summary__left">
                                 <span class="gb-essential-summary__num">01</span>
@@ -5814,7 +7134,7 @@
                     </details>
 
                     <!-- Module 02: Travel + Immigration -->
-                    <details class="gb-essential-module">
+                    <details class="gb-essential-module" data-mod="travel">
                         <summary class="gb-essential-summary">
                             <div class="gb-essential-summary__left">
                                 <span class="gb-essential-summary__num">02</span>
@@ -5837,7 +7157,7 @@
                     </details>
 
                     <!-- Module 03: Taxes + FIRPTA -->
-                    <details class="gb-essential-module">
+                    <details class="gb-essential-module" data-mod="tax">
                         <summary class="gb-essential-summary">
                             <div class="gb-essential-summary__left">
                                 <span class="gb-essential-summary__num">03</span>
@@ -5860,7 +7180,7 @@
                     </details>
 
                     <!-- Module 04: Condominiums -->
-                    <details class="gb-essential-module">
+                    <details class="gb-essential-module" data-mod="condos">
                         <summary class="gb-essential-summary">
                             <div class="gb-essential-summary__left">
                                 <span class="gb-essential-summary__num">04</span>
@@ -5883,7 +7203,7 @@
                     </details>
 
                     <!-- Module 05: Insurance -->
-                    <details class="gb-essential-module">
+                    <details class="gb-essential-module" data-mod="insurance">
                         <summary class="gb-essential-summary">
                             <div class="gb-essential-summary__left">
                                 <span class="gb-essential-summary__num">05</span>
@@ -5902,7 +7222,7 @@
                     </details>
 
                     <!-- Module 06: Rentals -->
-                    <details class="gb-essential-module">
+                    <details class="gb-essential-module" data-mod="rentals">
                         <summary class="gb-essential-summary">
                             <div class="gb-essential-summary__left">
                                 <span class="gb-essential-summary__num">06</span>
@@ -5921,7 +7241,7 @@
                     </details>
 
                     <!-- Module 07: Owning from Abroad -->
-                    <details class="gb-essential-module">
+                    <details class="gb-essential-module" data-mod="owningAbroad">
                         <summary class="gb-essential-summary">
                             <div class="gb-essential-summary__left">
                                 <span class="gb-essential-summary__num">07</span>
@@ -5940,7 +7260,7 @@
                     </details>
 
                     <!-- Module 08: Ownership Rules -->
-                    <details class="gb-essential-module">
+                    <details class="gb-essential-module" data-mod="ownershipRules">
                         <summary class="gb-essential-summary">
                             <div class="gb-essential-summary__left">
                                 <span class="gb-essential-summary__num">08</span>
@@ -5979,59 +7299,85 @@
                 </p>
             </div>
 
-            <!-- Regional Growth & Industry Grid -->
-            <div class="gb-live-build-grid">
-                <!-- Left: Demographic Population Cards & Industries -->
-                <div class="gb-live-build-content">
-                    <h3 class="gb-title gb-title--card" style="font-size: 1.5rem; color: var(--gb-navy);">
-                        REGIONAL DEMOGRAPHIC FOUNDATION
-                    </h3>
-                    <p class="gb-description" style="margin-top: 0.5rem;">
-                        Sustained population growth across Lee and Collier counties underpins a dynamic workforce, expanding commercial services, and long-term community value.
-                    </p>
-
-                    <div class="gb-pop-cards">
-                        <!-- Lee County -->
-                        <div class="gb-pop-card">
-                            <div class="gb-pop-card__num">875,607</div>
-                            <div class="gb-pop-card__label">LEE COUNTY</div>
-                            <div class="gb-pop-card__sub">2025 Population Estimate &middot; U.S. Census Bureau</div>
-                        </div>
-
-                        <!-- Collier County -->
-                        <div class="gb-pop-card">
-                            <div class="gb-pop-card__num">417,131</div>
-                            <div class="gb-pop-card__label">COLLIER COUNTY</div>
-                            <div class="gb-pop-card__sub">2025 Population Estimate &middot; U.S. Census Bureau</div>
+            <!-- Dual County Photographic Visual Planes (Dominating Photography) -->
+            <div class="gb-county-planes">
+                <!-- Lee County Editorial Visual Plane -->
+                <article class="gb-county-plane" id="gb-county-plane-lee">
+                    <div class="gb-county-plane__photo-wrap">
+                        <img class="gb-county-plane__img"
+                             src="https://upload.wikimedia.org/wikipedia/commons/thumb/d/de/Caloosahatchee_River_sunset_from_Ford_estate_Ft_Myers_%2815510875243%29.jpg/1280px-Caloosahatchee_River_sunset_from_Ford_estate_Ft_Myers_%2815510875243%29.jpg"
+                             alt="Caloosahatchee River at sunset viewed from the Edison and Ford Winter Estates in Fort Myers, Lee County"
+                             loading="lazy"
+                             decoding="async">
+                        <div class="gb-county-plane__overlay" aria-hidden="true"></div>
+                        <div class="gb-county-plane__photo-badge">
+                            <span class="gb-county-plane__tag">COUNTY SEAT &middot; FORT MYERS</span>
+                            <h3 class="gb-county-plane__name">LEE COUNTY</h3>
                         </div>
                     </div>
+                    <div class="gb-county-plane__content">
+                        <div class="gb-county-plane__pop">
+                            <span class="gb-county-plane__pop-num">875,607</span>
+                            <span class="gb-county-plane__pop-label">2025 Population Estimate<br>U.S. Census Bureau</span>
+                        </div>
+                        <p class="gb-description" style="margin-top: 1rem; font-size: 0.9rem; line-height: 1.6;">
+                            Anchored by Fort Myers, Cape Coral, Bonita Springs and Estero, Lee County is Southwest Florida’s largest regional employment, commercial and institutional hub, home to Florida Gulf Coast University and Southwest Florida International Airport (RSW).
+                        </p>
+                        <div class="gb-county-plane__credit">
+                            Location: Caloosahatchee River &middot; Fort Myers (Photo: Russ / Wikimedia Commons CC BY 2.0)
+                        </div>
+                    </div>
+                </article>
 
-                    <div style="margin-top: 2rem;">
-                        <h4 style="font-family: var(--gb-font-display); font-size: 0.875rem; font-weight: 700; letter-spacing: 0.1em; color: var(--gb-navy); text-transform: uppercase;">
-                            DIVERSIFIED ECONOMIC DRIVERS
+                <!-- Collier County Editorial Visual Plane -->
+                <article class="gb-county-plane" id="gb-county-plane-collier">
+                    <div class="gb-county-plane__photo-wrap">
+                        <img class="gb-county-plane__img"
+                             src="https://images.unsplash.com/photo-1603806840334-dc5842ab56fc?auto=format&fit=crop&w=1200&q=80"
+                             alt="Historic Naples Pier and vibrant Gulf Coast shoreline in Naples, Collier County"
+                             loading="lazy"
+                             decoding="async">
+                        <div class="gb-county-plane__overlay" aria-hidden="true"></div>
+                        <div class="gb-county-plane__photo-badge">
+                            <span class="gb-county-plane__tag">COUNTY SEAT &middot; EAST NAPLES</span>
+                            <h3 class="gb-county-plane__name">COLLIER COUNTY</h3>
+                        </div>
+                    </div>
+                    <div class="gb-county-plane__content">
+                        <div class="gb-county-plane__pop">
+                            <span class="gb-county-plane__pop-num">417,131</span>
+                            <span class="gb-county-plane__pop-label">2025 Population Estimate<br>U.S. Census Bureau</span>
+                        </div>
+                        <p class="gb-description" style="margin-top: 1rem; font-size: 0.9rem; line-height: 1.6;">
+                            Known for world-class coastal residences, arts institutions, golf communities and Gulf access spanning Naples and Marco Island, Collier County combines high-end private wealth, A-rated school performance, and protected Everglades nature preserves.
+                        </p>
+                        <div class="gb-county-plane__credit">
+                            Location: Naples Pier &middot; Naples, Florida (Photo: Unsplash Verified Location)
+                        </div>
+                    </div>
+                </article>
+            </div>
+
+            <!-- Dynamic County Supporting Panel (Personalized by Goal) -->
+            <div class="gb-county-supporting" id="gb-county-supporting-panel">
+                <div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 1rem;">
+                    <div>
+                        <span class="gb-eyebrow gb-eyebrow--orange" id="gb-county-focus-tag">ECONOMIC FOUNDATION &amp; INFRASTRUCTURE</span>
+                        <h4 id="gb-county-focus-title" style="font-family: var(--gb-font-display); font-size: 1.35rem; color: var(--gb-navy); font-weight: 800; margin-top: 4px;">
+                            CONNECTIVITY, COMMERCE &amp; REGIONAL EXPANSION
                         </h4>
-                        <div class="gb-industry-strip" aria-label="Key Southwest Florida Industries">
-                            <span class="gb-industry-tag">HEALTHCARE</span>
-                            <span class="gb-industry-tag">TECHNOLOGY</span>
-                            <span class="gb-industry-tag">CONSTRUCTION</span>
-                            <span class="gb-industry-tag">EDUCATION</span>
-                            <span class="gb-industry-tag">TRANSPORTATION</span>
-                            <span class="gb-industry-tag">TOURISM</span>
-                            <span class="gb-industry-tag">MANUFACTURING</span>
-                            <span class="gb-industry-tag">PROFESSIONAL SERVICES</span>
-                        </div>
+                    </div>
+                    <div class="gb-industry-strip" aria-label="Key Southwest Florida Industries">
+                        <span class="gb-industry-tag">HEALTHCARE</span>
+                        <span class="gb-industry-tag">TECHNOLOGY</span>
+                        <span class="gb-industry-tag">EDUCATION</span>
+                        <span class="gb-industry-tag">LOGISTICS</span>
+                        <span class="gb-industry-tag">HOSPITALITY</span>
                     </div>
                 </div>
-
-                <!-- Right: Modern Architecture Photo Window -->
-                <div class="gb-photo-window gb-photo-window--live-build">
-                    <img class="gb-photo-window__layer gb-photo-window__layer--active"
-                         src="https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&w=1200&q=80"
-                         alt="Contemporary commercial and institutional architecture in Southwest Florida"
-                         loading="lazy"
-                         decoding="async">
-                    <div class="gb-photo-window__vignette"></div>
-                </div>
+                <p id="gb-county-focus-desc" class="gb-description" style="margin-top: 0.85rem; font-size: 0.925rem; line-height: 1.6;">
+                    Southwest Florida’s twin-county economic engine pairs Lee County’s industrial, university and airport infrastructure with Collier County’s private capital and luxury services.
+                </p>
             </div>
 
             <!-- Education Subsection Block -->
@@ -6133,6 +7479,37 @@
                     <button type="button" class="gb-route-btn" data-route="brazil" aria-pressed="false">
                         BRAZIL (CONNECTING ACCESS)
                     </button>
+                    <button type="button" class="gb-route-btn" data-route="uk" aria-pressed="false">
+                        UNITED KINGDOM (CONNECTING)
+                    </button>
+                    <button type="button" class="gb-route-btn" data-route="latam" aria-pressed="false">
+                        LATIN AMERICA (CONNECTING)
+                    </button>
+                </div>
+            </div>
+
+            <!-- Market-Tailored Flight Planning Intelligence & Fare Estimator -->
+            <div class="gb-flight-planner-wrap" id="gb-flight-planner" aria-label="Flight Planning &amp; Travel Access Intelligence">
+                <div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 1rem;">
+                    <div>
+                        <span class="gb-eyebrow gb-eyebrow--orange">GETTING TO SOUTHWEST FLORIDA</span>
+                        <h3 style="font-family: var(--gb-font-display); font-size: 1.5rem; color: #ffffff; font-weight: 800; margin-top: 4px;">
+                            FLIGHT PLANNING &amp; ROUTE INTELLIGENCE
+                        </h3>
+                    </div>
+                    <div id="gb-flight-status-badge"></div>
+                </div>
+
+                <!-- Origin airport selector chips -->
+                <div id="gb-flight-origin-selector" class="gb-flight-origin-selector"></div>
+
+                <!-- Flight Planning Grid -->
+                <div class="gb-flight-planner-grid" id="gb-flight-planner-cards">
+                    <!-- Populated dynamically by applyPersonalization() / renderFlightPlanner() -->
+                </div>
+
+                <div class="gb-flight-api-notice" id="gb-flight-methodology-text">
+                    Methodology: Typical sampled round-trip reflects the median of lowest reasonable economy fares sampled across 30, 60, and 90-day future travel windows (7-night stays, 1 adult). Airfares fluctuate constantly; rates shown are informational planning estimates and are not guaranteed bookable rates.
                 </div>
             </div>
 
@@ -6181,6 +7558,9 @@
                     Explore official sources and organizations that can help you understand travel, tax, condominium, education, business and buying considerations.
                 </p>
             </div>
+
+            <!-- Dedicated Country Official Consular & Travel Links Block -->
+            <div id="gb-official-country-block" class="gb-official-country-wrap" style="display: none; margin-bottom: 2rem;"></div>
 
             <!-- Search Field and Category Filter Rail -->
             <div class="gb-resource-controls">
@@ -6618,6 +7998,8 @@
                 window.scrollTo(0, 0);
             });
         });
+    }
+
     // 1b. Dynamic WordPress Admin Bar & Site Header Integration
     function updateAdminBarOffset() {
         const root = document.getElementById('ccor-global-buyers');
@@ -6739,13 +8121,24 @@
                 { id: 'justExploring', title: 'JUST EXPLORING', subtitle: 'Start discovering', defaultCategory: 'onTheWater' }
             ],
             markets: [
-                { id: 'canada', name: 'CANADA', tag: 'Seasonal direct flight corridors & snowbird community' },
-                { id: 'germany', name: 'DEUTSCHLAND', tag: 'Direct Frankfurt–RSW corridor & cultural ties' },
-                { id: 'brazil', name: 'BRASIL', tag: 'Southwest Florida luxury, diversification & ownership' },
-                { id: 'uk', name: 'UNITED KINGDOM', tag: 'Transatlantic sunshine escapes & golfing lifestyle' },
-                { id: 'latam', name: 'LATIN AMERICA', tag: 'Expanding commercial investment & family retreats' },
-                { id: 'other', name: 'SOMEWHERE ELSE', tag: 'Global gateway welcoming all international buyers' }
+                { id: 'canada', code: 'CA', name: 'CANADA', tag: 'Seasonal direct flight corridors & snowbird community' },
+                { id: 'germany', code: 'DE', name: 'GERMANY', tag: 'Direct Frankfurt–RSW corridor & cultural ties' },
+                { id: 'brazil', code: 'BR', name: 'BRAZIL', tag: 'Southwest Florida luxury, diversification & ownership' },
+                { id: 'uk', code: 'GB', name: 'UNITED KINGDOM', tag: 'Transatlantic sunshine escapes & golfing lifestyle' },
+                { id: 'colombia', code: 'CO', name: 'COLOMBIA', tag: 'Miami/Orlando gateway & rental property investment' },
+                { id: 'argentina', code: 'AR', name: 'ARGENTINA', tag: 'High cash purchase rates & seasonal property usage' },
+                { id: 'mexico', code: 'MX', name: 'MEXICO', tag: '$489M Florida purchase volume & trade connectivity' },
+                { id: 'otherLatam', code: null, name: 'OTHER LATIN AMERICA', tag: 'Central America, Caribbean & South America' },
+                { id: 'other', code: null, name: 'SOMEWHERE ELSE', tag: 'Global gateway welcoming international purchasers worldwide' }
             ]
+        },
+        leadCapture: {
+            enabled: true,
+            endpoint: '/global-buyers-api/leads',
+            profileSelectionEndpoint: '/global-buyers-api/profile-selection',
+            privacyUrl: 'https://coconutcoastrealtors.org/privacy-policy/',
+            consentVersion: '2026.1',
+            turnstileSiteKey: ''
         },
         propertyCategories: [
             {
@@ -7072,7 +8465,11 @@
                 { id: 'toronto', name: 'Toronto, Canada (YYZ)', lat: 43.6777, lng: -79.6248, nonstop: true, airline: 'Air Canada, WestJet', seasonal: 'Nonstop Corridor' },
                 { id: 'montreal', name: 'Montréal, Canada (YUL)', lat: 45.4657, lng: -73.7455, nonstop: true, airline: 'Air Canada', seasonal: 'Nonstop Seasonal' },
                 { id: 'ottawa', name: 'Ottawa, Canada (YOW)', lat: 45.3225, lng: -75.6692, nonstop: true, airline: 'Porter Airlines', seasonal: 'Nonstop Seasonal' },
-                { id: 'brazil', name: 'São Paulo, Brazil (GRU)', lat: -23.4356, lng: -46.4731, nonstop: false, hub: 'MIA / MCO / ATL', seasonal: 'Connecting Global Access' }
+                { id: 'brazil', name: 'São Paulo, Brazil (GRU)', lat: -23.4356, lng: -46.4731, nonstop: false, hub: 'MIA / ATL', seasonal: 'Connecting Global Access' },
+                { id: 'london', name: 'London, United Kingdom (LHR)', lat: 51.4700, lng: -0.4543, nonstop: false, hub: 'MIA / ATL / CLT', seasonal: 'Transatlantic Corridor' },
+                { id: 'bogota', name: 'Bogotá, Colombia (BOG)', lat: 4.7016, lng: -74.1469, nonstop: false, hub: 'MIA / FLL', seasonal: 'Connecting Global Access' },
+                { id: 'buenosaires', name: 'Buenos Aires, Argentina (EZE)', lat: -34.8222, lng: -58.5358, nonstop: false, hub: 'MIA / ATL', seasonal: 'Connecting Global Access' },
+                { id: 'mexico', name: 'Mexico City, Mexico (MEX)', lat: 19.4361, lng: -99.0719, nonstop: false, hub: 'MIA / IAH / DFW', seasonal: 'Connecting Global Access' }
             ]
         },
         airportStats: {
@@ -7352,14 +8749,1512 @@
         }
     }
 
-    // Inter-component dispatchers
+    // Inter-component dispatchers & state
     let selectPropertyCategoryFn = null;
     let hasUserManuallySelectedCategory = false;
+    let filterGlobalRouteFn = null;
 
     /**
-     * Phase 04: Visitor Personalization System (#gb-personalize)
+     * Set active property category in Find Your Florida without overriding manual selection
      */
-    function initPersonalization() {
+    function setActivePropertyCategory(catId) {
+        if (!hasUserManuallySelectedCategory && typeof selectPropertyCategoryFn === 'function') {
+            selectPropertyCategoryFn(catId, false);
+        }
+    }
+
+    /**
+     * Inline SVG Flag Graphics (Zero external icon fonts or device-dependent emoji)
+     */
+    function getCountryFlagSvg(marketId, isLarge) {
+        const cls = isLarge ? 'gb-flag-svg gb-flag-svg--lg' : 'gb-flag-svg';
+        switch (marketId) {
+            case 'canada':
+                return '<svg class="' + cls + '" viewBox="0 0 32 20" aria-label="Flag of Canada" role="img"><rect width="32" height="20" fill="#D52B1E"/><rect x="8" width="16" height="20" fill="#FFFFFF"/><path d="M16 4.5l.8 2.3 2.1-.8-.8 2.2 2.3.9-1.9 1.4.9 2-2.1-.5-.5 3.5h-1.6l-.5-3.5-2.1.5.9-2-1.9-1.4 2.3-.9-.8-2.2 2.1.8z" fill="#D52B1E"/></svg>';
+            case 'germany':
+                return '<svg class="' + cls + '" viewBox="0 0 32 20" aria-label="Flag of Germany" role="img"><rect width="32" height="6.67" fill="#000000"/><rect y="6.67" width="32" height="6.67" fill="#DD0000"/><rect y="13.34" width="32" height="6.66" fill="#FFCC00"/></svg>';
+            case 'brazil':
+                return '<svg class="' + cls + '" viewBox="0 0 32 20" aria-label="Flag of Brazil" role="img"><rect width="32" height="20" fill="#009B3A"/><polygon points="16,2.5 29.5,10 16,17.5 2.5,10" fill="#FEDF01"/><circle cx="16" cy="10" r="4.2" fill="#002776"/><path d="M12.3 10.8a4.2 4.2 0 0 0 7.4-1.6 4.2 4.2 0 0 1-7.4 1.6z" fill="#FFFFFF"/></svg>';
+            case 'uk':
+                return '<svg class="' + cls + '" viewBox="0 0 32 20" aria-label="Flag of United Kingdom" role="img"><clipPath id="gb-uk-flag-clip"><rect width="32" height="20"/></clipPath><g clip-path="url(#gb-uk-flag-clip)"><rect width="32" height="20" fill="#012169"/><path d="M0 0l32 20M32 0L0 20" stroke="#FFFFFF" stroke-width="4"/><path d="M0 0l32 20M32 0L0 20" stroke="#C8102E" stroke-width="2"/><path d="M16 0v20M0 10h32" stroke="#FFFFFF" stroke-width="6"/><path d="M16 0v20M0 10h32" stroke="#C8102E" stroke-width="3.5"/></g></svg>';
+            case 'colombia':
+                return '<svg class="' + cls + '" viewBox="0 0 32 20" aria-label="Flag of Colombia" role="img"><rect width="32" height="10" fill="#FCD116"/><rect y="10" width="32" height="5" fill="#003893"/><rect y="15" width="32" height="5" fill="#CE1126"/></svg>';
+            case 'argentina':
+                return '<svg class="' + cls + '" viewBox="0 0 32 20" aria-label="Flag of Argentina" role="img"><rect width="32" height="6.67" fill="#74ACDF"/><rect y="6.67" width="32" height="6.67" fill="#FFFFFF"/><rect y="13.34" width="32" height="6.66" fill="#74ACDF"/><circle cx="16" cy="10" r="2.2" fill="#F6B40E"/><circle cx="16" cy="10" r="1.3" fill="#843511"/></svg>';
+            case 'mexico':
+                return '<svg class="' + cls + '" viewBox="0 0 32 20" aria-label="Flag of Mexico" role="img"><rect width="10.67" height="20" fill="#006847"/><rect x="10.67" width="10.66" height="20" fill="#FFFFFF"/><rect x="21.33" width="10.67" height="20" fill="#CE1126"/><circle cx="16" cy="10" r="2.5" fill="#784B22"/></svg>';
+            case 'otherLatam':
+                return '<svg class="' + cls + '" viewBox="0 0 32 20" aria-label="Latin America" role="img"><rect width="32" height="20" fill="#009B3A" rx="2"/><polygon points="16,3 28,10 16,17 4,10" fill="#FEDF01"/><circle cx="16" cy="10" r="4" fill="#002776"/></svg>';
+            default:
+                return '<svg class="' + cls + '" viewBox="0 0 32 20" aria-label="Global Gateway" role="img"><rect width="32" height="20" fill="#0794a6" rx="2"/><circle cx="16" cy="10" r="6" fill="none" stroke="#FFFFFF" stroke-width="1.2"/><ellipse cx="16" cy="10" rx="3" ry="6" fill="none" stroke="#FFFFFF" stroke-width="1"/><line x1="10" y1="10" x2="22" y2="10" stroke="#FFFFFF" stroke-width="1"/></svg>';
+        }
+    }
+
+    /**
+     * Verified Market Intelligence & Research Database
+     * Primary Source: Florida Realtors® 2025 Profile of International Residential Transactions in Florida (Aug 2024–Jul 2025)
+     * Regional Source: Lee County Visitor & Convention Bureau (2025)
+     */
+    const GB_MARKET_INTELLIGENCE = {
+        canada: {
+            id: 'canada',
+            name: 'Canada',
+            code: 'CA',
+            currency: 'CAD',
+            symbol: 'C$',
+            accent: '#D52B1E',
+            accentSecondary: '#FFFFFF',
+            corridorId: 'canada',
+            headline: "Florida's #1 International Residential Buyer Market",
+            signal: "Canadians represent nearly one in five international home purchases across Florida, with strong concentration in Southwest Florida's lock-and-leave coastal and golf communities.",
+            stats: [
+                { label: 'Share of FL Intl Purchases', value: '18%', tag: 'statewide', priority: ['secondHome', 'futureMove'] },
+                { label: 'Residential Purchase Volume', value: '$1.916B', tag: 'volume', priority: ['investment', 'business'] },
+                { label: 'Non-Resident Buyers', value: '85%', tag: 'profile', priority: ['secondHome', 'vacationRental'] },
+                { label: 'All-Cash Purchases', value: '75%', tag: 'cash', priority: ['secondHome', 'investment'] },
+                { label: 'Vacation-Home-Only Intended Use', value: '58%', tag: 'vacation', priority: ['secondHome', 'vacationRental'] },
+                { label: 'Share of Cape Coral–Fort Myers Intl Buyers', value: '41%', tag: 'regional', priority: ['secondHome', 'futureMove', 'investment'] },
+                { label: 'Share of Naples–Marco Island Intl Buyers', value: '52%', tag: 'regional', priority: ['secondHome', 'investment'] }
+            ],
+            tendToDo: "Canadian buyers heavily favor lock-and-leave coastal condominiums, Gulf-access single-family homes, and bundled golf communities. 75% transact in cash, with seasonal occupancy concentrated between November and April.",
+            gettingHere: "Daily seasonal nonstop corridors connect Toronto (YYZ), Montreal (YUL), and Ottawa (YOW) directly into Fort Myers (RSW) via Air Canada, WestJet, and Porter.",
+            flightOrigins: [
+                { code: 'YYZ', name: 'Toronto Pearson (YYZ)', nonstop: true, route: 'YYZ → RSW', carrier: 'Air Canada / WestJet / Porter', typicalUsd: 380, sampleItinerary: { route: 'YYZ → RSW', stops: 'Nonstop', carrier: 'Air Canada', flightNum: 'AC1264', duration: '3h 25m', sampleUsd: 365 } },
+                { code: 'YUL', name: 'Montréal–Trudeau (YUL)', nonstop: true, route: 'YUL → RSW', carrier: 'Air Canada / Air Transat', typicalUsd: 410, sampleItinerary: { route: 'YUL → RSW', stops: 'Nonstop', carrier: 'Air Canada', flightNum: 'AC1652', duration: '3h 40m', sampleUsd: 395 } },
+                { code: 'YOW', name: 'Ottawa Macdonald–Cartier (YOW)', nonstop: true, route: 'YOW → RSW', carrier: 'Porter Airlines', typicalUsd: 430, sampleItinerary: { route: 'YOW → RSW', stops: 'Nonstop', carrier: 'Porter', flightNum: 'PD541', duration: '3h 35m', sampleUsd: 420 } }
+            ],
+            officialResources: [
+                { title: 'Consulate General of Canada in Miami', url: 'https://www.international.gc.ca/country-pays/us-eu/miami.aspx?lang=eng', type: 'Official Consular Assistance' },
+                { title: 'Government of Canada: U.S. Travel Advice & Advisories', url: 'https://travel.gc.ca/destinations/united-states', type: 'Official Travel Advice' }
+            ]
+        },
+        germany: {
+            id: 'germany',
+            name: 'Germany',
+            code: 'DE',
+            currency: 'EUR',
+            symbol: '€',
+            accent: '#FFCC00',
+            accentSecondary: '#DD0000',
+            corridorId: 'frankfurt',
+            headline: "Southwest Florida's Deep-Rooted European Connection",
+            signal: "German purchasers represent almost one-quarter of all international buyers in the Cape Coral–Fort Myers metro area, sustained by decades of cultural ties and seasonal direct transatlantic flights.",
+            stats: [
+                { label: 'Share of Cape Coral–Fort Myers Intl Buyers', value: '22%', tag: 'regional', priority: ['secondHome', 'investment', 'vacationRental'] },
+                { label: 'German Visitors to Lee County (2025)', value: '61,200', tag: 'tourism', priority: ['vacationRental', 'business', 'futureMove'] },
+                { label: 'Direct Nonstop Access Corridor', value: 'FRA → RSW', tag: 'access', priority: ['secondHome', 'futureMove'] }
+            ],
+            tendToDo: "German purchasers strongly favor waterfront single-family residences with Gulf access or expansive canal pools in Cape Coral, Sanibel, and Fort Myers. Many operate high-end seasonal vacation rentals when not in personal use.",
+            gettingHere: "Seasonal direct nonstop service connects Frankfurt (FRA) directly to Fort Myers (RSW) via Discover Airlines (Lufthansa Group), alongside convenient 1-stop connections via Atlanta, Charlotte, or Miami.",
+            flightOrigins: [
+                { code: 'FRA', name: 'Frankfurt am Main (FRA)', nonstop: true, route: 'FRA → RSW', carrier: 'Discover Airlines (Lufthansa Group)', typicalUsd: 890, sampleItinerary: { route: 'FRA → RSW', stops: 'Nonstop (Seasonal)', carrier: 'Discover Airlines', flightNum: '4Y64', duration: '10h 15m', sampleUsd: 875 } }
+            ],
+            officialResources: [
+                { title: 'German Consulate General Miami', url: 'https://www.germany.info/us-en/embassy-consulates/gkmiami', type: 'Consular Services' },
+                { title: 'Auswärtiges Amt: USA Reise- und Sicherheitshinweise', url: 'https://www.auswaertiges-amt.de/de/service/laender/usa-node/usa-reise-und-sicherheitshinweise/201382', type: 'Federal Foreign Office Travel Advice' }
+            ]
+        },
+        brazil: {
+            id: 'brazil',
+            name: 'Brazil',
+            code: 'BR',
+            currency: 'BRL',
+            symbol: 'R$',
+            accent: '#009B3A',
+            accentSecondary: '#FFDF00',
+            flourish: 'VIVA · INVISTA · CONECTE',
+            corridorId: 'brazil',
+            headline: 'Primary Residences & Coastal Living',
+            signal: "Brazilian buyers invest over $760M annually into Florida residential real estate, with notable activity in luxury communities across Naples and Fort Myers for family living and seasonal escapes.",
+            stats: [
+                { label: 'Share of FL Intl Purchases', value: '7%', tag: 'statewide', priority: ['futureMove', 'investment'] },
+                { label: 'Residential Purchase Volume', value: '$762M', tag: 'volume', priority: ['investment', 'business'] },
+                { label: 'Non-Resident Buyers', value: '68%', tag: 'profile', priority: ['secondHome', 'vacationRental'] },
+                { label: 'U.S. Mortgage Financing', value: '52%', tag: 'finance', priority: ['investment', 'futureMove'] },
+                { label: 'All-Cash Purchases', value: '42%', tag: 'cash', priority: ['secondHome', 'investment'] },
+                { label: 'Primary-Residence Intended Use', value: '15%', tag: 'residence', priority: ['futureMove', 'business'] },
+                { label: 'Share of Naples-Area Intl Buyers', value: '9%', tag: 'regional', priority: ['investment', 'secondHome'] }
+            ],
+            tendToDo: "Brazilian buyers are distinguished by their high utilization of U.S. mortgage financing (52%) and an increasing share purchasing primary residences (15%) in luxury gated, golf, and coastal communities.",
+            gettingHere: "Nonstop flights connect São Paulo (GRU) and Rio de Janeiro to Miami (MIA) or Orlando (MCO), with direct 1-stop air or smooth highway connections delivering passengers into Fort Myers (RSW).",
+            flightOrigins: [
+                { code: 'GRU', name: 'São Paulo/Guarulhos (GRU)', nonstop: false, route: 'GRU → ATL/MIA → RSW', carrier: 'Delta / American / LATAM', typicalUsd: 920, sampleItinerary: { route: 'GRU → ATL → RSW', stops: '1 Stop', carrier: 'Delta Air Lines', flightNum: 'DL104 / DL1842', duration: '13h 20m', sampleUsd: 895 } }
+            ],
+            officialResources: [
+                { title: 'Consulado-Geral do Brasil em Miami', url: 'https://www.gov.br/mre/pt-br/consulado-miami', type: 'Consulado-Geral Oficial' },
+                { title: 'e-Consular Miami', url: 'https://ec-miami.itamaraty.gov.br/index.php/sistema/login', type: 'Sistema de Agendamento Consular' }
+            ]
+        },
+        uk: {
+            id: 'uk',
+            name: 'United Kingdom',
+            code: 'GB',
+            currency: 'GBP',
+            symbol: '£',
+            accent: '#012169',
+            accentSecondary: '#C8102E',
+            corridorId: 'uk',
+            headline: 'Classic Sunshine Escapes & Renowned Golf Living',
+            signal: "British purchasers maintain strong affinity for Southwest Florida’s championship golf corridors and tranquil Gulf waterfronts, with over 70% acquiring homes as cash buyers.",
+            stats: [
+                { label: 'Share of FL Intl Purchases', value: '5%', tag: 'statewide', priority: ['secondHome', 'futureMove'] },
+                { label: 'All-Cash Purchases', value: '73%', tag: 'cash', priority: ['secondHome', 'investment'] },
+                { label: 'Non-Resident Buyers', value: '72%', tag: 'profile', priority: ['secondHome', 'vacationRental'] },
+                { label: 'Single-Family Home Preference', value: '57%', tag: 'property', priority: ['futureMove', 'secondHome'] },
+                { label: 'Vacation-Home-Only Intended Use', value: '39%', tag: 'vacation', priority: ['secondHome', 'vacationRental'] },
+                { label: 'Primary-Residence Intended Use', value: '20%', tag: 'residence', priority: ['futureMove', 'business'] }
+            ],
+            tendToDo: "UK buyers heavily prioritize single-family homes (57%) in master-planned golf and waterfront neighborhoods, with 73% paying cash and 20% choosing to establish primary or permanent Florida residence.",
+            gettingHere: "Multiple daily transatlantic departures connect London Heathrow (LHR) and Gatwick to Miami, Tampa, or Atlanta, connecting smoothly into Fort Myers (RSW).",
+            flightOrigins: [
+                { code: 'LHR', name: 'London Heathrow (LHR)', nonstop: false, route: 'LHR → CLT/ATL → RSW', carrier: 'British Airways / American / Delta', typicalUsd: 860, sampleItinerary: { route: 'LHR → CLT → RSW', stops: '1 Stop', carrier: 'American Airlines', flightNum: 'AA731 / AA2104', duration: '11h 45m', sampleUsd: 840 } }
+            ],
+            officialResources: [
+                { title: 'British Consulate General Miami', url: 'https://www.gov.uk/world/organisations/british-consulate-general-miami', type: 'Government Consular Representation' },
+                { title: 'GOV.UK: Foreign Travel Advice — USA', url: 'https://www.gov.uk/foreign-travel-advice/usa', type: 'Official Foreign Office Travel Guidance' }
+            ]
+        },
+        colombia: {
+            id: 'colombia',
+            name: 'Colombia',
+            code: 'CO',
+            currency: 'COP',
+            symbol: 'COL$',
+            accent: '#FCD116',
+            accentSecondary: '#003893',
+            corridorId: 'latam',
+            headline: 'Leading South American Residential Purchasing Group',
+            signal: "Colombian buyers are Florida's largest South American purchasing group, investing $925M with a marked emphasis on residential acquisitions and rental property usage.",
+            stats: [
+                { label: 'Share of FL Intl Purchases', value: '10%', tag: 'statewide', priority: ['investment', 'business'] },
+                { label: 'Residential Purchase Volume', value: '$925M', tag: 'volume', priority: ['investment', 'business'] },
+                { label: 'Rental-Only Intended Use', value: '54%', tag: 'rental', priority: ['investment', 'vacationRental'] },
+                { label: 'U.S. Mortgage Financing', value: '49%', tag: 'finance', priority: ['investment', 'futureMove'] },
+                { label: 'Non-Resident Buyers', value: '77%', tag: 'profile', priority: ['secondHome', 'vacationRental'] },
+                { label: 'All-Cash Purchases', value: '46%', tag: 'cash', priority: ['secondHome', 'investment'] },
+                { label: 'Primary-Residence Intended Use', value: '17%', tag: 'residence', priority: ['futureMove', 'business'] }
+            ],
+            tendToDo: "Over half of Colombian buyers (54%) target rental-designated properties, frequently partnering with U.S. lenders (49% mortgage utilization) for residential purchases.",
+            gettingHere: "Frequent direct flights link Bogotá (BOG) and Medellín to Miami and Fort Lauderdale, with quick 1-stop air or smooth 2-hour highway connection into Southwest Florida.",
+            flightOrigins: [
+                { code: 'BOG', name: 'Bogotá El Dorado (BOG)', nonstop: false, route: 'BOG → MIA → RSW', carrier: 'Avianca / American Airlines', typicalUsd: 580, sampleItinerary: { route: 'BOG → MIA → RSW', stops: '1 Stop', carrier: 'American Airlines', flightNum: 'AA1124 / AA3840', duration: '7h 10m', sampleUsd: 560 } }
+            ],
+            officialResources: [
+                { title: 'Consulado General de Colombia en Miami', url: 'https://miami.consulado.gov.co/', type: 'Consulado General' },
+                { title: 'Cancillería de Colombia: Trámites y Servicios', url: 'https://www.cancilleria.gov.co/', type: 'Ministerio de Relaciones Exteriores' }
+            ]
+        },
+        argentina: {
+            id: 'argentina',
+            name: 'Argentina',
+            code: 'AR',
+            currency: 'ARS',
+            symbol: 'AR$',
+            accent: '#74ACDF',
+            accentSecondary: '#F6B40E',
+            corridorId: 'latam',
+            headline: 'Residential Purchases & Seasonal Rental Focus',
+            signal: "Argentine purchasers invest $627M in Florida real estate, demonstrating strong activity in cash transactions (62%) and coastal residential property.",
+            stats: [
+                { label: 'Share of FL Intl Purchases', value: '6%', tag: 'statewide', priority: ['investment', 'secondHome'] },
+                { label: 'Residential Purchase Volume', value: '$627M', tag: 'volume', priority: ['investment', 'business'] },
+                { label: 'Non-Resident Buyers', value: '79%', tag: 'profile', priority: ['secondHome', 'vacationRental'] },
+                { label: 'All-Cash Purchases', value: '62%', tag: 'cash', priority: ['secondHome', 'investment'] },
+                { label: 'Rental-Only Intended Use', value: '57%', tag: 'rental', priority: ['investment', 'vacationRental'] }
+            ],
+            tendToDo: "Argentine purchasers in Florida report a high focus on rental-designated property use (57%) and cash transactions (62%), favoring condominiums and single-family properties with professional management.",
+            gettingHere: "Direct overnight flights link Buenos Aires (EZE) to Miami (MIA), connecting smoothly through Miami or Atlanta into Southwest Florida International Airport (RSW).",
+            flightOrigins: [
+                { code: 'EZE', name: 'Buenos Aires Ezeiza (EZE)', nonstop: false, route: 'EZE → MIA/ATL → RSW', carrier: 'American Airlines / Aerolíneas Argentinas / Delta', typicalUsd: 1040, sampleItinerary: { route: 'EZE → MIA → RSW', stops: '1 Stop', carrier: 'American Airlines', flightNum: 'AA900 / AA3912', duration: '12h 50m', sampleUsd: 1010 } }
+            ],
+            officialResources: [
+                { title: 'Consulado General y Centro de Promoción en Miami', url: 'https://cmiam.cancilleria.gob.ar/', type: 'Consulado General' },
+                { title: 'Cancillería Argentina: Guía para Viajeros', url: 'https://www.cancilleria.gob.ar/', type: 'Ministerio de Relaciones Exteriores' }
+            ]
+        },
+        mexico: {
+            id: 'mexico',
+            name: 'Mexico',
+            code: 'MX',
+            currency: 'MXN',
+            symbol: 'Mex$',
+            accent: '#006847',
+            accentSecondary: '#CE1126',
+            corridorId: 'latam',
+            headline: 'Substantial Florida Residential Investment',
+            signal: "Mexican international buyers generate $489M in Florida residential volume, drawn by established lifestyle communities, recreational amenities, and convenient travel links.",
+            stats: [
+                { label: 'Residential Purchase Volume', value: '$489M', tag: 'volume', priority: ['investment', 'business', 'secondHome', 'futureMove'] }
+            ],
+            tendToDo: "Mexican buyers seek residential properties in established communities with strong infrastructure, private schooling, and proximity to Gulf coastal amenities.",
+            gettingHere: "Multiple daily nonstop routes link Mexico City (MEX), Guadalajara, and Monterrey with Florida hubs (Miami, Orlando, Tampa), connecting seamlessly to Fort Myers (RSW).",
+            flightOrigins: [
+                { code: 'MEX', name: 'Mexico City Benito Juárez (MEX)', nonstop: false, route: 'MEX → MIA/DFW → RSW', carrier: 'Aeroméxico / American / United', typicalUsd: 520, sampleItinerary: { route: 'MEX → MIA → RSW', stops: '1 Stop', carrier: 'Aeroméxico / American', flightNum: 'AM440 / AA3840', duration: '6h 30m', sampleUsd: 495 } }
+            ],
+            officialResources: [
+                { title: 'Consulado General de México en Miami', url: 'https://consulmex.sre.gob.mx/miami/', type: 'Consulado General' },
+                { title: 'Secretaría de Relaciones Exteriores: Guía del Viajero', url: 'https://guiadelviajero.sre.gob.mx/', type: 'Gobierno de México' }
+            ]
+        },
+        otherLatam: {
+            id: 'otherLatam',
+            name: 'Latin America & Caribbean',
+            code: null,
+            currency: 'USD',
+            symbol: '$',
+            accent: '#009B3A',
+            accentSecondary: '#FCD116',
+            corridorId: 'latam',
+            headline: 'Pan-American Gateway to Southwest Florida Living',
+            signal: "Buyers across Central America, the Caribbean, and South America represent nearly half of all international transactions in Florida, drawn by coastal lifestyle, family retreats, and direct air transit corridors.",
+            stats: [
+                { label: 'Combined Latin America / Caribbean Share', value: '46%', tag: 'statewide', priority: ['investment', 'secondHome'] },
+                { label: 'Non-Resident Buyers (Regional Avg)', value: '74%', tag: 'profile', priority: ['secondHome', 'vacationRental'] },
+                { label: 'All-Cash Transactions', value: '54%', tag: 'cash', priority: ['secondHome', 'investment'] }
+            ],
+            tendToDo: "Regional purchasers frequently acquire vacation retreats, family homes, and managed properties that support seasonal visits.",
+            gettingHere: "Unrivaled air connectivity connects capitals across Latin America and the Caribbean to Florida via Miami, Orlando, and Fort Lauderdale with short connections to RSW.",
+            flightOrigins: [
+                { code: 'MIA', name: 'Miami Gateway Hub', nonstop: false, route: 'Pan-America → MIA → RSW', carrier: 'Various International Carriers', typicalUsd: 650, sampleItinerary: { route: 'Regional Capital → MIA → RSW', stops: '1 Stop', carrier: 'Major International Carrier', flightNum: 'Transborder', duration: '8h 00m', sampleUsd: 620 } }
+            ],
+            officialResources: [
+                { title: 'U.S. Department of State: U.S. Visas & Entry', url: 'https://travel.state.gov/content/travel/en/us-visas.html', type: 'Official U.S. Visa Information' },
+                { title: 'U.S. Customs and Border Protection: ESTA & Travel Info', url: 'https://esta.cbp.dhs.gov/', type: 'Official U.S. Border Entry' }
+            ]
+        },
+        other: {
+            id: 'other',
+            name: 'Global Gateway',
+            code: null,
+            currency: 'USD',
+            symbol: '$',
+            accent: '#0794a6',
+            accentSecondary: '#f59a16',
+            corridorId: 'all',
+            headline: 'Welcoming International Purchasers Worldwide',
+            signal: "Florida remains the #1 destination for foreign residential buyers in the United States, attracting investors and families from over 50 nations across Europe, Asia, Oceania, and the Americas.",
+            stats: [
+                { label: 'Florida Share of All U.S. Foreign Buyers', value: '20%', tag: 'statewide', priority: ['secondHome', 'investment'] },
+                { label: 'Total FL International Sales Volume', value: '$10.4B', tag: 'volume', priority: ['investment', 'business'] },
+                { label: 'All-Cash Foreign Transactions', value: '69%', tag: 'cash', priority: ['secondHome', 'investment'] }
+            ],
+            tendToDo: "International buyers choose Southwest Florida for its low density, safety, natural beauty, pristine Gulf beaches, and transparent U.S. private property rights.",
+            gettingHere: "Southwest Florida International Airport (RSW) and regional international gateways offer worldwide connections via major global airline alliances (Star Alliance, oneworld, SkyTeam).",
+            flightOrigins: [
+                { code: 'RSW', name: 'Global Hubs to Fort Myers', nonstop: false, route: 'Worldwide Hubs → ATL/CLT/MIA → RSW', carrier: 'Global Alliances (Star, oneworld, SkyTeam)', typicalUsd: 950, sampleItinerary: { route: 'International Hub → Gateway → RSW', stops: '1-2 Stops', carrier: 'Major International Alliances', flightNum: 'Transoceanic', duration: '12h–16h', sampleUsd: 920 } }
+            ],
+            officialResources: [
+                { title: 'U.S. Department of State: U.S. Visas & Travel', url: 'https://travel.state.gov/content/travel/en/us-visas.html', type: 'Official U.S. Visa Information' },
+                { title: 'U.S. Customs and Border Protection: ESTA Portal', url: 'https://esta.cbp.dhs.gov/', type: 'U.S. Border Entry Requirements' }
+            ]
+        }
+    };
+
+    /**
+     * FX Currency Baseline Reference Rates (Fallback & Seed)
+     */
+    const GB_FX_BASELINE = {
+        CAD: { rate: 1.3805, inv: 0.7244, symbol: 'C$', name: 'Canadian Dollar', date: '2026-03-06' },
+        EUR: { rate: 0.8597, inv: 1.1632, symbol: '€', name: 'Euro', date: '2026-03-06' },
+        BRL: { rate: 5.1111, inv: 0.1957, symbol: 'R$', name: 'Brazilian Real', date: '2026-03-06' },
+        GBP: { rate: 0.7383, inv: 1.3545, symbol: '£', name: 'British Pound', date: '2026-03-06' },
+        COP: { rate: 3116.18, inv: 0.000321, symbol: 'COL$', name: 'Colombian Peso', date: '2026-03-06' },
+        ARS: { rate: 1511.5, inv: 0.000662, symbol: 'AR$', name: 'Argentine Peso', date: '2026-03-06' },
+        MXN: { rate: 16.9313, inv: 0.0591, symbol: 'Mex$', name: 'Mexican Peso', date: '2026-03-06' },
+        USD: { rate: 1.0, inv: 1.0, symbol: '$', name: 'US Dollar', date: '2026-03-06' }
+    };
+
+    /**
+     * 5-Year Monthly Historical Exchange Rate Benchmark Dataset (2021-01 to 2026-01)
+     * Provides 60 verified monthly points per currency (rate = local currency per 1 USD)
+     */
+    const GB_FX_HISTORY_5YR = {
+        CAD: [1.27,1.26,1.25,1.25,1.21,1.23,1.25,1.26,1.27,1.24,1.26,1.27,1.26,1.27,1.26,1.26,1.29,1.29,1.29,1.30,1.35,1.37,1.35,1.35,1.34,1.35,1.37,1.35,1.32,1.32,1.32,1.35,1.35,1.37,1.37,1.35,1.34,1.35,1.35,1.37,1.37,1.37,1.37,1.35,1.36,1.38,1.39,1.40,1.41,1.41,1.42,1.40,1.39,1.39,1.38,1.38,1.38,1.38,1.38,1.38],
+        EUR: [0.82,0.83,0.85,0.83,0.82,0.84,0.85,0.85,0.85,0.86,0.88,0.88,0.88,0.88,0.91,0.93,0.95,0.95,0.98,1.00,1.01,1.02,0.97,0.94,0.92,0.93,0.92,0.91,0.91,0.92,0.91,0.92,0.94,0.95,0.92,0.91,0.92,0.92,0.92,0.93,0.92,0.93,0.92,0.91,0.90,0.92,0.93,0.95,0.95,0.94,0.93,0.91,0.90,0.89,0.88,0.88,0.87,0.86,0.86,0.86],
+        BRL: [5.36,5.42,5.63,5.46,5.29,5.01,5.21,5.25,5.28,5.50,5.60,5.65,5.53,5.22,5.07,4.92,4.95,5.15,5.38,5.21,5.24,5.28,5.28,5.25,5.20,5.17,5.26,5.03,4.95,4.86,4.80,4.90,4.93,5.05,4.90,4.88,4.92,4.97,4.98,5.16,5.12,5.36,5.48,5.52,5.55,5.65,5.77,5.98,6.05,5.90,5.70,5.55,5.45,5.38,5.30,5.25,5.20,5.15,5.12,5.11],
+        GBP: [0.73,0.72,0.72,0.72,0.71,0.72,0.72,0.72,0.73,0.73,0.75,0.75,0.74,0.74,0.76,0.78,0.81,0.82,0.83,0.84,0.89,0.88,0.84,0.83,0.81,0.83,0.82,0.80,0.79,0.78,0.78,0.79,0.81,0.82,0.79,0.79,0.79,0.79,0.79,0.80,0.79,0.79,0.78,0.77,0.76,0.77,0.78,0.79,0.79,0.78,0.77,0.76,0.75,0.75,0.74,0.74,0.74,0.74,0.74,0.74],
+        COP: [3480,3560,3610,3670,3730,3680,3830,3870,3820,3770,3900,3980,4020,3940,3810,3850,3980,4000,4350,4320,4430,4800,4910,4810,4710,4850,4770,4520,4430,4180,4050,4090,4030,4220,4080,3930,3910,3920,3890,3900,3860,4050,4040,4030,4180,4290,4420,4410,4350,4210,3980,3750,3520,3380,3290,3210,3180,3150,3125,3116],
+        ARS: [86,89,91,93,94,95,96,97,98,99,101,102,104,107,110,114,119,124,130,137,146,156,166,177,185,196,208,222,238,256,273,350,350,350,360,808,825,841,858,875,893,912,931,950,970,991,1012,1035,1070,1110,1160,1220,1290,1350,1410,1460,1485,1500,1508,1511],
+        MXN: [19.8,20.2,20.6,20.0,19.9,20.0,20.0,20.1,20.1,20.5,21.0,20.8,20.5,20.4,20.5,20.1,20.0,20.0,20.5,20.1,20.1,19.8,19.4,19.3,18.9,18.6,18.3,18.1,17.7,17.2,16.9,17.1,17.3,17.8,17.4,17.1,17.0,17.1,16.7,16.6,16.8,18.3,18.7,18.8,19.7,19.7,20.2,20.5,20.6,20.1,19.5,18.8,18.2,17.8,17.4,17.2,17.1,17.0,16.95,16.93]
+    };
+
+    let latestFxRates = Object.assign({}, GB_FX_BASELINE);
+    let isFxRatesLive = false;
+
+    /**
+     * Fetch Live Reference Rates from Frankfurter API
+     */
+    function fetchLatestFxRates(callback) {
+        if (isFxRatesLive) {
+            if (callback) callback(latestFxRates);
+            return;
+        }
+        try {
+            fetch('https://api.frankfurter.dev/v2/rates?base=USD')
+                .then(function (res) {
+                    if (!res.ok) throw new Error('HTTP ' + res.status);
+                    return res.json();
+                })
+                .then(function (data) {
+                    if (data && data.rates) {
+                        isFxRatesLive = true;
+                        const dateStr = data.date || new Date().toISOString().split('T')[0];
+                        ['CAD', 'EUR', 'BRL', 'GBP', 'COP', 'ARS', 'MXN'].forEach(function (curr) {
+                            if (data.rates[curr]) {
+                                const r = parseFloat(data.rates[curr]);
+                                latestFxRates[curr] = {
+                                    rate: r,
+                                    inv: r > 0 ? (1 / r) : 0,
+                                    symbol: (GB_FX_BASELINE[curr] || {}).symbol || curr,
+                                    name: (GB_FX_BASELINE[curr] || {}).name || curr,
+                                    date: dateStr
+                                };
+                            }
+                        });
+                        trackGlobalEvent('global_fx_loaded', { provider: 'Frankfurter', date: dateStr });
+                        if (callback) callback(latestFxRates);
+                    } else if (callback) {
+                        callback(latestFxRates);
+                    }
+                })
+                .catch(function () {
+                    // Fall back quietly to high-confidence baseline
+                    if (callback) callback(latestFxRates);
+                });
+        } catch (e) {
+            if (callback) callback(latestFxRates);
+        }
+    }
+
+    /**
+     * Render Responsive Inline SVG 5-Year Exchange Rate History Chart
+     */
+    function renderFxChartSvg(currencyCode, points, strokeColor) {
+        if (!currencyCode || currencyCode === 'USD' || !points || points.length < 2) {
+            return '<div style="font-size: 0.78rem; color: #64748b; padding: 0.75rem 0; font-style: italic;">Historical chart temporarily unavailable.</div>';
+        }
+        const w = 480;
+        const h = 130;
+        const padX = 24;
+        const padY = 16;
+
+        let minVal = points[0];
+        let maxVal = points[0];
+        for (let i = 1; i < points.length; i++) {
+            if (points[i] < minVal) minVal = points[i];
+            if (points[i] > maxVal) maxVal = points[i];
+        }
+        if (minVal === maxVal) { maxVal = minVal * 1.1; minVal = minVal * 0.9; }
+        const range = maxVal - minVal;
+
+        const coords = points.map(function (val, idx) {
+            const x = padX + (idx / (points.length - 1)) * (w - padX * 2);
+            const y = h - padY - ((val - minVal) / range) * (h - padY * 2);
+            return [x, y];
+        });
+
+        let pathD = 'M ' + coords[0][0].toFixed(1) + ' ' + coords[0][1].toFixed(1);
+        for (let j = 1; j < coords.length; j++) {
+            pathD += ' L ' + coords[j][0].toFixed(1) + ' ' + coords[j][1].toFixed(1);
+        }
+        const areaD = pathD + ' L ' + coords[coords.length - 1][0].toFixed(1) + ' ' + (h - padY) + ' L ' + coords[0][0].toFixed(1) + ' ' + (h - padY) + ' Z';
+
+        const firstPt = points[0];
+        const lastPt = points[points.length - 1];
+        const pctChange = (((lastPt - firstPt) / firstPt) * 100).toFixed(1);
+        const sign = pctChange >= 0 ? '+' : '';
+
+        const stroke = strokeColor || '#0794a6';
+        const gradId = 'gb-fx-grad-' + currencyCode.toLowerCase();
+
+        return '<svg class="gb-fx-svg-chart" viewBox="0 0 ' + w + ' ' + h + '" role="img" aria-label="5-Year Exchange Rate: USD to ' + currencyCode + ' history chart">' +
+            '<defs>' +
+                '<linearGradient id="' + gradId + '" x1="0" y1="0" x2="0" y2="1">' +
+                    '<stop offset="0%" stop-color="' + stroke + '" stop-opacity="0.28"/>' +
+                    '<stop offset="100%" stop-color="' + stroke + '" stop-opacity="0.0"/>' +
+                '</linearGradient>' +
+            '</defs>' +
+            '<line x1="' + padX + '" y1="' + padY + '" x2="' + (w - padX) + '" y2="' + padY + '" stroke="rgba(11,37,69,0.08)" stroke-dasharray="3,3"/>' +
+            '<line x1="' + padX + '" y1="' + (h / 2) + '" x2="' + (w - padX) + '" y2="' + (h / 2) + '" stroke="rgba(11,37,69,0.08)" stroke-dasharray="3,3"/>' +
+            '<line x1="' + padX + '" y1="' + (h - padY) + '" x2="' + (w - padX) + '" y2="' + (h - padY) + '" stroke="rgba(11,37,69,0.15)"/>' +
+            '<path d="' + areaD + '" fill="url(#' + gradId + ')"/>' +
+            '<path d="' + pathD + '" fill="none" stroke="' + stroke + '" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>' +
+            '<circle cx="' + coords[coords.length - 1][0].toFixed(1) + '" cy="' + coords[coords.length - 1][1].toFixed(1) + '" r="4" fill="' + stroke + '" stroke="#ffffff" stroke-width="1.5"/>' +
+            '<text x="' + padX + '" y="' + (h - 2) + '" fill="rgba(11,37,69,0.5)" font-size="10" font-family="sans-serif">2021</text>' +
+            '<text x="' + (w / 2) + '" y="' + (h - 2) + '" text-anchor="middle" fill="rgba(11,37,69,0.5)" font-size="10" font-family="sans-serif">2023</text>' +
+            '<text x="' + (w - padX) + '" y="' + (h - 2) + '" text-anchor="end" fill="rgba(11,37,69,0.5)" font-size="10" font-family="sans-serif">2026</text>' +
+            '<text x="' + (w - padX) + '" y="' + (padY + 10) + '" text-anchor="end" fill="var(--gb-navy)" font-size="11" font-weight="700" font-family="sans-serif">USD → ' + currencyCode + ': ' + sign + pctChange + '%</text>' +
+            '</svg>';
+    }
+
+    /**
+     * Render Multi-Market Restrained Reference FX Ticker Strip
+     */
+    function renderFxTicker(selectedMarketId) {
+        const tickerContainer = root.querySelector('#gb-fx-ticker-rail');
+        if (!tickerContainer) return;
+
+        const currMap = [
+            { market: 'canada', curr: 'CAD', flag: getCountryFlagSvg('canada') },
+            { market: 'germany', curr: 'EUR', flag: getCountryFlagSvg('germany') },
+            { market: 'brazil', curr: 'BRL', flag: getCountryFlagSvg('brazil') },
+            { market: 'uk', curr: 'GBP', flag: getCountryFlagSvg('uk') },
+            { market: 'colombia', curr: 'COP', flag: getCountryFlagSvg('colombia') },
+            { market: 'argentina', curr: 'ARS', flag: getCountryFlagSvg('argentina') },
+            { market: 'mexico', curr: 'MXN', flag: getCountryFlagSvg('mexico') }
+        ];
+
+        let html = '';
+        currMap.forEach(function (item) {
+            const data = latestFxRates[item.curr] || GB_FX_BASELINE[item.curr];
+            const isSelected = item.market === selectedMarketId;
+            const rateStr = data ? data.rate.toLocaleString('en-US', { maximumFractionDigits: (item.curr === 'COP' || item.curr === 'ARS') ? 0 : 2 }) : '--';
+
+            html += '<div class="gb-fx-ticker-item' + (isSelected ? ' gb-fx-ticker-item--active' : '') + '">' +
+                '<span class="gb-fx-ticker-flag">' + item.flag + '</span>' +
+                '<span class="gb-fx-ticker-pair">' + item.curr + '/USD</span>' +
+                '<span class="gb-fx-ticker-rate">' + rateStr + '</span>' +
+                '</div>';
+        });
+
+        tickerContainer.innerHTML = html;
+    }
+
+    /**
+     * Render Flight Planner Module with Origin Chips, Live Worker Abstraction & Planning Fallback
+     */
+    function renderFlightPlanner(marketId, originCodeOverride) {
+        const wrap = root.querySelector('#gb-flight-planner');
+        if (!wrap) return;
+
+        const marketData = GB_MARKET_INTELLIGENCE[marketId] || GB_MARKET_INTELLIGENCE['other'];
+        const origins = marketData.flightOrigins || [];
+        if (origins.length === 0) return;
+
+        let activeOrigin = origins[0];
+        if (originCodeOverride) {
+            const found = origins.find(function (o) { return o.code === originCodeOverride; });
+            if (found) activeOrigin = found;
+        }
+
+        // 1. Origin Airport Selector Chips (e.g. Canada YYZ / YUL / YOW)
+        const chipContainer = wrap.querySelector('#gb-flight-origin-selector');
+        if (chipContainer) {
+            if (origins.length > 1) {
+                let chipHtml = '<span style="font-size: 0.8125rem; font-weight: 700; color: rgba(255,255,255,0.7); margin-right: 8px; align-self: center;">DEPARTURE AIRPORT:</span>';
+                origins.forEach(function (orig) {
+                    const isChipActive = orig.code === activeOrigin.code;
+                    chipHtml += '<button type="button" class="gb-flight-origin-chip' + (isChipActive ? ' gb-flight-origin-chip--active' : '') + '" data-flight-origin="' + orig.code + '">' +
+                        orig.name +
+                        '</button>';
+                });
+                chipContainer.innerHTML = chipHtml;
+                chipContainer.style.display = 'flex';
+
+                chipContainer.querySelectorAll('.gb-flight-origin-chip').forEach(function (btn) {
+                    btn.addEventListener('click', function () {
+                        const code = btn.getAttribute('data-flight-origin');
+                        renderFlightPlanner(marketId, code);
+                    });
+                });
+            } else {
+                chipContainer.style.display = 'none';
+                chipContainer.innerHTML = '';
+            }
+        }
+
+        // 2. Flight Status Badge
+        const statusBadge = wrap.querySelector('#gb-flight-status-badge');
+        if (statusBadge) {
+            statusBadge.innerHTML = '<span style="font-size: 0.68rem; letter-spacing: 0.08em; padding: 4px 10px; border-radius: 4px; background: rgba(255,255,255,0.1); color: rgba(255,255,255,0.85); font-weight: 700; text-transform: uppercase;">PLANNING ESTIMATE · LIVE FARE INTEGRATION READY</span>';
+        }
+
+        // 3. Render Cards
+        const cardsGrid = wrap.querySelector('#gb-flight-planner-cards');
+        if (!cardsGrid) return;
+
+        const fx = latestFxRates[marketData.currency] || GB_FX_BASELINE[marketData.currency] || { rate: 1.0, symbol: '$' };
+        const typicalLocal = Math.round(activeOrigin.typicalUsd * fx.rate);
+        const sampleLocal = Math.round(activeOrigin.sampleItinerary.sampleUsd * fx.rate);
+        const currSym = marketData.symbol || '$';
+
+        const badgeCls = activeOrigin.nonstop ? 'gb-flight-badge-nonstop' : 'gb-flight-badge-connecting';
+        const badgeLabel = activeOrigin.nonstop ? 'NONSTOP CORRIDOR' : '1 STOP CONNECTING';
+
+        const card1 = '<div class="gb-flight-card">' +
+            '<div>' +
+                '<div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.75rem;">' +
+                    '<span style="font-size: 0.75rem; font-weight: 800; letter-spacing: 0.1em; color: var(--gb-sun-orange); text-transform: uppercase;">PLANNING BENCHMARK ROUND-TRIP</span>' +
+                    '<span class="' + badgeCls + '">' + badgeLabel + '</span>' +
+                '</div>' +
+                '<div style="font-family: var(--gb-font-display); font-size: 1.85rem; font-weight: 800; color: #ffffff; line-height: 1.1;">' +
+                    '$' + activeOrigin.typicalUsd.toLocaleString() + ' <span style="font-size: 0.95rem; font-weight: 600; color: rgba(255,255,255,0.65);">USD</span>' +
+                '</div>' +
+                (marketData.currency !== 'USD' ? '<div style="font-size: 1rem; font-weight: 700; color: var(--gb-teal); margin-top: 4px;">≈ ' + currSym + typicalLocal.toLocaleString() + ' ' + marketData.currency + '</div>' : '') +
+                '<p style="font-size: 0.8125rem; color: rgba(255,255,255,0.7); line-height: 1.45; margin-top: 0.85rem;">' +
+                    'Informational planning estimate based on benchmark round-trip schedules. Airfares fluctuate constantly.' +
+                '</p>' +
+            '</div>' +
+            '<div style="margin-top: 1.25rem; padding-top: 0.85rem; border-top: 1px solid rgba(255,255,255,0.12); font-size: 0.75rem; color: rgba(255,255,255,0.6);">' +
+                'Origin: <strong style="color: #ffffff;">' + activeOrigin.name + '</strong>' +
+            '</div>' +
+        '</div>';
+
+        const itin = activeOrigin.sampleItinerary;
+        const card2 = '<div class="gb-flight-card">' +
+            '<div>' +
+                '<div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.75rem;">' +
+                    '<span style="font-size: 0.75rem; font-weight: 800; letter-spacing: 0.1em; color: var(--gb-sun-orange); text-transform: uppercase;">PLANNING EXAMPLE ITINERARY</span>' +
+                    '<span style="font-size: 0.7rem; font-weight: 700; color: rgba(255,255,255,0.7);">' + itin.stops + '</span>' +
+                '</div>' +
+                '<div style="font-family: var(--gb-font-display); font-size: 1.35rem; font-weight: 800; color: #ffffff; letter-spacing: 0.04em;">' +
+                    itin.route +
+                '</div>' +
+                '<div style="font-size: 0.825rem; color: rgba(255,255,255,0.85); margin-top: 6px;">' +
+                    'Carrier: <strong style="color: #ffffff;">' + itin.carrier + '</strong> (' + itin.flightNum + ')' +
+                '</div>' +
+                '<div style="font-size: 0.825rem; color: rgba(255,255,255,0.85); margin-top: 2px;">' +
+                    'Duration: <strong style="color: #ffffff;">' + itin.duration + '</strong>' +
+                '</div>' +
+            '</div>' +
+            '<div style="margin-top: 1.25rem; padding-top: 0.85rem; border-top: 1px solid rgba(255,255,255,0.12); display: flex; justify-content: space-between; align-items: flex-end;">' +
+                '<div>' +
+                    '<span style="font-size: 0.7rem; color: rgba(255,255,255,0.55); text-transform: uppercase;">Benchmark Fare</span>' +
+                    '<div style="font-size: 1.15rem; font-weight: 800; color: #ffffff;">$' + itin.sampleUsd + ' USD' +
+                        (marketData.currency !== 'USD' ? ' <span style="font-size: 0.8rem; font-weight: 600; color: var(--gb-teal);">(' + currSym + sampleLocal.toLocaleString() + ')</span>' : '') +
+                    '</div>' +
+                '</div>' +
+                '<span style="font-size: 0.68rem; color: rgba(255,255,255,0.5);">STATIC ROUTE INFORMATION</span>' +
+            '</div>' +
+        '</div>';
+
+        cardsGrid.innerHTML = card1 + card2;
+    }
+
+    /**
+     * Buyer Essentials Reordering by Acquisition Goal
+     */
+    function reorderBuyerEssentials(intentId) {
+        const list = root.querySelector('#gb-essentials-accordion-list');
+        if (!list) return;
+
+        const priorityMaps = {
+            secondHome: ['owningAbroad', 'insurance', 'condos', 'travel', 'tax', 'rentals', 'financing', 'ownershipRules'],
+            investment: ['rentals', 'tax', 'financing', 'ownershipRules', 'owningAbroad', 'condos', 'insurance', 'travel'],
+            futureMove: ['travel', 'insurance', 'financing', 'owningAbroad', 'ownershipRules', 'condos', 'rentals', 'tax'],
+            vacationRental: ['rentals', 'condos', 'insurance', 'travel', 'owningAbroad', 'tax', 'financing', 'ownershipRules'],
+            business: ['ownershipRules', 'tax', 'financing', 'owningAbroad', 'rentals', 'travel', 'insurance', 'condos'],
+            justExploring: ['financing', 'travel', 'tax', 'condos', 'insurance', 'rentals', 'owningAbroad', 'ownershipRules']
+        };
+
+        const targetOrder = priorityMaps[intentId] || priorityMaps['justExploring'];
+        const modules = Array.from(list.querySelectorAll('.gb-essential-module[data-mod]'));
+        if (modules.length === 0) return;
+
+        const modMap = {};
+        modules.forEach(function (m) {
+            modMap[m.getAttribute('data-mod')] = m;
+        });
+
+        // Detach and re-append in prioritized order
+        targetOrder.forEach(function (key, idx) {
+            const m = modMap[key];
+            if (m) {
+                list.appendChild(m);
+                // Open only the top prioritized module to guide visitor smoothly
+                if (idx === 0) {
+                    m.open = true;
+                }
+            }
+        });
+    }
+
+    /**
+     * Update More Than a Destination Goal-Tailored Supporting Panel
+     */
+    function updateCountySupportingPanel(intentId) {
+        const panel = root.querySelector('#gb-county-supporting-panel');
+        if (!panel) return;
+
+        const contentMap = {
+            futureMove: {
+                eyebrow: 'COMMUNITY & INSTITUTIONS',
+                title: 'TOP-TIER EDUCATION & HEALTHCARE INFRASTRUCTURE',
+                text: 'Relocating to Southwest Florida connects families to world-class public and private institutions. Florida Gulf Coast University (FGCU) educates over 16,000 students in Fort Myers, while nationally ranked healthcare networks—including Lee Health and NCH Healthcare System—offer advanced medical specialization without leaving the coast.'
+            },
+            business: {
+                eyebrow: 'REGIONAL COMMERCE & EXPANSION',
+                title: 'CORPORATE LOGISTICS & STRATEGIC CONNECTIVITY',
+                text: 'Southwest Florida provides a pro-business operational environment with zero Florida personal income tax, an expanding multi-modal cargo terminal at RSW, and shovel-ready commercial corridors along I-75 and Alico Road uniting Lee and Collier counties.'
+            },
+            investment: {
+                eyebrow: 'MARKET FUNDAMENTALS & DEMOGRAPHICS',
+                title: 'SUSTAINED DEMOGRAPHIC EXPANSION & REGIONAL INFRASTRUCTURE',
+                text: 'Lee County’s population growth rate continues to outpace national averages at over 2.1% annually, while Collier County maintains established luxury residential communities and high international buyer concentration.'
+            },
+            secondHome: {
+                eyebrow: 'COASTAL LIVING & LEISURE',
+                title: 'GULF WATERWAYS, BARRIER ISLANDS & RESORT CORRIDORS',
+                text: 'Subtropical climate, extensive canal systems, barrier island beaches, and renowned golf communities make Lee and Collier counties primary destinations for seasonal residents and international homeowners.'
+            },
+            vacationRental: {
+                eyebrow: 'RENTAL DYNAMICS & DEMAND',
+                title: 'PROVEN PEAK-SEASON TOURISM & GULF LIFESTYLE OCCUPANCY',
+                text: 'Over 5 million annual visitors to Lee and Collier counties create consistent demand for premium waterfront canal homes and resort condominiums with established municipal short-term rental frameworks.'
+            },
+            justExploring: {
+                eyebrow: 'TWO COMPLEMENTARY COUNTIES',
+                title: 'URBAN VIBRANCY MEETS PRISTINE GULF COASTLINES',
+                text: 'Lee County offers vibrant riverfront downtowns, historic estates, and barrier island boating, while Collier County features world-renowned Naples luxury dining, art galleries, and immaculate golf preserves.'
+            }
+        };
+
+        const c = contentMap[intentId] || contentMap['justExploring'];
+        panel.innerHTML = '<span class="gb-eyebrow gb-eyebrow--orange">' + c.eyebrow + '</span>' +
+            '<h3 style="font-family: var(--gb-font-display); font-size: 1.4rem; color: var(--gb-navy); font-weight: 800; margin: 6px 0 10px;">' +
+                c.title +
+            '</h3>' +
+            '<p style="font-size: 0.9375rem; color: var(--gb-charcoal); line-height: 1.6; margin: 0;">' +
+                c.text +
+            '</p>';
+    }
+
+    /**
+     * Dedicated Official Resources Block in Resource Center (#gb-official-country-block)
+     */
+    function updateOfficialResources(marketId) {
+        const block = root.querySelector('#gb-official-country-block');
+        if (!block) return;
+
+        const marketData = GB_MARKET_INTELLIGENCE[marketId];
+        if (!marketData || !marketData.officialResources) {
+            block.style.display = 'none';
+            return;
+        }
+
+        const flagSvg = getCountryFlagSvg(marketId, false);
+        let linksHtml = '';
+        marketData.officialResources.forEach(function (res) {
+            linksHtml += '<a href="' + res.url + '" target="_blank" rel="noopener noreferrer" class="gb-official-link">' +
+                '<span>' + res.title + ' <small style="display: block; font-size: 0.72rem; color: var(--gb-teal); font-weight: 500;">' + res.type + '</small></span>' +
+                '<svg viewBox="0 0 16 16" width="14" height="14" fill="currentColor" aria-hidden="true"><path d="M4.5 1.5a.5.5 0 0 0 0 1h6.793L1.146 12.646a.5.5 0 0 0 .708.708L12 3.207V10a.5.5 0 0 0 1 0V2a.5.5 0 0 0-.5-.5h-8z"/></svg>' +
+                '</a>';
+        });
+
+        // Always include official U.S. Entry links
+        linksHtml += '<a href="https://travel.state.gov/content/travel/en/us-visas.html" target="_blank" rel="noopener noreferrer" class="gb-official-link">' +
+            '<span>U.S. Department of State: Visa & Entry Requirements <small style="display: block; font-size: 0.72rem; color: var(--gb-teal); font-weight: 500;">Official Federal Entry Portal</small></span>' +
+            '<svg viewBox="0 0 16 16" width="14" height="14" fill="currentColor" aria-hidden="true"><path d="M4.5 1.5a.5.5 0 0 0 0 1h6.793L1.146 12.646a.5.5 0 0 0 .708.708L12 3.207V10a.5.5 0 0 0 1 0V2a.5.5 0 0 0-.5-.5h-8z"/></svg>' +
+            '</a>';
+
+        block.innerHTML = '<div style="display: flex; align-items: center; gap: 12px; margin-bottom: 0.75rem;">' +
+            flagSvg +
+            '<h3 style="font-family: var(--gb-font-display); font-size: 1.25rem; color: var(--gb-navy); font-weight: 800; margin: 0;">' +
+                'OFFICIAL INFORMATION FOR TRAVELERS FROM ' + marketData.name.toUpperCase() +
+            '</h3>' +
+            '</div>' +
+            '<p style="font-size: 0.85rem; color: var(--gb-charcoal); margin-bottom: 1rem; line-height: 1.5;">' +
+                'Traveling from ' + marketData.name + '? Check official government consular, entry, and travel requirements before planning international transactions or extended stays. Market selection does not infer citizenship or visa status.' +
+            '</p>' +
+            '<div class="gb-official-links">' + linksHtml + '</div>';
+
+        block.style.display = 'block';
+    }
+
+    /**
+     * API Endpoint Resolver Helper
+     */
+    function getApiEndpoint(path) {
+        if (typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')) {
+            return 'https://ccor-global-buyers-api.bonitaspringsrealtors.workers.dev' + path;
+        }
+        return path;
+    }
+
+    /**
+     * PII Safe Email Masker (e.g., kevin@example.com -> k••••@example.com)
+     */
+    function maskEmail(email) {
+        if (!email || typeof email !== 'string') return '';
+        const parts = email.split('@');
+        if (parts.length !== 2) return email;
+        const user = parts[0];
+        const domain = parts[1];
+        const maskedUser = user.length > 1 ? user.charAt(0) + '\u2022\u2022\u2022\u2022' : user + '\u2022\u2022\u2022\u2022';
+        return maskedUser + '@' + domain;
+    }
+
+    /**
+     * Currency Number Formatter via Intl.NumberFormat
+     */
+    function formatCurrencyAmount(amount, currencyCode) {
+        if (isNaN(amount) || amount === null || amount === undefined) return '';
+        try {
+            const localeMap = {
+                'EUR': 'de-DE',
+                'CAD': 'en-CA',
+                'BRL': 'pt-BR',
+                'GBP': 'en-GB',
+                'COP': 'es-CO',
+                'ARS': 'es-AR',
+                'MXN': 'es-MX',
+                'USD': 'en-US'
+            };
+            const loc = localeMap[currencyCode] || 'en-US';
+            const maxDec = (currencyCode === 'COP' || currencyCode === 'ARS' || amount >= 1000) ? 0 : 2;
+            return new Intl.NumberFormat(loc, {
+                style: 'currency',
+                currency: currencyCode,
+                maximumFractionDigits: maxDec,
+                minimumFractionDigits: 0
+            }).format(amount);
+        } catch (e) {
+            return (currencyCode || '$') + ' ' + Math.round(amount).toLocaleString();
+        }
+    }
+
+    /**
+     * Daily Profile Selection Aggregator (Non-PII, Session Deduped)
+     */
+    function logProfileSelectionAggregate(marketId, intentId) {
+        if (!marketId || !intentId) return;
+        try {
+            const sessionKey = 'ccorGlobalSelectionLogged';
+            const logged = (typeof window !== 'undefined' && window.sessionStorage) ? (window.sessionStorage.getItem(sessionKey) || '') : '';
+            const combo = marketId + ':' + intentId;
+            if (logged.split(',').indexOf(combo) !== -1) {
+                return;
+            }
+            const marketData = GB_MARKET_INTELLIGENCE[marketId] || {};
+            const countryCode = marketData.code || (marketId === 'otherLatam' ? 'LATAM' : 'OTHER');
+
+            const apiEndpoint = getApiEndpoint('/global-buyers-api/profile-selection');
+            fetch(apiEndpoint, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    market: marketId,
+                    countryCode: countryCode,
+                    intent: intentId
+                })
+            }).then(function (res) {
+                if (res.ok && window.sessionStorage) {
+                    const updated = logged ? logged + ',' + combo : combo;
+                    window.sessionStorage.setItem(sessionKey, updated);
+                }
+            }).catch(function () {});
+        } catch (e) {}
+    }
+
+    /**
+     * Render Editorial Brief Module: "YOUR SOUTHWEST FLORIDA BRIEF"
+     * Replaced analytics 3-card dashboard with a unified editorial report
+     */
+    function renderPersonalizedBrief(intentId, marketId) {
+        const briefEl = root.querySelector('#gb-personalized-brief');
+        if (!briefEl) return;
+
+        if (!intentId && !marketId) {
+            briefEl.style.display = 'none';
+            briefEl.innerHTML = '';
+            return;
+        }
+
+        const effectiveMarketId = marketId || 'other';
+        const effectiveIntentId = intentId || 'justExploring';
+
+        const marketData = GB_MARKET_INTELLIGENCE[effectiveMarketId] || GB_MARKET_INTELLIGENCE['other'];
+        const intentConfig = GB_CONFIG.personalization.intents.find(function (i) { return i.id === effectiveIntentId; }) || { title: 'DISCOVERY' };
+
+        const flagSvgLg = getCountryFlagSvg(effectiveMarketId, true);
+
+        // Market Snapshot Stats Configuration
+        const allStats = marketData.stats || [];
+        let heroStat = null;
+        const supportingSignals = [];
+
+        // Market-specific tailored hero stat and supporting signals
+        if (effectiveMarketId === 'germany') {
+            heroStat = { value: '22%', label: 'of Cape Coral&ndash;Fort Myers international buyers' };
+            supportingSignals.push({ value: '61,200', label: 'German visitors to Lee County in 2025' });
+            supportingSignals.push({ value: 'FRA &rarr; RSW', label: 'Seasonal nonstop access when scheduled' });
+        } else if (effectiveMarketId === 'canada') {
+            heroStat = { value: '41%', label: 'of Cape Coral&ndash;Fort Myers international buyers (18% statewide)' };
+            supportingSignals.push({ value: '$1.916B', label: 'Florida residential purchase volume' });
+            supportingSignals.push({ value: '75%', label: 'All-cash purchases' });
+        } else if (effectiveMarketId === 'brazil') {
+            heroStat = { value: '$762M', label: 'Florida residential purchase volume' };
+            supportingSignals.push({ value: '52%', label: 'U.S. mortgage financing utilization' });
+            supportingSignals.push({ value: '15%', label: 'Primary-residence intended use' });
+        } else if (effectiveMarketId === 'uk') {
+            heroStat = { value: '73%', label: 'All-cash transactions' };
+            supportingSignals.push({ value: '57%', label: 'Single-family home preference' });
+            supportingSignals.push({ value: '20%', label: 'Primary-residence intended use' });
+        } else if (effectiveMarketId === 'colombia') {
+            heroStat = { value: '$925M', label: 'Florida residential volume (#1 South American market)' };
+            supportingSignals.push({ value: '54%', label: 'Rental-designated intended use' });
+            supportingSignals.push({ value: '49%', label: 'U.S. mortgage financing utilization' });
+        } else if (effectiveMarketId === 'argentina') {
+            heroStat = { value: '62%', label: 'All-cash transactions' };
+            supportingSignals.push({ value: '$627M', label: 'Florida residential purchase volume' });
+            supportingSignals.push({ value: '57%', label: 'Rental-designated intended use' });
+        } else if (effectiveMarketId === 'mexico') {
+            heroStat = { value: '$489M', label: 'Florida residential purchase volume' };
+            supportingSignals.push({ value: 'Direct Hubs', label: 'Convenient connections via MIA / DFW / TPA' });
+            supportingSignals.push({ value: 'Established', label: 'Preference for golf & coastal amenities' });
+        } else {
+            heroStat = { value: '#1', label: 'U.S. state for international home buyers (20+ years)' };
+            supportingSignals.push({ value: '50+', label: 'Nations active in Florida residential purchases' });
+            supportingSignals.push({ value: 'RSW Hub', label: 'Modern international gateway serving SW Florida' });
+        }
+
+        let signalsHtml = '<div class="gb-snapshot-signals">';
+        supportingSignals.forEach(function (sig) {
+            signalsHtml += '<div class="gb-snapshot-signal-item">' +
+                '<span class="gb-snapshot-signal-item__val">' + sig.value + '</span>' +
+                '<span class="gb-snapshot-signal-item__label">' + sig.label + '</span>' +
+                '</div>';
+        });
+        signalsHtml += '</div>';
+
+        // Collapsible remaining stats (if any)
+        let detailsHtml = '';
+        if (allStats.length > 2) {
+            detailsHtml = '<details class="gb-brief-details">' +
+                '<summary class="gb-brief-details__summary">ADDITIONAL VERIFIED BENCHMARKS (' + allStats.length + ' METRICS) &darr;</summary>' +
+                '<div class="gb-brief-details__grid">';
+            allStats.forEach(function (st) {
+                detailsHtml += '<div style="display: flex; flex-direction: column;">' +
+                    '<span style="font-family: var(--gb-font-display); font-size: 1.15rem; font-weight: 800; color: var(--gb-navy);">' + st.value + '</span>' +
+                    '<span style="font-size: 0.72rem; color: #64748b; line-height: 1.3;">' + st.label + '</span>' +
+                    '</div>';
+            });
+            detailsHtml += '</div></details>';
+        }
+
+        // Currency Data & Calculations
+        const fxData = latestFxRates[marketData.currency] || GB_FX_BASELINE[marketData.currency] || { rate: 1.0, inv: 1.0, symbol: '$', date: '2026-03-06' };
+        const medianUsd = 442000;
+        const medianConverted = Math.round(medianUsd * fxData.rate);
+        const currSym = marketData.symbol || '$';
+
+        const isFxLive = isFxRatesLive;
+        const statusBadgeHtml = isFxLive
+            ? '<span class="gb-calc-status-badge gb-calc-status-badge--live">LIVE REFERENCE</span>'
+            : '<span class="gb-calc-status-badge gb-calc-status-badge--verified">LAST VERIFIED</span>';
+        const statusDateHtml = isFxLive
+            ? 'Live reference rate &middot; ' + fxData.date + ' via Frankfurter API'
+            : 'Reference rate &middot; September 8, 2026';
+
+        const chartSvg = renderFxChartSvg(marketData.currency, GB_FX_HISTORY_5YR[marketData.currency], marketData.accent);
+
+        const brazilFlourishHtml = (effectiveMarketId === 'brazil') ?
+            '<div class="gb-brief-flourish">VIVA &middot; INVISTA &middot; CONECTE</div>' : '';
+
+        // Compact Getting Here Teaser
+        const firstFlight = (marketData.flightOrigins && marketData.flightOrigins.length > 0) ? marketData.flightOrigins[0] : null;
+        const isNonstop = firstFlight && firstFlight.nonstop;
+        const teaserRoute = firstFlight ? firstFlight.route : (marketData.corridorId ? marketData.corridorId.toUpperCase() + ' &rarr; RSW' : 'INTERNATIONAL GATEWAYS &rarr; RSW');
+        const teaserSub = isNonstop ? (firstFlight.carrier || 'Seasonal direct carrier access') : 'Connecting flight benchmarks and gateway schedules available below';
+
+        // What This Changes For You (Intentional Adaptation Summary)
+        let changesHomes = 'Waterfront & Coastal Properties is highlighted';
+        if (effectiveIntentId === 'secondHome') changesHomes = 'Lock-and-Leave Living & Golf Communities is highlighted';
+        else if (effectiveIntentId === 'investment') changesHomes = 'Investment & Seasonal Properties is highlighted';
+        else if (effectiveIntentId === 'futureMove') changesHomes = 'Coastal Single-Family Residences is highlighted';
+        else if (effectiveIntentId === 'vacationRental') changesHomes = 'On the Water & Boating Access is highlighted';
+        else if (effectiveIntentId === 'business') changesHomes = 'New Modern & Commercial Corridors is highlighted';
+
+        let changesEssentials = 'International Purchasing Essentials are organized for your inquiry';
+        if (effectiveIntentId === 'secondHome' || effectiveIntentId === 'futureMove') changesEssentials = 'Travel + Immigration & Cross-Border Advisory is prioritized';
+        else if (effectiveIntentId === 'investment' || effectiveIntentId === 'business') changesEssentials = 'Financing Structures & Tax Considerations is prioritized';
+
+        const changesResources = marketData.name + ' official consular and travel resources are recommended below';
+
+        // Official Links Treatment
+        let officialLinksHtml = '';
+        if (marketData.officialResources && marketData.officialResources.length > 0) {
+            marketData.officialResources.forEach(function (res) {
+                officialLinksHtml += '<a href="' + res.url + '" target="_blank" rel="noopener noreferrer" class="gb-brief-official-link">' +
+                    res.title + ' &rarr;' +
+                    '</a>';
+            });
+        }
+
+        // Assemble Full Editorial Report HTML
+        const briefHtml =
+            // 1. Light, Compact Editorial Header
+            '<div class="gb-brief-header">' +
+                '<div class="gb-brief-header__left">' +
+                    flagSvgLg +
+                    '<div>' +
+                        '<span class="gb-eyebrow gb-eyebrow--orange">YOUR SOUTHWEST FLORIDA BRIEF</span>' +
+                        '<div style="display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap;">' +
+                            '<h3 class="gb-brief-title" style="margin: 0; font-family: var(--gb-font-display); font-size: clamp(1.4rem, 3.5vw, 1.85rem); font-weight: 800; color: var(--gb-navy); text-transform: uppercase;">' +
+                                marketData.name +
+                            '</h3>' +
+                            '<span style="font-family: var(--gb-font-display); font-size: 0.875rem; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.08em;">' +
+                                '&middot; ' + intentConfig.title +
+                            '</span>' +
+                        '</div>' +
+                        brazilFlourishHtml +
+                    '</div>' +
+                '</div>' +
+            '</div>' +
+
+            // 2. Asymmetric Top Grid: Left = Snapshot, Right = Currency
+            '<div class="gb-brief-top-grid">' +
+                // Left: Market Snapshot
+                '<div class="gb-brief-snapshot">' +
+                    '<div class="gb-editorial-tag">' +
+                        '<span>A &middot; MARKET SNAPSHOT: ' + marketData.name.toUpperCase() + ' + SOUTHWEST FLORIDA</span>' +
+                    '</div>' +
+                    '<div class="gb-snapshot-stat-hero">' +
+                        '<div class="gb-snapshot-stat-hero__num">' + heroStat.value + '</div>' +
+                        '<div class="gb-snapshot-stat-hero__label">' + heroStat.label + '</div>' +
+                    '</div>' +
+                    signalsHtml +
+                    '<p class="gb-snapshot-narrative">' +
+                        marketData.signal + ' ' + marketData.tendToDo +
+                    '</p>' +
+                    '<div class="gb-snapshot-source">' +
+                        'Source &middot; Florida Realtors&reg; &middot; 2025 Profile of International Residential Transactions in Florida' +
+                    '</div>' +
+                    detailsHtml +
+                '</div>' +
+
+                // Right: Integrated Currency Module (Clean rates + two-way converter + 5-yr history)
+                '<div class="gb-brief-currency">' +
+                    '<div class="gb-editorial-tag" style="margin-bottom: 0.4rem;">' +
+                        '<span>B &middot; YOUR CURRENCY</span>' +
+                    '</div>' +
+                    '<div style="font-family: var(--gb-font-display); font-size: 1.15rem; font-weight: 800; color: var(--gb-navy); margin-bottom: 0.5rem;">' +
+                        'REFERENCE EXCHANGE RATE' +
+                    '</div>' +
+                    '<div class="gb-calc-status-row">' +
+                        '<span>' + statusDateHtml + '</span>' +
+                        statusBadgeHtml +
+                    '</div>' +
+                    // Reference rates display (fixed formatting)
+                    '<div class="gb-calc-rates-row">' +
+                        '<div class="gb-calc-rate-item">' +
+                            '<span class="gb-calc-rate-sym">1 ' + marketData.currency + '</span>' +
+                            '<span class="gb-calc-rate-eq">=</span>' +
+                            '<span class="gb-calc-rate-val">$' + fxData.inv.toFixed(4) + ' USD</span>' +
+                        '</div>' +
+                        '<div class="gb-calc-rate-item">' +
+                            '<span class="gb-calc-rate-sym">$1 USD</span>' +
+                            '<span class="gb-calc-rate-eq">=</span>' +
+                            '<span class="gb-calc-rate-val">' + currSym + ' ' + (fxData.rate > 100 ? fxData.rate.toFixed(2) : fxData.rate.toFixed(4)) + ' ' + marketData.currency + '</span>' +
+                        '</div>' +
+                    '</div>' +
+                    // Interactive Two-Way Currency Calculator
+                    '<div class="gb-calc-card">' +
+                        '<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">' +
+                            '<span style="font-family: var(--gb-font-display); font-size: 0.72rem; font-weight: 800; color: var(--gb-navy); text-transform: uppercase; letter-spacing: 0.08em;">' +
+                                'CURRENCY CONVERTER' +
+                            '</span>' +
+                            '<span style="font-size: 0.68rem; color: #64748b;">Two-way interactive</span>' +
+                        '</div>' +
+                        '<div id="gb-calc-fields" class="gb-calc-fields-row">' +
+                            '<div class="gb-calc-input-group" id="gb-calc-local-group">' +
+                                '<span class="gb-calc-pill">' + currSym + ' ' + marketData.currency + '</span>' +
+                                '<input type="text" id="gb-calc-local-input" class="gb-calc-input" inputmode="decimal" aria-label="' + marketData.currency + ' amount" value="' + medianConverted.toLocaleString('en-US') + '">' +
+                            '</div>' +
+                            '<button type="button" id="gb-calc-swap-btn" class="gb-calc-swap-btn" aria-label="Swap conversion direction" title="Swap conversion direction">&uarr;&darr;</button>' +
+                            '<div class="gb-calc-input-group" id="gb-calc-usd-group">' +
+                                '<span class="gb-calc-pill">$ USD</span>' +
+                                '<input type="text" id="gb-calc-usd-input" class="gb-calc-input" inputmode="decimal" aria-label="USD amount" value="442,000">' +
+                            '</div>' +
+                        '</div>' +
+                        '<div class="gb-calc-presets">' +
+                            '<span class="gb-calc-preset-label">Presets:</span>' +
+                            '<button type="button" class="gb-calc-preset-btn" data-preset="100000">$100K</button>' +
+                            '<button type="button" class="gb-calc-preset-btn" data-preset="250000">$250K</button>' +
+                            '<button type="button" class="gb-calc-preset-btn gb-calc-preset-btn--median" data-preset="442000" title="2025 Florida international-buyer median">$442K <span style="font-size: 0.65rem; font-weight: 600; opacity: 0.85;">(Median)</span></button>' +
+                            '<button type="button" class="gb-calc-preset-btn" data-preset="750000">$750K</button>' +
+                            '<button type="button" class="gb-calc-preset-btn" data-preset="1000000">$1M</button>' +
+                        '</div>' +
+                        '<div id="gb-calc-live-announcer" class="sr-only" aria-live="polite" style="position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); border: 0;"></div>' +
+                    '</div>' +
+                    // 5-Year History Chart Box with Explicit Basis
+                    '<div class="gb-fx-chart-box">' +
+                        '<div class="gb-fx-chart-box__header">' +
+                            '<span class="gb-fx-chart-box__title">5-YEAR HISTORY: $1 USD &rarr; ' + marketData.currency + '</span>' +
+                        '</div>' +
+                        chartSvg +
+                    '</div>' +
+                '</div>' +
+            '</div>' +
+
+            // 3. Compact Getting Here Teaser Row
+            '<div class="gb-brief-teaser-row">' +
+                '<div class="gb-brief-teaser-left">' +
+                    '<span style="font-family: var(--gb-font-display); font-size: 0.72rem; font-weight: 800; color: #64748b; text-transform: uppercase; letter-spacing: 0.1em;">GETTING HERE</span>' +
+                    '<span class="gb-brief-teaser-route">' + teaserRoute + '</span>' +
+                    '<span class="gb-brief-teaser-badge ' + (isNonstop ? 'gb-brief-teaser-badge--nonstop' : 'gb-brief-teaser-badge--connecting') + '">' +
+                        (isNonstop ? 'SEASONAL NONSTOP' : 'CONNECTING ACCESS') +
+                    '</span>' +
+                    '<span class="gb-brief-teaser-sub">' + teaserSub + '</span>' +
+                '</div>' +
+                '<a href="#gb-global-access" class="gb-brief-teaser-link">' +
+                    'EXPLORE FLIGHTS + FARES &darr;' +
+                '</a>' +
+            '</div>' +
+
+            // 4. What This Changes For You (Personalization Summary)
+            '<div class="gb-brief-changes">' +
+                '<div class="gb-brief-changes__title">YOUR PAGE HAS BEEN ADAPTED</div>' +
+                '<div class="gb-brief-changes__grid">' +
+                    '<div class="gb-brief-changes__item">' +
+                        '<span class="gb-brief-changes__label">HOMES</span>' +
+                        '<div class="gb-brief-changes__desc">' + changesHomes + '</div>' +
+                    '</div>' +
+                    '<div class="gb-brief-changes__item">' +
+                        '<span class="gb-brief-changes__label">BUYER ESSENTIALS</span>' +
+                        '<div class="gb-brief-changes__desc">' + changesEssentials + '</div>' +
+                    '</div>' +
+                    '<div class="gb-brief-changes__item">' +
+                        '<span class="gb-brief-changes__label">RESOURCES</span>' +
+                        '<div class="gb-brief-changes__desc">' + changesResources + '</div>' +
+                    '</div>' +
+                '</div>' +
+            '</div>' +
+
+            // 5. Official Resources List
+            (officialLinksHtml ?
+                '<div class="gb-brief-official-links">' +
+                    '<span class="gb-brief-official-label">OFFICIAL INFORMATION:</span>' +
+                    officialLinksHtml +
+                '</div>' : '') +
+
+            // 6. Optional Profile Capture Section (Quiet Collapsed State)
+            '<div class="gb-lead-section" id="gb-lead-section">' +
+                '<div class="gb-lead-toggle-card" id="gb-lead-toggle-card">' +
+                    '<div class="gb-lead-toggle-info">' +
+                        '<div class="gb-lead-toggle-title">KEEP YOUR PROFILE WITH CCOR &rarr;</div>' +
+                        '<div class="gb-lead-toggle-sub">' +
+                            'Optional. Share your contact information if you\'d like CCOR to keep your selected market and goals with your inquiry.' +
+                        '</div>' +
+                    '</div>' +
+                    '<button type="button" id="gb-lead-open-btn" class="gb-lead-toggle-btn">' +
+                        'SAVE MY PROFILE' +
+                    '</button>' +
+                '</div>' +
+
+                // Inline Expandable Lead Form
+                '<div class="gb-lead-form-wrap" id="gb-lead-form-wrap" style="display: none;">' +
+                    '<div style="display: flex; justify-content: space-between; align-items: baseline; border-bottom: 1px solid rgba(11,37,69,0.08); padding-bottom: 0.75rem;">' +
+                        '<div>' +
+                            '<span class="gb-eyebrow gb-eyebrow--orange">OPTIONAL PROFILE REGISTRATION</span>' +
+                            '<h4 style="font-family: var(--gb-font-display); font-size: 1.15rem; font-weight: 800; color: var(--gb-navy); margin: 4px 0 0;">' +
+                                'SAVE YOUR GLOBAL BUYER PREFERENCES' +
+                            '</h4>' +
+                        '</div>' +
+                        '<button type="button" id="gb-lead-close-btn" style="background: none; border: none; font-size: 1.25rem; color: #64748b; cursor: pointer; padding: 4px;" aria-label="Close profile capture">&times;</button>' +
+                    '</div>' +
+                    '<form id="gb-lead-form" novalidate>' +
+                        // Honeypot spam defense (Prompt item 24)
+                        '<input type="text" name="organization_url" id="gb-lead-hp" class="gb-hp-field" style="position: absolute; left: -9999px; width: 1px; height: 1px; opacity: 0; pointer-events: none;" tabindex="-1" autocomplete="off">' +
+
+                        '<div class="gb-lead-form-grid">' +
+                            '<div class="gb-lead-field">' +
+                                '<label for="gb-lead-first-name" class="gb-lead-label">FIRST NAME *</label>' +
+                                '<input type="text" id="gb-lead-first-name" class="gb-lead-input" required maxlength="80" autocomplete="given-name" placeholder="First name">' +
+                            '</div>' +
+                            '<div class="gb-lead-field">' +
+                                '<label for="gb-lead-last-name" class="gb-lead-label">LAST NAME</label>' +
+                                '<input type="text" id="gb-lead-last-name" class="gb-lead-input" maxlength="100" autocomplete="family-name" placeholder="Last name (optional)">' +
+                            '</div>' +
+                            '<div class="gb-lead-field" style="grid-column: span 2;">' +
+                                '<label for="gb-lead-email" class="gb-lead-label">EMAIL ADDRESS *</label>' +
+                                '<input type="email" id="gb-lead-email" class="gb-lead-input" required maxlength="254" autocomplete="email" placeholder="name@example.com">' +
+                            '</div>' +
+                            '<div class="gb-lead-field">' +
+                                '<label for="gb-lead-market-select" class="gb-lead-label">WHERE ARE YOU JOINING US FROM?</label>' +
+                                '<select id="gb-lead-market-select" class="gb-lead-select">' +
+                                    '<option value="canada"' + (effectiveMarketId === 'canada' ? ' selected' : '') + '>Canada</option>' +
+                                    '<option value="germany"' + (effectiveMarketId === 'germany' ? ' selected' : '') + '>Germany</option>' +
+                                    '<option value="brazil"' + (effectiveMarketId === 'brazil' ? ' selected' : '') + '>Brazil</option>' +
+                                    '<option value="uk"' + (effectiveMarketId === 'uk' ? ' selected' : '') + '>United Kingdom</option>' +
+                                    '<option value="colombia"' + (effectiveMarketId === 'colombia' ? ' selected' : '') + '>Colombia</option>' +
+                                    '<option value="argentina"' + (effectiveMarketId === 'argentina' ? ' selected' : '') + '>Argentina</option>' +
+                                    '<option value="mexico"' + (effectiveMarketId === 'mexico' ? ' selected' : '') + '>Mexico</option>' +
+                                    '<option value="otherLatam"' + (effectiveMarketId === 'otherLatam' ? ' selected' : '') + '>Other Latin America</option>' +
+                                    '<option value="other"' + (effectiveMarketId === 'other' ? ' selected' : '') + '>Somewhere Else (Global)</option>' +
+                                '</select>' +
+                            '</div>' +
+                            '<div class="gb-lead-field">' +
+                                '<label for="gb-lead-intent-select" class="gb-lead-label">YOUR GOAL</label>' +
+                                '<select id="gb-lead-intent-select" class="gb-lead-select">' +
+                                    '<option value="secondHome"' + (effectiveIntentId === 'secondHome' ? ' selected' : '') + '>Second Home</option>' +
+                                    '<option value="investment"' + (effectiveIntentId === 'investment' ? ' selected' : '') + '>Investment</option>' +
+                                    '<option value="futureMove"' + (effectiveIntentId === 'futureMove' ? ' selected' : '') + '>Future Move</option>' +
+                                    '<option value="vacationRental"' + (effectiveIntentId === 'vacationRental' ? ' selected' : '') + '>Vacation + Rental</option>' +
+                                    '<option value="business"' + (effectiveIntentId === 'business' ? ' selected' : '') + '>Business Opportunity</option>' +
+                                    '<option value="justExploring"' + (effectiveIntentId === 'justExploring' ? ' selected' : '') + '>Just Exploring</option>' +
+                                '</select>' +
+                            '</div>' +
+                        '</div>' +
+
+                        '<div class="gb-lead-consent-group">' +
+                            '<label class="gb-lead-checkbox-label">' +
+                                '<input type="checkbox" id="gb-lead-consent" required>' +
+                                '<span>I agree to CCOR storing the information I provide so it can be used in connection with my Global Buyers inquiry. See our <a href="https://coconutcoastrealtors.org/privacy-policy/" target="_blank" rel="noopener noreferrer">Privacy Policy</a>. *</span>' +
+                            '</label>' +
+                            '<label class="gb-lead-checkbox-label">' +
+                                '<input type="checkbox" id="gb-lead-marketing">' +
+                                '<span>I\'d also like occasional international buyer resources and updates from CCOR.</span>' +
+                            '</label>' +
+                        '</div>' +
+
+                        '<div class="gb-lead-status" id="gb-lead-status-msg" role="alert"></div>' +
+
+                        '<div class="gb-lead-actions">' +
+                            '<button type="submit" id="gb-lead-submit-btn" class="gb-lead-toggle-btn" style="padding: 11px 24px;">' +
+                                'SAVE MY PROFILE' +
+                            '</button>' +
+                            '<button type="button" id="gb-lead-cancel-btn" class="gb-lead-cancel-btn">' +
+                                'Cancel' +
+                            '</button>' +
+                        '</div>' +
+                    '</form>' +
+                '</div>' +
+
+                // Submission Success Card
+                '<div class="gb-lead-success-card" id="gb-lead-success-card" style="display: none;">' +
+                    '<div style="display: flex; align-items: center; gap: 8px;">' +
+                        '<svg width="20" height="20" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="10" fill="#15803d"/><path d="M6 10l3 3 5-6" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>' +
+                        '<span style="font-family: var(--gb-font-display); font-size: 0.95rem; font-weight: 800; color: #166534; text-transform: uppercase; letter-spacing: 0.06em;">PROFILE SAVED</span>' +
+                    '</div>' +
+                    '<p style="font-size: 0.875rem; color: var(--gb-charcoal); line-height: 1.5; margin: 0;">' +
+                        'Thanks. CCOR has saved the country, goal and contact information you chose to provide.' +
+                    '</p>' +
+                    '<div id="gb-lead-success-meta" style="font-size: 0.8125rem; color: #64748b; background: #ffffff; border: 1px solid #dcfce7; border-radius: 6px; padding: 10px 14px; margin: 4px 0;"></div>' +
+                    '<div style="display: flex; gap: 12px; flex-wrap: wrap; margin-top: 6px;">' +
+                        '<a href="#gb-find-realtor" class="gb-editorial-btn" style="padding: 9px 18px; font-size: 0.78rem;">FIND A REALTOR®</a>' +
+                        '<button type="button" id="gb-lead-continue-btn" class="gb-lead-cancel-btn" style="padding: 8px 14px; border: 1px solid rgba(11,37,69,0.15); border-radius: 4px;">CONTINUE EXPLORING</button>' +
+                    '</div>' +
+                '</div>' +
+            '</div>';
+
+        briefEl.innerHTML = briefHtml;
+        briefEl.style.display = 'block';
+
+        // Wire Two-Way Currency Converter
+        initCurrencyCalculator(fxData, marketData);
+
+        // Wire Optional Lead Capture
+        initLeadCapture(marketData, intentConfig);
+    }
+
+    /**
+     * Interactive Two-Way Currency Calculator Controller
+     */
+    function initCurrencyCalculator(fxData, marketData) {
+        const localInput = root.querySelector('#gb-calc-local-input');
+        const usdInput = root.querySelector('#gb-calc-usd-input');
+        const swapBtn = root.querySelector('#gb-calc-swap-btn');
+        const fieldsRow = root.querySelector('#gb-calc-fields');
+        const announcer = root.querySelector('#gb-calc-live-announcer');
+        const presetBtns = root.querySelectorAll('.gb-calc-preset-btn');
+
+        if (!localInput || !usdInput) return;
+
+        let announceTimer = null;
+        function debounceAnnounce(msg) {
+            if (!announcer) return;
+            clearTimeout(announceTimer);
+            announceTimer = setTimeout(function () {
+                announcer.textContent = msg;
+            }, 600);
+        }
+
+        function cleanNumber(str) {
+            if (!str) return 0;
+            const cleaned = str.toString().replace(/[^0-9.]/g, '');
+            const parsed = parseFloat(cleaned);
+            return isNaN(parsed) ? 0 : parsed;
+        }
+
+        // Local input changed -> calculate USD
+        localInput.addEventListener('input', function () {
+            const localVal = cleanNumber(localInput.value);
+            const usdVal = fxData.rate > 0 ? (localVal / fxData.rate) : 0;
+            usdInput.value = Math.round(usdVal).toLocaleString('en-US');
+            debounceAnnounce(formatCurrencyAmount(localVal, marketData.currency) + ' equals approximately ' + formatCurrencyAmount(usdVal, 'USD'));
+        });
+
+        // USD input changed -> calculate Local
+        usdInput.addEventListener('input', function () {
+            const usdVal = cleanNumber(usdInput.value);
+            const localVal = usdVal * fxData.rate;
+            localInput.value = Math.round(localVal).toLocaleString('en-US');
+            debounceAnnounce(formatCurrencyAmount(usdVal, 'USD') + ' equals approximately ' + formatCurrencyAmount(localVal, marketData.currency));
+        });
+
+        // Swap conversion direction (toggles visual input arrangement)
+        if (swapBtn && fieldsRow) {
+            let isSwapped = false;
+            swapBtn.addEventListener('click', function () {
+                isSwapped = !isSwapped;
+                const localGroup = root.querySelector('#gb-calc-local-group');
+                const usdGroup = root.querySelector('#gb-calc-usd-group');
+                if (localGroup && usdGroup) {
+                    if (isSwapped) {
+                        fieldsRow.insertBefore(usdGroup, swapBtn);
+                        fieldsRow.appendChild(localGroup);
+                        usdInput.focus();
+                    } else {
+                        fieldsRow.insertBefore(localGroup, swapBtn);
+                        fieldsRow.appendChild(usdGroup);
+                        localInput.focus();
+                    }
+                }
+            });
+        }
+
+        // Presets: $100K, $250K, $442K median, $750K, $1M
+        presetBtns.forEach(function (btn) {
+            btn.addEventListener('click', function () {
+                const presetVal = parseFloat(btn.getAttribute('data-preset')) || 442000;
+                usdInput.value = Math.round(presetVal).toLocaleString('en-US');
+                const localVal = presetVal * fxData.rate;
+                localInput.value = Math.round(localVal).toLocaleString('en-US');
+                debounceAnnounce(formatCurrencyAmount(presetVal, 'USD') + ' equals approximately ' + formatCurrencyAmount(localVal, marketData.currency));
+            });
+        });
+    }
+
+    /**
+     * Optional Visitor Profile / Contact Capture Controller
+     */
+    function initLeadCapture(marketData, intentConfig) {
+        const toggleCard = root.querySelector('#gb-lead-toggle-card');
+        const formWrap = root.querySelector('#gb-lead-form-wrap');
+        const openBtn = root.querySelector('#gb-lead-open-btn');
+        const closeBtn = root.querySelector('#gb-lead-close-btn');
+        const cancelBtn = root.querySelector('#gb-lead-cancel-btn');
+        const continueBtn = root.querySelector('#gb-lead-continue-btn');
+        const leadForm = root.querySelector('#gb-lead-form');
+        const successCard = root.querySelector('#gb-lead-success-card');
+        const statusMsg = root.querySelector('#gb-lead-status-msg');
+        const successMeta = root.querySelector('#gb-lead-success-meta');
+
+        if (!formWrap || !leadForm) return;
+
+        function openForm() {
+            toggleCard.style.display = 'none';
+            formWrap.style.display = 'block';
+            trackGlobalEvent('global_profile_capture_open', {});
+            const firstField = formWrap.querySelector('#gb-lead-first-name');
+            if (firstField) firstField.focus();
+        }
+
+        function closeForm() {
+            formWrap.style.display = 'none';
+            toggleCard.style.display = 'flex';
+        }
+
+        if (openBtn) openBtn.addEventListener('click', openForm);
+        if (closeBtn) closeBtn.addEventListener('click', closeForm);
+        if (cancelBtn) cancelBtn.addEventListener('click', closeForm);
+        if (continueBtn) {
+            continueBtn.addEventListener('click', function () {
+                successCard.style.display = 'none';
+                toggleCard.style.display = 'flex';
+            });
+        }
+
+        leadForm.addEventListener('submit', function (e) {
+            e.preventDefault();
+            if (statusMsg) {
+                statusMsg.style.display = 'none';
+                statusMsg.className = 'gb-lead-status';
+                statusMsg.textContent = '';
+            }
+
+            // 1. Spam defense: Honeypot trap check (Prompt item 24)
+            const hpField = leadForm.querySelector('#gb-lead-hp');
+            if (hpField && hpField.value.trim() !== '') {
+                // Silently fake success to bots without recording to D1
+                formWrap.style.display = 'none';
+                successCard.style.display = 'flex';
+                return;
+            }
+
+            // 2. Client-side field validation
+            const firstNameInput = leadForm.querySelector('#gb-lead-first-name');
+            const lastNameInput = leadForm.querySelector('#gb-lead-last-name');
+            const emailInput = leadForm.querySelector('#gb-lead-email');
+            const marketSelect = leadForm.querySelector('#gb-lead-market-select');
+            const intentSelect = leadForm.querySelector('#gb-lead-intent-select');
+            const consentCheckbox = leadForm.querySelector('#gb-lead-consent');
+            const marketingCheckbox = leadForm.querySelector('#gb-lead-marketing');
+
+            const firstName = (firstNameInput ? firstNameInput.value : '').trim();
+            const lastName = (lastNameInput ? lastNameInput.value : '').trim();
+            const email = (emailInput ? emailInput.value : '').trim().toLowerCase();
+            const selectedMarket = marketSelect ? marketSelect.value : marketData.id;
+            const selectedIntent = intentSelect ? intentSelect.value : intentConfig.id;
+            const consentGiven = consentCheckbox ? consentCheckbox.checked : false;
+            const marketingOptIn = marketingCheckbox ? marketingCheckbox.checked : false;
+
+            if (!firstName || firstName.length < 1 || firstName.length > 80) {
+                showError('Please provide your first name (up to 80 characters).');
+                if (firstNameInput) firstNameInput.focus();
+                return;
+            }
+
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!email || !emailRegex.test(email) || email.length > 254) {
+                showError('Please provide a valid email address.');
+                if (emailInput) emailInput.focus();
+                return;
+            }
+
+            if (!consentGiven) {
+                showError('Please agree to CCOR storing your information in connection with your inquiry.');
+                if (consentCheckbox) consentCheckbox.focus();
+                return;
+            }
+
+            function showError(msg) {
+                if (statusMsg) {
+                    statusMsg.textContent = msg;
+                    statusMsg.className = 'gb-lead-status gb-lead-status--error';
+                    statusMsg.style.display = 'block';
+                }
+            }
+
+            // 3. Extract safe UTM fields
+            let utmObj = null;
+            try {
+                if (window.location && window.location.search) {
+                    const params = new URLSearchParams(window.location.search);
+                    utmObj = {
+                        source: (params.get('utm_source') || '').substring(0, 50),
+                        medium: (params.get('utm_medium') || '').substring(0, 50),
+                        campaign: (params.get('utm_campaign') || '').substring(0, 50),
+                        content: (params.get('utm_content') || '').substring(0, 50)
+                    };
+                }
+            } catch (err) {}
+
+            const submitBtn = leadForm.querySelector('#gb-lead-submit-btn');
+            if (submitBtn) {
+                submitBtn.disabled = true;
+                submitBtn.textContent = 'SAVING...';
+            }
+
+            // Track submit event (NO PII in analytics!)
+            trackGlobalEvent('global_profile_capture_submit', {
+                market: selectedMarket,
+                intent: selectedIntent,
+                marketing_opt_in: marketingOptIn
+            });
+
+            const selMarketObj = GB_MARKET_INTELLIGENCE[selectedMarket] || {};
+            const countryCode = selMarketObj.code || (selectedMarket === 'otherLatam' ? 'LATAM' : 'OTHER');
+
+            const payload = {
+                firstName: firstName,
+                lastName: lastName,
+                email: email,
+                market: selectedMarket,
+                countryCode: countryCode,
+                intent: selectedIntent,
+                marketingOptIn: marketingOptIn,
+                consent: true,
+                consentVersion: (GB_CONFIG.leadCapture && GB_CONFIG.leadCapture.consentVersion) || '2026.1',
+                utm: utmObj
+            };
+
+            const endpoint = getApiEndpoint((GB_CONFIG.leadCapture && GB_CONFIG.leadCapture.endpoint) || '/global-buyers-api/leads');
+
+            fetch(endpoint, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            })
+            .then(function (res) {
+                if (!res.ok) throw new Error('HTTP ' + res.status);
+                return res.json();
+            })
+            .then(function (data) {
+                if (submitBtn) {
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = 'SAVE MY PROFILE';
+                }
+                if (data && data.ok) {
+                    // Success: collapse form, show success state with masked email
+                    formWrap.style.display = 'none';
+                    if (successMeta) {
+                        const marketDisplay = (GB_CONFIG.personalization.markets.find(function(m){ return m.id === selectedMarket; }) || {}).name || selectedMarket.toUpperCase();
+                        const intentDisplay = (GB_CONFIG.personalization.intents.find(function(i){ return i.id === selectedIntent; }) || {}).title || selectedIntent.toUpperCase();
+                        successMeta.textContent = marketDisplay + ' \u2022 ' + intentDisplay + ' | ' + firstName + ' (' + maskEmail(email) + ')';
+                    }
+                    successCard.style.display = 'flex';
+                    // Track success (NO PII in analytics!)
+                    trackGlobalEvent('global_profile_capture_success', {
+                        market: selectedMarket,
+                        intent: selectedIntent
+                    });
+                } else {
+                    throw new Error('API reported unsuccessful');
+                }
+            })
+            .catch(function (err) {
+                if (submitBtn) {
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = 'SAVE MY PROFILE';
+                }
+                showError("WE COULDN'T SAVE YOUR PROFILE RIGHT NOW. Your personalized page is still available. Please try again later or use the REALTOR® Directory.");
+                trackGlobalEvent('global_profile_capture_error', { error: 'request_failed' });
+            });
+        });
+    }
+
+    /**
+     * Update Persistent Nav Profile Pill
+     */
+    function updateNavProfilePill(intentId, marketId) {
+        const navPill = root.querySelector('#gb-nav-profile-pill');
+        const mobileProfile = root.querySelector('#gb-nav-mobile-profile');
+
+        if (!intentId && !marketId) {
+            if (navPill) navPill.style.display = 'none';
+            if (mobileProfile) mobileProfile.style.display = 'none';
+            return;
+        }
+
+        const marketObj = GB_CONFIG.personalization.markets.find(function (m) { return m.id === marketId; }) || { name: 'GLOBAL' };
+        const intentObj = GB_CONFIG.personalization.intents.find(function (i) { return i.id === intentId; }) || { title: 'EXPLORING' };
+        const flagSvg = getCountryFlagSvg(marketId || 'other', false);
+
+        const pillContent = flagSvg + ' <span>' + marketObj.name + ' · ' + intentObj.title + '</span>';
+
+        if (navPill) {
+            const contentEl = navPill.querySelector('#gb-nav-profile-content');
+            if (contentEl) contentEl.innerHTML = pillContent;
+            navPill.style.display = 'inline-flex';
+        }
+
+        if (mobileProfile) {
+            const mContentEl = mobileProfile.querySelector('#gb-nav-mobile-profile-content');
+            if (mContentEl) mContentEl.innerHTML = pillContent;
+            mobileProfile.style.display = 'flex';
+        }
+    }
+
+    /**
+     * Master Orchestrator: applyPersonalization(intentId, marketId, options)
+     * Coordinates all 6+ downstream visible reaction systems
+     */
+    function applyPersonalization(intentId, marketId, options) {
+        options = options || {};
+        const isUserAction = !!options.isUserAction;
+
         const personalizeSection = root.querySelector('#gb-personalize');
         if (!personalizeSection) return;
 
@@ -7367,75 +10262,62 @@
         const marketButtons = personalizeSection.querySelectorAll('button[data-market]');
         const summaryEl = personalizeSection.querySelector('#gb-personalize-summary');
         const hintEl = personalizeSection.querySelector('#gb-personalize-hint');
-        const resetBtn = personalizeSection.querySelector('#gb-personalize-reset');
 
-        let visitorIntent = null;
-        let visitorMarket = null;
+        // 1. Update Root Data Attributes & Theme Colors
+        if (marketId) {
+            root.setAttribute('data-gb-market', marketId);
+            const marketData = GB_MARKET_INTELLIGENCE[marketId];
+            if (marketData) {
+                root.style.setProperty('--gb-market-accent', marketData.accent);
+                root.style.setProperty('--gb-market-accent-secondary', marketData.accentSecondary);
+            }
+        } else {
+            root.removeAttribute('data-gb-market');
+            root.style.removeProperty('--gb-market-accent');
+            root.style.removeProperty('--gb-market-accent-secondary');
+        }
 
-        function getStoredValue(key) {
-            try {
-                return window.sessionStorage ? window.sessionStorage.getItem(key) : null;
-            } catch (e) {
-                return null;
+        if (intentId) {
+            root.setAttribute('data-gb-intent', intentId);
+        } else {
+            root.removeAttribute('data-gb-intent');
+        }
+
+        // 2. Update Personalization Selection Button States
+        intentButtons.forEach(function (btn) {
+            const isSelected = btn.getAttribute('data-intent') === intentId;
+            btn.setAttribute('aria-pressed', isSelected ? 'true' : 'false');
+            btn.classList.toggle('gb-choice-btn--active', isSelected);
+        });
+
+        marketButtons.forEach(function (btn) {
+            const isSelected = btn.getAttribute('data-market') === marketId;
+            btn.setAttribute('aria-pressed', isSelected ? 'true' : 'false');
+            btn.classList.toggle('gb-choice-btn--active', isSelected);
+        });
+
+        // Latin America Subgroup & Toggle Handling
+        const latamSubgroup = personalizeSection.querySelector('#gb-latam-options');
+        const latamToggle = personalizeSection.querySelector('#gb-btn-latam-toggle');
+        const isLatamSubmarket = (marketId === 'colombia' || marketId === 'argentina' || marketId === 'mexico' || marketId === 'otherLatam');
+
+        if (latamSubgroup && latamToggle) {
+            if (isLatamSubmarket) {
+                latamSubgroup.style.display = 'flex';
+                latamToggle.setAttribute('aria-expanded', 'true');
+                latamToggle.classList.add('gb-choice-btn--active');
+            } else if (!marketId) {
+                latamSubgroup.style.display = 'none';
+                latamToggle.setAttribute('aria-expanded', 'false');
+                latamToggle.classList.remove('gb-choice-btn--active');
             }
         }
 
-        function setStoredValue(key, val) {
-            try {
-                if (window.sessionStorage) {
-                    if (val) {
-                        window.sessionStorage.setItem(key, val);
-                    } else {
-                        window.sessionStorage.removeItem(key);
-                    }
-                }
-            } catch (e) {}
-        }
+        // 3. Update Summary & Contextual Hint
+        const intentObj = GB_CONFIG.personalization.intents.find(function (i) { return i.id === intentId; });
+        const marketObj = GB_CONFIG.personalization.markets.find(function (m) { return m.id === marketId; });
 
-        function updateContextualHint(intentId, marketId) {
-            if (!hintEl) return;
-            if (intentId === 'secondHome' && marketId === 'canada') {
-                hintEl.textContent = 'Popular questions for seasonal owners, snowbird flight corridors, and lock-and-leave living are highlighted below.';
-            } else if (marketId === 'germany') {
-                hintEl.textContent = 'Direct Frankfurt–RSW international flight access and seasonal travel guidelines are highlighted below.';
-            } else if (intentId === 'investment' || marketId === 'brazil') {
-                hintEl.textContent = 'Financing, international ownership structures, and investment property guidelines are highlighted below.';
-            } else if (marketId === 'uk') {
-                hintEl.textContent = 'Transatlantic sunshine escapes, golf community living, and currency transfer topics are highlighted below.';
-            } else if (marketId === 'latam') {
-                hintEl.textContent = 'Commercial investment opportunities and multi-generational family retreat communities are highlighted below.';
-            } else if (intentId === 'futureMove') {
-                hintEl.textContent = 'Single-family residences, outdoor living retreats, and community lifestyles are highlighted below.';
-            } else if (intentId === 'business') {
-                hintEl.textContent = 'New development corridors, commercial growth, and modern regional infrastructure are highlighted below.';
-            } else if (intentId === 'vacationRental') {
-                hintEl.textContent = 'Waterfront canal properties, coastal condominiums, and municipal rental rules are highlighted below.';
-            } else {
-                hintEl.textContent = 'Choose what interests you to subtly tailor property styles and advisory topics below.';
-            }
-        }
-
-        function updateSummaryDisplay() {
-            if (!summaryEl) return;
-            let intentObj = null;
-            if (visitorIntent) {
-                for (let i = 0; i < GB_CONFIG.personalization.intents.length; i++) {
-                    if (GB_CONFIG.personalization.intents[i].id === visitorIntent) {
-                        intentObj = GB_CONFIG.personalization.intents[i];
-                        break;
-                    }
-                }
-            }
-            let marketObj = null;
-            if (visitorMarket) {
-                for (let j = 0; j < GB_CONFIG.personalization.markets.length; j++) {
-                    if (GB_CONFIG.personalization.markets[j].id === visitorMarket) {
-                        marketObj = GB_CONFIG.personalization.markets[j];
-                        break;
-                    }
-                }
-            }
-
+        if (summaryEl) {
             if (intentObj && marketObj) {
                 summaryEl.textContent = intentObj.title + ' · ' + marketObj.name;
             } else if (intentObj) {
@@ -7445,86 +10327,233 @@
             } else {
                 summaryEl.textContent = 'EXPLORING SOUTHWEST FLORIDA';
             }
-
-            updateContextualHint(visitorIntent, visitorMarket);
         }
 
-        function applyIntent(intentId, isUserAction) {
-            visitorIntent = intentId;
-            setStoredValue('ccorGlobalIntent', intentId);
+        if (hintEl) {
+            if (intentId === 'secondHome' && marketId === 'canada') {
+                hintEl.textContent = 'Popular questions for seasonal owners, snowbird flight corridors, and lock-and-leave living are prioritized below.';
+            } else if (marketId === 'germany') {
+                hintEl.textContent = 'Direct Frankfurt–RSW international flight access, canal pool homes, and seasonal travel guidelines are prioritized below.';
+            } else if (intentId === 'investment' || marketId === 'brazil' || marketId === 'colombia' || marketId === 'argentina') {
+                hintEl.textContent = 'Financing options, international ownership structures, and tailored investment properties are prioritized below.';
+            } else if (marketId === 'uk') {
+                hintEl.textContent = 'Transatlantic sunshine escapes, golf community living, and currency transfer topics are prioritized below.';
+            } else if (intentId === 'futureMove') {
+                hintEl.textContent = 'Single-family residences, top educational institutions, and healthcare infrastructure are prioritized below.';
+            } else if (intentId === 'business') {
+                hintEl.textContent = 'Regional infrastructure, airport logistics, and commercial development corridors are prioritized below.';
+            } else {
+                hintEl.textContent = 'Choose what interests you to tailor property styles, travel corridors, and advisory topics below.';
+            }
+        }
 
-            intentButtons.forEach(function (btn) {
-                const isSelected = btn.getAttribute('data-intent') === intentId;
-                btn.setAttribute('aria-pressed', isSelected ? 'true' : 'false');
-                btn.classList.toggle('gb-choice-btn--active', isSelected);
+        // 4. Update Persistent Nav Profile Indicator
+        updateNavProfilePill(intentId, marketId);
+
+        // 5. Render Editorial Brief Module
+        renderPersonalizedBrief(intentId, marketId);
+
+        // 6. Preselect Find Your Florida Initial Property Category (respecting manual override)
+        if (intentObj && intentObj.defaultCategory) {
+            setActivePropertyCategory(intentObj.defaultCategory);
+        }
+
+        // 7. Reorder Buyer Essentials Modules
+        if (intentId) {
+            reorderBuyerEssentials(intentId);
+        }
+
+        // 8. Update More Than a Destination Supporting Panel
+        updateCountySupportingPanel(intentId || 'justExploring');
+
+        // 9. Update Flight Planner Module
+        renderFlightPlanner(marketId || 'other');
+
+        // 10. Update FX Multi-Market Ticker Strip
+        renderFxTicker(marketId);
+
+        // 11. Update Dedicated Official Resources Block
+        updateOfficialResources(marketId);
+
+        // 12. Leaflet Flight Map Corridor Filter
+        if (typeof filterGlobalRouteFn === 'function') {
+            const mData = GB_MARKET_INTELLIGENCE[marketId];
+            if (mData && mData.corridorId) {
+                filterGlobalRouteFn(mData.corridorId, false);
+            } else {
+                filterGlobalRouteFn('all', false);
+            }
+        }
+
+        // 13. Persist to SessionStorage
+        try {
+            if (window.sessionStorage) {
+                if (intentId) window.sessionStorage.setItem('ccorGlobalIntent', intentId);
+                else window.sessionStorage.removeItem('ccorGlobalIntent');
+
+                if (marketId) window.sessionStorage.setItem('ccorGlobalMarket', marketId);
+                else window.sessionStorage.removeItem('ccorGlobalMarket');
+            }
+        } catch (e) {}
+
+        // 14. Aggregate Profile Selection Event to Cloudflare D1 (Non-PII, Session Deduped)
+        if (marketId && intentId) {
+            logProfileSelectionAggregate(marketId, intentId);
+        }
+
+        // 15. Track Analytics (NO PII!)
+        if (isUserAction) {
+            trackGlobalEvent('global_market_profile_view', {
+                intent: intentId || 'none',
+                market: marketId || 'none'
             });
+        }
+    }
 
-            updateSummaryDisplay();
+    /**
+     * Phase 04: Visitor Personalization Initialization (#gb-personalize)
+     */
+    function initPersonalization() {
+        const personalizeSection = root.querySelector('#gb-personalize');
+        if (!personalizeSection) return;
 
-            if (intentId && !hasUserManuallySelectedCategory && typeof selectPropertyCategoryFn === 'function') {
-                const match = GB_CONFIG.personalization.intents.find(function (item) { return item.id === intentId; });
-                if (match && match.defaultCategory) {
-                    selectPropertyCategoryFn(match.defaultCategory, false);
+        const intentButtons = personalizeSection.querySelectorAll('button[data-intent]');
+        const marketButtons = personalizeSection.querySelectorAll('button[data-market]');
+        const resetBtn = personalizeSection.querySelector('#gb-personalize-reset');
+        const latamToggle = personalizeSection.querySelector('#gb-btn-latam-toggle');
+        const latamSubgroup = personalizeSection.querySelector('#gb-latam-options');
+
+        let currentIntent = null;
+        let currentMarket = null;
+
+        // Latin America Subgroup Toggle
+        if (latamToggle && latamSubgroup) {
+            latamToggle.addEventListener('click', function (e) {
+                e.preventDefault();
+                const isExpanded = latamSubgroup.style.display !== 'none';
+                latamSubgroup.style.display = isExpanded ? 'none' : 'flex';
+                latamToggle.setAttribute('aria-expanded', isExpanded ? 'false' : 'true');
+                if (!isExpanded) {
+                    latamToggle.classList.add('gb-choice-btn--active');
                 }
-            }
-
-            if (isUserAction) {
-                trackGlobalEvent('global_intent_select', { intent: intentId });
-            }
-        }
-
-        function applyMarket(marketId, isUserAction) {
-            visitorMarket = marketId;
-            setStoredValue('ccorGlobalMarket', marketId);
-
-            marketButtons.forEach(function (btn) {
-                const isSelected = btn.getAttribute('data-market') === marketId;
-                btn.setAttribute('aria-pressed', isSelected ? 'true' : 'false');
-                btn.classList.toggle('gb-choice-btn--active', isSelected);
             });
-
-            updateSummaryDisplay();
-
-            if (isUserAction) {
-                trackGlobalEvent('global_market_select', { market: marketId });
-            }
         }
 
+        // Intent Buttons
         intentButtons.forEach(function (btn) {
             btn.addEventListener('click', function () {
                 const intent = btn.getAttribute('data-intent');
-                if (visitorIntent === intent) {
-                    applyIntent(null, true);
-                } else {
-                    applyIntent(intent, true);
-                }
+                currentIntent = (currentIntent === intent) ? null : intent;
+                applyPersonalization(currentIntent, currentMarket, { isUserAction: true });
             });
         });
 
+        // Market Buttons
         marketButtons.forEach(function (btn) {
             btn.addEventListener('click', function () {
                 const market = btn.getAttribute('data-market');
-                if (visitorMarket === market) {
-                    applyMarket(null, true);
-                } else {
-                    applyMarket(market, true);
-                }
+                currentMarket = (currentMarket === market) ? null : market;
+                applyPersonalization(currentIntent, currentMarket, { isUserAction: true });
             });
         });
 
+        // Reset Button
         if (resetBtn) {
             resetBtn.addEventListener('click', function () {
-                applyIntent(null, true);
-                applyMarket(null, true);
+                currentIntent = null;
+                currentMarket = null;
+                hasUserManuallySelectedCategory = false;
+                applyPersonalization(null, null, { isUserAction: true });
                 trackGlobalEvent('global_personalize_reset', {});
             });
         }
 
-        const savedIntent = getStoredValue('ccorGlobalIntent');
-        const savedMarket = getStoredValue('ccorGlobalMarket');
-        if (savedIntent) applyIntent(savedIntent, false);
-        if (savedMarket) applyMarket(savedMarket, false);
-        updateSummaryDisplay();
+        // Persistent Nav "CHANGE" buttons
+        const navChangeBtn = root.querySelector('#gb-nav-profile-change');
+        if (navChangeBtn) {
+            navChangeBtn.addEventListener('click', function () {
+                personalizeSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                const firstBtn = personalizeSection.querySelector('button[data-intent]');
+                if (firstBtn) firstBtn.focus();
+            });
+        }
+
+        const mobileNavChangeBtn = root.querySelector('#gb-nav-mobile-profile-change');
+        if (mobileNavChangeBtn) {
+            mobileNavChangeBtn.addEventListener('click', function () {
+                personalizeSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                const firstBtn = personalizeSection.querySelector('button[data-intent]');
+                if (firstBtn) firstBtn.focus();
+            });
+        }
+
+        // Initialize FX Rates in background
+        fetchLatestFxRates(function () {
+            renderFxTicker(currentMarket);
+            if (currentMarket || currentIntent) {
+                renderPersonalizedBrief(currentIntent, currentMarket);
+                renderFlightPlanner(currentMarket || 'other');
+            }
+        });
+
+        // Query Parameter Support (?market=br&intent=investment)
+        function parseQueryParams() {
+            try {
+                if (typeof window === 'undefined' || !window.location || !window.location.search) return {};
+                const params = new URLSearchParams(window.location.search);
+                const mRaw = (params.get('market') || params.get('m') || '').toLowerCase().trim();
+                const iRaw = (params.get('intent') || params.get('i') || '').trim();
+
+                const marketMap = {
+                    'ca': 'canada', 'canada': 'canada',
+                    'de': 'germany', 'germany': 'germany', 'deutschland': 'germany',
+                    'br': 'brazil', 'brazil': 'brazil', 'brasil': 'brazil',
+                    'gb': 'uk', 'uk': 'uk', 'united kingdom': 'uk',
+                    'co': 'colombia', 'colombia': 'colombia',
+                    'ar': 'argentina', 'argentina': 'argentina',
+                    'mx': 'mexico', 'mexico': 'mexico',
+                    'latam': 'otherLatam', 'otherlatam': 'otherLatam',
+                    'other': 'other'
+                };
+
+                const intentMap = {
+                    'secondhome': 'secondHome', 'second-home': 'secondHome', 'second_home': 'secondHome',
+                    'investment': 'investment',
+                    'futuremove': 'futureMove', 'future-move': 'futureMove', 'future_move': 'futureMove',
+                    'vacationrental': 'vacationRental', 'vacation-rental': 'vacationRental', 'vacation_rental': 'vacationRental',
+                    'business': 'business',
+                    'justexploring': 'justExploring', 'just-exploring': 'justExploring', 'exploring': 'justExploring'
+                };
+
+                return {
+                    market: marketMap[mRaw] || null,
+                    intent: intentMap[iRaw.toLowerCase()] || null
+                };
+            } catch (e) {
+                return {};
+            }
+        }
+
+        const urlParams = parseQueryParams();
+        let initIntent = urlParams.intent;
+        let initMarket = urlParams.market;
+
+        if (!initIntent) {
+            try {
+                initIntent = window.sessionStorage ? window.sessionStorage.getItem('ccorGlobalIntent') : null;
+            } catch (e) {}
+        }
+        if (!initMarket) {
+            try {
+                initMarket = window.sessionStorage ? window.sessionStorage.getItem('ccorGlobalMarket') : null;
+            } catch (e) {}
+        }
+
+        if (initIntent || initMarket) {
+            currentIntent = initIntent;
+            currentMarket = initMarket;
+            applyPersonalization(currentIntent, currentMarket, { isUserAction: false });
+        }
     }
 
     /**
@@ -8322,6 +11351,12 @@
                 } else if (routeId === 'canada') {
                     const isCanada = (c.id === 'toronto' || c.id === 'montreal' || c.id === 'ottawa');
                     line.setStyle({ opacity: isCanada ? 1.0 : 0.15, weight: isCanada ? 3.5 : 1 });
+                } else if (routeId === 'uk') {
+                    const isUk = (c.id === 'london');
+                    line.setStyle({ opacity: isUk ? 1.0 : 0.15, weight: isUk ? 3.5 : 1 });
+                } else if (routeId === 'latam') {
+                    const isLatam = (c.id === 'bogota' || c.id === 'buenosaires' || c.id === 'mexicocity' || c.id === 'saopaulo');
+                    line.setStyle({ opacity: isLatam ? 1.0 : 0.15, weight: isLatam ? 3.5 : 1 });
                 } else if (routeId === c.id) {
                     line.setStyle({ opacity: 1.0, weight: 3.5 });
                 } else {
@@ -8334,6 +11369,8 @@
             }
         }
 
+        filterGlobalRouteFn = filterRoute;
+
         routeButtons.forEach(function (btn) {
             btn.addEventListener('click', function () {
                 const routeId = btn.getAttribute('data-route');
@@ -8343,12 +11380,8 @@
 
         try {
             const savedMarket = window.sessionStorage ? window.sessionStorage.getItem('ccorGlobalMarket') : null;
-            if (savedMarket === 'germany') {
-                filterRoute('frankfurt', false);
-            } else if (savedMarket === 'canada') {
-                filterRoute('canada', false);
-            } else if (savedMarket === 'brazil') {
-                filterRoute('brazil', false);
+            if (savedMarket && GB_MARKET_INTELLIGENCE[savedMarket] && GB_MARKET_INTELLIGENCE[savedMarket].corridorId) {
+                filterRoute(GB_MARKET_INTELLIGENCE[savedMarket].corridorId, false);
             }
         } catch (e) {}
     }

@@ -1,0 +1,20 @@
+# wrangler.toml — CCOR Global Buyers API & Admin Service
+name = "ccor-global-buyers-api"
+main = "src/index.js"
+compatibility_date = "2026-09-01"
+workers_dev = true
+
+[observability]
+enabled = true
+head_sampling_rate = 1
+
+[vars]
+ENVIRONMENT = "production"
+ALLOWED_ORIGINS = "https://coconutcoastlifestyles.com,https://coconutcoastrealtors.org,http://localhost:8088,http://127.0.0.1:8088"
+ADMIN_EMAILS = "bonitaspringsrealtors@gmail.com,kevin@coconutcoastrealtors.org"
+
+[[d1_databases]]
+binding = "GLOBAL_BUYERS_DB"
+database_name = "ccor-global-buyers"
+database_id = "ea137cf3-179a-429d-a742-278496fddcd9"
+migrations_dir = "migrations"

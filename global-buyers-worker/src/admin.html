@@ -1,0 +1,1052 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Global Buyers Intelligence — CCOR Private Admin</title>
+    <meta name="robots" content="noindex, nofollow">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --ccor-navy: #0b2545;
+            --ccor-navy-deep: #07182c;
+            --ccor-teal: #0794a6;
+            --ccor-orange: #f59a16;
+            --ccor-sand: #f7f4ee;
+            --ccor-charcoal: #1e293b;
+            --ccor-gray-light: #f1f5f9;
+            --ccor-border: #e2e8f0;
+            --font-display: 'Cinzel', Georgia, serif;
+            --font-body: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: var(--font-body);
+            background: #f8fafc;
+            color: var(--ccor-charcoal);
+            line-height: 1.5;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* Top Navigation Header */
+        .admin-header {
+            background: var(--ccor-navy);
+            color: #ffffff;
+            border-bottom: 3px solid var(--ccor-orange);
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .admin-header__brand {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .admin-header__logo {
+            height: 36px;
+            width: auto;
+        }
+
+        .admin-header__titles {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .admin-header__title {
+            font-family: var(--font-display);
+            font-size: 1.25rem;
+            font-weight: 800;
+            letter-spacing: 0.04em;
+            color: #ffffff;
+        }
+
+        .admin-header__subline {
+            font-size: 0.75rem;
+            color: rgba(255, 255, 255, 0.7);
+            letter-spacing: 0.02em;
+        }
+
+        .admin-header__user {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            font-size: 0.8125rem;
+            background: rgba(255, 255, 255, 0.08);
+            padding: 6px 14px;
+            border-radius: 9999px;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+        }
+
+        .admin-header__badge {
+            background: var(--ccor-teal);
+            color: #ffffff;
+            font-size: 0.6875rem;
+            font-weight: 700;
+            padding: 2px 6px;
+            border-radius: 4px;
+            text-transform: uppercase;
+        }
+
+        /* Layout Container */
+        .admin-container {
+            max-width: 1440px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        /* KPI Grid */
+        .kpi-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+            gap: 1.25rem;
+            margin-bottom: 2rem;
+        }
+
+        .kpi-card {
+            background: #ffffff;
+            border: 1px solid var(--ccor-border);
+            border-radius: 10px;
+            padding: 1.25rem;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+            border-top: 3px solid var(--ccor-teal);
+        }
+
+        .kpi-card--orange {
+            border-top-color: var(--ccor-orange);
+        }
+
+        .kpi-card--navy {
+            border-top-color: var(--ccor-navy);
+        }
+
+        .kpi-label {
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: #64748b;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+            margin-bottom: 6px;
+        }
+
+        .kpi-val {
+            font-size: 1.85rem;
+            font-weight: 800;
+            color: var(--ccor-navy);
+            line-height: 1.1;
+        }
+
+        .kpi-sub {
+            font-size: 0.75rem;
+            color: #94a3b8;
+            margin-top: 4px;
+        }
+
+        /* Content Sections */
+        .grid-two {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(420px, 1fr));
+            gap: 1.75rem;
+            margin-bottom: 2rem;
+        }
+
+        .card {
+            background: #ffffff;
+            border: 1px solid var(--ccor-border);
+            border-radius: 10px;
+            padding: 1.5rem;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+        }
+
+        .card__header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.25rem;
+            padding-bottom: 0.75rem;
+            border-bottom: 1px solid var(--ccor-border);
+        }
+
+        .card__title {
+            font-size: 0.9375rem;
+            font-weight: 700;
+            color: var(--ccor-navy);
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+        }
+
+        /* Bar Chart Styles */
+        .bar-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.875rem;
+        }
+
+        .bar-item {
+            display: grid;
+            grid-template-columns: 140px 1fr 60px;
+            align-items: center;
+            gap: 1rem;
+            font-size: 0.8125rem;
+        }
+
+        .bar-item__label {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-weight: 600;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .bar-item__track {
+            background: #e2e8f0;
+            height: 14px;
+            border-radius: 9999px;
+            overflow: hidden;
+        }
+
+        .bar-item__fill {
+            height: 100%;
+            background: var(--ccor-teal);
+            border-radius: 9999px;
+            transition: width 0.4s ease;
+        }
+
+        .bar-item__val {
+            text-align: right;
+            font-weight: 700;
+            color: #475569;
+        }
+
+        /* Tab Controls */
+        .tab-btn {
+            background: none;
+            border: none;
+            padding: 4px 10px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: #64748b;
+            cursor: pointer;
+            border-radius: 4px;
+        }
+
+        .tab-btn--active {
+            background: var(--ccor-navy);
+            color: #ffffff;
+        }
+
+        /* Matrix Table */
+        .matrix-table-wrap {
+            overflow-x: auto;
+            margin-top: 1rem;
+        }
+
+        .matrix-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.8125rem;
+        }
+
+        .matrix-table th, .matrix-table td {
+            padding: 8px 12px;
+            text-align: center;
+            border: 1px solid var(--ccor-border);
+        }
+
+        .matrix-table th {
+            background: #f8fafc;
+            font-weight: 700;
+            color: var(--ccor-navy);
+            font-size: 0.75rem;
+            text-transform: uppercase;
+        }
+
+        .matrix-table td:first-child, .matrix-table th:first-child {
+            text-align: left;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+
+        .matrix-cell--high {
+            background: rgba(7, 148, 166, 0.2);
+            font-weight: 800;
+            color: var(--ccor-navy);
+        }
+
+        /* Trend Line SVG Chart */
+        .trend-chart-wrap {
+            width: 100%;
+            height: 220px;
+            position: relative;
+        }
+
+        .trend-svg {
+            width: 100%;
+            height: 100%;
+        }
+
+        /* Contact Profiles Table */
+        .table-controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.75rem;
+            margin-bottom: 1rem;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .table-search {
+            padding: 8px 12px;
+            border: 1px solid var(--ccor-border);
+            border-radius: 6px;
+            font-size: 0.8125rem;
+            width: 260px;
+        }
+
+        .table-select {
+            padding: 8px 12px;
+            border: 1px solid var(--ccor-border);
+            border-radius: 6px;
+            font-size: 0.8125rem;
+            background: #ffffff;
+        }
+
+        .btn-export {
+            background: var(--ccor-teal);
+            color: #ffffff;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-size: 0.8125rem;
+            font-weight: 700;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .btn-export:hover {
+            background: #057a8a;
+        }
+
+        .leads-table-wrap {
+            overflow-x: auto;
+            border: 1px solid var(--ccor-border);
+            border-radius: 8px;
+        }
+
+        .leads-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.8125rem;
+            text-align: left;
+            background: #ffffff;
+        }
+
+        .leads-table th {
+            background: #f8fafc;
+            padding: 10px 14px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: #64748b;
+            text-transform: uppercase;
+            border-bottom: 1px solid var(--ccor-border);
+        }
+
+        .leads-table td {
+            padding: 12px 14px;
+            border-bottom: 1px solid var(--ccor-border);
+            vertical-align: middle;
+        }
+
+        .leads-table tr:hover {
+            background: #f8fafc;
+        }
+
+        .btn-delete {
+            background: none;
+            border: 1px solid #fca5a5;
+            color: #dc2626;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.7rem;
+            font-weight: 700;
+            cursor: pointer;
+        }
+
+        .btn-delete:hover {
+            background: #fef2f2;
+        }
+
+        .opt-badge {
+            font-size: 0.6875rem;
+            font-weight: 700;
+            padding: 2px 6px;
+            border-radius: 4px;
+        }
+
+        .opt-badge--yes {
+            background: #dcfce7;
+            color: #15803d;
+        }
+
+        .opt-badge--no {
+            background: #f1f5f9;
+            color: #64748b;
+        }
+
+        /* Detail Modal */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            display: none;
+        }
+
+        .modal-card {
+            background: #ffffff;
+            border-radius: 12px;
+            width: 90%;
+            max-width: 520px;
+            padding: 2rem;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+        }
+
+        .modal-title {
+            font-size: 1.15rem;
+            font-weight: 700;
+            color: var(--ccor-navy);
+            margin-bottom: 1.25rem;
+        }
+
+        .modal-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid var(--ccor-border);
+            font-size: 0.85rem;
+        }
+
+        .modal-row strong {
+            color: #64748b;
+        }
+
+        .modal-close-btn {
+            margin-top: 1.5rem;
+            background: var(--ccor-navy);
+            color: #ffffff;
+            border: none;
+            padding: 8px 18px;
+            border-radius: 6px;
+            font-size: 0.8125rem;
+            font-weight: 700;
+            cursor: pointer;
+            float: right;
+        }
+    </style>
+</head>
+<body>
+
+    <header class="admin-header">
+        <div class="admin-header__brand">
+            <img src="https://coconutcoastrealtors.org/wp-content/uploads/2026/04/CCOR-Horz-Logo-no-tag-clr-scaled-1-300x111.gif" alt="CCOR Logo" class="admin-header__logo">
+            <div class="admin-header__titles">
+                <span class="admin-header__title">GLOBAL BUYERS INTELLIGENCE</span>
+                <span class="admin-header__subline">Coconut Coast Organization of REALTORS® &middot; Internal Administration</span>
+            </div>
+        </div>
+        <div class="admin-header__user" id="adminUserBadge">
+            <span class="admin-header__badge">ACCESS PROTECTED</span>
+            <span id="adminUserEmail">Staff Member</span>
+        </div>
+    </header>
+
+    <main class="admin-container">
+        <!-- Top KPIs -->
+        <div class="kpi-grid">
+            <div class="kpi-card kpi-card--navy">
+                <div class="kpi-label">TOTAL CONTACT PROFILES</div>
+                <div class="kpi-val" id="kpiTotalLeads">--</div>
+                <div class="kpi-sub">Total buyer submissions</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-label">UNIQUE CONTACTS</div>
+                <div class="kpi-val" id="kpiUniqueEmails">--</div>
+                <div class="kpi-sub">Distinct email addresses</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-label">LAST 7 DAYS</div>
+                <div class="kpi-val" id="kpiLeads7d">--</div>
+                <div class="kpi-sub">Recent profile submissions</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-label">LAST 30 DAYS</div>
+                <div class="kpi-val" id="kpiLeads30d">--</div>
+                <div class="kpi-sub">Monthly pace</div>
+            </div>
+            <div class="kpi-card kpi-card--orange">
+                <div class="kpi-label">TOP MARKET</div>
+                <div class="kpi-val" id="kpiTopMarket" style="font-size: 1.45rem;">--</div>
+                <div class="kpi-sub" id="kpiTopMarketShare">--</div>
+            </div>
+            <div class="kpi-card kpi-card--orange">
+                <div class="kpi-label">TOP GOAL</div>
+                <div class="kpi-val" id="kpiTopGoal" style="font-size: 1.35rem;">--</div>
+                <div class="kpi-sub" id="kpiTopGoalShare">--</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-label">MARKETING OPT-INS</div>
+                <div class="kpi-val" id="kpiOptInRate">--</div>
+                <div class="kpi-sub" id="kpiOptInCount">-- opted in</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-label">PROFILE SELECTIONS</div>
+                <div class="kpi-val" id="kpiTotalSelections">--</div>
+                <div class="kpi-sub">Personalization events (no PII)</div>
+            </div>
+        </div>
+
+        <!-- Visualizations Grid 1 -->
+        <div class="grid-two">
+            <!-- Where People Are Joining From -->
+            <div class="card">
+                <div class="card__header">
+                    <h2 class="card__title">WHERE PEOPLE ARE JOINING FROM</h2>
+                    <div style="display: flex; gap: 4px;">
+                        <button type="button" class="tab-btn tab-btn--active" id="tabMarketLeads">LEADS</button>
+                        <button type="button" class="tab-btn" id="tabMarketSelections">SELECTIONS</button>
+                    </div>
+                </div>
+                <div class="bar-list" id="marketBarList">
+                    <!-- Dynamic Bars -->
+                </div>
+            </div>
+
+            <!-- What They're Looking For -->
+            <div class="card">
+                <div class="card__header">
+                    <h2 class="card__title">WHAT THEY'RE LOOKING FOR</h2>
+                    <div style="display: flex; gap: 4px;">
+                        <button type="button" class="tab-btn tab-btn--active" id="tabGoalLeads">LEADS</button>
+                        <button type="button" class="tab-btn" id="tabGoalSelections">SELECTIONS</button>
+                    </div>
+                </div>
+                <div class="bar-list" id="goalBarList">
+                    <!-- Dynamic Bars -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Trend Line Chart -->
+        <div class="card" style="margin-bottom: 2rem;">
+            <div class="card__header">
+                <div>
+                    <h2 class="card__title">PROFILE INTEREST OVER TIME</h2>
+                    <span style="font-size: 0.75rem; color: #64748b;">Comparing anonymous profile selections vs. contact submissions</span>
+                </div>
+                <div style="display: flex; gap: 4px;" id="trendRangeBtns">
+                    <button type="button" class="tab-btn tab-btn--active" data-range="7d">7D</button>
+                    <button type="button" class="tab-btn" data-range="30d">30D</button>
+                    <button type="button" class="tab-btn" data-range="90d">90D</button>
+                    <button type="button" class="tab-btn" data-range="all">ALL</button>
+                </div>
+            </div>
+            <div class="trend-chart-wrap" id="trendChartContainer">
+                <!-- Inline SVG Chart Generated Dynamically -->
+            </div>
+            <div style="display: flex; gap: 1.5rem; justify-content: flex-end; margin-top: 0.5rem; font-size: 0.75rem;">
+                <span style="display: flex; align-items: center; gap: 6px;">
+                    <span style="width: 12px; height: 3px; background: var(--ccor-teal); display: inline-block;"></span> Profile Selections
+                </span>
+                <span style="display: flex; align-items: center; gap: 6px;">
+                    <span style="width: 12px; height: 3px; background: var(--ccor-orange); display: inline-block;"></span> Contact Submissions
+                </span>
+            </div>
+        </div>
+
+        <!-- Country x Goal Matrix -->
+        <div class="card" style="margin-bottom: 2rem;">
+            <div class="card__header">
+                <div>
+                    <h2 class="card__title">COUNTRY &times; GOAL MATRIX</h2>
+                    <span style="font-size: 0.75rem; color: #64748b;">Cross-tabulation of buyer interest by origin and acquisition objective</span>
+                </div>
+            </div>
+            <div class="matrix-table-wrap" id="matrixContainer">
+                <!-- Dynamically populated cross-tab table -->
+            </div>
+        </div>
+
+        <!-- Recent Contact Profiles Table -->
+        <div class="card">
+            <div class="card__header">
+                <div>
+                    <h2 class="card__title">RECENT CONTACT PROFILES</h2>
+                    <span style="font-size: 0.75rem; color: #64748b;">Direct inquiries and saved visitor profiles</span>
+                </div>
+                <button type="button" class="btn-export" id="btnExportCsv">
+                    <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z"/><path d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708l3 3z"/></svg>
+                    EXPORT CSV
+                </button>
+            </div>
+
+            <div class="table-controls">
+                <input type="search" class="table-search" id="leadSearchInput" placeholder="Search by name or email...">
+                <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+                    <select class="table-select" id="filterMarketSelect">
+                        <option value="">All Markets</option>
+                        <option value="canada">Canada</option>
+                        <option value="germany">Germany</option>
+                        <option value="brazil">Brazil</option>
+                        <option value="uk">United Kingdom</option>
+                        <option value="colombia">Colombia</option>
+                        <option value="argentina">Argentina</option>
+                        <option value="mexico">Mexico</option>
+                        <option value="otherLatam">Other Latin America</option>
+                        <option value="other">Somewhere Else</option>
+                    </select>
+                    <select class="table-select" id="filterIntentSelect">
+                        <option value="">All Goals</option>
+                        <option value="secondHome">Second Home</option>
+                        <option value="investment">Investment</option>
+                        <option value="futureMove">Future Move</option>
+                        <option value="vacationRental">Vacation + Rental</option>
+                        <option value="business">Business Opportunity</option>
+                        <option value="justExploring">Just Exploring</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="leads-table-wrap">
+                <table class="leads-table">
+                    <thead>
+                        <tr>
+                            <th>Date (UTC)</th>
+                            <th>Name</th>
+                            <th>Email</th>
+                            <th>Market</th>
+                            <th>Goal</th>
+                            <th>Marketing Opt-In</th>
+                            <th>Source / UTM</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="leadsTableBody">
+                        <tr><td colspan="8" style="text-align: center; color: #64748b; padding: 2rem;">Loading contact profiles...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 1rem; font-size: 0.8125rem;">
+                <span id="tableCountInfo">Showing 0 profiles</span>
+                <div style="display: flex; gap: 0.5rem;" id="paginationBtns"></div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Detail Modal -->
+    <div class="modal-overlay" id="detailModal">
+        <div class="modal-card">
+            <h3 class="modal-title">Contact Profile Detail</h3>
+            <div id="modalContent"></div>
+            <button type="button" class="modal-close-btn" id="modalCloseBtn">Close</button>
+        </div>
+    </div>
+
+    <script>
+        (function () {
+            'use strict';
+
+            let state = {
+                summary: null,
+                matrix: null,
+                trends: null,
+                marketMode: 'leads',
+                goalMode: 'leads',
+                trendRange: '30d',
+                search: '',
+                marketFilter: '',
+                intentFilter: '',
+                page: 1,
+                limit: 25
+            };
+
+            const flagMap = {
+                canada: '🇨🇦', germany: '🇩🇪', brazil: '🇧🇷', uk: '🇬🇧',
+                colombia: '🇨🇴', argentina: '🇦🇷', mexico: '🇲🇽',
+                otherLatam: '🌎', other: '🌐'
+            };
+
+            const marketNames = {
+                canada: 'Canada', germany: 'Germany', brazil: 'Brazil', uk: 'United Kingdom',
+                colombia: 'Colombia', argentina: 'Argentina', mexico: 'Mexico',
+                otherLatam: 'Other LatAm', other: 'Somewhere Else'
+            };
+
+            const goalNames = {
+                secondHome: 'Second Home', investment: 'Investment', futureMove: 'Future Move',
+                vacationRental: 'Vacation + Rental', business: 'Business Opportunity', justExploring: 'Just Exploring'
+            };
+
+            // 1. Fetch Summary KPIs & Distributions
+            function loadSummary() {
+                fetch('/global-buyers-admin/api/summary')
+                    .then(r => r.json())
+                    .then(data => {
+                        if (!data.ok) return;
+                        state.summary = data;
+                        renderKPIs(data);
+                        renderMarketBars();
+                        renderGoalBars();
+                    })
+                    .catch(err => console.error('Summary error:', err));
+            }
+
+            function renderKPIs(data) {
+                document.getElementById('kpiTotalLeads').textContent = (data.totalLeads || 0).toLocaleString();
+                document.getElementById('kpiUniqueEmails').textContent = (data.uniqueEmails || 0).toLocaleString();
+                document.getElementById('kpiLeads7d').textContent = (data.leads7d || 0).toLocaleString();
+                document.getElementById('kpiLeads30d').textContent = (data.leads30d || 0).toLocaleString();
+
+                const topM = data.topMarket || { market: 'None', count: 0, share: 0 };
+                document.getElementById('kpiTopMarket').textContent = (flagMap[topM.market] || '') + ' ' + (marketNames[topM.market] || topM.market);
+                document.getElementById('kpiTopMarketShare').textContent = topM.count + ' leads (' + topM.share + '%)';
+
+                const topG = data.topGoal || { intent: 'None', count: 0, share: 0 };
+                document.getElementById('kpiTopGoal').textContent = goalNames[topG.intent] || topG.intent;
+                document.getElementById('kpiTopGoalShare').textContent = topG.count + ' leads (' + topG.share + '%)';
+
+                const optCount = data.marketingOptIns || 0;
+                const optRate = data.totalLeads > 0 ? Math.round((optCount / data.totalLeads) * 100) : 0;
+                document.getElementById('kpiOptInRate').textContent = optRate + '%';
+                document.getElementById('kpiOptInCount').textContent = optCount + ' opted in';
+
+                document.getElementById('kpiTotalSelections').textContent = (data.totalSelections || 0).toLocaleString();
+            }
+
+            function renderMarketBars() {
+                if (!state.summary) return;
+                const container = document.getElementById('marketBarList');
+                const list = (state.marketMode === 'leads' ? state.summary.marketLeads : state.summary.marketSelections) || [];
+                const total = list.reduce((sum, item) => sum + item.count, 0) || 1;
+
+                let html = '';
+                list.forEach(item => {
+                    const pct = Math.round((item.count / total) * 100);
+                    const name = marketNames[item.market] || item.market;
+                    const flag = flagMap[item.market] || '🌐';
+                    html += `
+                        <div class="bar-item">
+                            <div class="bar-item__label"><span>${flag}</span> <span>${name}</span></div>
+                            <div class="bar-item__track"><div class="bar-item__fill" style="width: ${pct}%;"></div></div>
+                            <div class="bar-item__val">${item.count} <small style="color:#94a3b8">(${pct}%)</small></div>
+                        </div>
+                    `;
+                });
+                container.innerHTML = html || '<div style="color: #64748b; font-size: 0.8125rem;">No data recorded yet.</div>';
+            }
+
+            function renderGoalBars() {
+                if (!state.summary) return;
+                const container = document.getElementById('goalBarList');
+                const list = (state.goalMode === 'leads' ? state.summary.goalLeads : state.summary.goalSelections) || [];
+                const total = list.reduce((sum, item) => sum + item.count, 0) || 1;
+
+                let html = '';
+                list.forEach(item => {
+                    const pct = Math.round((item.count / total) * 100);
+                    const name = goalNames[item.intent] || item.intent;
+                    html += `
+                        <div class="bar-item">
+                            <div class="bar-item__label"><span>${name}</span></div>
+                            <div class="bar-item__track"><div class="bar-item__fill" style="width: ${pct}%; background: var(--ccor-orange);"></div></div>
+                            <div class="bar-item__val">${item.count} <small style="color:#94a3b8">(${pct}%)</small></div>
+                        </div>
+                    `;
+                });
+                container.innerHTML = html || '<div style="color: #64748b; font-size: 0.8125rem;">No data recorded yet.</div>';
+            }
+
+            // 2. Load Matrix
+            function loadMatrix() {
+                fetch('/global-buyers-admin/api/matrix')
+                    .then(r => r.json())
+                    .then(data => {
+                        if (!data.ok) return;
+                        renderMatrix(data.matrix);
+                    })
+                    .catch(err => console.error('Matrix error:', err));
+            }
+
+            function renderMatrix(matrixData) {
+                const goals = ['secondHome', 'investment', 'futureMove', 'vacationRental', 'business', 'justExploring'];
+                const markets = ['canada', 'germany', 'brazil', 'uk', 'colombia', 'argentina', 'mexico', 'otherLatam', 'other'];
+
+                let html = '<table class="matrix-table"><thead><tr><th>Country / Market</th>';
+                goals.forEach(g => {
+                    html += `<th>${goalNames[g]}</th>`;
+                });
+                html += '<th>Total</th></tr></thead><tbody>';
+
+                markets.forEach(m => {
+                    const rowData = (matrixData || {})[m] || {};
+                    let rowTotal = 0;
+                    html += `<tr><td>${flagMap[m] || ''} ${marketNames[m] || m}</td>`;
+                    goals.forEach(g => {
+                        const count = rowData[g] || 0;
+                        rowTotal += count;
+                        html += `<td class="${count > 0 ? 'matrix-cell--high' : ''}">${count}</td>`;
+                    });
+                    html += `<td><strong>${rowTotal}</strong></td></tr>`;
+                });
+
+                html += '</tbody></table>';
+                document.getElementById('matrixContainer').innerHTML = html;
+            }
+
+            // 3. Load Trends Chart
+            function loadTrends(range) {
+                fetch('/global-buyers-admin/api/trends?range=' + range)
+                    .then(r => r.json())
+                    .then(data => {
+                        if (!data.ok) return;
+                        renderTrendChart(data.days || []);
+                    })
+                    .catch(err => console.error('Trends error:', err));
+            }
+
+            function renderTrendChart(days) {
+                const wrap = document.getElementById('trendChartContainer');
+                if (!days || days.length === 0) {
+                    wrap.innerHTML = '<div style="display:flex;height:100%;align-items:center;justify-content:center;color:#64748b;font-size:0.85rem;">No activity data recorded in this timeframe yet.</div>';
+                    return;
+                }
+
+                const w = 800;
+                const h = 200;
+                const padX = 40;
+                const padY = 20;
+
+                let maxVal = 5;
+                days.forEach(d => {
+                    if (d.selections > maxVal) maxVal = d.selections;
+                    if (d.leads > maxVal) maxVal = d.leads;
+                });
+
+                const stepX = (w - padX * 2) / (days.length > 1 ? (days.length - 1) : 1);
+
+                let selPoints = [];
+                let leadPoints = [];
+
+                days.forEach((d, i) => {
+                    const x = padX + i * stepX;
+                    const ySel = h - padY - (d.selections / maxVal) * (h - padY * 2);
+                    const yLead = h - padY - (d.leads / maxVal) * (h - padY * 2);
+                    selPoints.push(`${x.toFixed(1)},${ySel.toFixed(1)}`);
+                    leadPoints.push(`${x.toFixed(1)},${yLead.toFixed(1)}`);
+                });
+
+                const selPath = 'M ' + selPoints.join(' L ');
+                const leadPath = 'M ' + leadPoints.join(' L ');
+
+                let svg = `<svg class="trend-svg" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none">
+                    <line x1="${padX}" y1="${padY}" x2="${w - padX}" y2="${padY}" stroke="#e2e8f0" stroke-dasharray="3,3"/>
+                    <line x1="${padX}" y1="${h / 2}" x2="${w - padX}" y2="${h / 2}" stroke="#e2e8f0" stroke-dasharray="3,3"/>
+                    <line x1="${padX}" y1="${h - padY}" x2="${w - padX}" y2="${h - padY}" stroke="#cbd5e1"/>
+                    <path d="${selPath}" fill="none" stroke="var(--ccor-teal)" stroke-width="2.5" stroke-linecap="round"/>
+                    <path d="${leadPath}" fill="none" stroke="var(--ccor-orange)" stroke-width="2.5" stroke-linecap="round"/>
+                `;
+
+                // Render Start and End Dates
+                if (days.length > 0) {
+                    svg += `<text x="${padX}" y="${h - 4}" fill="#94a3b8" font-size="10" font-family="sans-serif">${days[0].day}</text>`;
+                    svg += `<text x="${w - padX}" y="${h - 4}" text-anchor="end" fill="#94a3b8" font-size="10" font-family="sans-serif">${days[days.length - 1].day}</text>`;
+                }
+                svg += '</svg>';
+                wrap.innerHTML = svg;
+            }
+
+            // 4. Load Leads Table
+            function loadLeads() {
+                const params = new URLSearchParams({
+                    search: state.search,
+                    market: state.marketFilter,
+                    intent: state.intentFilter,
+                    page: state.page,
+                    limit: state.limit
+                });
+
+                fetch('/global-buyers-admin/api/leads?' + params.toString())
+                    .then(r => r.json())
+                    .then(data => {
+                        if (!data.ok) return;
+                        renderLeadsTable(data.leads || [], data.total || 0);
+                    })
+                    .catch(err => console.error('Leads error:', err));
+            }
+
+            function renderLeadsTable(leads, total) {
+                const tbody = document.getElementById('leadsTableBody');
+                if (leads.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:#64748b;padding:2rem;">No matching contact profiles found.</td></tr>';
+                    document.getElementById('tableCountInfo').textContent = 'Showing 0 of ' + total + ' profiles';
+                    return;
+                }
+
+                let html = '';
+                leads.forEach(lead => {
+                    const dateStr = lead.created_at ? lead.created_at.substring(0, 16).replace('T', ' ') : '--';
+                    const name = (lead.first_name + ' ' + (lead.last_name || '')).trim();
+                    const flag = flagMap[lead.market] || '🌐';
+                    const market = marketNames[lead.market] || lead.market || 'Unknown';
+                    const goal = goalNames[lead.intent] || lead.intent || 'Unknown';
+                    const optClass = lead.marketing_opt_in ? 'opt-badge--yes' : 'opt-badge--no';
+                    const optText = lead.marketing_opt_in ? 'YES' : 'NO';
+                    const utm = lead.utm_source ? (lead.utm_source + (lead.utm_campaign ? ' / ' + lead.utm_campaign : '')) : (lead.referrer_host || 'Direct');
+
+                    html += `
+                        <tr data-lead-id="${lead.id}">
+                            <td style="color:#64748b;font-size:0.75rem;">${dateStr}</td>
+                            <td><strong>${name}</strong></td>
+                            <td><a href="mailto:${lead.email}" style="color:var(--ccor-teal);">${lead.email}</a></td>
+                            <td><span>${flag}</span> ${market}</td>
+                            <td>${goal}</td>
+                            <td><span class="opt-badge ${optClass}">${optText}</span></td>
+                            <td style="font-size:0.75rem;color:#64748b;">${utm}</td>
+                            <td>
+                                <button type="button" class="btn-delete" data-delete-id="${lead.id}">Delete</button>
+                            </td>
+                        </tr>
+                    `;
+                });
+
+                tbody.innerHTML = html;
+                document.getElementById('tableCountInfo').textContent = `Showing ${leads.length} of ${total} profiles`;
+
+                // Bind delete buttons
+                tbody.querySelectorAll('button[data-delete-id]').forEach(btn => {
+                    btn.addEventListener('click', function (e) {
+                        e.stopPropagation();
+                        const id = btn.getAttribute('data-delete-id');
+                        if (confirm('Are you sure you want to delete this contact profile? This cannot be undone.')) {
+                            deleteLead(id);
+                        }
+                    });
+                });
+            }
+
+            function deleteLead(id) {
+                fetch('/global-buyers-admin/api/leads/' + id, { method: 'DELETE' })
+                    .then(r => r.json())
+                    .then(data => {
+                        if (data.ok) {
+                            loadLeads();
+                            loadSummary();
+                            loadMatrix();
+                        } else {
+                            alert('Failed to delete profile: ' + (data.error || 'Server error'));
+                        }
+                    })
+                    .catch(err => alert('Network error deleting profile.'));
+            }
+
+            // Tabs and Controls Event Listeners
+            document.getElementById('tabMarketLeads').addEventListener('click', function () {
+                state.marketMode = 'leads';
+                this.classList.add('tab-btn--active');
+                document.getElementById('tabMarketSelections').classList.remove('tab-btn--active');
+                renderMarketBars();
+            });
+
+            document.getElementById('tabMarketSelections').addEventListener('click', function () {
+                state.marketMode = 'selections';
+                this.classList.add('tab-btn--active');
+                document.getElementById('tabMarketLeads').classList.remove('tab-btn--active');
+                renderMarketBars();
+            });
+
+            document.getElementById('tabGoalLeads').addEventListener('click', function () {
+                state.goalMode = 'leads';
+                this.classList.add('tab-btn--active');
+                document.getElementById('tabGoalSelections').classList.remove('tab-btn--active');
+                renderGoalBars();
+            });
+
+            document.getElementById('tabGoalSelections').addEventListener('click', function () {
+                state.goalMode = 'selections';
+                this.classList.add('tab-btn--active');
+                document.getElementById('tabGoalLeads').classList.remove('tab-btn--active');
+                renderGoalBars();
+            });
+
+            document.querySelectorAll('#trendRangeBtns button').forEach(btn => {
+                btn.addEventListener('click', function () {
+                    document.querySelectorAll('#trendRangeBtns button').forEach(b => b.classList.remove('tab-btn--active'));
+                    btn.classList.add('tab-btn--active');
+                    state.trendRange = btn.getAttribute('data-range');
+                    loadTrends(state.trendRange);
+                });
+            });
+
+            document.getElementById('leadSearchInput').addEventListener('input', function () {
+                state.search = this.value.trim();
+                state.page = 1;
+                loadLeads();
+            });
+
+            document.getElementById('filterMarketSelect').addEventListener('change', function () {
+                state.marketFilter = this.value;
+                state.page = 1;
+                loadLeads();
+            });
+
+            document.getElementById('filterIntentSelect').addEventListener('change', function () {
+                state.intentFilter = this.value;
+                state.page = 1;
+                loadLeads();
+            });
+
+            document.getElementById('btnExportCsv').addEventListener('click', function () {
+                window.location.href = '/global-buyers-admin/api/export.csv';
+            });
+
+            // Initial Execution
+            loadSummary();
+            loadMatrix();
+            loadTrends('30d');
+            loadLeads();
+
+            // Populate auth user badge from header if exposed
+            fetch('/global-buyers-admin/api/summary')
+                .then(r => {
+                    const authHeader = r.headers.get('x-authenticated-user');
+                    if (authHeader) {
+                        document.getElementById('adminUserEmail').textContent = authHeader;
+                    }
+                })
+                .catch(() => {});
+
+        })();
+    </script>
+</body>
+</html>
