@@ -20,13 +20,14 @@
 #ccor-global-buyers {
     /* Brand Color Palette */
     --gb-navy: #102F59;
-    --gb-deep-navy: #071B35;
     --gb-navy-deep: #071B35;
+    --gb-deep-navy: var(--gb-navy-deep);
     --gb-gulf-teal: #0794A6;
     --gb-aqua: #47C4D2;
     --gb-sun-orange: #F59A16;
     --gb-ivory: #FCFAF5;
     --gb-sand: #F6F2E9;
+    --gb-sand-warm: #F6F2E9;
     --gb-white: #FFFFFF;
 
     /* Semantic Typography Colors */
@@ -69,6 +70,7 @@
        adjust --gb-site-header-offset to match your theme header height (e.g. 80px). */
     --gb-nav-height: 64px;
     --gb-site-header-offset: 0px;
+    --gb-admin-bar-offset: 0px;
 
     /* Stacking Context & Z-Index Scale */
     --gb-z-base: 1;
@@ -116,10 +118,20 @@
     transition: color var(--gb-transition-fast), background-color var(--gb-transition-fast), border-color var(--gb-transition-fast), transform var(--gb-transition-fast);
 }
 
+/* WordPress Admin Bar Integration */
+:is(body.admin-bar, .admin-bar) #ccor-global-buyers {
+    --gb-admin-bar-offset: 32px;
+}
+@media (max-width: 782px) {
+    :is(body.admin-bar, .admin-bar) #ccor-global-buyers {
+        --gb-admin-bar-offset: 46px;
+    }
+}
+
 /* Nav Anchor Offset for Persistent Navigation */
 #ccor-global-buyers section[id],
 #ccor-global-buyers header[id] {
-    scroll-margin-top: calc(var(--gb-nav-height, 64px) + var(--gb-site-header-offset, 0px) + 8px);
+    scroll-margin-top: calc(var(--gb-nav-height, 64px) + var(--gb-admin-bar-offset, 0px) + var(--gb-site-header-offset, 0px) + 8px);
 }
 
 #ccor-global-buyers img,
@@ -273,32 +285,74 @@
     color: #153D59 !important;
 }
 
-/* Scoped Dark Context */
-#ccor-global-buyers .gb-context-dark {
-    background-color: var(--gb-deep-navy);
+/* Scoped Dark Context & Nested Precedence */
+#ccor-global-buyers .gb-context-dark,
+#ccor-global-buyers .gb-context-light .gb-context-dark {
+    background-color: var(--gb-navy-deep);
     color: var(--gb-text-light);
 }
 
 #ccor-global-buyers .gb-context-dark .gb-title,
 #ccor-global-buyers .gb-context-dark .gb-title--section,
 #ccor-global-buyers .gb-context-dark .gb-title--card,
+#ccor-global-buyers .gb-context-dark .gb-community-panel__title,
 #ccor-global-buyers .gb-context-dark h1,
 #ccor-global-buyers .gb-context-dark h2,
 #ccor-global-buyers .gb-context-dark h3,
-#ccor-global-buyers .gb-context-dark h4 {
-    color: #FFFFFF;
+#ccor-global-buyers .gb-context-dark h4,
+#ccor-global-buyers .gb-context-light .gb-context-dark .gb-title,
+#ccor-global-buyers .gb-context-light .gb-context-dark .gb-title--section,
+#ccor-global-buyers .gb-context-light .gb-context-dark .gb-title--card,
+#ccor-global-buyers .gb-context-light .gb-context-dark .gb-community-panel__title,
+#ccor-global-buyers .gb-context-light .gb-context-dark h1,
+#ccor-global-buyers .gb-context-light .gb-context-dark h2,
+#ccor-global-buyers .gb-context-light .gb-context-dark h3,
+#ccor-global-buyers .gb-context-light .gb-context-dark h4 {
+    color: #FFFFFF !important;
 }
 
 #ccor-global-buyers .gb-context-dark .gb-lead,
 #ccor-global-buyers .gb-context-dark .gb-lead--hero,
 #ccor-global-buyers .gb-context-dark .gb-lead--light,
+#ccor-global-buyers .gb-context-dark .gb-community-panel__desc,
 #ccor-global-buyers .gb-context-dark .gb-description,
-#ccor-global-buyers .gb-context-dark p {
-    color: var(--gb-text-light-muted);
+#ccor-global-buyers .gb-context-dark p,
+#ccor-global-buyers .gb-context-dark li,
+#ccor-global-buyers .gb-context-light .gb-context-dark .gb-lead,
+#ccor-global-buyers .gb-context-light .gb-context-dark .gb-lead--hero,
+#ccor-global-buyers .gb-context-light .gb-context-dark .gb-lead--light,
+#ccor-global-buyers .gb-context-light .gb-context-dark .gb-community-panel__desc,
+#ccor-global-buyers .gb-context-light .gb-context-dark .gb-description,
+#ccor-global-buyers .gb-context-light .gb-context-dark p,
+#ccor-global-buyers .gb-context-light .gb-context-dark li {
+    color: var(--gb-text-light-muted) !important;
 }
 
-#ccor-global-buyers .gb-context-dark .gb-eyebrow {
-    color: var(--gb-sun-orange);
+#ccor-global-buyers .gb-context-dark .gb-eyebrow,
+#ccor-global-buyers .gb-context-light .gb-context-dark .gb-eyebrow {
+    color: var(--gb-sun-orange) !important;
+}
+
+/* Nested Light Context inside Dark Context Precedence */
+#ccor-global-buyers .gb-context-dark .gb-context-light {
+    background-color: var(--gb-ivory);
+    color: var(--gb-text-primary);
+}
+
+#ccor-global-buyers .gb-context-dark .gb-context-light .gb-title,
+#ccor-global-buyers .gb-context-dark .gb-context-light .gb-title--section,
+#ccor-global-buyers .gb-context-dark .gb-context-light .gb-title--card,
+#ccor-global-buyers .gb-context-dark .gb-context-light h1,
+#ccor-global-buyers .gb-context-dark .gb-context-light h2,
+#ccor-global-buyers .gb-context-dark .gb-context-light h3,
+#ccor-global-buyers .gb-context-dark .gb-context-light h4 {
+    color: #071B35 !important;
+}
+
+#ccor-global-buyers .gb-context-dark .gb-context-light p,
+#ccor-global-buyers .gb-context-dark .gb-context-light li,
+#ccor-global-buyers .gb-context-dark .gb-context-light summary {
+    color: #52647A !important;
 }
 
 /* Subtle Gulf Wave Divider Accent (Clean SVG geometry) */
@@ -2244,23 +2298,7 @@
     position: relative;
 }
 
-#ccor-global-buyers #gb-explore-region .gb-header-block .gb-title,
-#ccor-global-buyers #gb-explore-region #gb-region-heading,
-#ccor-global-buyers #gb-explore-region .gb-title--section {
-    color: #071B35 !important;
-}
 
-#ccor-global-buyers #gb-explore-region .gb-header-block .gb-lead--hero,
-#ccor-global-buyers #gb-explore-region .gb-header-block .gb-lead,
-#ccor-global-buyers #gb-explore-region .gb-header-block p {
-    color: #52647A !important;
-    opacity: 1 !important;
-}
-
-#ccor-global-buyers #gb-explore-region .gb-header-block .gb-eyebrow,
-#ccor-global-buyers #gb-explore-region .gb-header-block .gb-eyebrow--orange {
-    color: #F59A16 !important;
-}
 
 #ccor-global-buyers .gb-region-flow {
     display: grid;
@@ -2845,7 +2883,7 @@
    ========================================================================== */
 #ccor-global-buyers .gb-nav {
     position: sticky;
-    top: var(--gb-site-header-offset, 0px);
+    top: calc(var(--gb-admin-bar-offset, 0px) + var(--gb-site-header-offset, 0px));
     z-index: var(--gb-z-nav, 100);
     width: 100%;
     background-color: rgba(255, 255, 255, 0.95);
@@ -6580,6 +6618,24 @@
                 window.scrollTo(0, 0);
             });
         });
+    // 1b. Dynamic WordPress Admin Bar & Site Header Integration
+    function updateAdminBarOffset() {
+        const root = document.getElementById('ccor-global-buyers');
+        if (!root) return;
+        const adminBar = document.getElementById('wpadminbar');
+        let offset = 0;
+        if (adminBar) {
+            const cs = window.getComputedStyle(adminBar);
+            if (cs.position === 'fixed') {
+                offset = adminBar.offsetHeight;
+            }
+        }
+        root.style.setProperty('--gb-admin-bar-offset', offset + 'px');
+    }
+    if (typeof window !== 'undefined') {
+        updateAdminBarOffset();
+        window.addEventListener('resize', updateAdminBarOffset, { passive: true });
+        window.addEventListener('DOMContentLoaded', updateAdminBarOffset);
     }
 
     /**
