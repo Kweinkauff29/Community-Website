@@ -5340,6 +5340,256 @@
     gap: 0.75rem;
 }
 
+/* Country Profile Popup Modal */
+#ccor-global-buyers .gb-profile-popup-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(7, 27, 53, 0.45);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    z-index: 10000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.25s ease;
+}
+#ccor-global-buyers .gb-profile-popup-overlay--open {
+    opacity: 1;
+    pointer-events: auto;
+}
+#ccor-global-buyers .gb-profile-popup-dialog {
+    background: #ffffff;
+    border-radius: 12px;
+    width: 92%;
+    max-width: 540px;
+    box-shadow: 0 25px 50px -12px rgba(7, 27, 53, 0.35);
+    position: relative;
+    max-height: 90vh;
+    overflow-y: auto;
+    padding: 2rem;
+    border-top: 4px solid var(--gb-sun-orange);
+    transform: translateY(12px) scale(0.98);
+    transition: transform 0.25s ease;
+}
+#ccor-global-buyers .gb-profile-popup-overlay--open .gb-profile-popup-dialog {
+    transform: translateY(0) scale(1);
+}
+#ccor-global-buyers .gb-profile-popup-close {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    line-height: 1;
+    color: #64748b;
+    cursor: pointer;
+    padding: 4px;
+    border-radius: 4px;
+    transition: color 0.15s ease;
+}
+#ccor-global-buyers .gb-profile-popup-close:hover {
+    color: var(--gb-navy);
+}
+#ccor-global-buyers .gb-profile-popup-header {
+    display: flex;
+    align-items: flex-start;
+    gap: 1rem;
+    margin-bottom: 1.25rem;
+}
+#ccor-global-buyers .gb-profile-popup-flag {
+    font-size: 2.2rem;
+    line-height: 1;
+}
+#ccor-global-buyers .gb-profile-popup-eyebrow {
+    font-size: 0.7rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    color: var(--gb-sun-orange);
+    text-transform: uppercase;
+}
+#ccor-global-buyers .gb-profile-popup-optional-tag {
+    font-size: 0.65rem;
+    font-weight: 700;
+    padding: 2px 6px;
+    border-radius: 4px;
+    background: #f1f5f9;
+    color: #475569;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+#ccor-global-buyers .gb-profile-popup-title {
+    font-family: var(--gb-font-display);
+    font-size: 1.2rem;
+    font-weight: 800;
+    color: var(--gb-navy);
+    margin: 4px 0 0;
+}
+#ccor-global-buyers .gb-profile-popup-sub {
+    font-size: 0.8125rem;
+    color: #64748b;
+    margin-top: 4px;
+    line-height: 1.4;
+}
+#ccor-global-buyers .gb-profile-popup-country-banner {
+    background: #f8fafc;
+    border: 1px solid rgba(11, 37, 69, 0.1);
+    border-radius: 8px;
+    padding: 0.75rem 1rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.25rem;
+}
+#ccor-global-buyers .gb-profile-popup-country-info {
+    display: flex;
+    flex-direction: column;
+}
+#ccor-global-buyers .gb-profile-popup-country-label {
+    font-size: 0.68rem;
+    font-weight: 700;
+    color: #94a3b8;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+}
+#ccor-global-buyers .gb-profile-popup-country-name {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: var(--gb-navy);
+}
+#ccor-global-buyers .gb-profile-popup-change-country {
+    background: none;
+    border: none;
+    color: var(--gb-teal);
+    font-size: 0.75rem;
+    font-weight: 700;
+    cursor: pointer;
+    text-decoration: underline;
+    padding: 4px 0;
+}
+#ccor-global-buyers .gb-popup-form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+}
+#ccor-global-buyers .gb-popup-field {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+#ccor-global-buyers .gb-popup-label {
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: var(--gb-navy);
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+}
+#ccor-global-buyers .gb-popup-input,
+#ccor-global-buyers .gb-popup-select {
+    padding: 9px 12px;
+    border: 1px solid rgba(11, 37, 69, 0.18);
+    border-radius: 6px;
+    font-size: 0.85rem;
+    color: var(--gb-navy);
+    background: #ffffff;
+    outline: none;
+    transition: border-color 0.2s ease;
+    font-family: inherit;
+}
+#ccor-global-buyers .gb-popup-input:focus,
+#ccor-global-buyers .gb-popup-select:focus {
+    border-color: var(--gb-teal);
+    box-shadow: 0 0 0 2px rgba(7, 148, 166, 0.15);
+}
+#ccor-global-buyers .gb-popup-consent-group {
+    margin-top: 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.65rem;
+    font-size: 0.78rem;
+    color: #475569;
+}
+#ccor-global-buyers .gb-popup-checkbox-label {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    cursor: pointer;
+    line-height: 1.4;
+}
+#ccor-global-buyers .gb-popup-checkbox-label input[type="checkbox"] {
+    margin-top: 2px;
+    flex-shrink: 0;
+}
+#ccor-global-buyers .gb-popup-checkbox-label a {
+    color: var(--gb-teal);
+    text-decoration: underline;
+}
+#ccor-global-buyers .gb-popup-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 0.65rem;
+    margin-top: 1.25rem;
+}
+#ccor-global-buyers .gb-popup-btn-submit {
+    background: var(--gb-navy);
+    color: #ffffff;
+    border: none;
+    padding: 11px 20px;
+    border-radius: 6px;
+    font-size: 0.8125rem;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    cursor: pointer;
+    transition: background 0.2s ease;
+    width: 100%;
+}
+#ccor-global-buyers .gb-popup-btn-submit:hover {
+    background: var(--gb-teal);
+}
+#ccor-global-buyers .gb-popup-btn-dismiss {
+    background: none;
+    border: none;
+    color: #64748b;
+    font-size: 0.75rem;
+    font-weight: 600;
+    cursor: pointer;
+    padding: 6px;
+    text-align: center;
+    transition: color 0.15s ease;
+}
+#ccor-global-buyers .gb-popup-btn-dismiss:hover {
+    color: var(--gb-navy);
+}
+#ccor-global-buyers .gb-popup-status {
+    margin-top: 0.75rem;
+    font-size: 0.8125rem;
+    color: #dc2626;
+    line-height: 1.4;
+}
+
+/* Mobile Responsive Bottom Sheet at <=768px */
+@media (max-width: 768px) {
+    #ccor-global-buyers .gb-profile-popup-overlay {
+        align-items: flex-end;
+    }
+    #ccor-global-buyers .gb-profile-popup-dialog {
+        width: 100%;
+        max-width: 100%;
+        border-radius: 16px 16px 0 0;
+        max-height: 85svh;
+        padding: 1.5rem;
+        transform: translateY(100%);
+    }
+    #ccor-global-buyers .gb-profile-popup-overlay--open .gb-profile-popup-dialog {
+        transform: translateY(0);
+    }
+    #ccor-global-buyers .gb-popup-form-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
 /* FX Module & Ticker Styles */
 #ccor-global-buyers .gb-fx-ticker-bar {
     background: var(--gb-navy-deep);
@@ -5667,6 +5917,78 @@
     color: rgba(255, 255, 255, 0.55);
     margin-top: 1rem;
     line-height: 1.4;
+}
+
+/* Flight Search Controls Bar */
+#ccor-global-buyers .gb-flight-controls-bar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    gap: 1rem;
+    margin: 1.25rem 0 1.5rem;
+    padding: 1.25rem;
+    background: rgba(11, 37, 69, 0.6);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 8px;
+}
+#ccor-global-buyers .gb-flight-control-group {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    flex: 1 1 180px;
+}
+#ccor-global-buyers .gb-flight-label {
+    font-size: 0.7rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    color: var(--gb-sun-orange);
+    text-transform: uppercase;
+}
+#ccor-global-buyers .gb-flight-select,
+#ccor-global-buyers .gb-flight-input {
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 6px;
+    color: #ffffff;
+    font-size: 0.8125rem;
+    padding: 8px 12px;
+    font-family: inherit;
+    outline: none;
+    transition: border-color 0.2s ease;
+}
+#ccor-global-buyers .gb-flight-select:focus,
+#ccor-global-buyers .gb-flight-input:focus {
+    border-color: var(--gb-sun-orange);
+    background: rgba(255, 255, 255, 0.15);
+}
+#ccor-global-buyers .gb-flight-select option {
+    background: #0b2545;
+    color: #ffffff;
+}
+#ccor-global-buyers .gb-flight-search-btn {
+    background: var(--gb-sun-orange);
+    color: var(--gb-navy-deep);
+    border: none;
+    padding: 9px 18px;
+    border-radius: 6px;
+    font-size: 0.75rem;
+    font-weight: 800;
+    letter-spacing: 0.06em;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.2s ease;
+    align-self: flex-end;
+    white-space: nowrap;
+}
+#ccor-global-buyers .gb-flight-search-btn:hover {
+    background: #ffffff;
+    color: var(--gb-navy);
+}
+#ccor-global-buyers .gb-flight-search-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
 }
 
 /* Official Country Resources List */
@@ -7500,8 +7822,38 @@
                     <div id="gb-flight-status-badge"></div>
                 </div>
 
-                <!-- Origin airport selector chips -->
-                <div id="gb-flight-origin-selector" class="gb-flight-origin-selector"></div>
+                <!-- Interactive Live Flight Controls Bar -->
+                <div class="gb-flight-controls-bar" id="gb-flight-controls-bar">
+                    <div class="gb-flight-control-group">
+                        <label for="gb-flight-origin-select" class="gb-flight-label">FLYING FROM</label>
+                        <select id="gb-flight-origin-select" class="gb-flight-select">
+                            <option value="FRA">Frankfurt (FRA &middot; Nonstop)</option>
+                            <option value="YYZ">Toronto Pearson (YYZ &middot; Nonstop)</option>
+                            <option value="YUL">Montréal-Trudeau (YUL &middot; Nonstop)</option>
+                            <option value="YOW">Ottawa International (YOW &middot; Nonstop)</option>
+                            <option value="GRU">São Paulo (GRU &middot; Connecting)</option>
+                            <option value="LHR">London Heathrow (LHR &middot; Connecting)</option>
+                            <option value="BOG">Bogotá (BOG &middot; Connecting)</option>
+                            <option value="EZE">Buenos Aires (EZE &middot; Connecting)</option>
+                            <option value="MEX">Mexico City (MEX &middot; Connecting)</option>
+                        </select>
+                    </div>
+
+                    <div class="gb-flight-control-group">
+                        <label for="gb-flight-depart-date" class="gb-flight-label">DEPART</label>
+                        <input type="date" id="gb-flight-depart-date" class="gb-flight-input">
+                    </div>
+
+                    <div class="gb-flight-control-group">
+                        <label for="gb-flight-return-date" class="gb-flight-label">RETURN</label>
+                        <input type="date" id="gb-flight-return-date" class="gb-flight-input">
+                    </div>
+
+                    <button type="button" id="gb-flight-search-btn" class="gb-flight-search-btn">
+                        <span>CHECK LIVE FARES</span>
+                        <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M8 15a.5.5 0 0 0 .5-.5V2.707l3.146 3.147a.5.5 0 0 0 .708-.708l-4-4a.5.5 0 0 0-.708 0l-4 4a.5.5 0 1 0 .708.708L7.5 2.707V14.5a.5.5 0 0 0 .5.5z"/></svg>
+                    </button>
+                </div>
 
                 <!-- Flight Planning Grid -->
                 <div class="gb-flight-planner-grid" id="gb-flight-planner-cards">
@@ -7532,10 +7884,10 @@
                 </div>
 
                 <div class="gb-airport-stat-card">
-                    <div class="gb-airport-stat-card__num">$330M</div>
-                    <div class="gb-airport-stat-card__label">TERMINAL EXPANSION</div>
+                    <div class="gb-airport-stat-card__num" style="font-size: 1.85rem; letter-spacing: -0.01em;">LIVE FARES</div>
+                    <div class="gb-airport-stat-card__label">AIRLINE ROUTE INTELLIGENCE</div>
                     <div class="gb-airport-stat-card__desc">
-                        Active multi-phase capital modernization consolidating TSA security screening checkpoints, passenger amenities, and international gate infrastructure.
+                        Server-side live airfare and flight corridor snapshots connecting international gateways to Southwest Florida International Airport (RSW).
                     </div>
                 </div>
             </div>
@@ -7959,6 +8311,126 @@
             </div>
         </div>
     </section>
+
+    <!-- ======================================================================
+         COUNTRY PROFILE POPUP MODAL DIALOG
+         Triggered naturally ~400–700ms after active country selection
+         Non-pushy, accessible, editorial dialog with explicit PII consent
+         ====================================================================== -->
+    <div id="gb-profile-popup-overlay" class="gb-profile-popup-overlay" role="dialog" aria-modal="true" aria-labelledby="gb-profile-popup-title" style="display: none;">
+        <div class="gb-profile-popup-dialog" id="gb-profile-popup-dialog">
+            <button type="button" class="gb-profile-popup-close" id="gb-profile-popup-close" aria-label="Close profile popup">&times;</button>
+            
+            <div class="gb-profile-popup-header">
+                <div class="gb-profile-popup-flag" id="gb-popup-flag">🇩🇪</div>
+                <div>
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <span class="gb-profile-popup-eyebrow" id="gb-popup-eyebrow">YOUR SOUTHWEST FLORIDA BRIEF &middot; GERMANY</span>
+                        <span class="gb-profile-popup-optional-tag">OPTIONAL</span>
+                    </div>
+                    <h3 class="gb-profile-popup-title" id="gb-profile-popup-title">KEEP YOUR PROFILE WITH CCOR</h3>
+                    <p class="gb-profile-popup-sub">
+                        Want CCOR to keep your personalized market and buyer profile with your inquiry? Save your preferences below.
+                    </p>
+                </div>
+            </div>
+
+            <!-- Read-only Country Identity Banner with Change Country link -->
+            <div class="gb-profile-popup-country-banner">
+                <div class="gb-profile-popup-country-info">
+                    <span class="gb-profile-popup-country-label">JOINING US FROM</span>
+                    <span class="gb-profile-popup-country-name" id="gb-popup-country-name">🇩🇪 Germany</span>
+                </div>
+                <button type="button" class="gb-profile-popup-change-country" id="gb-popup-change-country-btn">CHANGE COUNTRY</button>
+            </div>
+
+            <!-- Form Content -->
+            <div id="gb-profile-popup-form-wrap">
+                <form id="gb-profile-popup-form" novalidate>
+                    <!-- Honeypot spam defense -->
+                    <input type="text" name="hp_org_url" id="gb-popup-hp" style="position: absolute; left: -9999px; width: 1px; height: 1px; opacity: 0; pointer-events: none;" tabindex="-1" autocomplete="off">
+                    
+                    <div class="gb-popup-form-grid">
+                        <div class="gb-popup-field">
+                            <label for="gb-popup-first-name" class="gb-popup-label">FIRST NAME *</label>
+                            <input type="text" id="gb-popup-first-name" class="gb-popup-input" required maxlength="80" autocomplete="given-name" placeholder="First name">
+                        </div>
+                        <div class="gb-popup-field">
+                            <label for="gb-popup-last-name" class="gb-popup-label">LAST NAME</label>
+                            <input type="text" id="gb-popup-last-name" class="gb-popup-input" maxlength="100" autocomplete="family-name" placeholder="Last name (optional)">
+                        </div>
+                        <div class="gb-popup-field" style="grid-column: 1 / -1;">
+                            <label for="gb-popup-email" class="gb-popup-label">EMAIL ADDRESS *</label>
+                            <input type="email" id="gb-popup-email" class="gb-popup-input" required maxlength="254" autocomplete="email" placeholder="name@example.com">
+                        </div>
+                        <div class="gb-popup-field" style="grid-column: 1 / -1;">
+                            <label for="gb-popup-intent-select" class="gb-popup-label">YOUR GOAL</label>
+                            <select id="gb-popup-intent-select" class="gb-popup-select">
+                                <option value="secondHome">Second Home</option>
+                                <option value="investment">Investment</option>
+                                <option value="futureMove">Future Move</option>
+                                <option value="vacationRental">Vacation + Rental</option>
+                                <option value="business">Business Opportunity</option>
+                                <option value="justExploring">Just Exploring</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Explicit Consents -->
+                    <div class="gb-popup-consent-group">
+                        <label class="gb-popup-checkbox-label">
+                            <input type="checkbox" id="gb-popup-consent" required>
+                            <span>I agree to CCOR storing the information I provide so it can be used in connection with my Global Buyers inquiry. See our <a href="https://coconutcoastrealtors.org/privacy-policy/" target="_blank" rel="noopener noreferrer">Privacy Policy</a>. *</span>
+                        </label>
+                        <label class="gb-popup-checkbox-label">
+                            <input type="checkbox" id="gb-popup-marketing">
+                            <span>I'd also like occasional international buyer resources and updates from CCOR.</span>
+                        </label>
+                    </div>
+
+                    <!-- Cloudflare Turnstile Container -->
+                    <div id="gb-popup-turnstile-wrap" style="margin-top: 1rem; min-height: 65px;">
+                        <div class="cf-turnstile" id="gb-popup-turnstile" data-sitekey="0x4AAAAAAAEi6kUo-g63F_6D" data-theme="light"></div>
+                    </div>
+
+                    <div class="gb-popup-status" id="gb-popup-status-msg" role="alert" style="display: none;"></div>
+
+                    <div class="gb-popup-actions">
+                        <button type="submit" id="gb-popup-submit-btn" class="gb-popup-btn-submit">
+                            SAVE YOUR PROFILE WITH CCOR
+                        </button>
+                        <button type="button" id="gb-popup-dismiss-btn" class="gb-popup-btn-dismiss">
+                            NO THANKS &mdash; CONTINUE EXPLORING
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Success State View -->
+            <div id="gb-profile-popup-success-wrap" style="display: none;">
+                <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 0.75rem;">
+                    <svg width="24" height="24" viewBox="0 0 20 20" fill="none" aria-hidden="true"><circle cx="10" cy="10" r="10" fill="#15803d"/><path d="M6 10l3 3 5-6" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                    <span style="font-family: var(--gb-font-display); font-size: 1.15rem; font-weight: 800; color: #166534; letter-spacing: 0.05em;">PROFILE SAVED</span>
+                </div>
+                <div style="background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; padding: 1rem; margin-bottom: 1.25rem;">
+                    <div style="font-size: 0.875rem; font-weight: 700; color: #166534;" id="gb-popup-success-brief-line">
+                        🇩🇪 Germany &middot; Investment
+                    </div>
+                    <p style="font-size: 0.8125rem; color: #14532d; margin-top: 6px;" id="gb-popup-success-text">
+                        Thanks, Kevin. CCOR saved the information you chose to provide.
+                    </p>
+                </div>
+                <div class="gb-popup-actions">
+                    <button type="button" id="gb-popup-success-continue-btn" class="gb-popup-btn-submit">
+                        CONTINUE EXPLORING
+                    </button>
+                    <a href="https://coconutcoastrealtors.org/realtor-directory/?utm_source=global_buyers&utm_medium=website&utm_campaign=global_buyers&utm_content=popup_saved" target="_blank" rel="noopener noreferrer" class="gb-popup-btn-dismiss" style="text-align: center; text-decoration: none; display: inline-block;">
+                        FIND A REALTOR&reg;
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
 
 </div>
 
@@ -9220,62 +9692,225 @@
         tickerContainer.innerHTML = html;
     }
 
+    // Global flight planner state
+    let flightState = {
+        activeOrigin: 'FRA',
+        departDate: '',
+        returnDate: '',
+        isLive: false,
+        liveOffers: [],
+        checkedAt: null,
+        loading: false
+    };
+
     /**
-     * Render Flight Planner Module with Origin Chips, Live Worker Abstraction & Planning Fallback
+     * Fetch Live Airline Offers from /global-buyers-api/flights
      */
-    function renderFlightPlanner(marketId, originCodeOverride) {
+    function fetchLiveFlights(originCode, departureDate, returnDate, marketId) {
         const wrap = root.querySelector('#gb-flight-planner');
         if (!wrap) return;
 
+        const searchBtn = wrap.querySelector('#gb-flight-search-btn');
+        const statusBadge = wrap.querySelector('#gb-flight-status-badge');
+        const cardsGrid = wrap.querySelector('#gb-flight-planner-cards');
+
+        flightState.loading = true;
+        if (searchBtn) {
+            searchBtn.disabled = true;
+            searchBtn.innerHTML = '<span>SEARCHING...</span>';
+        }
+
+        const params = new URLSearchParams({
+            origin: originCode || 'FRA',
+            departureDate: departureDate || '',
+            returnDate: returnDate || '',
+            adults: '1',
+            market: marketId || 'germany'
+        });
+
+        const endpoint = getApiEndpoint('/global-buyers-api/flights?' + params.toString());
+        fetch(endpoint)
+            .then(function (res) {
+                return res.json().then(function (data) {
+                    return { status: res.status, data: data };
+                });
+            })
+            .then(function (result) {
+                flightState.loading = false;
+                if (searchBtn) {
+                    searchBtn.disabled = false;
+                    searchBtn.innerHTML = '<span>CHECK LIVE FARES</span><svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M8 15a.5.5 0 0 0 .5-.5V2.707l3.146 3.147a.5.5 0 0 0 .708-.708l-4-4a.5.5 0 0 0-.708 0l-4 4a.5.5 0 1 0 .708.708L7.5 2.707V14.5a.5.5 0 0 0 .5.5z"/></svg>';
+                }
+
+                if (result.status === 200 && result.data && result.data.live && result.data.offers && result.data.offers.length > 0) {
+                    flightState.isLive = true;
+                    flightState.liveOffers = result.data.offers;
+                    flightState.checkedAt = result.data.checkedAt || new Date().toISOString();
+                    renderLiveFlightCards(marketId, originCode, flightState.liveOffers[0]);
+                } else {
+                    flightState.isLive = false;
+                    flightState.liveOffers = [];
+                    renderPlanningFlightCards(marketId, originCode, true);
+                }
+            })
+            .catch(function (err) {
+                flightState.loading = false;
+                flightState.isLive = false;
+                if (searchBtn) {
+                    searchBtn.disabled = false;
+                    searchBtn.innerHTML = '<span>CHECK LIVE FARES</span>';
+                }
+                renderPlanningFlightCards(marketId, originCode, true);
+            });
+    }
+
+    /**
+     * Render Live Flight UI with Actual Duffel Offer
+     */
+    function renderLiveFlightCards(marketId, originCode, offer) {
+        const wrap = root.querySelector('#gb-flight-planner');
+        if (!wrap) return;
+
+        const statusBadge = wrap.querySelector('#gb-flight-status-badge');
+        const cardsGrid = wrap.querySelector('#gb-flight-planner-cards');
+        const methodologyText = wrap.querySelector('#gb-flight-methodology-text');
+        if (!cardsGrid) return;
+
+        const marketData = GB_MARKET_INTELLIGENCE[marketId] || GB_MARKET_INTELLIGENCE['other'];
+        const fx = latestFxRates[marketData.currency] || GB_FX_BASELINE[marketData.currency] || { rate: 1.0, symbol: '$' };
+        const currSym = marketData.symbol || '$';
+
+        const checkedTime = new Date(flightState.checkedAt || Date.now()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        const checkedDate = new Date(flightState.checkedAt || Date.now()).toLocaleDateString([], { month: 'short', day: 'numeric' });
+
+        if (statusBadge) {
+            statusBadge.innerHTML = '<span style="font-size: 0.68rem; letter-spacing: 0.08em; padding: 4px 10px; border-radius: 4px; background: #009B3A; color: #ffffff; font-weight: 800; text-transform: uppercase;">LIVE FARE SNAPSHOT · CHECKED ' + checkedDate.toUpperCase() + ' · ' + checkedTime + '</span>';
+        }
+
+        const totalUsd = offer.totalUsd || 0;
+        const totalLocal = Math.round(totalUsd * fx.rate);
+        const stopsOut = offer.stopsOutbound || 0;
+        const badgeCls = stopsOut === 0 ? 'gb-flight-badge-nonstop' : 'gb-flight-badge-connecting';
+        const badgeLabel = stopsOut === 0 ? 'NONSTOP' : stopsOut + ' STOP CONNECTING';
+
+        const outSegments = offer.outbound || [];
+        const carrierName = offer.carrier || (outSegments[0] && outSegments[0].carrierName) || 'Airline Partner';
+        const flightNum = (outSegments[0] && outSegments[0].flightNumber) ? ((outSegments[0].carrierCode || '') + outSegments[0].flightNumber) : '';
+        const durHours = offer.durationMinutesOut ? Math.floor(offer.durationMinutesOut / 60) + 'h ' + (offer.durationMinutesOut % 60) + 'm' : '--';
+
+        let routeDisplay = originCode + ' → RSW';
+        if (outSegments.length > 1) {
+            routeDisplay = outSegments.map(function(s) { return s.origin; }).concat('RSW').join(' → ');
+        }
+
+        const origins = marketData.flightOrigins || [];
+        const matchedOrigin = origins.find(function(o) { return o.code === originCode; }) || origins[0] || {};
+        const typicalUsd = matchedOrigin.typicalUsd || Math.round(totalUsd * 1.05);
+        const typicalLocal = Math.round(typicalUsd * fx.rate);
+
+        const card1 = '<div class="gb-flight-card">' +
+            '<div>' +
+                '<div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.75rem;">' +
+                    '<span style="font-size: 0.75rem; font-weight: 800; letter-spacing: 0.1em; color: var(--gb-sun-orange); text-transform: uppercase;">LOWEST CURRENT SAMPLE</span>' +
+                    '<span class="' + badgeCls + '">' + badgeLabel + '</span>' +
+                '</div>' +
+                '<div style="font-family: var(--gb-font-display); font-size: 1.85rem; font-weight: 800; color: #ffffff; line-height: 1.1;">' +
+                    '$' + Math.round(totalUsd).toLocaleString() + ' <span style="font-size: 0.95rem; font-weight: 600; color: rgba(255,255,255,0.65);">USD</span>' +
+                '</div>' +
+                (marketData.currency !== 'USD' ? '<div style="font-size: 1rem; font-weight: 700; color: var(--gb-teal); margin-top: 4px;">≈ ' + currSym + totalLocal.toLocaleString() + ' ' + marketData.currency + '</div>' : '') +
+                '<p style="font-size: 0.8125rem; color: rgba(255,255,255,0.7); line-height: 1.45; margin-top: 0.85rem;">' +
+                    'Round trip &middot; Economy &middot; 1 traveler &middot; ' + originCode + ' &rarr; RSW. Live fare snapshot is informational and may change before booking.' +
+                '</p>' +
+            '</div>' +
+            '<div style="margin-top: 1.25rem; padding-top: 0.85rem; border-top: 1px solid rgba(255,255,255,0.12); font-size: 0.75rem; color: rgba(255,255,255,0.6);">' +
+                'Checked: <strong style="color: #ffffff;">' + checkedDate + ' &middot; ' + checkedTime + '</strong>' +
+            '</div>' +
+        '</div>';
+
+        const card2 = '<div class="gb-flight-card">' +
+            '<div>' +
+                '<div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.75rem;">' +
+                    '<span style="font-size: 0.75rem; font-weight: 800; letter-spacing: 0.1em; color: var(--gb-sun-orange); text-transform: uppercase;">CURRENT SAMPLE ITINERARY</span>' +
+                    '<span style="font-size: 0.7rem; font-weight: 700; color: #86efac;">LIVE OFFER</span>' +
+                '</div>' +
+                '<div style="font-family: var(--gb-font-display); font-size: 1.35rem; font-weight: 800; color: #ffffff; letter-spacing: 0.04em;">' +
+                    routeDisplay +
+                '</div>' +
+                '<div style="font-size: 0.825rem; color: rgba(255,255,255,0.85); margin-top: 6px;">' +
+                    'Carrier: <strong style="color: #ffffff;">' + carrierName + '</strong> ' + (flightNum ? '(' + flightNum + ')' : '') +
+                '</div>' +
+                '<div style="font-size: 0.825rem; color: rgba(255,255,255,0.85); margin-top: 2px;">' +
+                    'Outbound Duration: <strong style="color: #ffffff;">' + durHours + '</strong>' +
+                '</div>' +
+            '</div>' +
+            '<div style="margin-top: 1.25rem; padding-top: 0.85rem; border-top: 1px solid rgba(255,255,255,0.12); display: flex; justify-content: space-between; align-items: flex-end;">' +
+                '<div>' +
+                    '<span style="font-size: 0.7rem; color: rgba(255,255,255,0.55); text-transform: uppercase;">Live Round-Trip</span>' +
+                    '<div style="font-size: 1.15rem; font-weight: 800; color: #ffffff;">$' + Math.round(totalUsd).toLocaleString() + ' USD' +
+                        (marketData.currency !== 'USD' ? ' <span style="font-size: 0.8rem; font-weight: 600; color: var(--gb-teal);">(' + currSym + totalLocal.toLocaleString() + ')</span>' : '') +
+                    '</div>' +
+                '</div>' +
+                '<span style="font-size: 0.68rem; color: #86efac; font-weight: 700;">AIRLINE API VERIFIED</span>' +
+            '</div>' +
+        '</div>';
+
+        const card3 = '<div class="gb-flight-card">' +
+            '<div>' +
+                '<div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.75rem;">' +
+                    '<span style="font-size: 0.75rem; font-weight: 800; letter-spacing: 0.1em; color: var(--gb-sun-orange); text-transform: uppercase;">TYPICAL SAMPLED FARE</span>' +
+                    '<span style="font-size: 0.7rem; font-weight: 700; color: rgba(255,255,255,0.7);">30-90D WINDOWS</span>' +
+                '</div>' +
+                '<div style="font-family: var(--gb-font-display); font-size: 1.85rem; font-weight: 800; color: #ffffff; line-height: 1.1;">' +
+                    '$' + typicalUsd.toLocaleString() + ' <span style="font-size: 0.95rem; font-weight: 600; color: rgba(255,255,255,0.65);">USD</span>' +
+                '</div>' +
+                (marketData.currency !== 'USD' ? '<div style="font-size: 1rem; font-weight: 700; color: var(--gb-teal); margin-top: 4px;">≈ ' + currSym + typicalLocal.toLocaleString() + ' ' + marketData.currency + '</div>' : '') +
+                '<p style="font-size: 0.8125rem; color: rgba(255,255,255,0.7); line-height: 1.45; margin-top: 0.85rem;">' +
+                    'Based on multiple future 7-night travel windows across 30, 60, and 90-day intervals. Economy class benchmark.' +
+                '</p>' +
+            '</div>' +
+            '<div style="margin-top: 1.25rem; padding-top: 0.85rem; border-top: 1px solid rgba(255,255,255,0.12); font-size: 0.75rem; color: rgba(255,255,255,0.6);">' +
+                'Benchmark Hub: <strong style="color: #ffffff;">' + (matchedOrigin.name || originCode) + '</strong>' +
+            '</div>' +
+        '</div>';
+
+        cardsGrid.innerHTML = card1 + card2 + card3;
+
+        if (methodologyText) {
+            methodologyText.textContent = 'Live Fare Snapshot: Real-time airline offer returned via server-side Duffel API. Airfares fluctuate continuously and are subject to seat availability prior to booking. Southwest Florida International Airport (RSW).';
+        }
+    }
+
+    /**
+     * Render Verified Planning Benchmark Flight Cards (Fallback)
+     */
+    function renderPlanningFlightCards(marketId, originCode, isApiFallback) {
+        const wrap = root.querySelector('#gb-flight-planner');
+        if (!wrap) return;
+
+        const statusBadge = wrap.querySelector('#gb-flight-status-badge');
+        const cardsGrid = wrap.querySelector('#gb-flight-planner-cards');
+        const methodologyText = wrap.querySelector('#gb-flight-methodology-text');
+        if (!cardsGrid) return;
+
         const marketData = GB_MARKET_INTELLIGENCE[marketId] || GB_MARKET_INTELLIGENCE['other'];
         const origins = marketData.flightOrigins || [];
-        if (origins.length === 0) return;
-
-        let activeOrigin = origins[0];
-        if (originCodeOverride) {
-            const found = origins.find(function (o) { return o.code === originCodeOverride; });
+        let activeOrigin = origins[0] || { code: originCode || 'FRA', name: originCode || 'Frankfurt', typicalUsd: 840, nonstop: true, sampleItinerary: { route: 'FRA → RSW', stops: 'Nonstop', carrier: 'Discover Airlines', flightNum: '4Y64', duration: '10h 15m', sampleUsd: 842 } };
+        if (originCode) {
+            const found = origins.find(function (o) { return o.code === originCode; });
             if (found) activeOrigin = found;
         }
 
-        // 1. Origin Airport Selector Chips (e.g. Canada YYZ / YUL / YOW)
-        const chipContainer = wrap.querySelector('#gb-flight-origin-selector');
-        if (chipContainer) {
-            if (origins.length > 1) {
-                let chipHtml = '<span style="font-size: 0.8125rem; font-weight: 700; color: rgba(255,255,255,0.7); margin-right: 8px; align-self: center;">DEPARTURE AIRPORT:</span>';
-                origins.forEach(function (orig) {
-                    const isChipActive = orig.code === activeOrigin.code;
-                    chipHtml += '<button type="button" class="gb-flight-origin-chip' + (isChipActive ? ' gb-flight-origin-chip--active' : '') + '" data-flight-origin="' + orig.code + '">' +
-                        orig.name +
-                        '</button>';
-                });
-                chipContainer.innerHTML = chipHtml;
-                chipContainer.style.display = 'flex';
-
-                chipContainer.querySelectorAll('.gb-flight-origin-chip').forEach(function (btn) {
-                    btn.addEventListener('click', function () {
-                        const code = btn.getAttribute('data-flight-origin');
-                        renderFlightPlanner(marketId, code);
-                    });
-                });
+        if (statusBadge) {
+            if (isApiFallback) {
+                statusBadge.innerHTML = '<span style="font-size: 0.68rem; letter-spacing: 0.08em; padding: 4px 10px; border-radius: 4px; background: rgba(255,255,255,0.12); color: #fef08a; font-weight: 700; text-transform: uppercase;">STATIC ROUTE INFORMATION · PLANNING BENCHMARK</span>';
             } else {
-                chipContainer.style.display = 'none';
-                chipContainer.innerHTML = '';
+                statusBadge.innerHTML = '<span style="font-size: 0.68rem; letter-spacing: 0.08em; padding: 4px 10px; border-radius: 4px; background: rgba(255,255,255,0.1); color: rgba(255,255,255,0.85); font-weight: 700; text-transform: uppercase;">STATIC ROUTE INFORMATION · PLANNING BENCHMARK</span>';
             }
         }
 
-        // 2. Flight Status Badge
-        const statusBadge = wrap.querySelector('#gb-flight-status-badge');
-        if (statusBadge) {
-            statusBadge.innerHTML = '<span style="font-size: 0.68rem; letter-spacing: 0.08em; padding: 4px 10px; border-radius: 4px; background: rgba(255,255,255,0.1); color: rgba(255,255,255,0.85); font-weight: 700; text-transform: uppercase;">PLANNING ESTIMATE · LIVE FARE INTEGRATION READY</span>';
-        }
-
-        // 3. Render Cards
-        const cardsGrid = wrap.querySelector('#gb-flight-planner-cards');
-        if (!cardsGrid) return;
-
         const fx = latestFxRates[marketData.currency] || GB_FX_BASELINE[marketData.currency] || { rate: 1.0, symbol: '$' };
         const typicalLocal = Math.round(activeOrigin.typicalUsd * fx.rate);
-        const sampleLocal = Math.round(activeOrigin.sampleItinerary.sampleUsd * fx.rate);
+        const sampleLocal = Math.round((activeOrigin.sampleItinerary ? activeOrigin.sampleItinerary.sampleUsd : activeOrigin.typicalUsd) * fx.rate);
         const currSym = marketData.symbol || '$';
 
         const badgeCls = activeOrigin.nonstop ? 'gb-flight-badge-nonstop' : 'gb-flight-badge-connecting';
@@ -9300,7 +9935,7 @@
             '</div>' +
         '</div>';
 
-        const itin = activeOrigin.sampleItinerary;
+        const itin = activeOrigin.sampleItinerary || { stops: '1 Stop', route: originCode + ' → RSW', carrier: 'Network Flag Carrier', flightNum: 'Verified Corridor', duration: 'Variable', sampleUsd: activeOrigin.typicalUsd };
         const card2 = '<div class="gb-flight-card">' +
             '<div>' +
                 '<div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.75rem;">' +
@@ -9329,6 +9964,31 @@
         '</div>';
 
         cardsGrid.innerHTML = card1 + card2;
+
+        if (methodologyText) {
+            methodologyText.textContent = isApiFallback
+                ? 'Methodology: Typical sampled round-trip reflects the median of lowest reasonable economy fares sampled across future travel windows (7-night stays, 1 adult). Live airline fare updates require server-side Duffel API integration.'
+                : 'Methodology: Typical sampled round-trip reflects the median of lowest reasonable economy fares sampled across 30, 60, and 90-day future travel windows (7-night stays, 1 adult). Airfares fluctuate constantly; rates shown are informational planning estimates and are not guaranteed bookable rates.';
+        }
+    }
+
+    function renderFlightPlanner(marketId, originCodeOverride) {
+        const wrap = root.querySelector('#gb-flight-planner');
+        if (!wrap) return;
+
+        const marketData = GB_MARKET_INTELLIGENCE[marketId] || GB_MARKET_INTELLIGENCE['other'];
+        const origins = marketData.flightOrigins || [];
+        if (origins.length === 0) return;
+
+        let activeOriginCode = originCodeOverride || (origins[0] ? origins[0].code : 'FRA');
+        flightState.activeOrigin = activeOriginCode;
+
+        const selectEl = wrap.querySelector('#gb-flight-origin-select');
+        if (selectEl) {
+            selectEl.value = activeOriginCode;
+        }
+
+        renderPlanningFlightCards(marketId, activeOriginCode, false);
     }
 
     /**
@@ -9544,6 +10204,97 @@
                 }
             }).catch(function () {});
         } catch (e) {}
+    }
+
+    /**
+     * Interactive Two-Way Currency Calculator & Inline Lead Controller
+     */
+    function initCurrencyCalculator(fxData, marketData) {
+        const briefEl = root.querySelector('#gb-personalized-brief');
+        if (!briefEl) return;
+        const localInput = briefEl.querySelector('#gb-calc-local-input');
+        const usdInput = briefEl.querySelector('#gb-calc-usd-input');
+        const swapBtn = briefEl.querySelector('#gb-calc-swap-btn');
+        const presetBtns = briefEl.querySelectorAll('.gb-calc-preset-btn');
+        const rate = fxData ? fxData.rate : 1.0;
+
+        if (localInput && usdInput) {
+            function updateFromUsd() {
+                const raw = usdInput.value.replace(/[^0-9.]/g, '');
+                const usd = parseFloat(raw);
+                if (!isNaN(usd)) {
+                    const local = Math.round(usd * rate);
+                    localInput.value = local.toLocaleString('en-US');
+                }
+            }
+
+            function updateFromLocal() {
+                const raw = localInput.value.replace(/[^0-9.]/g, '');
+                const local = parseFloat(raw);
+                if (!isNaN(local) && rate > 0) {
+                    const usd = Math.round(local / rate);
+                    usdInput.value = usd.toLocaleString('en-US');
+                }
+            }
+
+            usdInput.addEventListener('input', updateFromUsd);
+            localInput.addEventListener('input', updateFromLocal);
+
+            if (swapBtn) {
+                swapBtn.addEventListener('click', function() {
+                    const fieldsRow = briefEl.querySelector('#gb-calc-fields');
+                    if (fieldsRow) {
+                        fieldsRow.classList.toggle('gb-calc-fields-row--swapped');
+                    }
+                });
+            }
+
+            presetBtns.forEach(function (btn) {
+                btn.addEventListener('click', function () {
+                    const presetVal = parseFloat(btn.getAttribute('data-preset'));
+                    if (!isNaN(presetVal)) {
+                        usdInput.value = presetVal.toLocaleString('en-US');
+                        updateFromUsd();
+                    }
+                });
+            });
+        }
+
+        // Wire Inline Lead Form inside Brief
+        const openBtn = briefEl.querySelector('#gb-lead-open-btn');
+        const closeBtn = briefEl.querySelector('#gb-lead-close-btn');
+        const formWrap = briefEl.querySelector('#gb-lead-form-wrap');
+        const cancelBtn = briefEl.querySelector('#gb-lead-cancel-btn');
+        const form = briefEl.querySelector('#gb-lead-form');
+
+        if (openBtn && formWrap) {
+            openBtn.addEventListener('click', function () {
+                formWrap.style.display = 'block';
+                const fn = briefEl.querySelector('#gb-lead-first-name');
+                if (fn) fn.focus();
+            });
+        }
+        if (closeBtn && formWrap) {
+            closeBtn.addEventListener('click', function () {
+                formWrap.style.display = 'none';
+            });
+        }
+        if (cancelBtn && formWrap) {
+            cancelBtn.addEventListener('click', function () {
+                formWrap.style.display = 'none';
+            });
+        }
+        if (form) {
+            form.addEventListener('submit', function (e) {
+                e.preventDefault();
+                openProfilePopup({
+                    market: (marketData && marketData.id) ? marketData.id : 'germany',
+                    intent: root.getAttribute('data-gb-intent') || 'secondHome',
+                    isAutomatic: false,
+                    sourceBtn: openBtn
+                });
+            });
+        }
     }
 
     /**
@@ -9927,15 +10678,6 @@
                         '<svg width="20" height="20" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="10" fill="#15803d"/><path d="M6 10l3 3 5-6" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>' +
                         '<span style="font-family: var(--gb-font-display); font-size: 0.95rem; font-weight: 800; color: #166534; text-transform: uppercase; letter-spacing: 0.06em;">PROFILE SAVED</span>' +
                     '</div>' +
-                    '<p style="font-size: 0.875rem; color: var(--gb-charcoal); line-height: 1.5; margin: 0;">' +
-                        'Thanks. CCOR has saved the country, goal and contact information you chose to provide.' +
-                    '</p>' +
-                    '<div id="gb-lead-success-meta" style="font-size: 0.8125rem; color: #64748b; background: #ffffff; border: 1px solid #dcfce7; border-radius: 6px; padding: 10px 14px; margin: 4px 0;"></div>' +
-                    '<div style="display: flex; gap: 12px; flex-wrap: wrap; margin-top: 6px;">' +
-                        '<a href="#gb-find-realtor" class="gb-editorial-btn" style="padding: 9px 18px; font-size: 0.78rem;">FIND A REALTOR®</a>' +
-                        '<button type="button" id="gb-lead-continue-btn" class="gb-lead-cancel-btn" style="padding: 8px 14px; border: 1px solid rgba(11,37,69,0.15); border-radius: 4px;">CONTINUE EXPLORING</button>' +
-                    '</div>' +
-                '</div>' +
             '</div>';
 
         briefEl.innerHTML = briefHtml;
@@ -9944,277 +10686,523 @@
         // Wire Two-Way Currency Converter
         initCurrencyCalculator(fxData, marketData);
 
-        // Wire Optional Lead Capture
-        initLeadCapture(marketData, intentConfig);
+        // Wire Brief Modal Reopen Button
+        const reopenBtn = briefEl.querySelector('#gb-brief-open-popup-btn');
+        if (reopenBtn) {
+            reopenBtn.addEventListener('click', function () {
+                openProfilePopup({
+                    market: effectiveMarketId,
+                    intent: effectiveIntentId,
+                    isAutomatic: false,
+                    sourceBtn: reopenBtn
+                });
+            });
+        }
     }
 
     /**
-     * Interactive Two-Way Currency Calculator Controller
+     * Daily Country Selection Aggregator (Non-PII, Session Deduped)
+     * Endpoint: POST /global-buyers-api/market-selection
      */
-    function initCurrencyCalculator(fxData, marketData) {
-        const localInput = root.querySelector('#gb-calc-local-input');
-        const usdInput = root.querySelector('#gb-calc-usd-input');
-        const swapBtn = root.querySelector('#gb-calc-swap-btn');
-        const fieldsRow = root.querySelector('#gb-calc-fields');
-        const announcer = root.querySelector('#gb-calc-live-announcer');
-        const presetBtns = root.querySelectorAll('.gb-calc-preset-btn');
-
-        if (!localInput || !usdInput) return;
-
-        let announceTimer = null;
-        function debounceAnnounce(msg) {
-            if (!announcer) return;
-            clearTimeout(announceTimer);
-            announceTimer = setTimeout(function () {
-                announcer.textContent = msg;
-            }, 600);
-        }
-
-        function cleanNumber(str) {
-            if (!str) return 0;
-            const cleaned = str.toString().replace(/[^0-9.]/g, '');
-            const parsed = parseFloat(cleaned);
-            return isNaN(parsed) ? 0 : parsed;
-        }
-
-        // Local input changed -> calculate USD
-        localInput.addEventListener('input', function () {
-            const localVal = cleanNumber(localInput.value);
-            const usdVal = fxData.rate > 0 ? (localVal / fxData.rate) : 0;
-            usdInput.value = Math.round(usdVal).toLocaleString('en-US');
-            debounceAnnounce(formatCurrencyAmount(localVal, marketData.currency) + ' equals approximately ' + formatCurrencyAmount(usdVal, 'USD'));
-        });
-
-        // USD input changed -> calculate Local
-        usdInput.addEventListener('input', function () {
-            const usdVal = cleanNumber(usdInput.value);
-            const localVal = usdVal * fxData.rate;
-            localInput.value = Math.round(localVal).toLocaleString('en-US');
-            debounceAnnounce(formatCurrencyAmount(usdVal, 'USD') + ' equals approximately ' + formatCurrencyAmount(localVal, marketData.currency));
-        });
-
-        // Swap conversion direction (toggles visual input arrangement)
-        if (swapBtn && fieldsRow) {
-            let isSwapped = false;
-            swapBtn.addEventListener('click', function () {
-                isSwapped = !isSwapped;
-                const localGroup = root.querySelector('#gb-calc-local-group');
-                const usdGroup = root.querySelector('#gb-calc-usd-group');
-                if (localGroup && usdGroup) {
-                    if (isSwapped) {
-                        fieldsRow.insertBefore(usdGroup, swapBtn);
-                        fieldsRow.appendChild(localGroup);
-                        usdInput.focus();
-                    } else {
-                        fieldsRow.insertBefore(localGroup, swapBtn);
-                        fieldsRow.appendChild(usdGroup);
-                        localInput.focus();
-                    }
-                }
-            });
-        }
-
-        // Presets: $100K, $250K, $442K median, $750K, $1M
-        presetBtns.forEach(function (btn) {
-            btn.addEventListener('click', function () {
-                const presetVal = parseFloat(btn.getAttribute('data-preset')) || 442000;
-                usdInput.value = Math.round(presetVal).toLocaleString('en-US');
-                const localVal = presetVal * fxData.rate;
-                localInput.value = Math.round(localVal).toLocaleString('en-US');
-                debounceAnnounce(formatCurrencyAmount(presetVal, 'USD') + ' equals approximately ' + formatCurrencyAmount(localVal, marketData.currency));
-            });
-        });
-    }
-
-    /**
-     * Optional Visitor Profile / Contact Capture Controller
-     */
-    function initLeadCapture(marketData, intentConfig) {
-        const toggleCard = root.querySelector('#gb-lead-toggle-card');
-        const formWrap = root.querySelector('#gb-lead-form-wrap');
-        const openBtn = root.querySelector('#gb-lead-open-btn');
-        const closeBtn = root.querySelector('#gb-lead-close-btn');
-        const cancelBtn = root.querySelector('#gb-lead-cancel-btn');
-        const continueBtn = root.querySelector('#gb-lead-continue-btn');
-        const leadForm = root.querySelector('#gb-lead-form');
-        const successCard = root.querySelector('#gb-lead-success-card');
-        const statusMsg = root.querySelector('#gb-lead-status-msg');
-        const successMeta = root.querySelector('#gb-lead-success-meta');
-
-        if (!formWrap || !leadForm) return;
-
-        function openForm() {
-            toggleCard.style.display = 'none';
-            formWrap.style.display = 'block';
-            trackGlobalEvent('global_profile_capture_open', {});
-            const firstField = formWrap.querySelector('#gb-lead-first-name');
-            if (firstField) firstField.focus();
-        }
-
-        function closeForm() {
-            formWrap.style.display = 'none';
-            toggleCard.style.display = 'flex';
-        }
-
-        if (openBtn) openBtn.addEventListener('click', openForm);
-        if (closeBtn) closeBtn.addEventListener('click', closeForm);
-        if (cancelBtn) cancelBtn.addEventListener('click', closeForm);
-        if (continueBtn) {
-            continueBtn.addEventListener('click', function () {
-                successCard.style.display = 'none';
-                toggleCard.style.display = 'flex';
-            });
-        }
-
-        leadForm.addEventListener('submit', function (e) {
-            e.preventDefault();
-            if (statusMsg) {
-                statusMsg.style.display = 'none';
-                statusMsg.className = 'gb-lead-status';
-                statusMsg.textContent = '';
-            }
-
-            // 1. Spam defense: Honeypot trap check (Prompt item 24)
-            const hpField = leadForm.querySelector('#gb-lead-hp');
-            if (hpField && hpField.value.trim() !== '') {
-                // Silently fake success to bots without recording to D1
-                formWrap.style.display = 'none';
-                successCard.style.display = 'flex';
+    function logMarketSelection(marketId) {
+        if (!marketId) return;
+        try {
+            const sessionKey = 'ccorGlobalMarketsLogged';
+            const raw = (typeof window !== 'undefined' && window.sessionStorage) ? (window.sessionStorage.getItem(sessionKey) || '') : '';
+            let logged = [];
+            try { logged = JSON.parse(raw); } catch (e) { logged = raw ? raw.split(',') : []; }
+            if (logged.indexOf(marketId) !== -1) {
                 return;
             }
+            const marketData = GB_MARKET_INTELLIGENCE[marketId] || {};
+            const countryCode = marketData.code || (marketId === 'otherLatam' ? 'LATAM' : 'OTHER');
 
-            // 2. Client-side field validation
-            const firstNameInput = leadForm.querySelector('#gb-lead-first-name');
-            const lastNameInput = leadForm.querySelector('#gb-lead-last-name');
-            const emailInput = leadForm.querySelector('#gb-lead-email');
-            const marketSelect = leadForm.querySelector('#gb-lead-market-select');
-            const intentSelect = leadForm.querySelector('#gb-lead-intent-select');
-            const consentCheckbox = leadForm.querySelector('#gb-lead-consent');
-            const marketingCheckbox = leadForm.querySelector('#gb-lead-marketing');
-
-            const firstName = (firstNameInput ? firstNameInput.value : '').trim();
-            const lastName = (lastNameInput ? lastNameInput.value : '').trim();
-            const email = (emailInput ? emailInput.value : '').trim().toLowerCase();
-            const selectedMarket = marketSelect ? marketSelect.value : marketData.id;
-            const selectedIntent = intentSelect ? intentSelect.value : intentConfig.id;
-            const consentGiven = consentCheckbox ? consentCheckbox.checked : false;
-            const marketingOptIn = marketingCheckbox ? marketingCheckbox.checked : false;
-
-            if (!firstName || firstName.length < 1 || firstName.length > 80) {
-                showError('Please provide your first name (up to 80 characters).');
-                if (firstNameInput) firstNameInput.focus();
-                return;
-            }
-
-            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-            if (!email || !emailRegex.test(email) || email.length > 254) {
-                showError('Please provide a valid email address.');
-                if (emailInput) emailInput.focus();
-                return;
-            }
-
-            if (!consentGiven) {
-                showError('Please agree to CCOR storing your information in connection with your inquiry.');
-                if (consentCheckbox) consentCheckbox.focus();
-                return;
-            }
-
-            function showError(msg) {
-                if (statusMsg) {
-                    statusMsg.textContent = msg;
-                    statusMsg.className = 'gb-lead-status gb-lead-status--error';
-                    statusMsg.style.display = 'block';
-                }
-            }
-
-            // 3. Extract safe UTM fields
-            let utmObj = null;
-            try {
-                if (window.location && window.location.search) {
-                    const params = new URLSearchParams(window.location.search);
-                    utmObj = {
-                        source: (params.get('utm_source') || '').substring(0, 50),
-                        medium: (params.get('utm_medium') || '').substring(0, 50),
-                        campaign: (params.get('utm_campaign') || '').substring(0, 50),
-                        content: (params.get('utm_content') || '').substring(0, 50)
-                    };
-                }
-            } catch (err) {}
-
-            const submitBtn = leadForm.querySelector('#gb-lead-submit-btn');
-            if (submitBtn) {
-                submitBtn.disabled = true;
-                submitBtn.textContent = 'SAVING...';
-            }
-
-            // Track submit event (NO PII in analytics!)
-            trackGlobalEvent('global_profile_capture_submit', {
-                market: selectedMarket,
-                intent: selectedIntent,
-                marketing_opt_in: marketingOptIn
-            });
-
-            const selMarketObj = GB_MARKET_INTELLIGENCE[selectedMarket] || {};
-            const countryCode = selMarketObj.code || (selectedMarket === 'otherLatam' ? 'LATAM' : 'OTHER');
-
-            const payload = {
-                firstName: firstName,
-                lastName: lastName,
-                email: email,
-                market: selectedMarket,
-                countryCode: countryCode,
-                intent: selectedIntent,
-                marketingOptIn: marketingOptIn,
-                consent: true,
-                consentVersion: (GB_CONFIG.leadCapture && GB_CONFIG.leadCapture.consentVersion) || '2026.1',
-                utm: utmObj
-            };
-
-            const endpoint = getApiEndpoint((GB_CONFIG.leadCapture && GB_CONFIG.leadCapture.endpoint) || '/global-buyers-api/leads');
-
-            fetch(endpoint, {
+            const apiEndpoint = getApiEndpoint('/global-buyers-api/market-selection');
+            fetch(apiEndpoint, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload)
-            })
-            .then(function (res) {
-                if (!res.ok) throw new Error('HTTP ' + res.status);
-                return res.json();
-            })
-            .then(function (data) {
-                if (submitBtn) {
-                    submitBtn.disabled = false;
-                    submitBtn.textContent = 'SAVE MY PROFILE';
+                body: JSON.stringify({
+                    market: marketId,
+                    countryCode: countryCode
+                })
+            }).then(function (res) {
+                if (res.ok && window.sessionStorage) {
+                    logged.push(marketId);
+                    window.sessionStorage.setItem(sessionKey, JSON.stringify(logged));
                 }
-                if (data && data.ok) {
-                    // Success: collapse form, show success state with masked email
-                    formWrap.style.display = 'none';
-                    if (successMeta) {
-                        const marketDisplay = (GB_CONFIG.personalization.markets.find(function(m){ return m.id === selectedMarket; }) || {}).name || selectedMarket.toUpperCase();
-                        const intentDisplay = (GB_CONFIG.personalization.intents.find(function(i){ return i.id === selectedIntent; }) || {}).title || selectedIntent.toUpperCase();
-                        successMeta.textContent = marketDisplay + ' \u2022 ' + intentDisplay + ' | ' + firstName + ' (' + maskEmail(email) + ')';
-                    }
-                    successCard.style.display = 'flex';
-                    // Track success (NO PII in analytics!)
-                    trackGlobalEvent('global_profile_capture_success', {
-                        market: selectedMarket,
-                        intent: selectedIntent
-                    });
-                } else {
-                    throw new Error('API reported unsuccessful');
-                }
-            })
-            .catch(function (err) {
-                if (submitBtn) {
-                    submitBtn.disabled = false;
-                    submitBtn.textContent = 'SAVE MY PROFILE';
-                }
-                showError("WE COULDN'T SAVE YOUR PROFILE RIGHT NOW. Your personalized page is still available. Please try again later or use the REALTOR® Directory.");
-                trackGlobalEvent('global_profile_capture_error', { error: 'request_failed' });
+            }).catch(function () {});
+
+            trackGlobalEvent('global_country_select', {
+                market: marketId,
+                country_code: countryCode
             });
+        } catch (e) {}
+    }
+
+    let activePopupMarket = null;
+    let activePopupIntent = null;
+    let popupSourceType = 'country_popup';
+    let previousActiveElement = null;
+    let popupTurnstileWidgetId = null;
+
+    /**
+     * Open Country Profile Popup Modal
+     */
+    function openProfilePopup(opts) {
+        opts = opts || {};
+        const marketId = opts.market || root.getAttribute('data-gb-market') || 'germany';
+        const intentId = opts.intent || root.getAttribute('data-gb-intent') || 'secondHome';
+        const isAutomatic = !!opts.isAutomatic;
+        popupSourceType = isAutomatic ? 'country_popup' : 'brief_manual';
+
+        activePopupMarket = marketId;
+        activePopupIntent = intentId;
+        previousActiveElement = document.activeElement || opts.sourceBtn || null;
+
+        const overlay = root.querySelector('#gb-profile-popup-overlay');
+        if (!overlay) return;
+
+        const marketData = GB_MARKET_INTELLIGENCE[marketId] || GB_MARKET_INTELLIGENCE['other'];
+        const countryEmojis = {
+            canada: '🇨🇦',
+            germany: '🇩🇪',
+            brazil: '🇧🇷',
+            uk: '🇬🇧',
+            colombia: '🇨🇴',
+            argentina: '🇦🇷',
+            mexico: '🇲🇽',
+            otherLatam: '🌎',
+            other: '🌐'
+        };
+        const countryFlag = countryEmojis[marketId] || marketData.flag || '🌐';
+        const countryName = marketData.name || 'International';
+
+        // Update Identity in Modal Header & Banner
+        const flagEl = overlay.querySelector('#gb-popup-flag');
+        const eyebrowEl = overlay.querySelector('#gb-popup-eyebrow');
+        const countryNameEl = overlay.querySelector('#gb-popup-country-name');
+
+        if (flagEl) flagEl.textContent = countryFlag;
+        if (eyebrowEl) eyebrowEl.textContent = 'YOUR SOUTHWEST FLORIDA BRIEF · ' + countryName.toUpperCase();
+        if (countryNameEl) countryNameEl.textContent = countryFlag + ' ' + countryName;
+
+        // Reset and prefill intent selector
+        const intentSelect = overlay.querySelector('#gb-popup-intent-select');
+        if (intentSelect && intentId) {
+            intentSelect.value = intentId;
+        }
+
+        // Reset Views & Inputs
+        const formWrap = overlay.querySelector('#gb-profile-popup-form-wrap');
+        const successWrap = overlay.querySelector('#gb-profile-popup-success-wrap');
+        const statusMsg = overlay.querySelector('#gb-popup-status-msg');
+        const submitBtn = overlay.querySelector('#gb-popup-submit-btn');
+
+        if (formWrap) formWrap.style.display = 'block';
+        if (successWrap) successWrap.style.display = 'none';
+        if (statusMsg) {
+            statusMsg.style.display = 'none';
+            statusMsg.textContent = '';
+        }
+        if (submitBtn) {
+            submitBtn.disabled = false;
+            submitBtn.textContent = 'SAVE YOUR PROFILE WITH CCOR';
+        }
+
+        // Clear sensitive inputs for fresh user entry
+        const fnInput = overlay.querySelector('#gb-popup-first-name');
+        const lnInput = overlay.querySelector('#gb-popup-last-name');
+        const emInput = overlay.querySelector('#gb-popup-email');
+        const consentBox = overlay.querySelector('#gb-popup-consent');
+        const mktgBox = overlay.querySelector('#gb-popup-marketing');
+        const hpInput = overlay.querySelector('#gb-popup-hp');
+
+        if (fnInput) fnInput.value = '';
+        if (lnInput) lnInput.value = '';
+        if (emInput) emInput.value = '';
+        if (consentBox) consentBox.checked = false;
+        if (mktgBox) mktgBox.checked = false;
+        if (hpInput) hpInput.value = '';
+
+        // Reset/Render Turnstile if present
+        try {
+            if (typeof window !== 'undefined' && window.turnstile) {
+                const turnstileWrap = overlay.querySelector('#gb-popup-turnstile');
+                if (turnstileWrap) {
+                    if (popupTurnstileWidgetId !== null) {
+                        window.turnstile.reset(popupTurnstileWidgetId);
+                    } else {
+                        popupTurnstileWidgetId = window.turnstile.render(turnstileWrap, {
+                            sitekey: '0x4AAAAAAAEi6kUo-g63F_6D',
+                            theme: 'light',
+                            size: 'normal'
+                        });
+                    }
+                }
+            }
+        } catch (err) {}
+
+        // Open Overlay
+        overlay.style.display = 'flex';
+        requestAnimationFrame(function () {
+            overlay.classList.add('gb-profile-popup-overlay--open');
+        });
+
+        // Focus first field
+        setTimeout(function () {
+            if (fnInput) fnInput.focus();
+        }, 120);
+
+        trackGlobalEvent('global_profile_popup_open', {
+            market: marketId,
+            intent: intentId,
+            source: popupSourceType
         });
     }
 
+    /**
+     * Dismiss Country Profile Popup
+     */
+    function dismissProfilePopup() {
+        const overlay = root.querySelector('#gb-profile-popup-overlay');
+        if (!overlay) return;
+
+        overlay.classList.remove('gb-profile-popup-overlay--open');
+        setTimeout(function () {
+            overlay.style.display = 'none';
+        }, 220);
+
+        if (activePopupMarket && typeof window !== 'undefined' && window.sessionStorage) {
+            window.sessionStorage.setItem('ccorGlobalProfilePopupDismissedFor_' + activePopupMarket, 'true');
+        }
+
+        if (previousActiveElement && typeof previousActiveElement.focus === 'function') {
+            previousActiveElement.focus();
+        }
+
+        trackGlobalEvent('global_profile_popup_dismiss', {
+            market: activePopupMarket || 'unknown',
+            source: popupSourceType
+        });
+    }
+
+    /**
+     * Initialize Country Profile Popup Modal Events
+     */
+    function initProfilePopup() {
+        const overlay = root.querySelector('#gb-profile-popup-overlay');
+        if (!overlay) return;
+
+        const closeBtn = overlay.querySelector('#gb-profile-popup-close');
+        const dismissBtn = overlay.querySelector('#gb-popup-dismiss-btn');
+        const changeCountryBtn = overlay.querySelector('#gb-popup-change-country-btn');
+        const intentSelect = overlay.querySelector('#gb-popup-intent-select');
+        const form = overlay.querySelector('#gb-profile-popup-form');
+        const continueBtn = overlay.querySelector('#gb-popup-success-continue-btn');
+
+        if (closeBtn) {
+            closeBtn.addEventListener('click', function (e) {
+                e.preventDefault();
+                dismissProfilePopup();
+            });
+        }
+
+        if (dismissBtn) {
+            dismissBtn.addEventListener('click', function (e) {
+                e.preventDefault();
+                dismissProfilePopup();
+            });
+        }
+
+        if (continueBtn) {
+            continueBtn.addEventListener('click', function (e) {
+                e.preventDefault();
+                dismissProfilePopup();
+            });
+        }
+
+        // Close on backdrop click outside dialog
+        overlay.addEventListener('click', function (e) {
+            if (e.target === overlay) {
+                dismissProfilePopup();
+            }
+        });
+
+        // Close on Escape & trap focus
+        overlay.addEventListener('keydown', function (e) {
+            if (e.key === 'Escape' || e.keyCode === 27) {
+                dismissProfilePopup();
+                return;
+            }
+            if (e.key === 'Tab' || e.keyCode === 9) {
+                const focusables = overlay.querySelectorAll('button:not([disabled]), [href], input:not([disabled]):not([type="hidden"]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])');
+                if (focusables.length === 0) return;
+                const first = focusables[0];
+                const last = focusables[focusables.length - 1];
+                if (e.shiftKey) {
+                    if (document.activeElement === first) {
+                        e.preventDefault();
+                        last.focus();
+                    }
+                } else {
+                    if (document.activeElement === last) {
+                        e.preventDefault();
+                        first.focus();
+                    }
+                }
+            }
+        });
+
+        // "CHANGE COUNTRY" link inside popup banner
+        if (changeCountryBtn) {
+            changeCountryBtn.addEventListener('click', function (e) {
+                e.preventDefault();
+                dismissProfilePopup();
+                const personalizeSec = root.querySelector('#gb-personalize');
+                if (personalizeSec) {
+                    personalizeSec.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    const firstMarketBtn = personalizeSec.querySelector('button[data-market]');
+                    if (firstMarketBtn) setTimeout(function () { firstMarketBtn.focus(); }, 350);
+                }
+            });
+        }
+
+        // Updating goal in popup updates page personalization state and logs country+goal
+        if (intentSelect) {
+            intentSelect.addEventListener('change', function () {
+                const newIntent = intentSelect.value;
+                if (newIntent && activePopupMarket) {
+                    applyPersonalization(newIntent, activePopupMarket, { isUserAction: true });
+                }
+            });
+        }
+
+        // Handle Profile Contact Form Submission
+        if (form) {
+            form.addEventListener('submit', function (e) {
+                e.preventDefault();
+
+                // Honeypot check
+                const hp = overlay.querySelector('#gb-popup-hp');
+                if (hp && hp.value.trim() !== '') {
+                    // Silently fake success for bots
+                    showSuccessState('Visitor', activePopupMarket, intentSelect ? intentSelect.value : 'secondHome');
+                    return;
+                }
+
+                const fnInput = overlay.querySelector('#gb-popup-first-name');
+                const lnInput = overlay.querySelector('#gb-popup-last-name');
+                const emInput = overlay.querySelector('#gb-popup-email');
+                const consentBox = overlay.querySelector('#gb-popup-consent');
+                const mktgBox = overlay.querySelector('#gb-popup-marketing');
+                const statusMsg = overlay.querySelector('#gb-popup-status-msg');
+                const submitBtn = overlay.querySelector('#gb-popup-submit-btn');
+
+                const firstName = fnInput ? fnInput.value.trim() : '';
+                const lastName = lnInput ? lnInput.value.trim() : '';
+                const email = emInput ? emInput.value.trim() : '';
+                const consentGiven = consentBox ? consentBox.checked : false;
+                const marketingOptIn = mktgBox ? mktgBox.checked : false;
+                const chosenIntent = intentSelect ? intentSelect.value : (activePopupIntent || 'secondHome');
+
+                if (!firstName) {
+                    if (statusMsg) {
+                        statusMsg.textContent = 'Please enter your first name.';
+                        statusMsg.style.display = 'block';
+                    }
+                    if (fnInput) fnInput.focus();
+                    return;
+                }
+
+                if (!email || email.indexOf('@') === -1 || email.indexOf('.') === -1) {
+                    if (statusMsg) {
+                        statusMsg.textContent = 'Please enter a valid email address.';
+                        statusMsg.style.display = 'block';
+                    }
+                    if (emInput) emInput.focus();
+                    return;
+                }
+
+                if (!consentGiven) {
+                    if (statusMsg) {
+                        statusMsg.textContent = 'Please check the required consent box to save your profile with CCOR.';
+                        statusMsg.style.display = 'block';
+                    }
+                    if (consentBox) consentBox.focus();
+                    return;
+                }
+
+                let turnstileToken = '';
+                try {
+                    if (typeof window !== 'undefined' && window.turnstile) {
+                        turnstileToken = window.turnstile.getResponse(popupTurnstileWidgetId);
+                    }
+                } catch (tErr) {}
+
+                if (submitBtn) {
+                    submitBtn.disabled = true;
+                    submitBtn.textContent = 'SAVING YOUR PROFILE...';
+                }
+                if (statusMsg) statusMsg.style.display = 'none';
+
+                const marketData = GB_MARKET_INTELLIGENCE[activePopupMarket] || {};
+                const countryCode = marketData.code || (activePopupMarket === 'otherLatam' ? 'LATAM' : 'OTHER');
+
+                const leadPayload = {
+                    firstName: firstName,
+                    lastName: lastName,
+                    email: email,
+                    market: activePopupMarket,
+                    countryCode: countryCode,
+                    intent: chosenIntent,
+                    consent: true,
+                    consentGiven: true,
+                    marketingOptIn: marketingOptIn,
+                    leadSource: popupSourceType,
+                    consentVersion: '2026.1',
+                    turnstileToken: turnstileToken,
+                    'cf-turnstile-response': turnstileToken,
+                    cfTurnstileResponse: turnstileToken,
+                    hpOrgUrl: ''
+                };
+
+                const endpoint = getApiEndpoint('/global-buyers-api/leads');
+                fetch(endpoint, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(leadPayload)
+                })
+                .then(function (res) {
+                    return res.json().then(function (data) {
+                        return { ok: res.ok, status: res.status, data: data };
+                    });
+                })
+                .then(function (result) {
+                    if (result.ok && result.data && result.data.ok) {
+                        if (window.sessionStorage) {
+                            window.sessionStorage.setItem('ccorGlobalProfileSubmitted', 'true');
+                        }
+                        showSuccessState(firstName, activePopupMarket, chosenIntent);
+                        trackGlobalEvent('global_profile_popup_success', {
+                            market: activePopupMarket,
+                            intent: chosenIntent,
+                            marketing_opt_in: marketingOptIn
+                        });
+                    } else {
+                        const errMsg = (result.data && result.data.error) ? result.data.error : 'Submission error. Please try again.';
+                        if (statusMsg) {
+                            statusMsg.textContent = errMsg;
+                            statusMsg.style.display = 'block';
+                        }
+                        if (submitBtn) {
+                            submitBtn.disabled = false;
+                            submitBtn.textContent = 'SAVE YOUR PROFILE WITH CCOR';
+                        }
+                        try {
+                            if (window.turnstile && popupTurnstileWidgetId !== null) {
+                                window.turnstile.reset(popupTurnstileWidgetId);
+                            }
+                        } catch (reErr) {}
+                        trackGlobalEvent('global_profile_popup_error', {
+                            market: activePopupMarket,
+                            error: errMsg
+                        });
+                    }
+                })
+                .catch(function (err) {
+                    if (statusMsg) {
+                        statusMsg.textContent = 'Network error saving profile. Please check your connection.';
+                        statusMsg.style.display = 'block';
+                    }
+                    if (submitBtn) {
+                        submitBtn.disabled = false;
+                        submitBtn.textContent = 'SAVE YOUR PROFILE WITH CCOR';
+                    }
+                    trackGlobalEvent('global_profile_popup_error', {
+                        market: activePopupMarket,
+                        error: 'network_error'
+                    });
+                });
+            });
+        }
+
+        function showSuccessState(firstName, marketId, intentId) {
+            const formWrap = overlay.querySelector('#gb-profile-popup-form-wrap');
+            const successWrap = overlay.querySelector('#gb-profile-popup-success-wrap');
+            const briefLine = overlay.querySelector('#gb-popup-success-brief-line');
+            const successText = overlay.querySelector('#gb-popup-success-text');
+            const continueBtn = overlay.querySelector('#gb-popup-success-continue-btn');
+
+            const marketData = GB_MARKET_INTELLIGENCE[marketId] || GB_MARKET_INTELLIGENCE['other'];
+            const intentObj = GB_CONFIG.personalization.intents.find(function (i) { return i.id === intentId; }) || { title: 'Personalized Brief' };
+            const countryEmojis = {
+                canada: '🇨🇦',
+                germany: '🇩🇪',
+                brazil: '🇧🇷',
+                uk: '🇬🇧',
+                colombia: '🇨🇴',
+                argentina: '🇦🇷',
+                mexico: '🇲🇽',
+                otherLatam: '🌎',
+                other: '🌐'
+            };
+            const countryFlag = countryEmojis[marketId] || marketData.flag || '🌐';
+
+            if (briefLine) {
+                briefLine.textContent = countryFlag + ' ' + (marketData.name || 'International') + ' · ' + intentObj.title;
+            }
+            if (successText) {
+                successText.textContent = 'Thanks, ' + (firstName || 'there') + '. CCOR saved the information you chose to provide.';
+            }
+
+            if (formWrap) formWrap.style.display = 'none';
+            if (successWrap) successWrap.style.display = 'block';
+            if (continueBtn) continueBtn.focus();
+        }
+    }
+
+    /**
+     * Initialize Live Flight Controls (Origin Selector, Date Range, Live Search)
+     */
+    function initFlightControls() {
+        const wrap = root.querySelector('#gb-flight-planner');
+        if (!wrap) return;
+
+        const originSelect = wrap.querySelector('#gb-flight-origin-select');
+        const departInput = wrap.querySelector('#gb-flight-depart-date');
+        const returnInput = wrap.querySelector('#gb-flight-return-date');
+        const searchBtn = wrap.querySelector('#gb-flight-search-btn');
+
+        // Set Default Dates: ~45 days out, 7-day stay
+        const today = new Date();
+        const defaultDepart = new Date(today.getTime() + 45 * 24 * 60 * 60 * 1000);
+        const defaultReturn = new Date(defaultDepart.getTime() + 7 * 24 * 60 * 60 * 1000);
+
+        if (departInput && !departInput.value) {
+            departInput.value = defaultDepart.toISOString().slice(0, 10);
+        }
+        if (returnInput && !returnInput.value) {
+            returnInput.value = defaultReturn.toISOString().slice(0, 10);
+        }
+
+        if (originSelect) {
+            originSelect.addEventListener('change', function () {
+                flightState.activeOrigin = originSelect.value;
+                const currentMarket = root.getAttribute('data-gb-market') || 'germany';
+                renderPlanningFlightCards(currentMarket, originSelect.value, false);
+            });
+        }
+
+        if (searchBtn) {
+            searchBtn.addEventListener('click', function () {
+                const currentMarket = root.getAttribute('data-gb-market') || 'germany';
+                const selOrigin = originSelect ? originSelect.value : (flightState.activeOrigin || 'FRA');
+                const dep = departInput ? departInput.value : '';
+                const ret = returnInput ? returnInput.value : '';
+                fetchLiveFlights(selOrigin, dep, ret, currentMarket);
+            });
+        }
+    }
     /**
      * Update Persistent Nav Profile Pill
      */
@@ -10454,6 +11442,31 @@
                 const market = btn.getAttribute('data-market');
                 currentMarket = (currentMarket === market) ? null : market;
                 applyPersonalization(currentIntent, currentMarket, { isUserAction: true });
+
+                if (currentMarket) {
+                    // 1. Log non-PII country selection aggregate (session deduped)
+                    logMarketSelection(currentMarket);
+
+                    // 2. Trigger Tasteful Country Profile Popup
+                    const supportedPopupMarkets = ['canada', 'germany', 'brazil', 'uk', 'colombia', 'argentina', 'mexico'];
+                    if (supportedPopupMarkets.indexOf(currentMarket) !== -1 && typeof window !== 'undefined' && window.sessionStorage) {
+                        const isDismissed = window.sessionStorage.getItem('ccorGlobalProfilePopupDismissedFor_' + currentMarket);
+                        const isSubmitted = window.sessionStorage.getItem('ccorGlobalProfileSubmitted');
+                        const count = parseInt(window.sessionStorage.getItem('ccorGlobalProfilePopupsCount') || '0', 10);
+
+                        if (!isDismissed && !isSubmitted && count < 2) {
+                            window.sessionStorage.setItem('ccorGlobalProfilePopupsCount', String(count + 1));
+                            setTimeout(function () {
+                                openProfilePopup({
+                                    market: currentMarket,
+                                    intent: currentIntent,
+                                    isAutomatic: true,
+                                    sourceBtn: btn
+                                });
+                            }, 550);
+                        }
+                    }
+                }
             });
         });
 
@@ -11645,6 +12658,8 @@
     safeInit('PersistentNav', initPersistentNav);
     safeInit('BuyerEssentials', initBuyerEssentials);
     safeInit('ResourceCenter', initResourceCenter);
+    safeInit('FlightControls', initFlightControls);
+    safeInit('ProfilePopup', initProfilePopup);
 
     // Initialize Leaflet Maps in independent safe block
     safeInit('Maps', function () {

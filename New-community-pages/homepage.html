@@ -116,12 +116,14 @@
   #ccor-home .ch-global p { color: rgba(255,255,255,.72); max-width: 560px; }
 
   #ccor-home .ch-history { background: #fff; padding: clamp(75px, 10vw, 130px) 0; }
-  #ccor-home .ch-timeline { display: grid; gap: 0; grid-template-columns: repeat(4, 1fr); margin-top: 52px; }
+  #ccor-home .ch-timeline { display: grid; gap: 42px 38px; grid-template-columns: repeat(2, 1fr); margin-top: 52px; }
   #ccor-home .ch-era { border-top: 2px solid var(--navy); padding: 28px 26px 0 0; position: relative; }
   #ccor-home .ch-era::before { background: var(--orange); border: 5px solid #fff; border-radius: 50%; box-shadow: 0 0 0 1px var(--line); content: ""; height: 16px; left: 0; position: absolute; top: -9px; width: 16px; }
   #ccor-home .ch-era__date { color: var(--teal); font-size: .7rem; font-weight: 600; letter-spacing: .13em; text-transform: uppercase; }
   #ccor-home .ch-era h3 { font-family: var(--display); font-size: 1.55rem; font-weight: 500; line-height: 1.1; margin: 12px 0 10px; text-transform: uppercase; }
   #ccor-home .ch-era p { color: var(--muted); font-size: .88rem; }
+  #ccor-home .ch-history__sources { border-top: 1px solid var(--line); color: var(--muted); font-size: .72rem; margin-top: 46px; padding-top: 20px; }
+  #ccor-home .ch-history__sources a { border-bottom: 1px solid var(--teal); color: var(--navy); }
 
   #ccor-home .ch-cta { background: var(--teal); color: #fff; padding: 70px 0; }
   #ccor-home .ch-cta__inner { align-items: center; display: flex; gap: 30px; justify-content: space-between; }
@@ -174,7 +176,7 @@
 
 <main id="ccor-home">
   <header class="ch-hero" id="home">
-    <img class="ch-hero__image" src="https://images.unsplash.com/photo-1660854866563-401cc7ad6431?auto=format&amp;fit=crop&amp;w=2000&amp;q=86" alt="Southwest Florida Gulf Coast and pier at sunset" fetchpriority="high">
+    <img class="ch-hero__image" src="https://thumb.wikimedia.org/wikipedia/commons/thumb/0/00/Fort_Myers_Beach_and_Gulf_of_Mexico.JPG/1920px-Fort_Myers_Beach_and_Gulf_of_Mexico.JPG" alt="Southwest Florida Gulf Coast and pier at sunset" fetchpriority="high">
     <nav class="ch-nav" aria-label="Primary navigation">
       <div class="ch-shell ch-nav__inner">
         <a class="ch-brand" href="https://coconutcoastlifestyles.com/" aria-label="Coconut Coast Lifestyles home">
@@ -187,6 +189,7 @@
           <li><a href="https://coconutcoastlifestyles.com/places-to-shop/">Shopping</a></li>
           <li><a href="https://coconutcoastlifestyles.com/restaurant-in-swfl/">Dining</a></li>
           <li><a href="https://coconutcoastlifestyles.com/city-info/">City info</a></li>
+          <li><a href="https://coconutcoastopenhouses.com/home-search/">Find a Home</a></li>
           <li><a href="https://coconutcoastlifestyles.com/global-buyers/">Global buyers</a></li>
           <li><a class="ch-links__cta" href="https://coconutcoastrealtors.org/realtor-directory/">Find a REALTOR®</a></li>
         </ul>
@@ -230,19 +233,19 @@
       </div>
       <div class="ch-grid">
         <a class="ch-card" href="https://coconutcoastlifestyles.com/communities/">
-          <img src="https://images.unsplash.com/photo-1555117441-ab8a3d080d81?auto=format&amp;fit=crop&amp;w=1200&amp;q=82" alt="Turquoise Gulf water and a Southwest Florida beach" loading="lazy">
+          <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/3/3f/Estero_River.jpg/1280px-Estero_River.jpg" alt="Estero River at Koreshan State Historic Site in Estero, Florida" loading="lazy">
           <div class="ch-card__content"><span class="ch-card__num">01 · FIND YOUR FIT</span><h3>Communities</h3><p>From waterfront enclaves to golf and village living.</p></div>
         </a>
         <a class="ch-card" href="https://coconutcoastopenhouses.com/home-search/">
-          <img src="https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&amp;fit=crop&amp;w=1000&amp;q=82" alt="Modern coastal Florida home with a pool" loading="lazy">
+          <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/d/de/Caloosahatchee_River_sunset_from_Ford_estate_Ft_Myers_%2815510875243%29.jpg/1280px-Caloosahatchee_River_sunset_from_Ford_estate_Ft_Myers_%2815510875243%29.jpg" alt="Caloosahatchee River at sunset in Fort Myers, Florida" loading="lazy">
           <div class="ch-card__content"><span class="ch-card__num">02 · MAKE A MOVE</span><h3>Homes</h3><p>Search properties throughout the Coconut Coast.</p></div>
         </a>
         <a class="ch-card" href="https://coconutcoastlifestyles.com/restaurant-in-swfl/">
-          <img src="https://images.unsplash.com/photo-1692623622324-c37dada3f2a4?auto=format&amp;fit=crop&amp;w=1000&amp;q=82" alt="Southwest Florida waterfront dining at sunset" loading="lazy">
+          <img src="https://coconutcoastlifestyles.com/wp-content/uploads/2022/08/1395853737000-promenade-1-scaled.webp" alt="Promenade at Bonita Bay in Bonita Springs, Florida" loading="lazy">
           <div class="ch-card__content"><span class="ch-card__num">03 · TASTE THE COAST</span><h3>Dining</h3><p>Local favorites, waterfront tables and new discoveries.</p></div>
         </a>
         <a class="ch-card" href="https://coconutcoastlifestyles.com/places-to-shop/">
-          <img src="https://images.unsplash.com/photo-1441986300917-64674bd600d8?auto=format&amp;fit=crop&amp;w=1200&amp;q=82" alt="Bright open-air shopping destination" loading="lazy">
+          <img src="https://coconutcoastlifestyles.com/wp-content/uploads/2022/08/1000x666.jpg" alt="Coconut Point in Estero, Florida" loading="lazy">
           <div class="ch-card__content"><span class="ch-card__num">04 · MAKE A DAY OF IT</span><h3>Shopping</h3><p>Open-air centers, boutiques and familiar favorites.</p></div>
         </a>
       </div>
@@ -271,7 +274,7 @@
   </section>
 
   <section class="ch-global" aria-labelledby="ch-global-title">
-    <img class="ch-global__image" src="https://images.unsplash.com/photo-1603806840334-dc5842ab56fc?auto=format&amp;fit=crop&amp;w=1400&amp;q=84" alt="Naples Pier and Gulf Coast sunset" loading="lazy">
+    <img class="ch-global__image" src="https://thumb.wikimedia.org/wikipedia/commons/thumb/2/25/Naples_FL_pier_seen_from_8th_Avenue_Beach_at_sunset.jpg/1920px-Naples_FL_pier_seen_from_8th_Avenue_Beach_at_sunset.jpg" alt="Naples Pier and Gulf Coast sunset" loading="lazy">
     <div class="ch-shell">
       <div class="ch-global__content">
         <p class="ch-kicker">A global gateway</p>
@@ -289,11 +292,16 @@
         <p class="ch-lead">The story of Bonita Springs and Estero stretches from the Calusa and the Estero River to the connected communities of today.</p>
       </div>
       <div class="ch-timeline">
-        <article class="ch-era"><span class="ch-era__date">Before 1900</span><h3>First people + waterways</h3><p>The Calusa lived throughout Southwest Florida for generations, shaped by the region's rivers, estuaries and coast.</p></article>
-        <article class="ch-era"><span class="ch-era__date">1900–1940</span><h3>Towns take shape</h3><p>Survey became Bonita Springs, Estero grew along its river, and rail and the Tamiami Trail connected the region.</p></article>
-        <article class="ch-era"><span class="ch-era__date">1940–2000</span><h3>A modern coast</h3><p>Air conditioning, I-75 and planned communities accelerated growth while local landmarks remained.</p></article>
-        <article class="ch-era"><span class="ch-era__date">2000–today</span><h3>Connected communities</h3><p>Bonita Springs renewed its downtown and Estero incorporated as a village, each preserving a distinct sense of place.</p></article>
+        <article class="ch-era"><span class="ch-era__date">Before 1900 · Bonita Springs</span><h3>First communities + Survey</h3><p>People lived here thousands of years before European contact, and the Calusa built thriving communities around Southwest Florida's estuaries. In the 1870s, federal surveyors mapped the upper Imperial River area; the settlement that followed became known as Survey.</p></article>
+        <article class="ch-era"><span class="ch-era__date">1882–1910 · Estero</span><h3>Life along the river</h3><p>Early homesteaders farmed citrus along the Estero River and shipped harvests toward the Gulf. The Koreshan Unity began settling here in 1894, establishing homes, workshops, schools and cultural spaces along the river.</p></article>
+        <article class="ch-era"><span class="ch-era__date">1901–1936 · Bonita Springs</span><h3>A town finds its name</h3><p>Survey gained a post office in 1901 and was later renamed Bonita Springs. The railroad arrived in the early 1920s, the Tamiami Trail opened in 1928, and the Everglades Reptile Gardens—today's Wonder Gardens—welcomed visitors in 1936.</p></article>
+        <article class="ch-era"><span class="ch-era__date">1904–20th century · Estero</span><h3>The Koreshan legacy</h3><p>The Koreshans incorporated a large Town of Estero in 1904; it was abolished in 1907. Their community gradually declined, but surviving structures and riverside grounds remain preserved at Koreshan State Park.</p></article>
+        <article class="ch-era"><span class="ch-era__date">1940s–1999 · Bonita Springs</span><h3>A modern coastal city</h3><p>Air conditioning, a nearby airport, I-75 and the U.S. 41 bypass helped turn a quiet town into a growing coastal community. After decades of expansion, residents voted to incorporate Bonita Springs again in 1999.</p></article>
+        <article class="ch-era"><span class="ch-era__date">2001–2015 · Estero</span><h3>A village again</h3><p>Local residents organized to guide Estero's rapid growth and protect its identity. In 2014, 86 percent of voters supported incorporation; the Village of Estero was established on December 31, with its first council seated in 2015.</p></article>
+        <article class="ch-era"><span class="ch-era__date">Today · Bonita Springs</span><h3>Old Florida, renewed</h3><p>Downtown revitalization around Old 41 and the Imperial River is bringing new energy to the city while landmarks such as the Liles Hotel, Shangri-La Springs and Wonder Gardens keep local history visible.</p></article>
+        <article class="ch-era"><span class="ch-era__date">Today · Estero</span><h3>Growth with a sense of place</h3><p>Estero continues to balance neighborhood growth, regional access and village-scale design with the Estero River, preserved open space and historic places at the center of its identity.</p></article>
       </div>
+      <p class="ch-history__sources">History references: <a href="https://www.cityofbonitasprings.org/about_us/history" target="_blank" rel="noopener">City of Bonita Springs</a> and <a href="https://estero-fl.gov/estero-history/" target="_blank" rel="noopener">Village of Estero</a>.</p>
     </div>
   </section>
 
@@ -315,7 +323,7 @@
           <a href="https://coconutcoastrealtors.org/">About CCOR</a>
         </nav>
       </div>
-      <p class="ch-footer__legal">© 2026 Coconut Coast Organization of REALTORS® · 25300 Bernwood Drive, Suite 7, Bonita Springs, FL 34135 · (239) 992-6771 · Equal Housing Opportunity</p>
+      <p class="ch-footer__legal">© 2026 Coconut Coast Organization of REALTORS® · 25300 Bernwood Drive, Suite 7, Bonita Springs, FL 34135 · (239) 992-6771 · Equal Housing Opportunity<br><small>Photo credits: <a href="https://commons.wikimedia.org/wiki/File:Fort_Myers_Beach_and_Gulf_of_Mexico.JPG" target="_blank" rel="noopener">Sanibel sun</a>, <a href="https://commons.wikimedia.org/wiki/File:Estero_River.jpg" target="_blank" rel="noopener">kitmasterbloke</a>, <a href="https://commons.wikimedia.org/wiki/File:Caloosahatchee_River_sunset_from_Ford_estate_Ft_Myers_(15510875243).jpg" target="_blank" rel="noopener">Russ</a> and <a href="https://commons.wikimedia.org/wiki/File:Naples_FL_pier_seen_from_8th_Avenue_Beach_at_sunset.jpg" target="_blank" rel="noopener">P,TO 19104</a> via Wikimedia Commons.</small></p>
     </div>
   </footer>
 </main>

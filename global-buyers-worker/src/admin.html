@@ -107,10 +107,28 @@
             padding: 2rem;
         }
 
-        /* KPI Grid */
+        /* Section Intro */
+        .admin-intro {
+            margin-bottom: 1.5rem;
+        }
+
+        .admin-intro h1 {
+            font-family: var(--font-display);
+            font-size: 1.6rem;
+            color: var(--ccor-navy);
+            font-weight: 800;
+        }
+
+        .admin-intro p {
+            color: #64748b;
+            font-size: 0.875rem;
+            margin-top: 4px;
+        }
+
+        /* Three-Layer KPI Grid */
         .kpi-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
             gap: 1.25rem;
             margin-bottom: 2rem;
         }
@@ -132,8 +150,12 @@
             border-top-color: var(--ccor-navy);
         }
 
+        .kpi-card--green {
+            border-top-color: #16a34a;
+        }
+
         .kpi-label {
-            font-size: 0.75rem;
+            font-size: 0.72rem;
             font-weight: 700;
             color: #64748b;
             letter-spacing: 0.05em;
@@ -151,23 +173,110 @@
         .kpi-sub {
             font-size: 0.75rem;
             color: #94a3b8;
+            margin-top: 6px;
+        }
+
+        /* Funnel Card */
+        .funnel-card {
+            background: #ffffff;
+            border: 1px solid var(--ccor-border);
+            border-radius: 10px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+        }
+
+        .funnel-steps {
+            display: grid;
+            grid-template-columns: 1fr auto 1fr auto 1fr;
+            align-items: center;
+            gap: 1rem;
+            margin: 1.5rem 0 1rem;
+        }
+
+        @media (max-width: 860px) {
+            .funnel-steps {
+                grid-template-columns: 1fr;
+                gap: 0.75rem;
+            }
+            .funnel-arrow {
+                transform: rotate(90deg);
+                margin: 0 auto;
+            }
+        }
+
+        .funnel-box {
+            background: #f8fafc;
+            border: 1px solid var(--ccor-border);
+            border-radius: 8px;
+            padding: 1.25rem;
+            text-align: center;
+            position: relative;
+        }
+
+        .funnel-box--highlight {
+            background: #f0fdf4;
+            border-color: #bbf7d0;
+        }
+
+        .funnel-box__layer {
+            font-size: 0.7rem;
+            font-weight: 800;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: #64748b;
+            margin-bottom: 4px;
+        }
+
+        .funnel-box__val {
+            font-size: 1.75rem;
+            font-weight: 800;
+            color: var(--ccor-navy);
+        }
+
+        .funnel-box__sub {
+            font-size: 0.75rem;
+            color: #64748b;
             margin-top: 4px;
         }
 
-        /* Content Sections */
-        .grid-two {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(420px, 1fr));
-            gap: 1.75rem;
-            margin-bottom: 2rem;
+        .funnel-arrow {
+            font-size: 1.5rem;
+            color: #94a3b8;
+            font-weight: 800;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
         }
 
+        .funnel-arrow__rate {
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: var(--ccor-teal);
+            background: #f0fdfa;
+            padding: 2px 8px;
+            border-radius: 9999px;
+            border: 1px solid #ccfbf1;
+            margin-bottom: 4px;
+        }
+
+        .funnel-note {
+            font-size: 0.75rem;
+            color: #94a3b8;
+            line-height: 1.4;
+            border-top: 1px solid var(--ccor-border);
+            padding-top: 0.75rem;
+        }
+
+        /* Generic Card */
         .card {
             background: #ffffff;
             border: 1px solid var(--ccor-border);
             border-radius: 10px;
             padding: 1.5rem;
             box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+            margin-bottom: 2rem;
         }
 
         .card__header {
@@ -175,28 +284,60 @@
             justify-content: space-between;
             align-items: center;
             margin-bottom: 1.25rem;
-            padding-bottom: 0.75rem;
-            border-bottom: 1px solid var(--ccor-border);
+            flex-wrap: wrap;
+            gap: 0.5rem;
         }
 
         .card__title {
-            font-size: 0.9375rem;
-            font-weight: 700;
+            font-size: 0.95rem;
+            font-weight: 800;
+            letter-spacing: 0.04em;
             color: var(--ccor-navy);
             text-transform: uppercase;
-            letter-spacing: 0.04em;
         }
 
-        /* Bar Chart Styles */
+        .grid-two {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(420px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        @media (max-width: 500px) {
+            .grid-two {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Tab Switcher */
+        .tab-btn {
+            background: #f1f5f9;
+            border: 1px solid var(--ccor-border);
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: #64748b;
+            padding: 4px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.15s ease;
+        }
+
+        .tab-btn--active {
+            background: var(--ccor-navy);
+            color: #ffffff;
+            border-color: var(--ccor-navy);
+        }
+
+        /* Bar Lists */
         .bar-list {
             display: flex;
             flex-direction: column;
-            gap: 0.875rem;
+            gap: 0.85rem;
         }
 
         .bar-item {
             display: grid;
-            grid-template-columns: 140px 1fr 60px;
+            grid-template-columns: 150px 1fr 90px;
             align-items: center;
             gap: 1rem;
             font-size: 0.8125rem;
@@ -207,21 +348,23 @@
             align-items: center;
             gap: 6px;
             font-weight: 600;
+            color: var(--ccor-charcoal);
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
         }
 
         .bar-item__track {
-            background: #e2e8f0;
-            height: 14px;
+            background: #f1f5f9;
+            height: 10px;
             border-radius: 9999px;
             overflow: hidden;
+            position: relative;
         }
 
         .bar-item__fill {
-            height: 100%;
             background: var(--ccor-teal);
+            height: 100%;
             border-radius: 9999px;
             transition: width 0.4s ease;
         }
@@ -229,118 +372,101 @@
         .bar-item__val {
             text-align: right;
             font-weight: 700;
-            color: #475569;
+            color: var(--ccor-navy);
+            font-variant-numeric: tabular-nums;
         }
 
-        /* Tab Controls */
-        .tab-btn {
-            background: none;
-            border: none;
-            padding: 4px 10px;
-            font-size: 0.75rem;
-            font-weight: 600;
-            color: #64748b;
-            cursor: pointer;
-            border-radius: 4px;
-        }
-
-        .tab-btn--active {
-            background: var(--ccor-navy);
-            color: #ffffff;
-        }
-
-        /* Matrix Table */
+        /* Matrix Cross-Tab Table */
         .matrix-table-wrap {
             overflow-x: auto;
-            margin-top: 1rem;
         }
 
         .matrix-table {
             width: 100%;
             border-collapse: collapse;
             font-size: 0.8125rem;
-        }
-
-        .matrix-table th, .matrix-table td {
-            padding: 8px 12px;
-            text-align: center;
-            border: 1px solid var(--ccor-border);
+            text-align: left;
         }
 
         .matrix-table th {
             background: #f8fafc;
-            font-weight: 700;
-            color: var(--ccor-navy);
+            padding: 10px 14px;
             font-size: 0.75rem;
+            font-weight: 700;
+            color: #64748b;
             text-transform: uppercase;
-        }
-
-        .matrix-table td:first-child, .matrix-table th:first-child {
-            text-align: left;
-            font-weight: 600;
+            border-bottom: 1px solid var(--ccor-border);
             white-space: nowrap;
         }
 
+        .matrix-table td {
+            padding: 10px 14px;
+            border-bottom: 1px solid var(--ccor-border);
+            color: var(--ccor-charcoal);
+        }
+
+        .matrix-table tr:hover {
+            background: #f8fafc;
+        }
+
         .matrix-cell--high {
-            background: rgba(7, 148, 166, 0.2);
-            font-weight: 800;
-            color: var(--ccor-navy);
+            background: rgba(7, 148, 166, 0.08);
+            font-weight: 700;
+            color: var(--ccor-teal);
         }
 
         /* Trend Line SVG Chart */
         .trend-chart-wrap {
-            width: 100%;
             height: 220px;
             position: relative;
+            margin-top: 1rem;
         }
 
         .trend-svg {
             width: 100%;
             height: 100%;
+            overflow: visible;
         }
 
-        /* Contact Profiles Table */
+        /* Leads & Snapshots Tables */
         .table-controls {
             display: flex;
-            flex-wrap: wrap;
-            gap: 0.75rem;
-            margin-bottom: 1rem;
-            align-items: center;
             justify-content: space-between;
+            align-items: center;
+            gap: 1rem;
+            flex-wrap: wrap;
+            margin-bottom: 1rem;
         }
 
         .table-search {
-            padding: 8px 12px;
+            padding: 8px 14px;
+            font-size: 0.8125rem;
             border: 1px solid var(--ccor-border);
             border-radius: 6px;
-            font-size: 0.8125rem;
-            width: 260px;
+            min-width: 260px;
         }
 
         .table-select {
             padding: 8px 12px;
+            font-size: 0.8125rem;
             border: 1px solid var(--ccor-border);
             border-radius: 6px;
-            font-size: 0.8125rem;
             background: #ffffff;
         }
 
         .btn-export {
-            background: var(--ccor-teal);
+            background: var(--ccor-navy);
             color: #ffffff;
             border: none;
             padding: 8px 16px;
             border-radius: 6px;
-            font-size: 0.8125rem;
+            font-size: 0.75rem;
             font-weight: 700;
+            letter-spacing: 0.05em;
             cursor: pointer;
             display: inline-flex;
             align-items: center;
             gap: 6px;
-        }
-
-        .btn-export:hover {
-            background: #057a8a;
         }
 
         .leads-table-wrap {
@@ -360,11 +486,12 @@
         .leads-table th {
             background: #f8fafc;
             padding: 10px 14px;
-            font-size: 0.75rem;
+            font-size: 0.72rem;
             font-weight: 700;
             color: #64748b;
             text-transform: uppercase;
             border-bottom: 1px solid var(--ccor-border);
+            white-space: nowrap;
         }
 
         .leads-table td {
@@ -409,60 +536,19 @@
             color: #64748b;
         }
 
-        /* Detail Modal */
-        .modal-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0, 0, 0, 0.5);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 1000;
-            display: none;
-        }
-
-        .modal-card {
-            background: #ffffff;
-            border-radius: 12px;
-            width: 90%;
-            max-width: 520px;
-            padding: 2rem;
-            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
-        }
-
-        .modal-title {
-            font-size: 1.15rem;
+        .source-tag {
+            font-size: 0.6875rem;
             font-weight: 700;
-            color: var(--ccor-navy);
-            margin-bottom: 1.25rem;
+            padding: 2px 6px;
+            border-radius: 4px;
+            background: #e0f2fe;
+            color: #0369a1;
+            white-space: nowrap;
         }
 
-        .modal-row {
-            display: flex;
-            justify-content: space-between;
-            padding: 8px 0;
-            border-bottom: 1px solid var(--ccor-border);
-            font-size: 0.85rem;
-        }
-
-        .modal-row strong {
-            color: #64748b;
-        }
-
-        .modal-close-btn {
-            margin-top: 1.5rem;
-            background: var(--ccor-navy);
-            color: #ffffff;
-            border: none;
-            padding: 8px 18px;
-            border-radius: 6px;
-            font-size: 0.8125rem;
-            font-weight: 700;
-            cursor: pointer;
-            float: right;
+        .source-tag--manual {
+            background: #fef3c7;
+            color: #92400e;
         }
     </style>
 </head>
@@ -483,30 +569,45 @@
     </header>
 
     <main class="admin-container">
-        <!-- Top KPIs -->
+        <div class="admin-intro">
+            <h1>Global Buyers Intelligence Dashboard</h1>
+            <p>Three-layer analytics tracking country selections, profile selections, and direct contact inquiries.</p>
+        </div>
+
+        <!-- Three-Layer Top KPIs -->
         <div class="kpi-grid">
-            <div class="kpi-card kpi-card--navy">
-                <div class="kpi-label">TOTAL CONTACT PROFILES</div>
+            <div class="kpi-card kpi-card--green">
+                <div class="kpi-label">CONTACT PROFILES</div>
                 <div class="kpi-val" id="kpiTotalLeads">--</div>
-                <div class="kpi-sub">Total buyer submissions</div>
+                <div class="kpi-sub">Explicit inquiries with consent</div>
             </div>
             <div class="kpi-card">
-                <div class="kpi-label">UNIQUE CONTACTS</div>
+                <div class="kpi-label">UNIQUE CONTACT EMAILS</div>
                 <div class="kpi-val" id="kpiUniqueEmails">--</div>
-                <div class="kpi-sub">Distinct email addresses</div>
+                <div class="kpi-sub">Distinct contact emails</div>
+            </div>
+            <div class="kpi-card kpi-card--navy">
+                <div class="kpi-label">COUNTRY SELECTIONS</div>
+                <div class="kpi-val" id="kpiCountrySelections">--</div>
+                <div class="kpi-sub">Session-deduped market clicks</div>
             </div>
             <div class="kpi-card">
-                <div class="kpi-label">LAST 7 DAYS</div>
+                <div class="kpi-label">COUNTRY + GOAL SELECTIONS</div>
+                <div class="kpi-val" id="kpiProfileSelections">--</div>
+                <div class="kpi-sub">Completed personalization (no PII)</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-label">LAST 7 DAYS CONTACTS</div>
                 <div class="kpi-val" id="kpiLeads7d">--</div>
-                <div class="kpi-sub">Recent profile submissions</div>
+                <div class="kpi-sub">Recent contact pace</div>
             </div>
             <div class="kpi-card">
-                <div class="kpi-label">LAST 30 DAYS</div>
+                <div class="kpi-label">LAST 30 DAYS CONTACTS</div>
                 <div class="kpi-val" id="kpiLeads30d">--</div>
-                <div class="kpi-sub">Monthly pace</div>
+                <div class="kpi-sub">Monthly contact volume</div>
             </div>
             <div class="kpi-card kpi-card--orange">
-                <div class="kpi-label">TOP MARKET</div>
+                <div class="kpi-label">TOP COUNTRY</div>
                 <div class="kpi-val" id="kpiTopMarket" style="font-size: 1.45rem;">--</div>
                 <div class="kpi-sub" id="kpiTopMarketShare">--</div>
             </div>
@@ -520,10 +621,47 @@
                 <div class="kpi-val" id="kpiOptInRate">--</div>
                 <div class="kpi-sub" id="kpiOptInCount">-- opted in</div>
             </div>
-            <div class="kpi-card">
-                <div class="kpi-label">PROFILE SELECTIONS</div>
-                <div class="kpi-val" id="kpiTotalSelections">--</div>
-                <div class="kpi-sub">Personalization events (no PII)</div>
+        </div>
+
+        <!-- Funnel Visualization Card -->
+        <div class="funnel-card">
+            <div class="card__header">
+                <div>
+                    <h2 class="card__title">GLOBAL BUYERS FUNNEL</h2>
+                    <span style="font-size: 0.75rem; color: #64748b;">Visualizing visitor journey from initial country selection to profile personalization and contact submission</span>
+                </div>
+            </div>
+            <div class="funnel-steps">
+                <div class="funnel-box">
+                    <div class="funnel-box__layer">LAYER 1 &middot; ANONYMOUS</div>
+                    <div class="funnel-box__val" id="funnelCountryCount">--</div>
+                    <div class="funnel-box__sub">Country Selections</div>
+                </div>
+
+                <div class="funnel-arrow">
+                    <span class="funnel-arrow__rate" id="funnelCountryToProfileRate">--%</span>
+                    <span>&rarr;</span>
+                </div>
+
+                <div class="funnel-box">
+                    <div class="funnel-box__layer">LAYER 2 &middot; ANONYMOUS</div>
+                    <div class="funnel-box__val" id="funnelProfileCount">--</div>
+                    <div class="funnel-box__sub">Country + Goal Selections</div>
+                </div>
+
+                <div class="funnel-arrow">
+                    <span class="funnel-arrow__rate" id="funnelProfileToContactRate">--%</span>
+                    <span>&rarr;</span>
+                </div>
+
+                <div class="funnel-box funnel-box--highlight">
+                    <div class="funnel-box__layer" style="color: #15803d;">LAYER 3 &middot; EXPLICIT CONSENT</div>
+                    <div class="funnel-box__val" id="funnelContactCount" style="color: #15803d;">--</div>
+                    <div class="funnel-box__sub">Contact Profiles (Leads)</div>
+                </div>
+            </div>
+            <div class="funnel-note">
+                <strong>Methodology &amp; Privacy Note:</strong> Country-selection counts are session-deduped events recorded anonymously in <code>gb_market_daily</code>. Country + goal selections are stored in <code>gb_profile_daily</code>. Zero personal information, IP addresses, or device fingerprints are recorded until a visitor explicitly submits the contact profile form with affirmative consent.
             </div>
         </div>
 
@@ -532,10 +670,13 @@
             <!-- Where People Are Joining From -->
             <div class="card">
                 <div class="card__header">
-                    <h2 class="card__title">WHERE PEOPLE ARE JOINING FROM</h2>
+                    <div>
+                        <h2 class="card__title">WHERE PEOPLE ARE JOINING FROM</h2>
+                        <span style="font-size: 0.75rem; color: #64748b;">Breakdown by international market</span>
+                    </div>
                     <div style="display: flex; gap: 4px;">
-                        <button type="button" class="tab-btn tab-btn--active" id="tabMarketLeads">LEADS</button>
-                        <button type="button" class="tab-btn" id="tabMarketSelections">SELECTIONS</button>
+                        <button type="button" class="tab-btn tab-btn--active" id="tabMarketSelections">COUNTRY SELECTIONS</button>
+                        <button type="button" class="tab-btn" id="tabMarketLeads">CONTACT PROFILES</button>
                     </div>
                 </div>
                 <div class="bar-list" id="marketBarList">
@@ -546,10 +687,13 @@
             <!-- What They're Looking For -->
             <div class="card">
                 <div class="card__header">
-                    <h2 class="card__title">WHAT THEY'RE LOOKING FOR</h2>
+                    <div>
+                        <h2 class="card__title">WHAT THEY'RE LOOKING FOR</h2>
+                        <span style="font-size: 0.75rem; color: #64748b;">Breakdown by acquisition goal</span>
+                    </div>
                     <div style="display: flex; gap: 4px;">
-                        <button type="button" class="tab-btn tab-btn--active" id="tabGoalLeads">LEADS</button>
-                        <button type="button" class="tab-btn" id="tabGoalSelections">SELECTIONS</button>
+                        <button type="button" class="tab-btn tab-btn--active" id="tabGoalSelections">GOAL SELECTIONS</button>
+                        <button type="button" class="tab-btn" id="tabGoalLeads">CONTACT PROFILES</button>
                     </div>
                 </div>
                 <div class="bar-list" id="goalBarList">
@@ -559,11 +703,11 @@
         </div>
 
         <!-- Trend Line Chart -->
-        <div class="card" style="margin-bottom: 2rem;">
+        <div class="card">
             <div class="card__header">
                 <div>
-                    <h2 class="card__title">PROFILE INTEREST OVER TIME</h2>
-                    <span style="font-size: 0.75rem; color: #64748b;">Comparing anonymous profile selections vs. contact submissions</span>
+                    <h2 class="card__title">ACTIVITY &amp; INQUIRY TRENDS OVER TIME</h2>
+                    <span style="font-size: 0.75rem; color: #64748b;">Comparing anonymous selections vs. direct contact submissions</span>
                 </div>
                 <div style="display: flex; gap: 4px;" id="trendRangeBtns">
                     <button type="button" class="tab-btn tab-btn--active" data-range="7d">7D</button>
@@ -577,20 +721,23 @@
             </div>
             <div style="display: flex; gap: 1.5rem; justify-content: flex-end; margin-top: 0.5rem; font-size: 0.75rem;">
                 <span style="display: flex; align-items: center; gap: 6px;">
+                    <span style="width: 12px; height: 3px; background: var(--ccor-navy); display: inline-block;"></span> Country Selections
+                </span>
+                <span style="display: flex; align-items: center; gap: 6px;">
                     <span style="width: 12px; height: 3px; background: var(--ccor-teal); display: inline-block;"></span> Profile Selections
                 </span>
                 <span style="display: flex; align-items: center; gap: 6px;">
-                    <span style="width: 12px; height: 3px; background: var(--ccor-orange); display: inline-block;"></span> Contact Submissions
+                    <span style="width: 12px; height: 3px; background: var(--ccor-orange); display: inline-block;"></span> Contact Profiles
                 </span>
             </div>
         </div>
 
         <!-- Country x Goal Matrix -->
-        <div class="card" style="margin-bottom: 2rem;">
+        <div class="card">
             <div class="card__header">
                 <div>
                     <h2 class="card__title">COUNTRY &times; GOAL MATRIX</h2>
-                    <span style="font-size: 0.75rem; color: #64748b;">Cross-tabulation of buyer interest by origin and acquisition objective</span>
+                    <span style="font-size: 0.75rem; color: #64748b;">Cross-tabulation of aggregate buyer interest by origin and acquisition objective (from <code>gb_profile_daily</code>)</span>
                 </div>
             </div>
             <div class="matrix-table-wrap" id="matrixContainer">
@@ -598,12 +745,40 @@
             </div>
         </div>
 
+        <!-- Flight Fare Snapshots Section -->
+        <div class="card" id="flightSnapshotsCard">
+            <div class="card__header">
+                <div>
+                    <h2 class="card__title">FLIGHT FARE SNAPSHOTS</h2>
+                    <span style="font-size: 0.75rem; color: #64748b;">Recent airline offer samples recorded in <code>gb_fare_samples</code></span>
+                </div>
+            </div>
+            <div class="leads-table-wrap">
+                <table class="leads-table">
+                    <thead>
+                        <tr>
+                            <th>Sampled At (UTC)</th>
+                            <th>Origin</th>
+                            <th>Route</th>
+                            <th>Airline / Carrier</th>
+                            <th>Departure &middot; Return</th>
+                            <th>Lowest Sample Fare</th>
+                            <th>Stops / Duration</th>
+                        </tr>
+                    </thead>
+                    <tbody id="flightSnapshotsBody">
+                        <tr><td colspan="7" style="text-align: center; color: #64748b; padding: 1.5rem;">Loading fare snapshots...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
         <!-- Recent Contact Profiles Table -->
         <div class="card">
             <div class="card__header">
                 <div>
-                    <h2 class="card__title">RECENT CONTACT PROFILES</h2>
-                    <span style="font-size: 0.75rem; color: #64748b;">Direct inquiries and saved visitor profiles</span>
+                    <h2 class="card__title">CONTACT PROFILES (LEADS)</h2>
+                    <span style="font-size: 0.75rem; color: #64748b;">Direct inquiries and saved visitor profiles with explicit consent</span>
                 </div>
                 <button type="button" class="btn-export" id="btnExportCsv">
                     <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z"/><path d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708l3 3z"/></svg>
@@ -647,13 +822,14 @@
                             <th>Email</th>
                             <th>Market</th>
                             <th>Goal</th>
-                            <th>Marketing Opt-In</th>
-                            <th>Source / UTM</th>
+                            <th>Source</th>
+                            <th>Opt-In</th>
+                            <th>Campaign / Referrer</th>
                             <th>Action</th>
                         </tr>
                     </thead>
                     <tbody id="leadsTableBody">
-                        <tr><td colspan="8" style="text-align: center; color: #64748b; padding: 2rem;">Loading contact profiles...</td></tr>
+                        <tr><td colspan="9" style="text-align: center; color: #64748b; padding: 2rem;">Loading contact profiles...</td></tr>
                     </tbody>
                 </table>
             </div>
@@ -664,15 +840,6 @@
         </div>
     </main>
 
-    <!-- Detail Modal -->
-    <div class="modal-overlay" id="detailModal">
-        <div class="modal-card">
-            <h3 class="modal-title">Contact Profile Detail</h3>
-            <div id="modalContent"></div>
-            <button type="button" class="modal-close-btn" id="modalCloseBtn">Close</button>
-        </div>
-    </div>
-
     <script>
         (function () {
             'use strict';
@@ -681,8 +848,8 @@
                 summary: null,
                 matrix: null,
                 trends: null,
-                marketMode: 'leads',
-                goalMode: 'leads',
+                marketMode: 'selections',
+                goalMode: 'selections',
                 trendRange: '30d',
                 search: '',
                 marketFilter: '',
@@ -708,7 +875,7 @@
                 vacationRental: 'Vacation + Rental', business: 'Business Opportunity', justExploring: 'Just Exploring'
             };
 
-            // 1. Fetch Summary KPIs & Distributions
+            // 1. Fetch Summary KPIs & Funnel
             function loadSummary() {
                 fetch('/global-buyers-admin/api/summary')
                     .then(r => r.json())
@@ -716,6 +883,7 @@
                         if (!data.ok) return;
                         state.summary = data;
                         renderKPIs(data);
+                        renderFunnel(data.funnel || {});
                         renderMarketBars();
                         renderGoalBars();
                     })
@@ -723,25 +891,34 @@
             }
 
             function renderKPIs(data) {
-                document.getElementById('kpiTotalLeads').textContent = (data.totalLeads || 0).toLocaleString();
+                document.getElementById('kpiTotalLeads').textContent = (data.contactProfiles || 0).toLocaleString();
                 document.getElementById('kpiUniqueEmails').textContent = (data.uniqueEmails || 0).toLocaleString();
+                document.getElementById('kpiCountrySelections').textContent = (data.countrySelections || 0).toLocaleString();
+                document.getElementById('kpiProfileSelections').textContent = (data.profileSelections || 0).toLocaleString();
                 document.getElementById('kpiLeads7d').textContent = (data.leads7d || 0).toLocaleString();
                 document.getElementById('kpiLeads30d').textContent = (data.leads30d || 0).toLocaleString();
 
                 const topM = data.topMarket || { market: 'None', count: 0, share: 0 };
                 document.getElementById('kpiTopMarket').textContent = (flagMap[topM.market] || '') + ' ' + (marketNames[topM.market] || topM.market);
-                document.getElementById('kpiTopMarketShare').textContent = topM.count + ' leads (' + topM.share + '%)';
+                document.getElementById('kpiTopMarketShare').textContent = topM.count + ' contacts (' + topM.share + '%)';
 
                 const topG = data.topGoal || { intent: 'None', count: 0, share: 0 };
                 document.getElementById('kpiTopGoal').textContent = goalNames[topG.intent] || topG.intent;
-                document.getElementById('kpiTopGoalShare').textContent = topG.count + ' leads (' + topG.share + '%)';
+                document.getElementById('kpiTopGoalShare').textContent = topG.count + ' contacts (' + topG.share + '%)';
 
                 const optCount = data.marketingOptIns || 0;
-                const optRate = data.totalLeads > 0 ? Math.round((optCount / data.totalLeads) * 100) : 0;
+                const optRate = data.contactProfiles > 0 ? Math.round((optCount / data.contactProfiles) * 100) : 0;
                 document.getElementById('kpiOptInRate').textContent = optRate + '%';
                 document.getElementById('kpiOptInCount').textContent = optCount + ' opted in';
+            }
 
-                document.getElementById('kpiTotalSelections').textContent = (data.totalSelections || 0).toLocaleString();
+            function renderFunnel(funnel) {
+                document.getElementById('funnelCountryCount').textContent = (funnel.countrySelections || 0).toLocaleString();
+                document.getElementById('funnelProfileCount').textContent = (funnel.profileSelections || 0).toLocaleString();
+                document.getElementById('funnelContactCount').textContent = (funnel.contactProfiles || 0).toLocaleString();
+
+                document.getElementById('funnelCountryToProfileRate').textContent = (funnel.countryToProfilePct || '0.0') + '% of selections';
+                document.getElementById('funnelProfileToContactRate').textContent = (funnel.profileToContactPct || '0.0') + '% of profiles';
             }
 
             function renderMarketBars() {
@@ -763,7 +940,7 @@
                         </div>
                     `;
                 });
-                container.innerHTML = html || '<div style="color: #64748b; font-size: 0.8125rem;">No data recorded yet.</div>';
+                container.innerHTML = html || '<div style="color: #64748b; font-size: 0.8125rem; padding: 1rem 0;">No data recorded yet.</div>';
             }
 
             function renderGoalBars() {
@@ -784,10 +961,10 @@
                         </div>
                     `;
                 });
-                container.innerHTML = html || '<div style="color: #64748b; font-size: 0.8125rem;">No data recorded yet.</div>';
+                container.innerHTML = html || '<div style="color: #64748b; font-size: 0.8125rem; padding: 1rem 0;">No data recorded yet.</div>';
             }
 
-            // 2. Load Matrix
+            // 2. Load Matrix (from gb_profile_daily)
             function loadMatrix() {
                 fetch('/global-buyers-admin/api/matrix')
                     .then(r => r.json())
@@ -849,23 +1026,29 @@
 
                 let maxVal = 5;
                 days.forEach(d => {
-                    if (d.selections > maxVal) maxVal = d.selections;
-                    if (d.leads > maxVal) maxVal = d.leads;
+                    if ((d.countrySelections || 0) > maxVal) maxVal = d.countrySelections;
+                    if ((d.profileSelections || 0) > maxVal) maxVal = d.profileSelections;
+                    if ((d.leads || 0) > maxVal) maxVal = d.leads;
                 });
 
                 const stepX = (w - padX * 2) / (days.length > 1 ? (days.length - 1) : 1);
 
+                let mktPoints = [];
                 let selPoints = [];
                 let leadPoints = [];
 
                 days.forEach((d, i) => {
                     const x = padX + i * stepX;
-                    const ySel = h - padY - (d.selections / maxVal) * (h - padY * 2);
-                    const yLead = h - padY - (d.leads / maxVal) * (h - padY * 2);
+                    const yMkt = h - padY - ((d.countrySelections || 0) / maxVal) * (h - padY * 2);
+                    const ySel = h - padY - ((d.profileSelections || 0) / maxVal) * (h - padY * 2);
+                    const yLead = h - padY - ((d.leads || 0) / maxVal) * (h - padY * 2);
+
+                    mktPoints.push(`${x.toFixed(1)},${yMkt.toFixed(1)}`);
                     selPoints.push(`${x.toFixed(1)},${ySel.toFixed(1)}`);
                     leadPoints.push(`${x.toFixed(1)},${yLead.toFixed(1)}`);
                 });
 
+                const mktPath = 'M ' + mktPoints.join(' L ');
                 const selPath = 'M ' + selPoints.join(' L ');
                 const leadPath = 'M ' + leadPoints.join(' L ');
 
@@ -873,11 +1056,11 @@
                     <line x1="${padX}" y1="${padY}" x2="${w - padX}" y2="${padY}" stroke="#e2e8f0" stroke-dasharray="3,3"/>
                     <line x1="${padX}" y1="${h / 2}" x2="${w - padX}" y2="${h / 2}" stroke="#e2e8f0" stroke-dasharray="3,3"/>
                     <line x1="${padX}" y1="${h - padY}" x2="${w - padX}" y2="${h - padY}" stroke="#cbd5e1"/>
-                    <path d="${selPath}" fill="none" stroke="var(--ccor-teal)" stroke-width="2.5" stroke-linecap="round"/>
+                    <path d="${mktPath}" fill="none" stroke="var(--ccor-navy)" stroke-width="2" stroke-linecap="round"/>
+                    <path d="${selPath}" fill="none" stroke="var(--ccor-teal)" stroke-width="2" stroke-linecap="round"/>
                     <path d="${leadPath}" fill="none" stroke="var(--ccor-orange)" stroke-width="2.5" stroke-linecap="round"/>
                 `;
 
-                // Render Start and End Dates
                 if (days.length > 0) {
                     svg += `<text x="${padX}" y="${h - 4}" fill="#94a3b8" font-size="10" font-family="sans-serif">${days[0].day}</text>`;
                     svg += `<text x="${w - padX}" y="${h - 4}" text-anchor="end" fill="#94a3b8" font-size="10" font-family="sans-serif">${days[days.length - 1].day}</text>`;
@@ -908,7 +1091,7 @@
             function renderLeadsTable(leads, total) {
                 const tbody = document.getElementById('leadsTableBody');
                 if (leads.length === 0) {
-                    tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:#64748b;padding:2rem;">No matching contact profiles found.</td></tr>';
+                    tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;color:#64748b;padding:2rem;">No matching contact profiles found.</td></tr>';
                     document.getElementById('tableCountInfo').textContent = 'Showing 0 of ' + total + ' profiles';
                     return;
                 }
@@ -922,15 +1105,18 @@
                     const goal = goalNames[lead.intent] || lead.intent || 'Unknown';
                     const optClass = lead.marketing_opt_in ? 'opt-badge--yes' : 'opt-badge--no';
                     const optText = lead.marketing_opt_in ? 'YES' : 'NO';
+                    const sourceText = lead.lead_source === 'country_popup' ? 'Country Popup' : 'Brief Manual';
+                    const sourceClass = lead.lead_source === 'country_popup' ? 'source-tag' : 'source-tag source-tag--manual';
                     const utm = lead.utm_source ? (lead.utm_source + (lead.utm_campaign ? ' / ' + lead.utm_campaign : '')) : (lead.referrer_host || 'Direct');
 
                     html += `
                         <tr data-lead-id="${lead.id}">
                             <td style="color:#64748b;font-size:0.75rem;">${dateStr}</td>
                             <td><strong>${name}</strong></td>
-                            <td><a href="mailto:${lead.email}" style="color:var(--ccor-teal);">${lead.email}</a></td>
+                            <td><a href="mailto:${lead.email}" style="color:var(--ccor-teal); text-decoration: none;">${lead.email}</a></td>
                             <td><span>${flag}</span> ${market}</td>
                             <td>${goal}</td>
+                            <td><span class="${sourceClass}">${sourceText}</span></td>
                             <td><span class="opt-badge ${optClass}">${optText}</span></td>
                             <td style="font-size:0.75rem;color:#64748b;">${utm}</td>
                             <td>
@@ -943,7 +1129,6 @@
                 tbody.innerHTML = html;
                 document.getElementById('tableCountInfo').textContent = `Showing ${leads.length} of ${total} profiles`;
 
-                // Bind delete buttons
                 tbody.querySelectorAll('button[data-delete-id]').forEach(btn => {
                     btn.addEventListener('click', function (e) {
                         e.stopPropagation();
@@ -970,14 +1155,47 @@
                     .catch(err => alert('Network error deleting profile.'));
             }
 
-            // Tabs and Controls Event Listeners
-            document.getElementById('tabMarketLeads').addEventListener('click', function () {
-                state.marketMode = 'leads';
-                this.classList.add('tab-btn--active');
-                document.getElementById('tabMarketSelections').classList.remove('tab-btn--active');
-                renderMarketBars();
-            });
+            // 5. Load Flight Fare Snapshots
+            function loadFlightSnapshots() {
+                fetch('/global-buyers-admin/api/flight-snapshots')
+                    .then(r => r.json())
+                    .then(data => {
+                        if (!data.ok) return;
+                        renderFlightSnapshots(data.snapshots || []);
+                    })
+                    .catch(() => {});
+            }
 
+            function renderFlightSnapshots(snapshots) {
+                const tbody = document.getElementById('flightSnapshotsBody');
+                if (snapshots.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:#64748b;padding:1.5rem;">No flight fare snapshots sampled yet. Will populate as scheduled Duffel queries run.</td></tr>';
+                    return;
+                }
+
+                let html = '';
+                snapshots.forEach(s => {
+                    const timeStr = s.sampled_at ? s.sampled_at.substring(0, 16).replace('T', ' ') : '--';
+                    const localPrice = s.local_currency && s.fare_local ? ` (${s.local_currency} ${s.fare_local.toFixed(0)})` : '';
+                    const durationStr = s.duration_minutes ? `${Math.floor(s.duration_minutes / 60)}h ${s.duration_minutes % 60}m` : '--';
+                    const stopsStr = s.stops === 0 ? '<strong style="color:#16a34a;">Nonstop</strong>' : `${s.stops} stop(s)`;
+
+                    html += `
+                        <tr>
+                            <td style="font-size:0.75rem; color:#64748b;">${timeStr}</td>
+                            <td><strong>${s.origin}</strong></td>
+                            <td>${s.origin} &rarr; ${s.destination || 'RSW'}</td>
+                            <td>${s.carrier || 'Airline Partner'}</td>
+                            <td style="font-size:0.75rem;">${s.departure_date} &rarr; ${s.return_date}</td>
+                            <td><strong>$${s.fare_usd ? s.fare_usd.toFixed(2) : '--'} USD</strong><span style="font-size:0.75rem; color:#64748b;">${localPrice}</span></td>
+                            <td>${stopsStr} &middot; ${durationStr}</td>
+                        </tr>
+                    `;
+                });
+                tbody.innerHTML = html;
+            }
+
+            // Tab Buttons
             document.getElementById('tabMarketSelections').addEventListener('click', function () {
                 state.marketMode = 'selections';
                 this.classList.add('tab-btn--active');
@@ -985,17 +1203,24 @@
                 renderMarketBars();
             });
 
-            document.getElementById('tabGoalLeads').addEventListener('click', function () {
-                state.goalMode = 'leads';
+            document.getElementById('tabMarketLeads').addEventListener('click', function () {
+                state.marketMode = 'leads';
                 this.classList.add('tab-btn--active');
-                document.getElementById('tabGoalSelections').classList.remove('tab-btn--active');
-                renderGoalBars();
+                document.getElementById('tabMarketSelections').classList.remove('tab-btn--active');
+                renderMarketBars();
             });
 
             document.getElementById('tabGoalSelections').addEventListener('click', function () {
                 state.goalMode = 'selections';
                 this.classList.add('tab-btn--active');
                 document.getElementById('tabGoalLeads').classList.remove('tab-btn--active');
+                renderGoalBars();
+            });
+
+            document.getElementById('tabGoalLeads').addEventListener('click', function () {
+                state.goalMode = 'leads';
+                this.classList.add('tab-btn--active');
+                document.getElementById('tabGoalSelections').classList.remove('tab-btn--active');
                 renderGoalBars();
             });
 
@@ -1035,8 +1260,8 @@
             loadMatrix();
             loadTrends('30d');
             loadLeads();
+            loadFlightSnapshots();
 
-            // Populate auth user badge from header if exposed
             fetch('/global-buyers-admin/api/summary')
                 .then(r => {
                     const authHeader = r.headers.get('x-authenticated-user');

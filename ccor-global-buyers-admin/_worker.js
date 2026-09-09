@@ -6,26 +6,55 @@
 const ALLOWED_MARKETS = ['canada', 'germany', 'brazil', 'uk', 'colombia', 'argentina', 'mexico', 'otherLatam', 'other'];
 const ALLOWED_INTENTS = ['secondHome', 'investment', 'futureMove', 'vacationRental', 'business', 'justExploring'];
 
+/**
+ * Cloudflare Access JWT Parser & Authenticator
+ * Validates JWT token structure, expiration, and user email against authorized list.
+ * Strips all caller-controlled dev bypasses.
+ */
 function authenticateAdmin(request, env) {
-    let email = request.headers.get('Cf-Access-Authenticated-User-Email');
+    const jwt = request.headers.get('Cf-Access-Jwt-Assertion');
+    const headerEmail = request.headers.get('Cf-Access-Authenticated-User-Email');
 
-    // Dev/preview bypass
-    if (!email && (env.ENVIRONMENT === 'development' || request.headers.get('x-dev-admin') === 'true')) {
-        email = request.headers.get('x-admin-email') || 'kevin@coconutcoastrealtors.org';
+    if (!jwt && !headerEmail) {
+        return { authenticated: false, error: 'Cloudflare Access authentication required', status: 401 };
     }
 
-    if (!email) {
-        return { authenticated: false, error: 'Cloudflare Access authentication required', status: 401 };
+    let authenticatedEmail = null;
+
+    if (jwt) {
+        try {
+            const parts = jwt.split('.');
+            if (parts.length !== 3) {
+                return { authenticated: false, error: 'Malformed Cloudflare Access JWT', status: 401 };
+            }
+            const payloadRaw = atob(parts[1].replace(/-/g, '+').replace(/_/g, '/'));
+            const payload = JSON.parse(payloadRaw);
+
+            const nowSec = Math.floor(Date.now() / 1000);
+            if (payload.exp && payload.exp < nowSec) {
+                return { authenticated: false, error: 'Cloudflare Access token has expired', status: 401 };
+            }
+
+            authenticatedEmail = payload.email || payload.preferred_username || headerEmail;
+        } catch (e) {
+            return { authenticated: false, error: 'Invalid Cloudflare Access JWT structure', status: 401 };
+        }
+    } else {
+        authenticatedEmail = headerEmail;
+    }
+
+    if (!authenticatedEmail) {
+        return { authenticated: false, error: 'No authenticated user identity located in request', status: 401 };
     }
 
     if (env.ADMIN_EMAILS) {
         const allowedList = env.ADMIN_EMAILS.split(',').map(e => e.trim().toLowerCase());
-        if (!allowedList.includes(email.toLowerCase())) {
-            return { authenticated: false, error: 'User email not authorized for CCOR Global Buyers Administration', status: 403 };
+        if (!allowedList.includes(authenticatedEmail.toLowerCase())) {
+            return { authenticated: false, error: `User email (${authenticatedEmail}) is not authorized for CCOR Global Buyers Administration`, status: 403 };
         }
     }
 
-    return { authenticated: true, email };
+    return { authenticated: true, email: authenticatedEmail };
 }
 
 function jsonResponse(data, status = 200, extraHeaders = {}) {
@@ -53,11 +82,9 @@ export default {
         // 1. Check Authentication for all admin routes & assets
         const auth = authenticateAdmin(request, env);
         if (!auth.authenticated) {
-            // If requesting API, return JSON error
             if (path.includes('/api/')) {
                 return jsonResponse({ ok: false, error: auth.error }, auth.status, adminHeaders);
             }
-            // Return clean HTML prompt for Cloudflare Access
             return new Response(`<!DOCTYPE html>
 <html>
 <head>
@@ -99,49 +126,77 @@ export default {
 
             // A. If D1 is directly available on Pages, execute queries
             if (env.GLOBAL_BUYERS_DB) {
-                // Summary API
+                // Summary API (Three-layer metric model + Funnel)
                 if (apiSubPath === '/summary' && request.method === 'GET') {
                     try {
                         const now = new Date();
                         const d7 = new Date(now.getTime() - 7 * 86400000).toISOString();
                         const d30 = new Date(now.getTime() - 30 * 86400000).toISOString();
 
-                        const [totalRow, uniqueRow, leads7dRow, leads30dRow, optInRow, topMarketRow, topGoalRow, totalSelRow] = await Promise.all([
+                        const [
+                            totalCountrySelRow,
+                            totalProfileSelRow,
+                            totalLeadsRow,
+                            uniqueEmailsRow,
+                            leads7dRow,
+                            leads30dRow,
+                            optInRow,
+                            topMarketRow,
+                            topGoalRow
+                        ] = await Promise.all([
+                            env.GLOBAL_BUYERS_DB.prepare('SELECT SUM(selection_count) AS count FROM gb_market_daily').first(),
+                            env.GLOBAL_BUYERS_DB.prepare('SELECT SUM(selection_count) AS count FROM gb_profile_daily').first(),
                             env.GLOBAL_BUYERS_DB.prepare('SELECT COUNT(*) AS count FROM gb_leads').first(),
                             env.GLOBAL_BUYERS_DB.prepare('SELECT COUNT(DISTINCT email) AS count FROM gb_leads').first(),
                             env.GLOBAL_BUYERS_DB.prepare('SELECT COUNT(*) AS count FROM gb_leads WHERE created_at >= ?').bind(d7).first(),
                             env.GLOBAL_BUYERS_DB.prepare('SELECT COUNT(*) AS count FROM gb_leads WHERE created_at >= ?').bind(d30).first(),
                             env.GLOBAL_BUYERS_DB.prepare('SELECT COUNT(*) AS count FROM gb_leads WHERE marketing_opt_in = 1').first(),
                             env.GLOBAL_BUYERS_DB.prepare('SELECT market, COUNT(*) AS count FROM gb_leads GROUP BY market ORDER BY count DESC LIMIT 1').first(),
-                            env.GLOBAL_BUYERS_DB.prepare('SELECT intent, COUNT(*) AS count FROM gb_leads GROUP BY intent ORDER BY count DESC LIMIT 1').first(),
-                            env.GLOBAL_BUYERS_DB.prepare('SELECT SUM(selection_count) AS count FROM gb_profile_daily').first()
+                            env.GLOBAL_BUYERS_DB.prepare('SELECT intent, COUNT(*) AS count FROM gb_leads GROUP BY intent ORDER BY count DESC LIMIT 1').first()
                         ]);
 
-                        const [marketLeadsRes, marketSelRes, goalLeadsRes, goalSelRes] = await Promise.all([
-                            env.GLOBAL_BUYERS_DB.prepare('SELECT market, COUNT(*) AS count FROM gb_leads GROUP BY market ORDER BY count DESC').all(),
+                        const [mktSelRes, mktProfRes, mktLeadsRes, goalSelRes, goalLeadsRes] = await Promise.all([
+                            env.GLOBAL_BUYERS_DB.prepare('SELECT market, SUM(selection_count) AS count FROM gb_market_daily GROUP BY market ORDER BY count DESC').all(),
                             env.GLOBAL_BUYERS_DB.prepare('SELECT market, SUM(selection_count) AS count FROM gb_profile_daily GROUP BY market ORDER BY count DESC').all(),
-                            env.GLOBAL_BUYERS_DB.prepare('SELECT intent, COUNT(*) AS count FROM gb_leads GROUP BY intent ORDER BY count DESC').all(),
-                            env.GLOBAL_BUYERS_DB.prepare('SELECT intent, SUM(selection_count) AS count FROM gb_profile_daily GROUP BY intent ORDER BY count DESC').all()
+                            env.GLOBAL_BUYERS_DB.prepare('SELECT market, COUNT(*) AS count FROM gb_leads GROUP BY market ORDER BY count DESC').all(),
+                            env.GLOBAL_BUYERS_DB.prepare('SELECT intent, SUM(selection_count) AS count FROM gb_profile_daily GROUP BY intent ORDER BY count DESC').all(),
+                            env.GLOBAL_BUYERS_DB.prepare('SELECT intent, COUNT(*) AS count FROM gb_leads GROUP BY intent ORDER BY count DESC').all()
                         ]);
 
-                        const totalLeads = totalRow?.count || 0;
+                        const countrySelections = totalCountrySelRow?.count || 0;
+                        const profileSelections = totalProfileSelRow?.count || 0;
+                        const contactProfiles = totalLeadsRow?.count || 0;
+                        const uniqueEmails = uniqueEmailsRow?.count || 0;
+
+                        const funnel = {
+                            countrySelections,
+                            profileSelections,
+                            contactProfiles,
+                            countryToProfilePct: countrySelections > 0 ? ((profileSelections / countrySelections) * 100).toFixed(1) : '0.0',
+                            profileToContactPct: profileSelections > 0 ? ((contactProfiles / profileSelections) * 100).toFixed(1) : '0.0',
+                            countryToContactPct: countrySelections > 0 ? ((contactProfiles / countrySelections) * 100).toFixed(1) : '0.0'
+                        };
+
                         const topMCount = topMarketRow?.count || 0;
                         const topGCount = topGoalRow?.count || 0;
 
                         return jsonResponse({
                             ok: true,
-                            totalLeads,
-                            uniqueEmails: uniqueRow?.count || 0,
+                            countrySelections,
+                            profileSelections,
+                            contactProfiles,
+                            uniqueEmails,
                             leads7d: leads7dRow?.count || 0,
                             leads30d: leads30dRow?.count || 0,
                             marketingOptIns: optInRow?.count || 0,
-                            totalSelections: totalSelRow?.count || 0,
-                            topMarket: topMarketRow ? { market: topMarketRow.market, count: topMCount, share: totalLeads > 0 ? Math.round((topMCount / totalLeads) * 100) : 0 } : null,
-                            topGoal: topGoalRow ? { intent: topGoalRow.intent, count: topGCount, share: totalLeads > 0 ? Math.round((topGCount / totalLeads) * 100) : 0 } : null,
-                            marketLeads: marketLeadsRes.results || [],
-                            marketSelections: marketSelRes.results || [],
-                            goalLeads: goalLeadsRes.results || [],
-                            goalSelections: goalSelRes.results || []
+                            topMarket: topMarketRow ? { market: topMarketRow.market, count: topMCount, share: contactProfiles > 0 ? Math.round((topMCount / contactProfiles) * 100) : 0 } : null,
+                            topGoal: topGoalRow ? { intent: topGoalRow.intent, count: topGCount, share: contactProfiles > 0 ? Math.round((topGCount / contactProfiles) * 100) : 0 } : null,
+                            funnel,
+                            marketSelections: mktSelRes.results || [],
+                            marketProfiles: mktProfRes.results || [],
+                            marketLeads: mktLeadsRes.results || [],
+                            goalSelections: goalSelRes.results || [],
+                            goalLeads: goalLeadsRes.results || []
                         }, 200, adminHeaders);
                     } catch (err) {
                         return jsonResponse({ ok: false, error: err.message }, 500, adminHeaders);
@@ -152,8 +207,8 @@ export default {
                 if (apiSubPath === '/matrix' && request.method === 'GET') {
                     try {
                         const res = await env.GLOBAL_BUYERS_DB.prepare(`
-                            SELECT market, intent, COUNT(*) as count
-                            FROM gb_leads
+                            SELECT market, intent, SUM(selection_count) as count
+                            FROM gb_profile_daily
                             GROUP BY market, intent
                         `).all();
 
@@ -180,30 +235,23 @@ export default {
 
                         const startDate = new Date(Date.now() - daysBack * 86400000).toISOString().split('T')[0];
 
-                        const [selRes, leadRes] = await Promise.all([
-                            env.GLOBAL_BUYERS_DB.prepare(`
-                                SELECT day, SUM(selection_count) as selections
-                                FROM gb_profile_daily
-                                WHERE day >= ?
-                                GROUP BY day
-                                ORDER BY day ASC
-                            `).bind(startDate).all(),
-                            env.GLOBAL_BUYERS_DB.prepare(`
-                                SELECT substr(created_at, 1, 10) as day, COUNT(*) as leads
-                                FROM gb_leads
-                                WHERE created_at >= ?
-                                GROUP BY substr(created_at, 1, 10)
-                                ORDER BY day ASC
-                            `).bind(startDate).all()
+                        const [mktByDay, selByDay, leadsByDay] = await Promise.all([
+                            env.GLOBAL_BUYERS_DB.prepare('SELECT day, SUM(selection_count) as count FROM gb_market_daily WHERE day >= ? GROUP BY day ORDER BY day ASC').bind(startDate).all(),
+                            env.GLOBAL_BUYERS_DB.prepare('SELECT day, SUM(selection_count) as count FROM gb_profile_daily WHERE day >= ? GROUP BY day ORDER BY day ASC').bind(startDate).all(),
+                            env.GLOBAL_BUYERS_DB.prepare('SELECT SUBSTR(created_at, 1, 10) as day, COUNT(*) as count FROM gb_leads WHERE created_at >= ? GROUP BY day ORDER BY day ASC').bind(startDate).all()
                         ]);
 
                         const dayMap = {};
-                        (selRes.results || []).forEach(r => {
-                            dayMap[r.day] = { day: r.day, selections: r.selections, leads: 0 };
+                        (mktByDay.results || []).forEach(r => {
+                            dayMap[r.day] = { day: r.day, countrySelections: r.count, profileSelections: 0, leads: 0 };
                         });
-                        (leadRes.results || []).forEach(r => {
-                            if (!dayMap[r.day]) dayMap[r.day] = { day: r.day, selections: 0, leads: 0 };
-                            dayMap[r.day].leads = r.leads;
+                        (selByDay.results || []).forEach(r => {
+                            if (!dayMap[r.day]) dayMap[r.day] = { day: r.day, countrySelections: 0, profileSelections: 0, leads: 0 };
+                            dayMap[r.day].profileSelections = r.count;
+                        });
+                        (leadsByDay.results || []).forEach(r => {
+                            if (!dayMap[r.day]) dayMap[r.day] = { day: r.day, countrySelections: 0, profileSelections: 0, leads: 0 };
+                            dayMap[r.day].leads = r.count;
                         });
 
                         const sortedDays = Object.values(dayMap).sort((a, b) => a.day.localeCompare(b.day));
@@ -248,7 +296,7 @@ export default {
                         const listQuery = `
                             SELECT id, created_at, first_name, last_name, email, market, country_code,
                                    intent, marketing_opt_in, consent, consent_version, referrer_host,
-                                   utm_source, utm_medium, utm_campaign
+                                   utm_source, utm_medium, utm_campaign, lead_source
                             FROM gb_leads
                             WHERE ${whereClause}
                             ORDER BY created_at DESC
@@ -265,6 +313,23 @@ export default {
                             page,
                             limit
                         }, 200, adminHeaders);
+                    } catch (err) {
+                        return jsonResponse({ ok: false, error: err.message }, 500, adminHeaders);
+                    }
+                }
+
+                // Flight Snapshots API
+                if (apiSubPath === '/flight-snapshots' && request.method === 'GET') {
+                    try {
+                        const res = await env.GLOBAL_BUYERS_DB.prepare(`
+                            SELECT id, sampled_at, market, origin, destination, departure_date, return_date,
+                                   fare_usd, local_currency, fare_local, carrier, stops, duration_minutes
+                            FROM gb_fare_samples
+                            ORDER BY sampled_at DESC
+                            LIMIT 50
+                        `).all();
+
+                        return jsonResponse({ ok: true, snapshots: res.results || [] }, 200, adminHeaders);
                     } catch (err) {
                         return jsonResponse({ ok: false, error: err.message }, 500, adminHeaders);
                     }
@@ -290,13 +355,13 @@ export default {
                     try {
                         const res = await env.GLOBAL_BUYERS_DB.prepare(`
                             SELECT created_at, first_name, last_name, email, market, country_code,
-                                   intent, marketing_opt_in, consent_version, utm_source, utm_medium, utm_campaign
+                                   intent, marketing_opt_in, consent_version, utm_source, utm_medium, utm_campaign, lead_source
                             FROM gb_leads
                             ORDER BY created_at DESC
                         `).all();
 
                         const rows = res.results || [];
-                        const headers = ['created_at', 'first_name', 'last_name', 'email', 'market', 'country_code', 'intent', 'marketing_opt_in', 'consent_version', 'utm_source', 'utm_medium', 'utm_campaign'];
+                        const headers = ['created_at', 'first_name', 'last_name', 'email', 'market', 'country_code', 'intent', 'marketing_opt_in', 'consent_version', 'utm_source', 'utm_medium', 'utm_campaign', 'lead_source'];
 
                         let csv = headers.join(',') + '\n';
                         rows.forEach(r => {
@@ -321,7 +386,7 @@ export default {
                 }
             }
 
-            // B. If D1 is not directly attached on Pages, proxy to Worker API seamlessly
+            // B. If D1 is not directly attached on Pages, proxy to Worker API securely
             const workerBase = env.WORKER_API_BASE || 'https://ccor-global-buyers-api.bonitaspringsrealtors.workers.dev';
             const workerTargetUrl = `${workerBase}/global-buyers-admin/api${apiSubPath}${url.search}`;
 
@@ -330,13 +395,10 @@ export default {
             if (accept) proxyHeaders.set('Accept', accept);
             const contentType = request.headers.get('Content-Type');
             if (contentType) proxyHeaders.set('Content-Type', contentType);
+            if (request.headers.get('Cf-Access-Jwt-Assertion')) {
+                proxyHeaders.set('Cf-Access-Jwt-Assertion', request.headers.get('Cf-Access-Jwt-Assertion'));
+            }
             proxyHeaders.set('Cf-Access-Authenticated-User-Email', auth.email);
-            if (request.headers.get('x-dev-admin') === 'true') {
-                proxyHeaders.set('x-dev-admin', 'true');
-            }
-            if (request.headers.get('x-admin-email')) {
-                proxyHeaders.set('x-admin-email', request.headers.get('x-admin-email'));
-            }
 
             const proxyRes = await fetch(workerTargetUrl, {
                 method: request.method,
