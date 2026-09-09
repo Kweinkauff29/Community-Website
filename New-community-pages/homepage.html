@@ -1,0 +1,341 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Coconut Coast Lifestyles | Southwest Florida</title>
+<!--
+  COCONUT COAST LIFESTYLES — HOMEPAGE
+  Self-contained WordPress/Elementor HTML fragment.
+  Paste into one full-width HTML widget with the theme page title hidden.
+-->
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600&family=Poppins:wght@400;500;600&display=swap');
+
+  #ccor-home {
+    --navy: #102f59;
+    --deep: #071b35;
+    --teal: #0794a6;
+    --aqua: #47c4d2;
+    --orange: #f59a16;
+    --ivory: #fcfaf5;
+    --sand: #f6f2e9;
+    --ink: #132644;
+    --muted: #627084;
+    --line: rgba(16, 47, 89, .14);
+    --sans: "Poppins", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    --display: "Oswald", "Arial Narrow", sans-serif;
+    color: var(--ink);
+    background: var(--ivory);
+    font-family: var(--sans);
+    font-size: 16px;
+    line-height: 1.6;
+    overflow: hidden;
+    width: 100%;
+  }
+
+  #ccor-home *, #ccor-home *::before, #ccor-home *::after { box-sizing: border-box; }
+  #ccor-home * { margin: 0; }
+  #ccor-home a { color: inherit; text-decoration: none; }
+  #ccor-home img { display: block; max-width: 100%; }
+  #ccor-home button { font: inherit; }
+  #ccor-home a:focus-visible, #ccor-home button:focus-visible { outline: 3px solid var(--orange); outline-offset: 4px; }
+  #ccor-home [id] { scroll-margin-top: 90px; }
+
+  #ccor-home .ch-shell { width: min(1180px, calc(100% - 40px)); margin-inline: auto; }
+  #ccor-home .ch-kicker { color: var(--teal); font-size: .75rem; font-weight: 600; letter-spacing: .19em; text-transform: uppercase; }
+  #ccor-home .ch-kicker::before { content: ""; display: inline-block; width: 28px; height: 2px; margin: 0 12px 4px 0; background: currentColor; }
+  #ccor-home .ch-display { font-family: var(--display); font-size: clamp(2.8rem, 7vw, 6rem); font-weight: 500; letter-spacing: -.025em; line-height: .94; text-transform: uppercase; }
+  #ccor-home .ch-title { font-family: var(--display); font-size: clamp(2.15rem, 5vw, 4.5rem); font-weight: 500; letter-spacing: -.02em; line-height: 1; text-transform: uppercase; }
+  #ccor-home .ch-lead { color: var(--muted); font-size: clamp(1rem, 1.5vw, 1.17rem); max-width: 680px; }
+  #ccor-home .ch-btn { align-items: center; border: 1px solid transparent; display: inline-flex; font-size: .78rem; font-weight: 600; gap: 14px; justify-content: center; letter-spacing: .11em; min-height: 50px; padding: 0 23px; text-transform: uppercase; transition: transform .2s ease, background .2s ease, border-color .2s ease; }
+  #ccor-home .ch-btn:hover { transform: translateY(-2px); }
+  #ccor-home .ch-btn--orange { background: var(--orange); color: var(--deep); }
+  #ccor-home .ch-btn--orange:hover { background: #ffad2f; }
+  #ccor-home .ch-btn--ghost { border-color: rgba(255,255,255,.52); color: #fff; }
+  #ccor-home .ch-btn--ghost:hover { background: #fff; color: var(--deep); }
+  #ccor-home .ch-arrow { font-size: 1.15rem; }
+
+  #ccor-home .ch-hero { min-height: 760px; position: relative; color: #fff; background: var(--deep); }
+  #ccor-home .ch-hero__image { height: 100%; inset: 0; object-fit: cover; position: absolute; width: 100%; }
+  #ccor-home .ch-hero::after { background: linear-gradient(90deg, rgba(7,27,53,.96) 0%, rgba(7,27,53,.76) 43%, rgba(7,27,53,.28) 78%, rgba(7,27,53,.12) 100%), linear-gradient(0deg, rgba(7,27,53,.42), transparent 55%); content: ""; inset: 0; position: absolute; }
+  #ccor-home .ch-nav { border-bottom: 1px solid rgba(255,255,255,.18); position: relative; z-index: 4; }
+  #ccor-home .ch-nav__inner { align-items: center; display: flex; justify-content: space-between; min-height: 104px; }
+  #ccor-home .ch-brand { align-items: center; display: flex; gap: 16px; min-width: 260px; }
+  #ccor-home .ch-brand img { filter: brightness(0) invert(1); height: auto; width: 148px; }
+  #ccor-home .ch-brand__text { border-left: 1px solid rgba(255,255,255,.26); font-size: .58rem; letter-spacing: .13em; line-height: 1.5; padding-left: 15px; text-transform: uppercase; }
+  #ccor-home .ch-links { align-items: center; display: flex; gap: clamp(14px, 2vw, 30px); list-style: none; padding: 0; }
+  #ccor-home .ch-links a { color: rgba(255,255,255,.88); font-size: .73rem; font-weight: 500; letter-spacing: .08em; text-transform: uppercase; }
+  #ccor-home .ch-links a:hover { color: var(--aqua); }
+  #ccor-home .ch-links .ch-links__cta { border: 1px solid rgba(255,255,255,.55); padding: 12px 15px; }
+  #ccor-home .ch-menu { background: transparent; border: 1px solid rgba(255,255,255,.45); color: #fff; cursor: pointer; display: none; font-size: .75rem; letter-spacing: .12em; padding: 11px 13px; text-transform: uppercase; }
+  #ccor-home .ch-hero__content { align-items: flex-end; display: grid; gap: 50px; grid-template-columns: minmax(0, 760px) 1fr; min-height: 655px; padding-block: 90px 72px; position: relative; z-index: 2; }
+  #ccor-home .ch-hero .ch-kicker { color: var(--aqua); margin-bottom: 25px; }
+  #ccor-home .ch-hero h1 { max-width: 760px; }
+  #ccor-home .ch-hero__accent { color: var(--aqua); display: block; }
+  #ccor-home .ch-hero__copy { color: rgba(255,255,255,.75); font-size: clamp(1rem, 1.5vw, 1.2rem); margin-top: 28px; max-width: 620px; }
+  #ccor-home .ch-actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 34px; }
+  #ccor-home .ch-hero__aside { border-left: 1px solid rgba(255,255,255,.22); color: rgba(255,255,255,.73); font-size: .76rem; letter-spacing: .12em; padding: 18px 0 18px 25px; text-transform: uppercase; }
+  #ccor-home .ch-hero__aside strong { color: #fff; display: block; font-family: var(--display); font-size: 2.1rem; font-weight: 500; letter-spacing: 0; margin-top: 6px; }
+
+  #ccor-home .ch-intro { background: #fff; padding: clamp(76px, 10vw, 130px) 0; }
+  #ccor-home .ch-intro__grid { align-items: end; display: grid; gap: 70px; grid-template-columns: 1.1fr .9fr; }
+  #ccor-home .ch-intro .ch-title { margin: 18px 0 0; }
+  #ccor-home .ch-intro__copy { border-left: 1px solid var(--line); padding-left: 34px; }
+  #ccor-home .ch-intro__copy p + p { margin-top: 18px; }
+
+  #ccor-home .ch-explore { background: var(--sand); padding: clamp(72px, 9vw, 120px) 0; }
+  #ccor-home .ch-heading-row { align-items: end; display: flex; gap: 35px; justify-content: space-between; margin-bottom: 45px; }
+  #ccor-home .ch-heading-row .ch-title { margin-top: 16px; }
+  #ccor-home .ch-heading-row .ch-lead { max-width: 440px; }
+  #ccor-home .ch-grid { display: grid; gap: 14px; grid-template-columns: repeat(12, 1fr); }
+  #ccor-home .ch-card { min-height: 360px; overflow: hidden; position: relative; }
+  #ccor-home .ch-card:nth-child(1), #ccor-home .ch-card:nth-child(4) { grid-column: span 7; }
+  #ccor-home .ch-card:nth-child(2), #ccor-home .ch-card:nth-child(3) { grid-column: span 5; }
+  #ccor-home .ch-card img { height: 100%; inset: 0; object-fit: cover; position: absolute; transition: transform .6s cubic-bezier(.2,.7,.2,1); width: 100%; }
+  #ccor-home .ch-card::after { background: linear-gradient(0deg, rgba(7,27,53,.92), rgba(7,27,53,.04) 70%); content: ""; inset: 0; position: absolute; }
+  #ccor-home .ch-card:hover img { transform: scale(1.035); }
+  #ccor-home .ch-card__content { bottom: 0; color: #fff; left: 0; padding: 32px; position: absolute; right: 0; z-index: 2; }
+  #ccor-home .ch-card__num { color: var(--aqua); font-size: .72rem; letter-spacing: .14em; }
+  #ccor-home .ch-card h3 { font-family: var(--display); font-size: clamp(2rem, 4vw, 3.5rem); font-weight: 500; line-height: 1; margin: 8px 0 5px; text-transform: uppercase; }
+  #ccor-home .ch-card p { color: rgba(255,255,255,.76); font-size: .87rem; }
+
+  #ccor-home .ch-places { background: var(--ivory); padding: clamp(75px, 10vw, 132px) 0; }
+  #ccor-home .ch-place-grid { display: grid; gap: 1px; grid-template-columns: 1fr 1fr; margin-top: 45px; background: var(--line); border: 1px solid var(--line); }
+  #ccor-home .ch-place { background: var(--ivory); padding: clamp(30px, 5vw, 58px); transition: background .2s ease; }
+  #ccor-home .ch-place:hover { background: #fff; }
+  #ccor-home .ch-place__label { color: var(--teal); font-size: .71rem; font-weight: 600; letter-spacing: .14em; text-transform: uppercase; }
+  #ccor-home .ch-place h3 { font-family: var(--display); font-size: clamp(2rem, 4.3vw, 4rem); font-weight: 500; line-height: 1; margin: 19px 0 16px; text-transform: uppercase; }
+  #ccor-home .ch-place p { color: var(--muted); max-width: 470px; }
+  #ccor-home .ch-text-link { border-bottom: 2px solid var(--orange); display: inline-flex; font-size: .75rem; font-weight: 600; letter-spacing: .1em; margin-top: 25px; padding-bottom: 5px; text-transform: uppercase; }
+  #ccor-home .ch-text-link:hover { color: var(--teal); }
+
+  #ccor-home .ch-global { background: var(--deep); color: #fff; min-height: 610px; overflow: hidden; position: relative; }
+  #ccor-home .ch-global__image { height: 100%; inset: 0 0 0 50%; object-fit: cover; position: absolute; width: 50%; }
+  #ccor-home .ch-global::after { background: linear-gradient(90deg, var(--deep) 50%, rgba(7,27,53,.35) 78%, rgba(7,27,53,.16)); content: ""; inset: 0; position: absolute; }
+  #ccor-home .ch-global__content { max-width: 610px; padding-block: clamp(85px, 11vw, 140px); position: relative; z-index: 2; }
+  #ccor-home .ch-global .ch-kicker { color: var(--aqua); }
+  #ccor-home .ch-global .ch-title { margin: 19px 0 22px; }
+  #ccor-home .ch-global p { color: rgba(255,255,255,.72); max-width: 560px; }
+
+  #ccor-home .ch-history { background: #fff; padding: clamp(75px, 10vw, 130px) 0; }
+  #ccor-home .ch-timeline { display: grid; gap: 0; grid-template-columns: repeat(4, 1fr); margin-top: 52px; }
+  #ccor-home .ch-era { border-top: 2px solid var(--navy); padding: 28px 26px 0 0; position: relative; }
+  #ccor-home .ch-era::before { background: var(--orange); border: 5px solid #fff; border-radius: 50%; box-shadow: 0 0 0 1px var(--line); content: ""; height: 16px; left: 0; position: absolute; top: -9px; width: 16px; }
+  #ccor-home .ch-era__date { color: var(--teal); font-size: .7rem; font-weight: 600; letter-spacing: .13em; text-transform: uppercase; }
+  #ccor-home .ch-era h3 { font-family: var(--display); font-size: 1.55rem; font-weight: 500; line-height: 1.1; margin: 12px 0 10px; text-transform: uppercase; }
+  #ccor-home .ch-era p { color: var(--muted); font-size: .88rem; }
+
+  #ccor-home .ch-cta { background: var(--teal); color: #fff; padding: 70px 0; }
+  #ccor-home .ch-cta__inner { align-items: center; display: flex; gap: 30px; justify-content: space-between; }
+  #ccor-home .ch-cta h2 { font-family: var(--display); font-size: clamp(2.3rem, 5vw, 4.7rem); font-weight: 500; line-height: .98; text-transform: uppercase; }
+  #ccor-home .ch-cta p { color: rgba(255,255,255,.8); margin-top: 13px; }
+  #ccor-home .ch-footer { background: var(--deep); color: rgba(255,255,255,.66); padding: 52px 0 34px; }
+  #ccor-home .ch-footer__top { align-items: center; display: flex; gap: 30px; justify-content: space-between; }
+  #ccor-home .ch-footer img { filter: brightness(0) invert(1); width: 190px; }
+  #ccor-home .ch-footer__links { display: flex; flex-wrap: wrap; gap: 18px 28px; }
+  #ccor-home .ch-footer__links a { font-size: .72rem; letter-spacing: .09em; text-transform: uppercase; }
+  #ccor-home .ch-footer__links a:hover { color: var(--aqua); }
+  #ccor-home .ch-footer__legal { border-top: 1px solid rgba(255,255,255,.12); font-size: .7rem; margin-top: 35px; padding-top: 24px; }
+
+  @media (max-width: 1040px) {
+    #ccor-home .ch-menu { display: block; }
+    #ccor-home .ch-links { background: var(--deep); border-top: 1px solid rgba(255,255,255,.15); display: none; flex-direction: column; gap: 0; left: 0; padding: 18px 20px 24px; position: absolute; right: 0; top: 100%; }
+    #ccor-home .ch-links.is-open { display: flex; }
+    #ccor-home .ch-links li, #ccor-home .ch-links a { width: 100%; }
+    #ccor-home .ch-links a { display: block; padding: 13px 6px; }
+    #ccor-home .ch-links .ch-links__cta { margin-top: 8px; text-align: center; }
+    #ccor-home .ch-hero__content { grid-template-columns: 1fr; }
+    #ccor-home .ch-hero__aside { display: none; }
+  }
+
+  @media (max-width: 760px) {
+    #ccor-home .ch-shell { width: min(100% - 28px, 1180px); }
+    #ccor-home .ch-brand__text { display: none; }
+    #ccor-home .ch-brand img { width: 125px; }
+    #ccor-home .ch-nav__inner { min-height: 82px; }
+    #ccor-home .ch-hero { min-height: 720px; }
+    #ccor-home .ch-hero::after { background: linear-gradient(90deg, rgba(7,27,53,.92), rgba(7,27,53,.56)), linear-gradient(0deg, rgba(7,27,53,.7), transparent 55%); }
+    #ccor-home .ch-hero__content { align-items: center; min-height: 638px; padding-block: 60px 70px; }
+    #ccor-home .ch-intro__grid, #ccor-home .ch-place-grid { grid-template-columns: 1fr; }
+    #ccor-home .ch-intro__grid { gap: 36px; }
+    #ccor-home .ch-intro__copy { border-left: 0; border-top: 1px solid var(--line); padding: 28px 0 0; }
+    #ccor-home .ch-heading-row { align-items: start; flex-direction: column; }
+    #ccor-home .ch-card:nth-child(n) { grid-column: 1 / -1; min-height: 330px; }
+    #ccor-home .ch-global__image { inset: 0; width: 100%; }
+    #ccor-home .ch-global::after { background: rgba(7,27,53,.82); }
+    #ccor-home .ch-timeline { grid-template-columns: 1fr; }
+    #ccor-home .ch-era { border-left: 2px solid var(--navy); border-top: 0; padding: 0 0 35px 28px; }
+    #ccor-home .ch-era::before { left: -9px; top: 1px; }
+    #ccor-home .ch-cta__inner, #ccor-home .ch-footer__top { align-items: flex-start; flex-direction: column; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    #ccor-home *, #ccor-home *::before, #ccor-home *::after { scroll-behavior: auto !important; transition-duration: .01ms !important; }
+  }
+</style>
+
+<main id="ccor-home">
+  <header class="ch-hero" id="home">
+    <img class="ch-hero__image" src="https://images.unsplash.com/photo-1660854866563-401cc7ad6431?auto=format&amp;fit=crop&amp;w=2000&amp;q=86" alt="Southwest Florida Gulf Coast and pier at sunset" fetchpriority="high">
+    <nav class="ch-nav" aria-label="Primary navigation">
+      <div class="ch-shell ch-nav__inner">
+        <a class="ch-brand" href="https://coconutcoastlifestyles.com/" aria-label="Coconut Coast Lifestyles home">
+          <img src="https://coconutcoastrealtors.org/wp-content/uploads/2026/04/CCOR-Horz-Logo-no-tag-clr-scaled-1-300x111.gif" alt="Coconut Coast Organization of REALTORS®">
+          <span class="ch-brand__text">Coconut Coast<br>Lifestyles</span>
+        </a>
+        <button class="ch-menu" type="button" aria-expanded="false" aria-controls="ch-main-links">Menu</button>
+        <ul class="ch-links" id="ch-main-links">
+          <li><a href="https://coconutcoastlifestyles.com/communities/">Communities</a></li>
+          <li><a href="https://coconutcoastlifestyles.com/places-to-shop/">Shopping</a></li>
+          <li><a href="https://coconutcoastlifestyles.com/restaurant-in-swfl/">Dining</a></li>
+          <li><a href="https://coconutcoastlifestyles.com/city-info/">City info</a></li>
+          <li><a href="https://coconutcoastlifestyles.com/global-buyers/">Global buyers</a></li>
+          <li><a class="ch-links__cta" href="https://coconutcoastrealtors.org/realtor-directory/">Find a REALTOR®</a></li>
+        </ul>
+      </div>
+    </nav>
+    <div class="ch-shell ch-hero__content">
+      <div>
+        <p class="ch-kicker">Welcome to Southwest Florida</p>
+        <h1 class="ch-display">Find your place<br><span class="ch-hero__accent">on the coast.</span></h1>
+        <p class="ch-hero__copy">Explore the communities, coastlines and everyday experiences that make Bonita Springs, Estero and the greater Southwest Florida region feel like home.</p>
+        <div class="ch-actions">
+          <a class="ch-btn ch-btn--orange" href="#explore">Explore the coast <span class="ch-arrow">→</span></a>
+          <a class="ch-btn ch-btn--ghost" href="https://coconutcoastrealtors.org/realtor-directory/">Find a REALTOR®</a>
+        </div>
+      </div>
+      <p class="ch-hero__aside">Your local guide to<br><strong>Lee + Collier</strong>counties · Florida</p>
+    </div>
+  </header>
+
+  <section class="ch-intro" aria-labelledby="ch-intro-title">
+    <div class="ch-shell ch-intro__grid">
+      <div>
+        <p class="ch-kicker">Live the Coconut Coast</p>
+        <h2 class="ch-title" id="ch-intro-title">Sunshine is only<br>the beginning.</h2>
+      </div>
+      <div class="ch-intro__copy">
+        <p class="ch-lead">Life here moves between Gulf beaches, winding waterways, village streets and vibrant downtowns.</p>
+        <p class="ch-lead">Coconut Coast Lifestyles connects you with the places to live, shop, dine and explore—and with trusted REALTORS® who know the region.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="ch-explore" id="explore" aria-labelledby="ch-explore-title">
+    <div class="ch-shell">
+      <div class="ch-heading-row">
+        <div>
+          <p class="ch-kicker">Start exploring</p>
+          <h2 class="ch-title" id="ch-explore-title">Southwest Florida,<br>your way.</h2>
+        </div>
+        <p class="ch-lead">Go beyond a list of links. Choose the part of coastal life you want to discover first.</p>
+      </div>
+      <div class="ch-grid">
+        <a class="ch-card" href="https://coconutcoastlifestyles.com/communities/">
+          <img src="https://images.unsplash.com/photo-1555117441-ab8a3d080d81?auto=format&amp;fit=crop&amp;w=1200&amp;q=82" alt="Turquoise Gulf water and a Southwest Florida beach" loading="lazy">
+          <div class="ch-card__content"><span class="ch-card__num">01 · FIND YOUR FIT</span><h3>Communities</h3><p>From waterfront enclaves to golf and village living.</p></div>
+        </a>
+        <a class="ch-card" href="https://coconutcoastopenhouses.com/home-search/">
+          <img src="https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&amp;fit=crop&amp;w=1000&amp;q=82" alt="Modern coastal Florida home with a pool" loading="lazy">
+          <div class="ch-card__content"><span class="ch-card__num">02 · MAKE A MOVE</span><h3>Homes</h3><p>Search properties throughout the Coconut Coast.</p></div>
+        </a>
+        <a class="ch-card" href="https://coconutcoastlifestyles.com/restaurant-in-swfl/">
+          <img src="https://images.unsplash.com/photo-1692623622324-c37dada3f2a4?auto=format&amp;fit=crop&amp;w=1000&amp;q=82" alt="Southwest Florida waterfront dining at sunset" loading="lazy">
+          <div class="ch-card__content"><span class="ch-card__num">03 · TASTE THE COAST</span><h3>Dining</h3><p>Local favorites, waterfront tables and new discoveries.</p></div>
+        </a>
+        <a class="ch-card" href="https://coconutcoastlifestyles.com/places-to-shop/">
+          <img src="https://images.unsplash.com/photo-1441986300917-64674bd600d8?auto=format&amp;fit=crop&amp;w=1200&amp;q=82" alt="Bright open-air shopping destination" loading="lazy">
+          <div class="ch-card__content"><span class="ch-card__num">04 · MAKE A DAY OF IT</span><h3>Shopping</h3><p>Open-air centers, boutiques and familiar favorites.</p></div>
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <section class="ch-places" aria-labelledby="ch-places-title">
+    <div class="ch-shell">
+      <p class="ch-kicker">Heart of the Coconut Coast</p>
+      <h2 class="ch-title" id="ch-places-title" style="margin-top:18px">Two communities.<br>One coastal rhythm.</h2>
+      <div class="ch-place-grid">
+        <article class="ch-place" id="bonita-springs">
+          <p class="ch-place__label">Gateway to the Gulf</p>
+          <h3>Bonita Springs</h3>
+          <p>Beaches, boating, golf and a revitalized Old 41 district create an easygoing city with deep local roots.</p>
+          <a class="ch-text-link" href="https://coconutcoastlifestyles.com/communities/#bonita-springs">Explore Bonita communities →</a>
+        </article>
+        <article class="ch-place" id="estero">
+          <p class="ch-place__label">Village life, naturally</p>
+          <h3>Estero</h3>
+          <p>Preserve land, the Estero River, thriving neighborhoods and convenient access place the village at the center of the region.</p>
+          <a class="ch-text-link" href="https://coconutcoastlifestyles.com/communities/#estero">Explore Estero communities →</a>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <section class="ch-global" aria-labelledby="ch-global-title">
+    <img class="ch-global__image" src="https://images.unsplash.com/photo-1603806840334-dc5842ab56fc?auto=format&amp;fit=crop&amp;w=1400&amp;q=84" alt="Naples Pier and Gulf Coast sunset" loading="lazy">
+    <div class="ch-shell">
+      <div class="ch-global__content">
+        <p class="ch-kicker">A global gateway</p>
+        <h2 class="ch-title" id="ch-global-title">Florida feels<br>closer from here.</h2>
+        <p>International buyers can explore the market, travel connections, ownership questions, property styles and trusted resources in one guided experience.</p>
+        <a class="ch-btn ch-btn--orange" style="margin-top:30px" href="https://coconutcoastlifestyles.com/global-buyers/">Explore global buyers <span class="ch-arrow">→</span></a>
+      </div>
+    </div>
+  </section>
+
+  <section class="ch-history" id="history" aria-labelledby="ch-history-title">
+    <div class="ch-shell">
+      <div class="ch-heading-row">
+        <div><p class="ch-kicker">Rooted here</p><h2 class="ch-title" id="ch-history-title">A coast shaped<br>over time.</h2></div>
+        <p class="ch-lead">The story of Bonita Springs and Estero stretches from the Calusa and the Estero River to the connected communities of today.</p>
+      </div>
+      <div class="ch-timeline">
+        <article class="ch-era"><span class="ch-era__date">Before 1900</span><h3>First people + waterways</h3><p>The Calusa lived throughout Southwest Florida for generations, shaped by the region's rivers, estuaries and coast.</p></article>
+        <article class="ch-era"><span class="ch-era__date">1900–1940</span><h3>Towns take shape</h3><p>Survey became Bonita Springs, Estero grew along its river, and rail and the Tamiami Trail connected the region.</p></article>
+        <article class="ch-era"><span class="ch-era__date">1940–2000</span><h3>A modern coast</h3><p>Air conditioning, I-75 and planned communities accelerated growth while local landmarks remained.</p></article>
+        <article class="ch-era"><span class="ch-era__date">2000–today</span><h3>Connected communities</h3><p>Bonita Springs renewed its downtown and Estero incorporated as a village, each preserving a distinct sense of place.</p></article>
+      </div>
+    </div>
+  </section>
+
+  <section class="ch-cta" aria-labelledby="ch-cta-title">
+    <div class="ch-shell ch-cta__inner">
+      <div><h2 id="ch-cta-title">Ready to find<br>your Florida?</h2><p>Start with a local professional who knows the Coconut Coast.</p></div>
+      <a class="ch-btn ch-btn--orange" href="https://coconutcoastrealtors.org/realtor-directory/">Search the REALTOR® directory <span class="ch-arrow">→</span></a>
+    </div>
+  </section>
+
+  <footer class="ch-footer">
+    <div class="ch-shell">
+      <div class="ch-footer__top">
+        <a href="https://coconutcoastrealtors.org/" aria-label="Coconut Coast Organization of REALTORS®"><img src="https://coconutcoastrealtors.org/wp-content/uploads/2026/04/CCOR-Horz-Logo-no-tag-clr-scaled-1-300x111.gif" alt="Coconut Coast Organization of REALTORS®"></a>
+        <nav class="ch-footer__links" aria-label="Footer navigation">
+          <a href="https://coconutcoastlifestyles.com/city-info/">City info</a>
+          <a href="https://coconutcoastlifestyles.com/real-estate-information/">Become a REALTOR®</a>
+          <a href="https://www.nar.realtor/the-facts#consumer-guides">Consumer guides</a>
+          <a href="https://coconutcoastrealtors.org/">About CCOR</a>
+        </nav>
+      </div>
+      <p class="ch-footer__legal">© 2026 Coconut Coast Organization of REALTORS® · 25300 Bernwood Drive, Suite 7, Bonita Springs, FL 34135 · (239) 992-6771 · Equal Housing Opportunity</p>
+    </div>
+  </footer>
+</main>
+
+<script>
+  (function () {
+    var root = document.getElementById('ccor-home');
+    if (!root) return;
+    var button = root.querySelector('.ch-menu');
+    var links = root.querySelector('.ch-links');
+    if (!button || !links) return;
+    button.addEventListener('click', function () {
+      var open = links.classList.toggle('is-open');
+      button.setAttribute('aria-expanded', String(open));
+    });
+    links.addEventListener('click', function (event) {
+      if (event.target.closest('a')) {
+        links.classList.remove('is-open');
+        button.setAttribute('aria-expanded', 'false');
+      }
+    });
+  }());
+</script>

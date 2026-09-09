@@ -31,7 +31,7 @@ function getCorsHeaders(request, env) {
     let allowOrigin = '';
     if (allowed.includes(origin)) {
         allowOrigin = origin;
-    } else if (origin.endsWith('coconutcoastlifestyles.com') || origin.endsWith('coconutcoastrealtors.org') || origin.startsWith('http://localhost:') || origin.startsWith('http://127.0.0.1:')) {
+    } else if (origin.endsWith('coconutcoastlifestyles.com') || origin.endsWith('coconutcoastrealtors.org') || origin.endsWith('.pages.dev') || origin.startsWith('http://localhost:') || origin.startsWith('http://127.0.0.1:')) {
         allowOrigin = origin;
     } else if (allowed.length > 0) {
         allowOrigin = allowed[0];

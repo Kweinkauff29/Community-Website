@@ -1,0 +1,12 @@
+name = "ccor-global-buyers-admin"
+compatibility_date = "2026-09-01"
+pages_build_output_dir = "."
+
+[vars]
+ADMIN_EMAILS = "bonitaspringsrealtors@gmail.com,kevin@coconutcoastrealtors.org"
+WORKER_API_BASE = "https://ccor-global-buyers-api.bonitaspringsrealtors.workers.dev"
+
+[[d1_databases]]
+binding = "GLOBAL_BUYERS_DB"
+database_name = "ccor-global-buyers"
+database_id = "ea137cf3-179a-429d-a742-278496fddcd9"
