@@ -1,0 +1,22 @@
+/*
+  Access-Control-Allow-Origin: *
+
+/*.html
+  Cache-Control: no-cache, no-store, must-revalidate
+  Pragma: no-cache
+
+/
+  Cache-Control: no-cache, no-store, must-revalidate
+  Pragma: no-cache
+
+/open-house
+  Cache-Control: no-cache, no-store, must-revalidate
+  Pragma: no-cache
+
+/open-house/
+  Cache-Control: no-cache, no-store, must-revalidate
+  Pragma: no-cache
+
+/open-house/index.html
+  Cache-Control: no-cache, no-store, must-revalidate
+  Pragma: no-cache

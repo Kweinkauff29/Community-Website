@@ -18,9 +18,11 @@ export default {
             const headers = new Headers();
             headers.set('Access-Control-Allow-Origin', '*');
             headers.set('Content-Type', 'application/json');
-            headers.set('Cache-Control', 'public, max-age=300, s-maxage=300'); // 5 min cache
+            headers.set('Cache-Control', 'public, max-age=60, s-maxage=60'); // Fresh cache
             
-            // Format to match what frontend expects
+            const CCOR_CITIES = ['BONITA SPRINGS', 'ESTERO'];
+
+            // Format to match what frontend expects and filter to Bonita/Estero (BER/CCOR)
             const data = (results.results || []).map(row => {
                 let property = null;
                 try { property = JSON.parse(row.PropertyData); } catch(e) {}
@@ -35,7 +37,13 @@ export default {
                     },
                     property
                 };
-            }).filter(x => x.property);
+            }).filter(x => {
+                if (!x.property || !x.property.City) return false;
+                const city = x.property.City.toUpperCase().trim();
+                const orig = (x.property.OriginatingSystemName || '').toLowerCase();
+                const agentId = x.property.ListAgentMlsId || '';
+                return CCOR_CITIES.includes(city) || orig.includes('bonita') || agentId.startsWith('B');
+            });
 
             return new Response(JSON.stringify(data), { headers });
         }
@@ -228,7 +236,7 @@ export default {
         
         const listingKeys = [...new Set(ohRec.map(r => r.ListingKey))];
         let properties = [];
-        const PROP_SEL = 'ListingKey,ListingId,UnparsedAddress,City,PostalCode,ListPrice,PropertyType,PropertySubType,BedroomsTotal,BathroomsTotalInteger,LivingArea,LotSizeAcres,YearBuilt,StandardStatus,SubdivisionName,ListAgentFullName,ListAgentEmail,ListAgentDirectPhone,ListAgentKey,ListOfficeName,ListOfficePhone,PublicRemarks,Coordinates,Media';
+        const PROP_SEL = 'ListingKey,ListingId,UnparsedAddress,City,PostalCode,ListPrice,PropertyType,PropertySubType,BedroomsTotal,BathroomsTotalInteger,LivingArea,LotSizeAcres,YearBuilt,StandardStatus,SubdivisionName,ListAgentFullName,ListAgentEmail,ListAgentDirectPhone,ListAgentKey,ListAgentMlsId,ListOfficeName,ListOfficePhone,ListOfficeMlsId,OriginatingSystemName,PublicRemarks,Coordinates,Media';
         
         for (let i = 0; i < listingKeys.length; i += 25) {
             const chunk = listingKeys.slice(i, i + 25);
@@ -242,8 +250,19 @@ export default {
         }
 
         const propMap = new Map(properties.map(p => [p.ListingKey, p]));
+        const CCOR_CITIES = ['BONITA SPRINGS', 'ESTERO'];
 
-        const statements = ohRec.map(oh => {
+        // Filter Open House records to only Bonita / Estero / Bonita agents
+        const filteredOhRec = ohRec.filter(oh => {
+            const p = propMap.get(oh.ListingKey);
+            if (!p || !p.City) return false;
+            const city = p.City.toUpperCase().trim();
+            const orig = (p.OriginatingSystemName || '').toLowerCase();
+            const agentId = p.ListAgentMlsId || '';
+            return CCOR_CITIES.includes(city) || orig.includes('bonita') || agentId.startsWith('B');
+        });
+
+        const statements = filteredOhRec.map(oh => {
             const p = propMap.get(oh.ListingKey) || null;
             return env.DB.prepare(`
                 INSERT OR REPLACE INTO open_houses (
@@ -259,17 +278,15 @@ export default {
             await env.DB.batch(statements.slice(i, i + 50));
         }
 
-        // Cleanup old open houses
-        const validOhKeys = new Set(ohRec.map(oh => oh.OpenHouseKey || oh.ListingKey));
-        if (validOhKeys.size > 0) {
-            const existing = await env.DB.prepare("SELECT OpenHouseKey FROM open_houses").all();
-            const staleKeys = existing.results.filter(row => !validOhKeys.has(row.OpenHouseKey)).map(r => r.OpenHouseKey);
-            for (let i = 0; i < staleKeys.length; i += 50) {
-                const chunk = staleKeys.slice(i, i + 50);
-                const placeholders = chunk.map(() => "?").join(",");
-                await env.DB.prepare(`DELETE FROM open_houses WHERE OpenHouseKey IN (${placeholders})`).bind(...chunk).run();
-            }
+        // Cleanup: remove all open houses in DB that are not in filteredOhRec
+        const validOhKeys = new Set(filteredOhRec.map(oh => oh.OpenHouseKey || oh.ListingKey));
+        const existing = await env.DB.prepare("SELECT OpenHouseKey FROM open_houses").all();
+        const staleKeys = (existing.results || []).filter(row => !validOhKeys.has(row.OpenHouseKey)).map(r => r.OpenHouseKey);
+        for (let i = 0; i < staleKeys.length; i += 50) {
+            const chunk = staleKeys.slice(i, i + 50);
+            const placeholders = chunk.map(() => "?").join(",");
+            await env.DB.prepare(`DELETE FROM open_houses WHERE OpenHouseKey IN (${placeholders})`).bind(...chunk).run();
         }
-        console.log(`Synced ${ohRec.length} Open Houses`);
+        console.log(`Synced ${filteredOhRec.length} Open Houses (filtered to Bonita/Estero)`);
     }
 };
