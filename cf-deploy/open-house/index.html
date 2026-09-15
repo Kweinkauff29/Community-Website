@@ -2627,11 +2627,15 @@
           const d = (oh?.OpenHouseDate || oh?.OpenHouseStartTime || '').slice(0, 10);
           return d >= EVENT_START && d <= EVENT_END;
         });
-        // Filter to CCOR board area only (Bonita Springs / Estero)
+        // Include CCOR board area (Bonita Springs / Estero) AND CCOR/BER member listings
         const CCOR_CITIES = ['BONITA SPRINGS', 'ESTERO'];
         allMerged = allMerged.filter(({ property: p }) => {
           if (!p || !p.City) return false;
-          return CCOR_CITIES.includes(p.City.toUpperCase().trim());
+          const city = p.City.toUpperCase().trim();
+          const orig = (p.OriginatingSystemName || '').toLowerCase();
+          const agentId = (p.ListAgentMlsId || '').toUpperCase();
+          const officeId = (p.ListOfficeMlsId || '').toUpperCase();
+          return CCOR_CITIES.includes(city) || orig.includes('bonita') || agentId.startsWith('B') || officeId.startsWith('B');
         });
         const properties = allMerged.map(d => d.property).filter(Boolean);
         extractInlineMedia(properties);

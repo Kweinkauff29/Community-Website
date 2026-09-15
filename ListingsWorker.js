@@ -41,8 +41,9 @@ export default {
                 if (!x.property || !x.property.City) return false;
                 const city = x.property.City.toUpperCase().trim();
                 const orig = (x.property.OriginatingSystemName || '').toLowerCase();
-                const agentId = x.property.ListAgentMlsId || '';
-                return CCOR_CITIES.includes(city) || orig.includes('bonita') || agentId.startsWith('B');
+                const agentId = (x.property.ListAgentMlsId || '').toUpperCase();
+                const officeId = (x.property.ListOfficeMlsId || '').toUpperCase();
+                return CCOR_CITIES.includes(city) || orig.includes('bonita') || agentId.startsWith('B') || officeId.startsWith('B');
             });
 
             return new Response(JSON.stringify(data), { headers });
@@ -218,7 +219,7 @@ export default {
     async syncOpenHouses(env) {
         const EVENT_START = '2026-09-25';
         const EVENT_END = '2026-09-27';
-        const ohFilter = `OpenHouseStatus eq 'Active' and OriginatingSystemName eq 'Bonita Springs' and OpenHouseDate ge ${EVENT_START} and OpenHouseDate le ${EVENT_END}`;
+        const ohFilter = `(OpenHouseStatus eq 'Active' or OpenHouseStatus eq null) and OriginatingSystemName eq 'Bonita Springs' and OpenHouseDate ge ${EVENT_START} and OpenHouseDate le ${EVENT_END}`;
         const ohURL = `https://api.bridgedataoutput.com/api/v2/OData/bsaor/OpenHouse?$filter=${encodeURIComponent(ohFilter)}&$top=200&$orderby=OpenHouseStartTime asc&access_token=${env.BRIDGE_TOKEN}`;
         
         let ohRec = [];
@@ -258,8 +259,9 @@ export default {
             if (!p || !p.City) return false;
             const city = p.City.toUpperCase().trim();
             const orig = (p.OriginatingSystemName || '').toLowerCase();
-            const agentId = p.ListAgentMlsId || '';
-            return CCOR_CITIES.includes(city) || orig.includes('bonita') || agentId.startsWith('B');
+            const agentId = (p.ListAgentMlsId || '').toUpperCase();
+            const officeId = (p.ListOfficeMlsId || '').toUpperCase();
+            return CCOR_CITIES.includes(city) || orig.includes('bonita') || agentId.startsWith('B') || officeId.startsWith('B');
         });
 
         const statements = filteredOhRec.map(oh => {
