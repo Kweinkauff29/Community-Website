@@ -8,8 +8,8 @@ export default {
             const headers = new Headers();
             headers.set('Access-Control-Allow-Origin', '*');
             headers.set('Content-Type', 'application/json');
-            // Cache for 1 hour on the client, 1 day on the edge
-            headers.set('Cache-Control', 'public, max-age=3600, s-maxage=86400');
+            // Cache for 1 min on client, 3 min on edge so 15-min cron updates propagate promptly
+            headers.set('Cache-Control', 'public, max-age=60, s-maxage=180');
             return new Response(JSON.stringify(results.results || []), { headers });
         }
 
