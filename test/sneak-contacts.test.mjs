@@ -131,3 +131,9 @@ test('passwordless signup, one-use exchange and notification work together on th
  assert.equal(sql.prepare('SELECT count(*) n FROM sneak_contacts').get().n,1);
  }finally{sql.close();}
 });
+
+test('consumer health recognizes the configured mailer service without exposing secrets',async()=>{
+ const {default:worker}=await import('../sneak-consumer/worker.js');
+ const response=await worker.fetch(new Request('https://consumer.example/api/consumer/version'),{MAILER:{},SNEAK_MAILER_SECRET:'private-secret',CONSUMER_AUTH_ENABLED:'true'});
+ const body=await response.json();assert.equal(body.emailProviderConfigured,true);assert.equal(body.authEnabled,true);assert.doesNotMatch(JSON.stringify(body),/private-secret/);
+});

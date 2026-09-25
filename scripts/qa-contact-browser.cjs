@@ -27,7 +27,7 @@ const host='https://sneak-idx-worker.bonitaspringsrealtors.workers.dev';
     assert.ok(rects.recentBottom<=rects.height+1,JSON.stringify(rects));
     const h1=await page.locator('.idx-widget-shell iframe').evaluate(e=>e.offsetHeight);await page.waitForTimeout(1200);const h2=await page.locator('.idx-widget-shell iframe').evaluate(e=>e.offsetHeight);assert.ok(Math.abs(h1-h2)<5,`Unstable embed ${h1}->${h2}`);
     // Embedded mode exposes sign-in through a save action rather than a hidden header.
-    await frame.locator('#saveSearchBtn').click();await frame.locator('#consumerAuthModal.open').waitFor();
+    await frame.locator('#consumerEmbeddedAccountBtn').click();await frame.locator('#consumerAuthModal.open').waitFor();
     await frame.locator('#consumerEmailInput').fill('browser-qa@example.com');await frame.locator('#consumerSubmitBtn').click();
     await page.waitForFunction(()=>true);for(let i=0;i<30&&!authRequest;i++)await page.waitForTimeout(100);
     assert.ok(authRequest);assert.equal(new URL(authRequest.returnUrl).protocol,'https:');assert.equal(new URL(authRequest.returnUrl).pathname,'/portal');
@@ -36,7 +36,7 @@ const host='https://sneak-idx-worker.bonitaspringsrealtors.workers.dev';
     await page.locator('#qa-contact > .sneak-idx-widget-container > button').click();
     const popup=page.frameLocator('#qa-contact dialog iframe');await popup.locator('#name').fill('Browser QA');await popup.locator('#email').fill('browser-qa@example.com');await popup.locator('#message').fill('Test request');await popup.locator('#submit').click();await popup.locator('#status').filter({hasText:'Thank you'}).waitFor();
     await page.locator('#qa-contact dialog > button').click();assert.equal(await page.locator('#qa-contact dialog').isVisible(),false);
-    console.log(name,width,'recent placement, stable height, secure sign-in, contact popup PASS',rects);await page.close();
+    console.log(name,width,'recent placement, stable height, secure sign-in, contact popup PASS',rects);await page.unrouteAll({behavior:"wait"});await page.close();
    }
   }finally{await browser.close();}
  }

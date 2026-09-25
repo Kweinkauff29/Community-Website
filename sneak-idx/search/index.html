@@ -2967,6 +2967,7 @@
       cursor: pointer;
     }
     .cart-add-list-btn { border: 0; background: transparent; color: #7c3aed; cursor: pointer; padding: 4px; }
+    body.consumer-auth-disabled #consumerEmbeddedAccountBtn,
     body.consumer-auth-disabled #consumerAuthNavItem,
     body.consumer-auth-disabled #consumerUserNavItem,
     body.consumer-auth-disabled #saveSearchBtn,
@@ -3217,6 +3218,8 @@
         <button class="save-search-btn" id="saveSearchBtn" title="Save current search criteria">
           <i class="fas fa-bookmark"></i> <span>Save Search</span>
         </button>
+
+        <button class="save-search-btn" id="consumerEmbeddedAccountBtn" type="button"><i class="far fa-user"></i> <span>Sign In</span></button>
 
         <!-- Active Spatial Filter Pill -->
         <div class="active-spatial-pill" id="activeSpatialPill" style="display:none;">
@@ -6994,6 +6997,7 @@
       // Consumer Authentication & Account Modals (Phase 7.3C1A)
       const authBtn = document.getElementById('consumerAuthBtn');
       if (authBtn) authBtn.onclick = openConsumerAuthModal;
+      document.getElementById('consumerEmbeddedAccountBtn').onclick = () => consumerUser ? openConsumerAccountModal() : openConsumerAuthModal();
       
       const authClose = document.getElementById('consumerAuthClose');
       if (authClose) authClose.onclick = closeConsumerAuthModal;
@@ -7484,6 +7488,8 @@
     }
 
     function updateConsumerNavUI() {
+      const embeddedAccountLabel = document.querySelector('#consumerEmbeddedAccountBtn span');
+      if (embeddedAccountLabel) embeddedAccountLabel.textContent = consumerUser ? 'My Account' : 'Sign In';
       const authNavItem = document.getElementById('consumerAuthNavItem');
       const savedNavItem = document.getElementById('consumerSavedNavItem');
       const userNavItem = document.getElementById('consumerUserNavItem');

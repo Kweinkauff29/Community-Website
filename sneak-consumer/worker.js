@@ -111,6 +111,7 @@ export default {
                 authEnabled,
                 emailAlertsEnabled: emailAlertsEnabled(env),
                 emailProviderConfigured: Boolean(
+                    (env?.MAILER && env?.SNEAK_MAILER_SECRET) ||
                     (env?.MAILJET_API_KEY || env?.MJ_API_KEY)
                     && (env?.MAILJET_SECRET_KEY || env?.MJ_API_SECRET)
                 ),
