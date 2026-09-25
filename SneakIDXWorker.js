@@ -18,6 +18,7 @@ import {
     buildCommonListingFilters,
     buildListingOrderClause
 } from './sneak-shared/idx-query.js';
+import { notifyOwner } from './sneak-shared/notify-owner.js';
 import { isAccountEntitled } from './sneak-shared/entitlement.js';
 
 export const SNEAK_IDX_BUILD = '2026.09.25.3';
@@ -1570,6 +1571,7 @@ async function handleLeadSubmission(req, site, env, ctx, allowedOrigin) {
         leadId, site.site_id, listingKey, leadType, name, email, phone, message, sourceUrl
     ).run();
 
+    await notifyOwner(env,ctx,'inquiry_'+leadId);
     if (ctx && ctx.waitUntil) {
         ctx.waitUntil(recordUsage(site.site_id, 'leads', env));
     }

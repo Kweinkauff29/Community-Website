@@ -23,3 +23,8 @@ binding = "DB"
 database_name = "sneak-idx-production"
 database_id = "9d3c529d-a769-4ab3-9385-d9c8bc5e937d"
 migrations_dir = "migrations"
+
+[[services]]
+binding = "OWNER_NOTIFIER"
+service = "sneak-idx-member"
+entrypoint = "OwnerNotifier"

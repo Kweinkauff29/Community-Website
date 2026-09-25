@@ -97,7 +97,7 @@ async function resolveCorsOrigin(req, env) {
 }
 
 export default {
-    async fetch(req, env) {
+    async fetch(req, env, ctx) {
         const url = new URL(req.url);
         const method = req.method.toUpperCase();
 
@@ -128,7 +128,7 @@ export default {
 
         // 2. Magic Link Verification (Direct browser navigation / redirect)
         if (url.pathname === '/api/consumer/auth/verify' && method === 'GET') {
-            return await handleVerifyMagicLink(req, url, env);
+            return await handleVerifyMagicLink(req, url, env, ctx);
         }
 
         // 3. Resolve CORS Origin

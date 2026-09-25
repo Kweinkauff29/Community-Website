@@ -113,18 +113,18 @@ export async function renderOwnerNotification(db,notification,site,env={}){
  return {subject,text:lines.join('\n'),html:`<h2>${escape(subject)}</h2>${lines.filter(l=>l!=='View property: '+propertyUrl).map(l=>`<p>${escape(l)}</p>`).join('')}${propertyUrl?`<p><a href="${escape(propertyUrl)}">View property details</a></p>`:''}<p><a href="${dashboard}">View contacts and activity</a></p>`};
 }
 
-export async function processOwnerNotifications({db,env,now=new Date(),dryRun=false}){
+export async function processOwnerNotifications({db,env,now=new Date(),dryRun=false,notificationId=null}){
  if(env.OWNER_NOTIFICATIONS_ENABLED!=='true')return {disabled:true};
  const nowIso=now.toISOString();
- if(!dryRun)await db.prepare('DELETE FROM sneak_lead_rate_limits WHERE expires_at<?').bind(nowIso).run();
+ if(!dryRun&&!notificationId)await db.prepare('DELETE FROM sneak_lead_rate_limits WHERE expires_at<?').bind(nowIso).run();
  const sites=(await rows(db.prepare(`SELECT s.id,s.site_name,p.*,a.status AS account_status,e.status AS entitlement_status,e.grace_until,e.expires_at FROM sneak_sites s JOIN sneak_accounts a ON a.id=s.account_id LEFT JOIN sneak_account_entitlements e ON e.account_id=a.id JOIN sneak_contact_settings p ON p.site_id=s.id WHERE s.status='active' AND a.status='active'`))).filter(s=>isAccountEntitled(s.account_status,s.entitlement_status,s.grace_until,now,s.expires_at));
  for(const site of sites){
-  if(!site.weekly_digest)continue;
+  if(notificationId||!site.weekly_digest)continue;
   const period=weeklyWindow(now,site);
   if(new Date(period.end)<new Date(site.created_at.endsWith('Z')?site.created_at:site.created_at.replace(' ','T')+'Z'))continue;
   if(!dryRun)await db.prepare(`INSERT OR IGNORE INTO sneak_owner_notifications(id,site_id,kind,period_start,period_end) VALUES(?,?,'weekly',?,?)`).bind('weekly_'+site.id+'_'+period.key,site.id,period.start,period.end).run();
  }
- const pending=await rows(db.prepare(`SELECT n.* FROM sneak_owner_notifications n JOIN sneak_sites s ON s.id=n.site_id JOIN sneak_accounts a ON a.id=s.account_id WHERE n.processed_at IS NULL AND s.status='active' AND a.status='active' ORDER BY n.created_at LIMIT 100`));
+ const pending=await rows(db.prepare(`SELECT n.* FROM sneak_owner_notifications n JOIN sneak_sites s ON s.id=n.site_id JOIN sneak_accounts a ON a.id=s.account_id WHERE n.processed_at IS NULL AND (? IS NULL OR n.id=?) AND s.status='active' AND a.status='active' ORDER BY n.created_at LIMIT 100`).bind(notificationId,notificationId));
  for(const n of pending){
   const config=sites.find(s=>s.id===n.site_id);if(!config)continue;
   const enabled=n.kind==='signup'?config.signup_notifications:n.kind==='inquiry'?config.inquiry_notifications:config.weekly_digest;
@@ -134,7 +134,7 @@ export async function processOwnerNotifications({db,env,now=new Date(),dryRun=fa
    await db.batch([...recipients.map(r=>db.prepare('INSERT OR IGNORE INTO sneak_owner_email_deliveries(id,notification_id,recipient) VALUES(?,?,?)').bind(crypto.randomUUID(),n.id,r.email)),db.prepare('UPDATE sneak_owner_notifications SET processed_at=? WHERE id=?').bind(nowIso,n.id)]);
   }
  }
- const due=await rows(db.prepare(`SELECT d.*,n.site_id,n.kind,n.reference_id,n.period_start,n.period_end FROM sneak_owner_email_deliveries d JOIN sneak_owner_notifications n ON n.id=d.notification_id JOIN sneak_sites s ON s.id=n.site_id JOIN sneak_accounts a ON a.id=s.account_id WHERE s.status='active' AND a.status='active' AND d.attempts<5 AND ((d.status IN ('pending','failed') AND (d.next_attempt_at IS NULL OR d.next_attempt_at<=?)) OR (d.status='sending' AND d.claimed_at<?)) ORDER BY n.created_at LIMIT 25`).bind(nowIso,new Date(now-15*60000).toISOString()));
+ const due=await rows(db.prepare(`SELECT d.*,n.site_id,n.kind,n.reference_id,n.period_start,n.period_end FROM sneak_owner_email_deliveries d JOIN sneak_owner_notifications n ON n.id=d.notification_id JOIN sneak_sites s ON s.id=n.site_id JOIN sneak_accounts a ON a.id=s.account_id WHERE (? IS NULL OR n.id=?) AND s.status='active' AND a.status='active' AND d.attempts<5 AND ((d.status IN ('pending','failed') AND (d.next_attempt_at IS NULL OR d.next_attempt_at<=?)) OR (d.status='sending' AND d.claimed_at<?)) ORDER BY n.created_at LIMIT 25`).bind(notificationId,notificationId,nowIso,new Date(now-15*60000).toISOString()));
  const stats={pending:pending.length,due:due.length,sent:0,failed:0,dryRun};
  for(const d of due){
   const site=sites.find(s=>s.id===d.site_id);if(!site)continue;

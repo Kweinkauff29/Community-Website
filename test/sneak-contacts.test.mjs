@@ -98,7 +98,7 @@ test('member route uses owner role from the verified session to authorize settin
 });
 test('lead endpoint validates fields, stores inquiries and rate limits before creating excess notifications',async()=>{
  const {default:worker}=await import('../SneakIDXWorker.js');const {sql,db}=fixture();try{
- const env={DB:db,SNEAK_SIGNING_SECRET:'a-long-enough-test-signing-secret',SNEAK_ENV:'production'};
+ const notified=[];const env={DB:db,SNEAK_SIGNING_SECRET:'a-long-enough-test-signing-secret',SNEAK_ENV:'production',OWNER_NOTIFIER:{dispatch:async id=>notified.push(id)}};
  const portal=await handleHostedPortal(new Request('https://idx.example/portal?site=a'),env);
  const html=await portal.text();const src=html.match(/<iframe src="([^"]+)/)[1].replaceAll('&amp;','&');const token=new URL(src).searchParams.get('session');
  const post=body=>worker.fetch(new Request('https://idx.example/idx/v1/lead?site=a',{method:'POST',headers:{Authorization:'Bearer '+token,'Content-Type':'application/json','CF-Connecting-IP':'192.0.2.1'},body:JSON.stringify(body)}),env,{});
@@ -106,7 +106,7 @@ test('lead endpoint validates fields, stores inquiries and rate limits before cr
  assert.equal((await post({companyWebsite:'bot.example'})).status,201);
  for(let i=0;i<10;i++)assert.equal((await post({name:'Buyer',email:'buyer@example.com',message:'Tour please'})).status,201);
  assert.equal((await post({name:'Buyer',email:'buyer@example.com'})).status,429);
- assert.equal(sql.prepare('SELECT count(*) n FROM sneak_leads').get().n,10);
+ assert.equal(sql.prepare('SELECT count(*) n FROM sneak_leads').get().n,10);assert.equal(notified.length,10);assert.ok(notified.every(id=>sql.prepare('SELECT id FROM sneak_owner_notifications WHERE id=?').get(id)));
  }finally{sql.close();}
 });
 test('Mailjet validation mode never reports a delivered email',async t=>{
@@ -201,4 +201,29 @@ test('authentication mail keeps direct links while retaining the monitoring BCC'
  t.mock.method(globalThis,'fetch',async(url,options)=>{message=JSON.parse(options.body).Messages[0];return Response.json({Messages:[{Status:'success',To:[{MessageID:'123'}]}]});});
  await sendTransactionalEmail({MAILJET_API_KEY:'test',MAILJET_SECRET_KEY:'test',EMAIL_BCC:'tech@berealtors.org'},{to:'buyer@example.com',subject:'Sign in',html:'<a>Sign in</a>',customId:'SNEAK-IDX-MEMBER'});
  assert.equal(message.TrackClicks,'disabled');assert.equal(message.TrackOpens,'disabled');assert.deepEqual(message.Bcc,[{Email:'tech@berealtors.org'}]);
+});
+
+test('immediate dispatch sends only its durable event, then cron avoids resending it',async()=>{
+ const {sql,db}=fixture();try{
+ inquiry(sql,'now');inquiry(sql,'other','b');login(sql);
+ const sent=[];const sender={...env,MAILER:{fetch:async(url,opts)=>{sent.push(JSON.parse(opts.body));return Response.json({success:true,providerMessageId:'456'});}}};
+ assert.equal((await processOwnerNotifications({db,env:sender,notificationId:'inquiry_now'})).sent,1);
+ assert.deepEqual(sent.map(x=>x.to),['a@example.com']);
+ assert.equal(sql.prepare("SELECT count(*) n FROM sneak_owner_notifications WHERE kind='weekly'").get().n,0);
+ assert.equal(sql.prepare("SELECT processed_at FROM sneak_owner_notifications WHERE id='inquiry_other'").get().processed_at,null);
+ assert.equal((await processOwnerNotifications({db,env:sender,notificationId:'signup_u1'})).sent,1);
+ assert.equal((await processOwnerNotifications({db,env:sender,notificationId:'inquiry_now'})).sent,0);
+ sql.exec('UPDATE sneak_contact_settings SET weekly_digest=0');
+ assert.equal((await processOwnerNotifications({db,env:sender})).sent,1);
+ assert.equal(sent.length,3);
+ }finally{sql.close();}
+});
+test('notification dispatch survives response completion and leaves failures for cron',async t=>{
+ const {notifyOwner}=await import('../sneak-shared/notify-owner.js');let pending;let release;const calls=[];
+ const done=new Promise(resolve=>release=resolve);
+ await notifyOwner({OWNER_NOTIFIER:{dispatch:async id=>{calls.push(id);await done;}}},{waitUntil:p=>pending=p},'inquiry_abc');
+ assert.deepEqual(calls,['inquiry_abc']);assert.ok(pending);release();await pending;
+ const logs=[];t.mock.method(console,'error',x=>logs.push(x));
+ await notifyOwner({OWNER_NOTIFIER:{dispatch:async()=>{throw Error('Provider unavailable');}}},null,'signup_abc');
+ assert.equal(logs.length,1);assert.match(logs[0],/owner_notification_deferred/);
 });

@@ -1,3 +1,4 @@
+import { notifyOwner } from '../sneak-shared/notify-owner.js';
 /**
  * sneak-consumer/api.js
  * 
@@ -759,7 +760,7 @@ export async function handleRequestMagicLink(req, env, origin) {
  * GET /api/consumer/auth/verify?token=...
  * Consumes magic link and redirects to validated member site with ?auth_code=...
  */
-export async function handleVerifyMagicLink(req, url, env) {
+export async function handleVerifyMagicLink(req, url, env, ctx) {
     const token = url.searchParams.get('token');
     if (!token) {
         return new Response('Invalid or missing authentication token.', { status: 400 });
@@ -784,6 +785,7 @@ export async function handleVerifyMagicLink(req, url, env) {
         });
     }
 
+    await notifyOwner(env,ctx,'signup_'+result.userId);
     // Build return redirect URL with short-lived auth exchange code
     const returnUrl = new URL(result.returnUrl);
     returnUrl.searchParams.set('auth_code', result.exchangeCode);

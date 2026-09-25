@@ -25,3 +25,8 @@ migrations_dir = "migrations"
 [[services]]
 binding = "MAILER"
 service = "sneak-idx-member"
+
+[[services]]
+binding = "OWNER_NOTIFIER"
+service = "sneak-idx-member"
+entrypoint = "OwnerNotifier"
