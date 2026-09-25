@@ -73,6 +73,39 @@ export function generateEmbedSnippets(siteKey, allowedDomains = [], branding = {
 <script src="${scriptUrl}" data-site="${siteKey}" data-widget="open_houses" data-target="#sneak-idx-open-houses" async defer></script>`,
             recommendedWidth: "100%",
             responsive: true
+        },
+        {
+            widgetType: "featured_agent",
+            targetId: 'sneak-idx-featured',
+            name: "Agent Featured Listings",
+            description: "Showcases agent's active and pending listings with headshot branding badges.",
+            htmlSnippet: `<!-- CCOR IDX Agent Featured Listings Widget -->
+<div id="sneak-idx-featured" data-site="${siteKey}" data-widget="search" data-featured="true" style="width:100%;max-width:100%;"></div>
+<script src="${scriptUrl}" data-site="${siteKey}" data-widget="search" data-featured="true" data-target="#sneak-idx-featured" async defer></script>`,
+            recommendedWidth: "100%",
+            responsive: true
+        },
+        {
+            widgetType: "landing_page",
+            targetId: 'sneak-idx-landing',
+            name: "Pre-Filtered City & Price Route Landing Page",
+            description: "Dedicated property landing page with auto-detected route parameters and contextual title banner.",
+            htmlSnippet: `<!-- CCOR IDX Route Landing Page Widget (Detects city and price range from URL slug or data attributes) -->
+<div id="sneak-idx-landing" data-site="${siteKey}" data-widget="search" data-route-mode="auto" style="width:100%;max-width:100%;"></div>
+<script src="${scriptUrl}" data-site="${siteKey}" data-widget="search" data-route-mode="auto" data-target="#sneak-idx-landing" async defer></script>`,
+            recommendedWidth: "100%",
+            responsive: true
+        },
+        {
+            widgetType: "pinned_listings",
+            targetId: 'sneak-idx-pinned',
+            name: "Pinned Agent Listings",
+            description: "Displays listings with agent properties pinned as the first displayed results.",
+            htmlSnippet: `<!-- CCOR IDX Pinned Listings Widget -->
+<div id="sneak-idx-pinned" data-site="${siteKey}" data-widget="search" data-pin-own="true" style="width:100%;max-width:100%;"></div>
+<script src="${scriptUrl}" data-site="${siteKey}" data-widget="search" data-pin-own="true" data-target="#sneak-idx-pinned" async defer></script>`,
+            recommendedWidth: "100%",
+            responsive: true
         }
     ].map(item => ({ ...item, operational: true, responsiveMode: 'adaptive' }));
 

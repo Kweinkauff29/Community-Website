@@ -34,20 +34,51 @@
     let targetSelector = currentScript.getAttribute('data-target');
     let customParams = currentScript.getAttribute('data-params') || '';
 
-    // If missing on script tag, check container elements in DOM
-    if (!siteKey) {
-        const container = document.getElementById('sneak-idx-search') ||
+    let scriptCity = currentScript.getAttribute('data-city');
+    let scriptMinPrice = currentScript.getAttribute('data-min-price');
+    let scriptMaxPrice = currentScript.getAttribute('data-max-price');
+    let scriptPropType = currentScript.getAttribute('data-property-type');
+    let scriptAgent = currentScript.getAttribute('data-agent') || currentScript.getAttribute('data-agent-mls-id');
+    let scriptOpenHouses = currentScript.getAttribute('data-open-houses') || currentScript.getAttribute('data-open-house');
+    let scriptFeatured = currentScript.getAttribute('data-featured');
+    let scriptHeading = currentScript.getAttribute('data-heading');
+    let routeMode = currentScript.getAttribute('data-route-mode'); // 'auto', 'true', 'false'
+    let scriptPinOwn = currentScript.getAttribute('data-pin-own');
+    let scriptPinAgent = currentScript.getAttribute('data-pin-agent') || currentScript.getAttribute('data-pin-agents');
+    let scriptPinListings = currentScript.getAttribute('data-pin-listings') || currentScript.getAttribute('data-pin-listing');
+
+    // Resolve container element: prefer explicit targetSelector, then preceding sibling, then standard IDs
+    let containerEl = targetSelector ? document.querySelector(targetSelector) : null;
+    if (!containerEl) {
+        const prev = currentScript.previousElementSibling;
+        if (prev && (prev.hasAttribute('data-site') || prev.hasAttribute('data-site-key') || (prev.id && prev.id.startsWith('sneak-idx-')))) {
+            containerEl = prev;
+        } else {
+            containerEl = document.getElementById('sneak-idx-landing') ||
+                          document.getElementById('sneak-idx-featured') ||
+                          document.getElementById('sneak-idx-search') ||
                           document.getElementById('sneak-idx-search-bar') ||
                           document.getElementById('sneak-idx-grid') ||
-                          document.getElementById('sneak-idx-open-houses') ||
-                          document.querySelector('[data-site]') ||
-                          document.querySelector('[data-site-key]');
-        if (container) {
-            siteKey = container.getAttribute('data-site') || container.getAttribute('data-site-key');
-            if (!widgetType) widgetType = container.getAttribute('data-widget');
-            if (!customHeight) customHeight = container.getAttribute('data-height');
-            if (!targetSelector && container.id) targetSelector = '#' + container.id;
+                          document.getElementById('sneak-idx-open-houses');
         }
+    }
+    if (containerEl) {
+        if (!siteKey) siteKey = containerEl.getAttribute('data-site') || containerEl.getAttribute('data-site-key');
+        if (!widgetType) widgetType = containerEl.getAttribute('data-widget');
+        if (!customHeight) customHeight = containerEl.getAttribute('data-height');
+        if (!targetSelector && containerEl.id) targetSelector = '#' + containerEl.id;
+        if (!scriptCity) scriptCity = containerEl.getAttribute('data-city');
+        if (!scriptMinPrice) scriptMinPrice = containerEl.getAttribute('data-min-price');
+        if (!scriptMaxPrice) scriptMaxPrice = containerEl.getAttribute('data-max-price');
+        if (!scriptPropType) scriptPropType = containerEl.getAttribute('data-property-type');
+        if (!scriptAgent) scriptAgent = containerEl.getAttribute('data-agent') || containerEl.getAttribute('data-agent-mls-id');
+        if (!scriptOpenHouses) scriptOpenHouses = containerEl.getAttribute('data-open-houses') || containerEl.getAttribute('data-open-house');
+        if (!scriptFeatured) scriptFeatured = containerEl.getAttribute('data-featured');
+        if (!scriptHeading) scriptHeading = containerEl.getAttribute('data-heading');
+        if (!routeMode) routeMode = containerEl.getAttribute('data-route-mode');
+        if (!scriptPinOwn) scriptPinOwn = containerEl.getAttribute('data-pin-own');
+        if (!scriptPinAgent) scriptPinAgent = containerEl.getAttribute('data-pin-agent') || containerEl.getAttribute('data-pin-agents');
+        if (!scriptPinListings) scriptPinListings = containerEl.getAttribute('data-pin-listings') || containerEl.getAttribute('data-pin-listing');
     }
 
     widgetType = widgetType || 'search';
@@ -174,6 +205,93 @@
             }
         } catch {}
 
+        // Parse contextual route slugs & parameters (Phase 7.4B3)
+        function parseParentRouteAndFilters() {
+            const filters = {};
+            if (routeMode !== 'false') {
+                try {
+                    const pathname = window.location.pathname.toLowerCase();
+                    const formatCitySlug = (slug) => {
+                        return slug.split('-')
+                            .map(w => w.charAt(0).toUpperCase() + w.slice(1))
+                            .join(' ');
+                    };
+
+                    // Pattern 1: /homes-for-sale-in-{city}-fl-{min}-to-{max} or /condos-for-sale-in-...
+                    const priceRouteMatch = pathname.match(/(?:homes|condos|properties|rentals)-for-(?:sale|rent)-in-([a-z0-9-]+?)(?:-fl)?-(\d+)-to-(\d+)/i) ||
+                                            pathname.match(/\/([a-z0-9-]+?)(?:-fl)?-(\d+)-to-(\d+)/i);
+                    if (priceRouteMatch) {
+                        const rawCitySlug = priceRouteMatch[1].replace(/-fl$/i, '');
+                        filters.city = formatCitySlug(rawCitySlug);
+                        filters.minPrice = priceRouteMatch[2];
+                        filters.maxPrice = priceRouteMatch[3];
+                        if (pathname.includes('rental') || pathname.includes('for-rent')) {
+                            filters.propertyType = 'rental';
+                        } else if (pathname.includes('condo')) {
+                            filters.propertyType = 'sale';
+                            filters.propertySubType = 'Condominium';
+                        } else {
+                            filters.propertyType = 'sale';
+                        }
+                    } else {
+                        // Pattern 2: /homes-for-sale-in-{city}(?:-fl)? or /open-houses-in-{city}
+                        const cityRouteMatch = pathname.match(/(?:homes|properties|condos)-for-sale-in-([a-z0-9-]+?)(?:-fl)?(?:\/|$)/i) ||
+                                               pathname.match(/open-houses-in-([a-z0-9-]+?)(?:-fl)?(?:\/|$)/i) ||
+                                               pathname.match(/real-estate-in-([a-z0-9-]+?)(?:-fl)?(?:\/|$)/i);
+                        if (cityRouteMatch) {
+                            const rawCitySlug = cityRouteMatch[1].replace(/-fl$/i, '');
+                            filters.city = formatCitySlug(rawCitySlug);
+                            filters.propertyType = 'sale';
+                            if (pathname.includes('open-house')) {
+                                filters.openHouses = '1';
+                            }
+                        } else if (pathname.includes('open-houses') || pathname.includes('open-house')) {
+                            filters.openHouses = '1';
+                        } else if (pathname.includes('featured-listings') || pathname.includes('agent-listings') || pathname.includes('our-listings')) {
+                            filters.featured = '1';
+                        }
+                    }
+                } catch (err) {
+                    console.warn('[SNEAK IDX] Route parse error:', err);
+                }
+            }
+
+            // Parent URL query parameters
+            try {
+                const currentUrl = new URL(window.location.href);
+                if (currentUrl.searchParams.has('city')) filters.city = currentUrl.searchParams.get('city');
+                if (currentUrl.searchParams.has('minPrice')) filters.minPrice = currentUrl.searchParams.get('minPrice');
+                if (currentUrl.searchParams.has('maxPrice')) filters.maxPrice = currentUrl.searchParams.get('maxPrice');
+                if (currentUrl.searchParams.has('propertyType')) filters.propertyType = currentUrl.searchParams.get('propertyType');
+                if (currentUrl.searchParams.has('agent')) filters.agent = currentUrl.searchParams.get('agent');
+                if (currentUrl.searchParams.has('agentMlsId')) filters.agent = currentUrl.searchParams.get('agentMlsId');
+                if (currentUrl.searchParams.has('openHouses') || currentUrl.searchParams.has('open_houses')) filters.openHouses = '1';
+                if (currentUrl.searchParams.has('featured')) filters.featured = '1';
+                if (currentUrl.searchParams.has('heading')) filters.heading = currentUrl.searchParams.get('heading');
+                if (currentUrl.searchParams.has('pinOwn')) filters.pinOwn = currentUrl.searchParams.get('pinOwn');
+                if (currentUrl.searchParams.has('pinAgent')) filters.pinAgent = currentUrl.searchParams.get('pinAgent');
+                if (currentUrl.searchParams.has('pinAgents')) filters.pinAgent = currentUrl.searchParams.get('pinAgents');
+                if (currentUrl.searchParams.has('pinListings')) filters.pinListings = currentUrl.searchParams.get('pinListings');
+            } catch {}
+
+            // Script/container data attributes override
+            if (scriptCity) filters.city = scriptCity;
+            if (scriptMinPrice) filters.minPrice = scriptMinPrice;
+            if (scriptMaxPrice) filters.maxPrice = scriptMaxPrice;
+            if (scriptPropType) filters.propertyType = scriptPropType;
+            if (scriptAgent) filters.agent = scriptAgent;
+            if (scriptOpenHouses === 'true' || scriptOpenHouses === '1') filters.openHouses = '1';
+            if (scriptFeatured === 'true' || scriptFeatured === '1') filters.featured = '1';
+            if (scriptHeading) filters.heading = scriptHeading;
+            if (scriptPinOwn === 'true' || scriptPinOwn === '1') filters.pinOwn = '1';
+            if (scriptPinAgent) filters.pinAgent = scriptPinAgent;
+            if (scriptPinListings) filters.pinListings = scriptPinListings;
+
+            return filters;
+        }
+
+        const routeFilters = parseParentRouteAndFilters();
+
         // Construct iframe URL with signed session token and deterministic build version
         const separator = widgetPath.includes('?') ? '&' : '?';
         const buildVersion = '2026.09.01.7.4b2';
@@ -189,6 +307,42 @@
         }
         if (deepListSlug) {
             iframeUrl += `&ccor_list=${encodeURIComponent(deepListSlug)}`;
+        }
+        if (routeFilters.city) {
+            iframeUrl += `&city=${encodeURIComponent(routeFilters.city)}`;
+        }
+        if (routeFilters.minPrice) {
+            iframeUrl += `&minPrice=${encodeURIComponent(routeFilters.minPrice)}`;
+        }
+        if (routeFilters.maxPrice) {
+            iframeUrl += `&maxPrice=${encodeURIComponent(routeFilters.maxPrice)}`;
+        }
+        if (routeFilters.propertyType) {
+            iframeUrl += `&propertyType=${encodeURIComponent(routeFilters.propertyType)}`;
+        }
+        if (routeFilters.propertySubType) {
+            iframeUrl += `&propertySubType=${encodeURIComponent(routeFilters.propertySubType)}`;
+        }
+        if (routeFilters.agent) {
+            iframeUrl += `&agent=${encodeURIComponent(routeFilters.agent)}`;
+        }
+        if (routeFilters.openHouses) {
+            iframeUrl += `&openHouses=1`;
+        }
+        if (routeFilters.featured) {
+            iframeUrl += `&featured=1`;
+        }
+        if (routeFilters.heading) {
+            iframeUrl += `&heading=${encodeURIComponent(routeFilters.heading)}`;
+        }
+        if (routeFilters.pinOwn) {
+            iframeUrl += `&pinOwn=1`;
+        }
+        if (routeFilters.pinAgent) {
+            iframeUrl += `&pinAgent=${encodeURIComponent(routeFilters.pinAgent)}`;
+        }
+        if (routeFilters.pinListings) {
+            iframeUrl += `&pinListings=${encodeURIComponent(routeFilters.pinListings)}`;
         }
         if (customParams) {
             iframeUrl += `&${customParams}`;
@@ -212,11 +366,11 @@
                 // Tablet Viewport (e.g. 1024x768)
                 return Math.max(760, Math.min(Math.round(viewportHeight * 0.88), 920));
             }
-            // Desktop Viewport (e.g. 1440x900, 1920x1080)
-            return Math.max(860, Math.min(Math.round(viewportHeight * 0.90), 1050));
+            // Desktop Viewport (e.g. 1440x900, 1920x1080) - Expanded layout
+            return Math.max(900, Math.min(Math.round(viewportHeight * 0.92), 1150));
         }
 
-        let computedHeight = '850px';
+        let computedHeight = '900px';
         if (isFixedHeight && customHeight) {
             computedHeight = customHeight;
         } else {
@@ -263,7 +417,7 @@
             if (e.source && e.source !== iframe.contentWindow) return;
 
             const newHeight = Number(e.data.height);
-            if (!Number.isFinite(newHeight) || newHeight < 400 || newHeight > 3000) return;
+            if (!Number.isFinite(newHeight) || newHeight < 400 || newHeight > 3500) return;
 
             // Debounce small jitter <= 3px
             if (Math.abs(newHeight - lastResizeHeight) <= 3) return;

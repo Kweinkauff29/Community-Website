@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SNEAK IDX Embed Test — Ursula Weinkauff (ursulaweinkauff.com)</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      margin: 0;
+      padding: 32px 20px;
+      background: #f1f5f9;
+      color: #334155;
+    }
+    .wrapper {
+      max-width: 1240px;
+      margin: 0 auto;
+      background: #fff;
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+    }
+    header {
+      margin-bottom: 24px;
+      border-bottom: 1px solid #e2e8f0;
+      padding-bottom: 16px;
+    }
+    h1 {
+      margin: 0 0 8px 0;
+      font-size: 1.5rem;
+      color: #0f172a;
+    }
+    p {
+      margin: 0 0 12px 0;
+      font-size: 0.95rem;
+      color: #64748b;
+    }
+    .badge {
+      display: inline-block;
+      padding: 4px 10px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      border-radius: 6px;
+      background: #e0f2fe;
+      color: #0369a1;
+      margin-right: 8px;
+    }
+    .badge-scope {
+      background: #f0fdf4;
+      color: #166534;
+    }
+    .snippet-box {
+      background: #0f172a;
+      color: #e2e8f0;
+      padding: 16px;
+      border-radius: 8px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-size: 0.85rem;
+      overflow-x: auto;
+      margin: 16px 0;
+    }
+    .embed-area {
+      margin-top: 24px;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      overflow: hidden;
+      min-height: 800px;
+      background: #fafafa;
+    }
+  </style>
+</head>
+<body>
+  <div class="wrapper">
+    <header>
+      <h1>Ursula Weinkauff — Dedicated IDX Embed Test</h1>
+      <p>
+        <span class="badge">Site Key: ursulaweinkauff-com</span>
+        <span class="badge badge-scope">Scope: Full Market (agent: 633942)</span>
+        <span class="badge">Domains: ursulaweinkauff.com, www.ursulaweinkauff.com</span>
+      </p>
+      <p>Simulating 3rd-party host embedding for <strong>Ursulaweinkauff.com</strong> via SNEAK IDX Serving Worker.</p>
+    </header>
+
+    <div>
+      <h3 style="margin: 0 0 8px 0; font-size: 1rem; color: #1e293b;">1. Agent Featured & Open House Listings Widget (Screenshot 1 Match):</h3>
+      <p style="font-size: 0.85rem; color: #64748b;">Filtering to agent <code>633942</code> (Ursula Weinkauff) with headshot avatar badges and "Open Sun 2PM-4PM" badges.</p>
+      <div class="snippet-box">&lt;!-- SNEAK IDX Agent Featured Listings Widget --&gt;
+&lt;div id="sneak-idx-featured" data-site="ursulaweinkauff-com" data-widget="search" data-featured="true" style="width:100%;max-width:100%;"&gt;&lt;/div&gt;
+&lt;script src="https://sneak-idx-worker.bonitaspringsrealtors.workers.dev/embed.js" data-site="ursulaweinkauff-com" data-widget="search" data-featured="true" data-target="#sneak-idx-featured" async defer&gt;&lt;/script&gt;</div>
+      <div class="embed-area" style="min-height: 550px;">
+        <div id="sneak-idx-featured" data-site="ursulaweinkauff-com" data-widget="search" data-featured="true" style="width:100%;max-width:100%;"></div>
+        <script 
+          src="https://sneak-idx-worker.bonitaspringsrealtors.workers.dev/embed.js" 
+          data-site="ursulaweinkauff-com" 
+          data-widget="search" 
+          data-featured="true"
+          data-target="#sneak-idx-featured"
+          data-height="600px">
+        </script>
+      </div>
+    </div>
+
+    <div style="margin-top: 40px;">
+      <h3 style="margin: 0 0 8px 0; font-size: 1rem; color: #1e293b;">2. Route Landing Page Pre-Filtered Widget (Screenshot 2 Match):</h3>
+      <p style="font-size: 0.85rem; color: #64748b;">Pre-filtered to Fort Myers Beach, $350k - $500k with contextual title banner and centered map.</p>
+      <div class="snippet-box">&lt;!-- SNEAK IDX Route Landing Page Widget --&gt;
+&lt;div id="sneak-idx-landing" data-site="ursulaweinkauff-com" data-widget="search" data-city="Fort Myers Beach" data-min-price="350000" data-max-price="500000" data-heading="Homes for Sale in Fort Myers Beach, FL $350,000 to $500,000" style="width:100%;max-width:100%;"&gt;&lt;/div&gt;
+&lt;script src="https://sneak-idx-worker.bonitaspringsrealtors.workers.dev/embed.js" data-site="ursulaweinkauff-com" data-widget="search" data-city="Fort Myers Beach" data-min-price="350000" data-max-price="500000" data-heading="Homes for Sale in Fort Myers Beach, FL $350,000 to $500,000" data-target="#sneak-idx-landing" async defer&gt;&lt;/script&gt;</div>
+      <div class="embed-area" style="min-height: 750px;">
+        <div id="sneak-idx-landing" data-site="ursulaweinkauff-com" data-widget="search" data-city="Fort Myers Beach" data-min-price="350000" data-max-price="500000" data-heading="Homes for Sale in Fort Myers Beach, FL $350,000 to $500,000" style="width:100%;max-width:100%;"></div>
+        <script 
+          src="https://sneak-idx-worker.bonitaspringsrealtors.workers.dev/embed.js" 
+          data-site="ursulaweinkauff-com" 
+          data-widget="search" 
+          data-city="Fort Myers Beach" 
+          data-min-price="350000" 
+          data-max-price="500000" 
+          data-heading="Homes for Sale in Fort Myers Beach, FL $350,000 to $500,000"
+          data-target="#sneak-idx-landing"
+          data-height="750px">
+        </script>
+      </div>
+    </div>
+
+    <div style="margin-top: 40px;">
+      <h3 style="margin: 0 0 8px 0; font-size: 1rem; color: #1e293b;">3. Pinned Listings Widget (Expanded Width & Adaptive Height):</h3>
+      <p style="font-size: 0.85rem; color: #64748b;">Pinning agent's listings first across full market search with 1800px expanded layout and adaptive Recently Viewed height expansion.</p>
+      <div class="snippet-box">&lt;!-- SNEAK IDX Pinned Listings Widget --&gt;
+&lt;div id="sneak-idx-pinned" data-site="ursulaweinkauff-com" data-widget="search" data-pin-own="true" style="width:100%;max-width:100%;"&gt;&lt;/div&gt;
+&lt;script src="https://sneak-idx-worker.bonitaspringsrealtors.workers.dev/embed.js" data-site="ursulaweinkauff-com" data-widget="search" data-pin-own="true" data-target="#sneak-idx-pinned" async defer&gt;&lt;/script&gt;</div>
+      <div class="embed-area" style="min-height: 950px;">
+        <div id="sneak-idx-pinned" data-site="ursulaweinkauff-com" data-widget="search" data-pin-own="true" style="width:100%;max-width:100%;"></div>
+        <script 
+          src="https://sneak-idx-worker.bonitaspringsrealtors.workers.dev/embed.js" 
+          data-site="ursulaweinkauff-com" 
+          data-widget="search" 
+          data-pin-own="true"
+          data-target="#sneak-idx-pinned">
+        </script>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

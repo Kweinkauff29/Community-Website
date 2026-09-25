@@ -448,9 +448,9 @@ export async function verifyConsumerSession(db, rawToken, requestedSiteKey = nul
         return { error: 'SiteMismatch', status: 403 };
     }
 
-    // Async update last_seen_at
+    // Async update last_seen_at - throttled to 15-minute intervals to reduce D1 row writes
     try {
-        await db.prepare("UPDATE sneak_consumer_sessions SET last_seen_at = datetime('now') WHERE id = ?").bind(row.session_id).run();
+        await db.prepare("UPDATE sneak_consumer_sessions SET last_seen_at = datetime('now') WHERE id = ? AND (last_seen_at IS NULL OR last_seen_at < datetime('now', '-15 minutes'))").bind(row.session_id).run();
     } catch {}
 
     return {

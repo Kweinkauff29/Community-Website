@@ -15,7 +15,8 @@ import {
     buildTenantListingScope,
     isListingIdxEligible,
     applyListingDisplayControls,
-    buildCommonListingFilters
+    buildCommonListingFilters,
+    buildListingOrderClause
 } from './sneak-shared/idx-query.js';
 import { isAccountEntitled } from './sneak-shared/entitlement.js';
 
@@ -113,7 +114,7 @@ export default {
 
             // --- ROUTE: GET /idx/v1/search ---
             if (url.pathname === '/idx/v1/search' && req.method === 'GET') {
-                return await handleSearch(url, site, env, ctx, allowedOrigin);
+                return await handleSearch(url, site, branding, env, ctx, allowedOrigin);
             }
 
             // --- ROUTE: GET /idx/v1/map ---
@@ -729,12 +730,15 @@ async function handleStaticWithCSP(req, siteKey, env) {
             (doms.results || []).forEach(r => {
                 const d = r.domain.trim();
                 if (d === 'localhost' || d === '127.0.0.1') {
-                    allowed.push(`http://${d}:*`, `http://${d}`);
+                    allowed.push(`http://${d}:*`, `http://${d}`, `https://${d}:*`, `https://${d}`);
                 } else if (d.startsWith('*.')) {
-                    allowed.push(`https://${d}`, `https://${d.slice(2)}`);
+                    const root = d.slice(2);
+                    allowed.push(`https://${d}`, `https://${root}`, `http://${d}`, `http://${root}`);
                 } else if (d !== '*') {
-                    // Strictly HTTPS without auto-expanding www
-                    allowed.push(`https://${d}`);
+                    allowed.push(`https://${d}`, `http://${d}`);
+                    if (!d.startsWith('www.') && !d.includes(':')) {
+                        allowed.push(`https://www.${d}`, `http://www.${d}`);
+                    }
                 }
             });
 
@@ -840,7 +844,7 @@ async function handleGetConfig(url, site, branding, env, allowedOrigin) {
 /**
  * GET /idx/v1/search?site=abc123&page=1&limit=20&sort=newest&city=...
  */
-async function handleSearch(url, site, env, ctx, allowedOrigin) {
+async function handleSearch(url, site, branding, env, ctx, allowedOrigin) {
     const params = url.searchParams;
     const filter = buildCommonListingFilters(params, site);
 
@@ -855,24 +859,11 @@ async function handleSearch(url, site, env, ctx, allowedOrigin) {
     const limit = Math.min(100, Math.max(1, parseInt(params.get('limit'), 10) || 20));
     const offset = (page - 1) * limit;
 
-    // Sorting
+    // Sorting with Pin Precedence
     const sort = params.get('sort') || 'newest';
-    let orderSQL = "ORDER BY ModificationTimestamp DESC, ListingContractDate DESC";
-    if (sort === 'priceDesc') {
-        orderSQL = "ORDER BY ListPrice DESC, ListingContractDate DESC";
-    } else if (sort === 'priceAsc') {
-        orderSQL = "ORDER BY ListPrice ASC, ListingContractDate DESC";
-    } else if (sort === 'sqftDesc') {
-        orderSQL = "ORDER BY LivingArea DESC NULLS LAST, ListPrice DESC";
-    } else if (sort === 'acresDesc') {
-        orderSQL = "ORDER BY LotSizeAcres DESC NULLS LAST, ListPrice DESC";
-    } else if (sort === 'yearDesc') {
-        orderSQL = "ORDER BY YearBuilt DESC NULLS LAST, ListPrice DESC";
-    } else if (sort === 'dateAsc') {
-        orderSQL = "ORDER BY ListingContractDate ASC";
-    }
+    const { orderSQL, orderBinds } = buildListingOrderClause(sort, filter.pinnedListings, filter.pinnedAgents);
 
-    // Count Total
+    // Count Total (does not require orderBinds)
     const countSQL = `SELECT COUNT(*) AS total FROM sneak_listings ${filter.whereSQL}`;
     const countRes = await env.DB.prepare(countSQL).bind(...filter.bindValues).first();
     const total = countRes ? countRes.total : 0;
@@ -885,23 +876,54 @@ async function handleSearch(url, site, env, ctx, allowedOrigin) {
         Latitude, Longitude, ModificationTimestamp, YearBuilt, LotSizeAcres,
         ListAgentFullName, ListOfficeName, ListOfficePhone, ListAgentMlsId, ListOfficeMlsId, SubdivisionName,
         WaterfrontYN, PoolPrivateYN, GarageSpaces, NewConstructionYN, Zoning,
-        InternetEntireListingDisplayYN, InternetAddressDisplayYN
+        InternetEntireListingDisplayYN, InternetAddressDisplayYN,
+        (SELECT json_object('OpenHouseDate', oh.OpenHouseDate, 'OpenHouseStartTime', oh.OpenHouseStartTime, 'OpenHouseEndTime', oh.OpenHouseEndTime)
+         FROM sneak_open_houses oh 
+         WHERE oh.ListingKey = sneak_listings.ListingKey 
+           AND (oh.OpenHouseDate IS NULL OR oh.OpenHouseDate >= date('now')) 
+         ORDER BY oh.OpenHouseDate ASC, oh.OpenHouseStartTime ASC LIMIT 1) as OpenHouseJson
     `;
     const searchSQL = `SELECT ${selectCols} FROM sneak_listings ${filter.whereSQL} ${orderSQL} LIMIT ? OFFSET ?`;
-    const results = await env.DB.prepare(searchSQL).bind(...filter.bindValues, limit, offset).all();
+    const results = await env.DB.prepare(searchSQL).bind(...filter.bindValues, ...orderBinds, limit, offset).all();
+
+    const tenantAgentMlsId = site.default_agent_mls_id || site.scope_value || '633942';
+    const tenantAgentPhoto = branding?.agent_photo_url || '';
 
     const formattedListings = (results.results || []).map(row => {
         const item = applyListingDisplayControls(row);
+        let openHouse = null;
+        if (item.OpenHouseJson) {
+            try {
+                openHouse = typeof item.OpenHouseJson === 'string' ? JSON.parse(item.OpenHouseJson) : item.OpenHouseJson;
+            } catch {}
+        }
+        delete item.OpenHouseJson;
+
+        // Associate agent photo with listing
+        let agentPhotoUrl = null;
+        if (tenantAgentPhoto) {
+            const isMatch = (item.ListAgentMlsId && String(item.ListAgentMlsId).trim() === String(tenantAgentMlsId).trim()) ||
+                            (item.ListAgentFullName && branding?.display_name && item.ListAgentFullName.toLowerCase().includes(branding.display_name.toLowerCase())) ||
+                            (site.scope_type === 'agent');
+            if (isMatch) {
+                agentPhotoUrl = tenantAgentPhoto;
+            }
+        }
+
+        const isPinned = (Array.isArray(filter.pinnedListings) && filter.pinnedListings.includes(item.ListingKey)) ||
+                         (Array.isArray(filter.pinnedAgents) && filter.pinnedAgents.includes(String(item.ListAgentMlsId || '').trim()));
+
         return {
             ...item,
+            isPinned: Boolean(isPinned),
+            OpenHouse: openHouse,
+            AgentPhotoUrl: agentPhotoUrl,
             Coordinates: (item.Longitude && item.Latitude) ? [item.Longitude, item.Latitude] : null,
             Media: item.PrimaryPhoto ? [{ MediaURL: item.PrimaryPhoto, Order: 0 }] : []
         };
     });
 
-    if (ctx && ctx.waitUntil) {
-        ctx.waitUntil(recordUsage(site.site_id, 'searches', env));
-    }
+    // Note: Usage writes for read searches suppressed to protect D1 write quota
 
     const totalPages = Math.ceil(total / limit);
 
@@ -1164,10 +1186,7 @@ async function handleListingDetail(listingKey, site, req, env, ctx, allowedOrigi
     fullDetails.Media = getListingMediaUrls(fullDetails)
         .map((url, index) => ({ MediaURL: url, Order: index }));
 
-    if (ctx && ctx.waitUntil) {
-        ctx.waitUntil(recordUsage(site.site_id, 'listing_views', env));
-    }
-
+    // Note: Usage writes for listing detail views suppressed to protect D1 write quota
     return jsonResponse({ data: fullDetails }, 200, allowedOrigin, 'public, max-age=120, s-maxage=600');
 }
 
@@ -1215,15 +1234,30 @@ async function handleAgentListings(agentMlsId, url, site, env, allowedOrigin) {
     }
 
     const limit = Math.min(50, Math.max(1, parseInt(url.searchParams.get('limit'), 10) || 20));
+    const pinListings = url.searchParams.get('pinListings');
+    const pinnedKeys = pinListings ? String(pinListings).split(',').map(k => k.trim()).filter(Boolean) : [];
+
+    let orderClause = 'ORDER BY ListingContractDate DESC';
+    const orderBinds = [];
+    if (pinnedKeys.length > 0) {
+        const placeholders = pinnedKeys.map(() => '?').join(',');
+        orderClause = `ORDER BY CASE WHEN ListingKey IN (${placeholders}) THEN 0 ELSE 1 END ASC, ListingContractDate DESC`;
+        orderBinds.push(...pinnedKeys);
+    }
 
     const results = await env.DB.prepare(`
         SELECT ListingKey, ListingId, ListPrice, UnparsedAddress, City, BedroomsTotal, BathroomsTotalInteger, LivingArea, PrimaryPhoto, StandardStatus, PropertyType, PropertySubType
         FROM sneak_listings
         WHERE ListAgentMlsId = ? AND StandardStatus = 'Active' AND ${scope.clause}
-        ORDER BY ListingContractDate DESC LIMIT ?
-    `).bind(agentMlsId, ...scope.binds, limit).all();
+        ${orderClause} LIMIT ?
+    `).bind(agentMlsId, ...scope.binds, ...orderBinds, limit).all();
 
-    return jsonResponse({ data: results.results || [] }, 200, allowedOrigin, 'public, max-age=300, s-maxage=600');
+    const data = (results.results || []).map(row => ({
+        ...row,
+        isPinned: pinnedKeys.includes(row.ListingKey)
+    }));
+
+    return jsonResponse({ data }, 200, allowedOrigin, 'public, max-age=300, s-maxage=600');
 }
 
 /**
@@ -1269,18 +1303,56 @@ async function handleOpenHouses(url, site, env, allowedOrigin) {
         }
     }
 
+    // Pinning support for Open Houses
+    const pinOwn = url.searchParams.get('pinOwn') === '1' || url.searchParams.get('pinOwn') === 'true';
+    const pinAgent = url.searchParams.get('pinAgent') || url.searchParams.get('pinAgents');
+    const pinListings = url.searchParams.get('pinListings');
+    const pinnedOHAgents = [];
+    const pinnedOHListings = [];
+    if (pinOwn) {
+        const ownAgent = site.default_agent_mls_id || (site.scope_type === 'agent' ? site.scope_value : null);
+        if (ownAgent) pinnedOHAgents.push(String(ownAgent).trim());
+    }
+    if (pinAgent) {
+        String(pinAgent).split(',').map(a => a.trim()).filter(Boolean).forEach(a => {
+            if (!pinnedOHAgents.includes(a)) pinnedOHAgents.push(a);
+        });
+    }
+    if (pinListings) {
+        String(pinListings).split(',').map(k => k.trim()).filter(Boolean).forEach(k => {
+            if (!pinnedOHListings.includes(k)) pinnedOHListings.push(k);
+        });
+    }
+
+    const ohOrderBinds = [];
+    const ohWhenClauses = [];
+    if (pinnedOHListings.length > 0) {
+        const placeholders = pinnedOHListings.map(() => '?').join(',');
+        ohWhenClauses.push(`WHEN l.ListingKey IN (${placeholders}) THEN 0`);
+        ohOrderBinds.push(...pinnedOHListings);
+    }
+    if (pinnedOHAgents.length > 0) {
+        const placeholders = pinnedOHAgents.map(() => '?').join(',');
+        ohWhenClauses.push(`WHEN l.ListAgentMlsId IN (${placeholders}) THEN 1`);
+        ohOrderBinds.push(...pinnedOHAgents);
+    }
+    let ohOrderSQL = "ORDER BY oh.OpenHouseDate ASC, oh.OpenHouseStartTime ASC";
+    if (ohWhenClauses.length > 0) {
+        ohOrderSQL = `ORDER BY CASE ${ohWhenClauses.join(' ')} ELSE 2 END ASC, oh.OpenHouseDate ASC, oh.OpenHouseStartTime ASC`;
+    }
+
     const query = `
         SELECT 
             oh.OpenHouseKey, oh.ListingKey, oh.OpenHouseStartTime, oh.OpenHouseEndTime, oh.OpenHouseDate, oh.OpenHouseRemarks, oh.PropertyData,
-            l.UnparsedAddress, l.City, l.ListPrice, l.BedroomsTotal, l.BathroomsTotalInteger, l.LivingArea, l.PrimaryPhoto, l.ListAgentFullName, l.ListOfficeName
+            l.UnparsedAddress, l.City, l.ListPrice, l.BedroomsTotal, l.BathroomsTotalInteger, l.LivingArea, l.PrimaryPhoto, l.ListAgentFullName, l.ListOfficeName, l.ListAgentMlsId
         FROM sneak_open_houses oh
         JOIN sneak_listings l ON oh.ListingKey = l.ListingKey
         WHERE ${whereClauses.join(' AND ')}
-        ORDER BY oh.OpenHouseDate ASC, oh.OpenHouseStartTime ASC
+        ${ohOrderSQL}
         LIMIT 100
     `;
 
-    const results = await env.DB.prepare(query).bind(...bindValues).all();
+    const results = await env.DB.prepare(query).bind(...bindValues, ...ohOrderBinds).all();
 
     const data = (results.results || []).map(row => {
         let property = null;
@@ -1299,7 +1371,9 @@ async function handleOpenHouses(url, site, env, allowedOrigin) {
                 ListOfficeName: row.ListOfficeName
             };
         }
+        const isPinned = (pinnedOHListings.includes(row.ListingKey) || pinnedOHAgents.includes(String(row.ListAgentMlsId || '').trim()));
         return {
+            isPinned: Boolean(isPinned),
             openHouse: {
                 openHouseKey: row.OpenHouseKey,
                 listingKey: row.ListingKey,
@@ -1389,6 +1463,8 @@ async function handleLeadSubmission(req, site, env, ctx, allowedOrigin) {
    ========================================================================== */
 
 async function recordUsage(siteId, column, env) {
+    // Strictly restrict usage row writes to high-value conversions (e.g. 'leads') to protect D1 write limits
+    if (column !== 'leads') return;
     try {
         const today = new Date().toISOString().split('T')[0];
         const id = `${siteId}_${today}`;

@@ -134,9 +134,19 @@ export async function runOpenHouseSync(env) {
 
         // 5. Batch Upsert Valid Events to D1
         const upsertSql = `
-            INSERT OR REPLACE INTO sneak_open_houses (
+            INSERT INTO sneak_open_houses (
                 id, OpenHouseKey, ListingKey, OpenHouseStartTime, OpenHouseEndTime, OpenHouseDate, OpenHouseRemarks, created_at, updated_at
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, datetime('now'), datetime('now'));
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, datetime('now'), datetime('now'))
+            ON CONFLICT(OpenHouseKey) DO UPDATE SET
+                OpenHouseStartTime = excluded.OpenHouseStartTime,
+                OpenHouseEndTime = excluded.OpenHouseEndTime,
+                OpenHouseDate = excluded.OpenHouseDate,
+                OpenHouseRemarks = excluded.OpenHouseRemarks,
+                updated_at = datetime('now')
+            WHERE excluded.OpenHouseStartTime IS NOT sneak_open_houses.OpenHouseStartTime
+               OR excluded.OpenHouseEndTime IS NOT sneak_open_houses.OpenHouseEndTime
+               OR excluded.OpenHouseDate IS NOT sneak_open_houses.OpenHouseDate
+               OR excluded.OpenHouseRemarks IS NOT sneak_open_houses.OpenHouseRemarks;
         `;
 
         const upsertStatements = validOpenHouses.map(oh => {

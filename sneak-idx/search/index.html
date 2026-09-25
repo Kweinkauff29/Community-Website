@@ -93,6 +93,11 @@
     body.is-embedded .mobile-view-toggle-bar {
       flex: 0 0 auto;
     }
+    body.is-embedded .recently-viewed-section {
+      flex: 0 0 auto;
+      padding: 6px 16px;
+      margin: 6px auto 10px;
+    }
     body.is-embedded .main-container {
       flex: 1 1 auto;
       min-height: 0;
@@ -206,7 +211,8 @@
     }
 
     .filters-outer {
-      max-width: 1600px;
+      max-width: 1800px;
+      width: 100%;
       margin: 0 auto;
       display: flex;
       flex-direction: column;
@@ -793,7 +799,8 @@
     }
 
     .carousel-container {
-      max-width: 1600px;
+      max-width: 1800px;
+      width: 100%;
       margin: 0 auto;
     }
 
@@ -863,7 +870,13 @@
     .main-container {
       display: flex;
       height: calc(100vh - 160px);
+      min-height: 600px;
       position: relative;
+      transition: min-height 0.25s ease, height 0.25s ease;
+    }
+
+    body.has-recently-viewed .main-container {
+      min-height: 690px;
     }
 
     .map-section {
@@ -1296,7 +1309,7 @@
     }
 
     .listings-section {
-      width: 55%;
+      width: 58%;
       height: 100%;
       overflow-y: auto;
       padding: 16px;
@@ -1305,9 +1318,15 @@
       flex-direction: column;
     }
 
+    @media (min-width: 1600px) {
+      .listings-section {
+        width: 60%;
+      }
+    }
+
     .listings-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
       gap: 16px;
       flex-grow: 1;
     }
@@ -1328,6 +1347,34 @@
       transform: translateY(-3px);
       box-shadow: var(--shadow-md);
       border-color: #cbd5e1;
+    }
+
+    .listing-card.listing-card-pinned {
+      border: 1.5px solid #38bdf8 !important;
+      box-shadow: 0 4px 14px rgba(2, 132, 199, 0.14) !important;
+    }
+
+    .pinned-badge {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      background: linear-gradient(135deg, #0284c7, #0369a1);
+      color: #fff;
+      font-size: 0.72rem;
+      font-weight: 700;
+      padding: 4px 9px;
+      border-radius: 6px;
+      z-index: 3;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.25);
+      letter-spacing: 0.3px;
+    }
+
+    .open-house-badge.has-pinned-offset,
+    .status-badge-card.has-pinned-offset {
+      top: 38px !important;
     }
 
     .listing-card.active,
@@ -1363,40 +1410,157 @@
       transform: scale(1.03);
     }
 
-    .price-badge {
-      position: absolute;
-      bottom: 10px;
-      left: 10px;
-      background: rgba(15, 23, 42, 0.85);
-      color: #fff;
-      padding: 4px 8px;
-      border-radius: 6px;
+    /* Contextual Route Landing Banner (Screenshot 2) */
+    .landing-header-banner {
+      background: #ffffff;
+      border: 1px solid var(--border);
+      padding: 24px 28px;
+      margin-bottom: 20px;
+      border-radius: 12px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 16px;
+      flex-wrap: wrap;
+      box-shadow: var(--shadow-sm);
+    }
+    .landing-banner-title {
+      font-size: 1.65rem;
       font-weight: 700;
-      font-size: 1rem;
-      backdrop-filter: blur(4px);
+      color: #0f172a;
+      margin-bottom: 6px;
+      line-height: 1.25;
+      letter-spacing: -0.3px;
+    }
+    .landing-banner-sub {
+      font-size: 0.95rem;
+      color: #64748b;
+      font-weight: 400;
+    }
+    .landing-banner-actions {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+    }
+    .banner-action-btn {
+      background: #0f172a;
+      color: #ffffff;
+      border: 1px solid #0f172a;
+      padding: 10px 18px;
+      border-radius: 6px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.2s ease;
+    }
+    .banner-action-btn:hover {
+      background: #1e293b;
+      border-color: #1e293b;
+      transform: translateY(-1px);
+    }
+    .banner-action-save {
+      background: #475569;
+      border-color: #475569;
+    }
+    .banner-action-save:hover {
+      background: #334155;
+      border-color: #334155;
+    }
+
+    /* Card Photo & Badges (Screenshot 1 & 2) */
+    .price-badge {
+      display: none; /* Replaced by price row below photo */
+    }
+
+    .open-house-badge {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      background: rgba(255, 255, 255, 0.95);
+      color: #0f172a;
+      font-size: 0.72rem;
+      font-weight: 700;
+      padding: 4px 9px;
+      border-radius: 4px;
+      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.25);
+      z-index: 4;
+      letter-spacing: 0.1px;
     }
 
     .status-badge-card {
       position: absolute;
       top: 10px;
       left: 10px;
-      padding: 3px 8px;
-      border-radius: 6px;
-      font-size: 0.7rem;
+      padding: 4px 9px;
+      border-radius: 4px;
+      font-size: 0.72rem;
       font-weight: 700;
       text-transform: uppercase;
       color: #fff;
+      z-index: 3;
     }
 
     .status-badge-card.active { background: var(--success); }
     .status-badge-card.auc { background: var(--warning); }
-    .status-badge-card.pending { background: var(--pending); }
+    .status-badge-card.pending { background: #facc15; color: #000; font-weight: 800; }
+    .status-badge-card.new { background: #10b981; color: #fff; font-weight: 800; }
 
-    .card-save-btn {
+    .card-tour-badge {
       position: absolute;
       top: 10px;
       right: 10px;
-      background: rgba(255, 255, 255, 0.9);
+      background: rgba(15, 23, 42, 0.75);
+      color: #ffffff;
+      width: 28px;
+      height: 28px;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.85rem;
+      z-index: 4;
+      backdrop-filter: blur(4px);
+    }
+
+    .card-agent-badge {
+      position: absolute;
+      bottom: 8px;
+      right: 8px;
+      width: 46px;
+      height: 46px;
+      border-radius: 8px;
+      object-fit: cover;
+      border: 2px solid #1a2a3a;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.45);
+      z-index: 4;
+      background: #1a2a3a;
+      transition: transform 0.2s ease;
+    }
+
+    .listing-card:hover .card-agent-badge {
+      transform: scale(1.06);
+    }
+
+    /* Card Details & Footer (Screenshot 1) */
+    .card-price-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-top: 2px;
+    }
+
+    .card-price {
+      font-size: 1.35rem;
+      font-weight: 700;
+      color: #0f172a;
+      letter-spacing: -0.3px;
+    }
+
+    .card-save-btn {
+      background: transparent;
       border: none;
       width: 32px;
       height: 32px;
@@ -1405,18 +1569,60 @@
       align-items: center;
       justify-content: center;
       cursor: pointer;
-      color: #64748b;
-      font-size: 0.85rem;
+      color: #94a3b8;
+      font-size: 1.25rem;
       transition: all 0.2s;
+      padding: 0;
     }
 
     .card-save-btn:hover {
-      background: #fff;
-      transform: scale(1.1);
+      color: var(--hot);
+      transform: scale(1.15);
     }
 
     .card-save-btn.saved {
       color: var(--hot);
+    }
+
+    .card-footer-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-top: auto;
+      padding-top: 8px;
+      border-top: 1px solid #f1f5f9;
+      font-size: 0.75rem;
+      color: #64748b;
+    }
+
+    .card-agent-name {
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 60%;
+      color: #64748b;
+      font-size: 0.75rem;
+    }
+
+    .card-broker-reciprocity {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      color: #94a3b8;
+      font-size: 0.58rem;
+      text-transform: uppercase;
+      line-height: 1;
+      letter-spacing: 0.2px;
+      font-weight: 600;
+    }
+
+    .br-icon {
+      flex-shrink: 0;
+      color: #64748b;
+    }
+
+    .br-text {
+      text-align: left;
     }
 
     .card-content {
@@ -2408,9 +2614,11 @@
 
     /* Recently Viewed + Property Compare (Phase 7.3C3A) */
     .recently-viewed-section {
-      max-width: 1440px;
+      max-width: 1800px;
+      width: 100%;
       margin: 14px auto 18px;
       padding: 0 18px;
+      transition: all 0.3s ease;
     }
     .recently-viewed-header {
       display: flex;
@@ -3181,6 +3389,18 @@
       </div>
     </div>
     <div class="listings-section">
+      <!-- Landing Header Banner (Screenshot 2) -->
+      <div id="landingHeaderBanner" class="landing-header-banner" style="display:none;">
+        <div class="landing-banner-content">
+          <h1 class="landing-banner-title" id="landingBannerTitle"></h1>
+          <div class="landing-banner-sub" id="landingBannerSub"></div>
+        </div>
+        <div class="landing-banner-actions">
+          <button class="banner-action-btn" id="bannerModifySearchBtn" onclick="document.getElementById('moreFiltersDrawer')?.classList.add('open')"><i class="fas fa-sliders-h"></i> Modify Search</button>
+          <button class="banner-action-btn banner-action-save" id="bannerSaveSearchBtn" onclick="document.getElementById('saveSearchBtn')?.click()"><i class="fas fa-bookmark"></i> Save Search</button>
+        </div>
+      </div>
+
       <div class="listings-grid" id="listingsGrid"></div>
       
       <!-- Pagination Controls -->
@@ -3723,6 +3943,123 @@
       return '$' + val;
     };
 
+    // Contextual Route & Pre-Filter State (Phase 7.4B3)
+    let filterAgentMlsId = urlParams.get('agent') || urlParams.get('agentMlsId') || null;
+    let filterFeatured = urlParams.get('featured') === '1' || urlParams.get('featured') === 'true';
+    let urlCustomHeading = urlParams.get('heading') || null;
+    let filterPinOwn = urlParams.get('pinOwn') === '1' || urlParams.get('pinOwn') === 'true';
+    let filterPinAgent = urlParams.get('pinAgent') || urlParams.get('pinAgents') || null;
+    let filterPinListings = urlParams.get('pinListings') || urlParams.get('pinListing') || null;
+
+    function formatOpenHouseBadge(oh) {
+      if (!oh) return '';
+      if (typeof oh === 'string') return oh;
+      let dayStr = '';
+      if (oh.OpenHouseDate) {
+        const parts = String(oh.OpenHouseDate).split('-');
+        if (parts.length === 3) {
+          const d = new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10));
+          const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+          dayStr = days[d.getDay()] || '';
+        }
+      }
+      function fmtTime(t) {
+        if (!t) return '';
+        try {
+          if (String(t).includes('T')) {
+            const d = new Date(t);
+            return d.toLocaleTimeString('en-US', {
+              hour: 'numeric',
+              minute: '2-digit',
+              timeZone: 'America/New_York'
+            }).replace(':00 ', ' ').replace(' ', '');
+          }
+          const parts = String(t).split(':');
+          let h = parseInt(parts[0], 10);
+          const ampm = h >= 12 ? 'PM' : 'AM';
+          h = h % 12 || 12;
+          const m = parts[1] || '00';
+          return m === '00' ? `${h}${ampm}` : `${h}:${m}${ampm}`;
+        } catch {
+          return '';
+        }
+      }
+      const startStr = fmtTime(oh.OpenHouseStartTime);
+      const endStr = fmtTime(oh.OpenHouseEndTime);
+      const timeSpan = (startStr && endStr) ? `${startStr}-${endStr}` : (startStr || '');
+      return `Open ${dayStr} ${timeSpan}`.trim();
+    }
+
+    function centerMapOnCity(cityName) {
+      if (!cityName || !map) return;
+      const cityMap = {
+        'estero': [26.4381, -81.8067],
+        'fort myers beach': [26.4520, -81.9481],
+        'fort myers': [26.6406, -81.8723],
+        'bonita springs': [26.3398, -81.7787],
+        'naples': [26.1420, -81.7948],
+        'cape coral': [26.5629, -81.9495],
+        'lehigh acres': [26.6253, -81.6248],
+        'marco island': [25.9363, -81.7157],
+        'sanibel': [26.4490, -82.0223],
+        'punta gorda': [26.9298, -82.0454]
+      };
+      const key = cityName.toLowerCase().trim();
+      const coords = cityMap[key];
+      if (coords) {
+        suppressViewportSearch = true;
+        map.setView(coords, 12);
+        setTimeout(() => { suppressViewportSearch = false; }, 500);
+      }
+    }
+
+    function updateLandingBanner(customHeading, city, minPrice, maxPrice, propertyType, openHouses, featured) {
+      const banner = document.getElementById('landingHeaderBanner');
+      const titleEl = document.getElementById('landingBannerTitle');
+      const subEl = document.getElementById('landingBannerSub');
+      if (!banner || !titleEl || !subEl) return;
+
+      const hasRouteFilter = customHeading || city || minPrice || maxPrice || openHouses || featured || filterAgentMlsId;
+      if (!hasRouteFilter) {
+        banner.style.display = 'none';
+        return;
+      }
+
+      let title = '';
+      let sub = '';
+
+      if (customHeading) {
+        title = customHeading;
+        sub = customHeading;
+      } else if (openHouses) {
+        title = city ? `Open Houses in ${city}, FL` : 'Upcoming Open Houses';
+        sub = city ? `Tour open houses in ${city}, FL this weekend` : 'Tour scheduled open houses this weekend';
+      } else if (featured || filterAgentMlsId) {
+        const agentName = tenantConfig?.displayName || 'Ursula Weinkauff';
+        title = `Featured Listings by ${agentName}`;
+        sub = city ? `Exclusive & featured properties in ${city}, FL` : 'Exclusive & featured properties';
+      } else if (city) {
+        const typeLabel = (propertyType === 'rental' ? 'Rentals' : (drawerState.subtypes?.includes('Condominium') ? 'Condos for Sale' : 'Homes for Sale'));
+        const priceStr = (minPrice && maxPrice) ? ` $${Number(minPrice).toLocaleString()} to $${Number(maxPrice).toLocaleString()}` :
+                         (minPrice ? ` from $${Number(minPrice).toLocaleString()}` :
+                         (maxPrice ? ` up to $${Number(maxPrice).toLocaleString()}` : ''));
+        const priceSubStr = (minPrice && maxPrice) ? ` from $${Number(minPrice).toLocaleString()} to $${Number(maxPrice).toLocaleString()}` :
+                            (minPrice ? ` from $${Number(minPrice).toLocaleString()}` :
+                            (maxPrice ? ` up to $${Number(maxPrice).toLocaleString()}` : ''));
+        title = `${typeLabel} in ${city}, FL${priceStr}`;
+        sub = `${typeLabel.toLowerCase()} in ${city}, FL${priceSubStr}`;
+      } else if (minPrice || maxPrice) {
+        const priceStr = (minPrice && maxPrice) ? `$${Number(minPrice).toLocaleString()} to $${Number(maxPrice).toLocaleString()}` :
+                         (minPrice ? `from $${Number(minPrice).toLocaleString()}` : `up to $${Number(maxPrice).toLocaleString()}`);
+        title = `Properties ${priceStr}`;
+        sub = `Browse properties ${priceStr}`;
+      }
+
+      titleEl.textContent = title;
+      subEl.textContent = sub;
+      banner.style.display = 'flex';
+    }
+
     // --- DOM Loaded ---
     document.addEventListener('DOMContentLoaded', async () => {
       if (IS_EMBEDDED) document.body.classList.add('is-embedded');
@@ -3736,6 +4073,57 @@
 
       initMap();
       setupEventListeners();
+
+      // Contextual Route & Pre-Filter Initialization (Phase 7.4B3)
+      const urlCity = urlParams.get('city');
+      const urlMinPrice = parseFloat(urlParams.get('minPrice')) || null;
+      const urlMaxPrice = parseFloat(urlParams.get('maxPrice')) || null;
+      const urlOpenHouses = urlParams.get('openHouses') === '1' || urlParams.get('open_houses') === '1' || urlParams.get('type') === 'open-houses';
+      const urlSubType = urlParams.get('propertySubType');
+
+      if (urlCity) {
+        drawerState.cities = urlCity.split(',').map(c => c.trim()).filter(Boolean);
+        centerMapOnCity(drawerState.cities[0]);
+      }
+
+      if (urlMinPrice) {
+        let bestMin = 0;
+        let minDiff = Infinity;
+        for (let i = 0; i < PRICE_STEPS.length; i++) {
+          if (PRICE_STEPS[i] !== null) {
+            const diff = Math.abs(PRICE_STEPS[i] - urlMinPrice);
+            if (diff < minDiff) { minDiff = diff; bestMin = i; }
+          }
+        }
+        priceMinIdx = bestMin;
+        const minSlider = document.getElementById('priceRangeMin');
+        if (minSlider) minSlider.value = bestMin;
+      }
+
+      if (urlMaxPrice) {
+        let bestMax = PRICE_STEPS.length - 1;
+        let maxDiff = Infinity;
+        for (let i = 0; i < PRICE_STEPS.length; i++) {
+          if (PRICE_STEPS[i] !== null) {
+            const diff = Math.abs(PRICE_STEPS[i] - urlMaxPrice);
+            if (diff < maxDiff) { maxDiff = diff; bestMax = i; }
+          }
+        }
+        priceMaxIdx = bestMax;
+        const maxSlider = document.getElementById('priceRangeMax');
+        if (maxSlider) maxSlider.value = bestMax;
+      }
+
+      if (urlOpenHouses) {
+        drawerState.openHouse = true;
+        const ohToggle = document.getElementById('drawerOpenHouse');
+        if (ohToggle) ohToggle.checked = true;
+      }
+
+      if (urlSubType) {
+        drawerState.subtypes = urlSubType.split(',').map(s => s.trim()).filter(Boolean);
+      }
+
       updatePriceSliderUI();
       updateDisclaimerDates();
       updateCartUI();
@@ -3754,6 +4142,7 @@
       syncToolbarWithCategory();
 
       await loadTenantConfig();
+      updateLandingBanner(urlCustomHeading, drawerState.cities[0], urlMinPrice, urlMaxPrice, currentPropertyType, urlOpenHouses, filterFeatured);
       await initConsumerAuth(initialAuthCode);
       await loadCompareState();
       await loadRecentlyViewed();
@@ -3767,6 +4156,7 @@
     });
 
     function initMap() {
+      suppressViewportSearch = true;
       map = L.map('map').setView([26.34, -81.78], 11);
       L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png', {
         attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
@@ -3790,9 +4180,11 @@
       map.addLayer(markerCluster);
 
       // Map Event Listeners
+      map.on('movestart', () => { userHasMovedMap = true; });
       map.on('moveend', onMapMoveEnd);
       map.on('click', onMapClick);
       map.on('mousemove', onMapMouseMove);
+      setTimeout(() => { suppressViewportSearch = false; }, 600);
     }
 
     // --- Spatial Search State Engine (Phase 7.3B2B) ---
@@ -4609,7 +5001,7 @@
           p.set('centerLat', spatialState.centerLat.toFixed(6));
           p.set('centerLng', spatialState.centerLng.toFixed(6));
           p.set('radiusMiles', spatialState.radiusMiles.toString());
-        } else if (currentViewportBounds) {
+        } else if (currentViewportBounds && userHasMovedMap && !drawerState.cities.length && !filterAgentMlsId && !filterFeatured) {
           p.set('north', currentViewportBounds.north.toFixed(6));
           p.set('south', currentViewportBounds.south.toFixed(6));
           p.set('east', currentViewportBounds.east.toFixed(6));
@@ -4663,6 +5055,15 @@
       if (drawerState.openHouse) p.set('openHouse', '1');
       if (drawerState.newListing) p.set('newListingDays', '7');
       if (drawerState.priceReduced) p.set('priceReduced', '1');
+
+      // Agent & Featured Filters
+      if (filterAgentMlsId) p.set('agentMlsId', filterAgentMlsId);
+      if (filterFeatured) p.set('featured', '1');
+
+      // Pinned Listings & Agents Precedence
+      if (filterPinOwn) p.set('pinOwn', '1');
+      if (filterPinAgent) p.set('pinAgents', filterPinAgent);
+      if (filterPinListings) p.set('pinListings', filterPinListings);
 
       // Sort
       const sort = document.querySelector('input[name="sort"]:checked')?.value || 'dateDesc';
@@ -4805,7 +5206,6 @@
         const sc = item.StandardStatus === 'Pending' ? 'pending' : item.StandardStatus === 'Active Under Contract' ? 'auc' : 'active';
         const sl = escapeHtml(item.StandardStatus === 'Active Under Contract' ? 'Under Contract' : item.StandardStatus || 'Active');
         const isSaved = savedListings.some(s => s.key === item.ListingKey);
-        const isCompared = compareKeys.includes(item.ListingKey);
 
         const isLand = item.PropertyType === 'Land';
         const isComm = (item.PropertyType || '').toLowerCase().includes('commercial') || (item.PropertyType || '').toLowerCase().includes('business');
@@ -4814,43 +5214,77 @@
         if (isLand) {
           detailsHtml = `
             <div class="card-details">
-              ${item.LotSizeAcres ? `<span class="card-detail-item"><i class="fas fa-tree"></i> ${escapeHtml(item.LotSizeAcres)} Acres</span>` : ''}
-              ${item.SubdivisionName ? `<span class="card-detail-item"><i class="fas fa-map-pin"></i> ${escapeHtml(item.SubdivisionName)}</span>` : ''}
+              <span>Residential Lots & Land: ${escapeHtml(item.LotSizeAcres ? item.LotSizeAcres + ' acres' : (item.SubdivisionName || 'Land'))}</span>
             </div>
           `;
         } else if (isComm) {
           detailsHtml = `
             <div class="card-details">
-              ${item.LivingArea ? `<span class="card-detail-item"><i class="fas fa-ruler-combined"></i> ${escapeHtml((item.LivingArea).toLocaleString())} sqft</span>` : ''}
-              ${item.LotSizeAcres ? `<span class="card-detail-item"><i class="fas fa-tree"></i> ${escapeHtml(item.LotSizeAcres)} Acres</span>` : ''}
-              ${item.YearBuilt ? `<span class="card-detail-item"><i class="fas fa-calendar"></i> Built ${escapeHtml(item.YearBuilt)}</span>` : ''}
+              <span>${item.LivingArea ? escapeHtml((item.LivingArea).toLocaleString()) + ' sqft' : ''} ${item.YearBuilt ? '· Built ' + escapeHtml(item.YearBuilt) : ''}</span>
             </div>
           `;
         } else {
           detailsHtml = `
             <div class="card-details">
-              <span class="card-detail-item"><i class="fas fa-bed"></i> ${escapeHtml(item.BedroomsTotal || 0)} bd</span>
-              <span class="card-detail-item"><i class="fas fa-bath"></i> ${escapeHtml(item.BathroomsTotalInteger || 0)} ba</span>
-              <span class="card-detail-item"><i class="fas fa-ruler-combined"></i> ${escapeHtml((item.LivingArea || 0).toLocaleString())} sqft</span>
+              <span>${escapeHtml(item.BedroomsTotal || 0)} bd · ${escapeHtml(item.BathroomsTotalInteger || 0)} ba · ${escapeHtml((item.LivingArea || 0).toLocaleString())} sqft</span>
             </div>
           `;
         }
 
+        const ohBadge = formatOpenHouseBadge(item.OpenHouse);
+        const isPending = item.StandardStatus === 'Pending' || item.StandardStatus === 'Active Under Contract';
+        const isNew = item.ListingContractDate && (Date.now() - new Date(item.ListingContractDate).getTime()) < (7 * 24 * 60 * 60 * 1000);
+        const isPinned = Boolean(item.isPinned);
+
+        if (isPinned) {
+          card.classList.add('listing-card-pinned');
+        }
+
+        let agentPhoto = item.AgentPhotoUrl || null;
+        if (!agentPhoto && tenantConfig?.agentPhotoUrl) {
+          if (item.ListAgentMlsId === '633942' || (item.ListAgentFullName && tenantConfig?.displayName && item.ListAgentFullName.toLowerCase().includes(tenantConfig.displayName.toLowerCase())) || filterFeatured || filterAgentMlsId) {
+            agentPhoto = tenantConfig.agentPhotoUrl;
+          }
+        }
+
+        let badgeHtml = '';
+        if (isPinned) {
+          badgeHtml += `<div class="pinned-badge"><i class="fas fa-thumbtack"></i> Pinned</div>`;
+        }
+        if (ohBadge) {
+          badgeHtml += `<div class="open-house-badge ${isPinned ? 'has-pinned-offset' : ''}">${escapeHtml(ohBadge)}</div>`;
+        } else if (isPending) {
+          badgeHtml += `<div class="status-badge-card pending ${isPinned ? 'has-pinned-offset' : ''}">Pending</div>`;
+        } else if (isNew) {
+          badgeHtml += `<div class="status-badge-card new ${isPinned ? 'has-pinned-offset' : ''}">New</div>`;
+        } else if (!isPinned) {
+          badgeHtml += `<div class="status-badge-card ${sc}">${sl}</div>`;
+        }
+
+        const addressLine = `${escapeHtml(item.UnparsedAddress || 'Address Undisclosed')}, ${escapeHtml(item.City || '')}, FL ${escapeHtml(item.PostalCode || '')}`;
+
         card.innerHTML = `
           <div class="card-img-wrapper">
             <img src="${imgUrl}" class="card-img" loading="lazy" alt="Property">
-            <div class="price-badge">${escapeHtml(fmt.format(item.ListPrice || 0))}</div>
-            <div class="status-badge-card ${sc}">${sl}</div>
-            <button class="card-save-btn ${isSaved ? 'saved' : ''}" onclick="event.stopPropagation();toggleSave('${escapeHtml(item.ListingKey)}')" title="Save property"><i class="fas fa-heart"></i></button>
-            <button class="card-compare-btn ${isCompared ? 'selected' : ''}" onclick="event.stopPropagation();toggleCompare('${escapeHtml(item.ListingKey)}')" title="${isCompared ? 'Remove from' : 'Add to'} comparison"><i class="fas ${isCompared ? 'fa-check' : 'fa-columns'}"></i> <span>${isCompared ? 'Compared' : 'Compare'}</span></button>
+            ${badgeHtml}
+            <div class="card-tour-badge" title="Virtual / 3D Tour"><i class="fas fa-cube"></i></div>
+            ${agentPhoto ? `<img class="card-agent-badge" src="${escapeHtml(agentPhoto)}" alt="Agent" title="${escapeHtml(item.ListAgentFullName || '')}">` : ''}
           </div>
           <div class="card-content">
-            <div class="card-subtype">${escapeHtml(item.PropertySubType || item.PropertyType || '')}</div>
-            <div class="card-address">${escapeHtml(item.UnparsedAddress || 'Address Undisclosed')}</div>
+            <div class="card-price-row">
+              <span class="card-price">${escapeHtml(fmt.format(item.ListPrice || 0))}</span>
+              <button class="card-save-btn ${isSaved ? 'saved' : ''}" onclick="event.stopPropagation();toggleSave('${escapeHtml(item.ListingKey)}')" title="Save property" aria-label="Save property"><i class="${isSaved ? 'fas' : 'far'} fa-heart"></i></button>
+            </div>
+            <div class="card-address" title="${addressLine}">${addressLine}</div>
             ${detailsHtml}
-            <div class="card-meta">
-              <div style="font-weight:600;color:var(--primary);"><i class="fas fa-map-marker-alt"></i> ${escapeHtml(item.City || '')}</div>
-              <div style="font-size:0.75rem;color:var(--text-muted);">${escapeHtml(item.ListOfficeName || '')}</div>
+            <div class="card-footer-row">
+              <div class="card-agent-name">${escapeHtml(item.ListAgentFullName || item.ListOfficeName || '')}</div>
+              <div class="card-broker-reciprocity" title="Broker Reciprocity">
+                <svg class="br-icon" viewBox="0 0 24 24" width="13" height="13" fill="currentColor">
+                  <path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/>
+                </svg>
+                <span class="br-text">Broker<br>Reciprocity</span>
+              </div>
             </div>
           </div>
         `;
@@ -5556,6 +5990,31 @@
       renderRecentlyViewed();
     }
 
+    function updateAdaptiveEmbedHeight() {
+      const isRecentActive = Boolean(recentlyViewedEntries && recentlyViewedEntries.length > 0);
+      document.body.classList.toggle('has-recently-viewed', isRecentActive);
+      const mainContainer = document.getElementById('mainContainer');
+      if (mainContainer) mainContainer.classList.toggle('has-recently-viewed', isRecentActive);
+
+      if (window.parent && window.parent !== window) {
+        const docH = Math.max(
+          document.documentElement.scrollHeight,
+          document.body.scrollHeight,
+          document.documentElement.offsetHeight
+        );
+        const baseH = window.innerHeight || 900;
+        const targetH = isRecentActive ? Math.max(docH, baseH + 185) : docH;
+        try {
+          window.parent.postMessage({
+            type: 'SNEAK_RESIZE',
+            siteKey: SITE_KEY,
+            height: targetH,
+            recentlyViewedActive: isRecentActive
+          }, '*');
+        } catch {}
+      }
+    }
+
     function renderRecentlyViewed() {
       const section = document.getElementById('recentlyViewedSection');
       const track = document.getElementById('recentlyViewedTrack');
@@ -5581,6 +6040,7 @@
         </div>`;
       }).join('');
       updateSharedListCounts();
+      updateAdaptiveEmbedHeight();
     }
 
     function clearAnonymousRecentlyViewed() {

@@ -24,7 +24,7 @@ const MISSING_CHUNK_SIZE = 25;
 const LARGE_MISSING_THRESHOLD = 500;
 
 const upsertSql = `
-    INSERT OR REPLACE INTO sneak_listings (
+    INSERT INTO sneak_listings (
         ListingKey, ListingId, ListPrice, OriginalListPrice,
         UnparsedAddress, StreetNumber, StreetName, UnitNumber,
         City, StateOrProvince, PostalCode, CountyOrParish,
@@ -37,7 +37,59 @@ const upsertSql = `
         InternetEntireListingDisplayYN, InternetAddressDisplayYN,
         OriginatingSystemKey, OriginatingSystemName,
         WaterfrontYN, PoolPrivateYN, GarageSpaces, NewConstructionYN, Zoning
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    ON CONFLICT(ListingKey) DO UPDATE SET
+        ListingId = excluded.ListingId,
+        ListPrice = excluded.ListPrice,
+        OriginalListPrice = excluded.OriginalListPrice,
+        UnparsedAddress = excluded.UnparsedAddress,
+        StreetNumber = excluded.StreetNumber,
+        StreetName = excluded.StreetName,
+        UnitNumber = excluded.UnitNumber,
+        City = excluded.City,
+        StateOrProvince = excluded.StateOrProvince,
+        PostalCode = excluded.PostalCode,
+        CountyOrParish = excluded.CountyOrParish,
+        BedroomsTotal = excluded.BedroomsTotal,
+        BathroomsTotalInteger = excluded.BathroomsTotalInteger,
+        BathroomsFull = excluded.BathroomsFull,
+        BathroomsHalf = excluded.BathroomsHalf,
+        LivingArea = excluded.LivingArea,
+        StandardStatus = excluded.StandardStatus,
+        PropertyType = excluded.PropertyType,
+        PropertySubType = excluded.PropertySubType,
+        PrimaryPhoto = excluded.PrimaryPhoto,
+        MediaJSON = excluded.MediaJSON,
+        ListingContractDate = excluded.ListingContractDate,
+        ModificationTimestamp = excluded.ModificationTimestamp,
+        StatusChangeTimestamp = excluded.StatusChangeTimestamp,
+        Latitude = excluded.Latitude,
+        Longitude = excluded.Longitude,
+        YearBuilt = excluded.YearBuilt,
+        LotSizeAcres = excluded.LotSizeAcres,
+        SubdivisionName = excluded.SubdivisionName,
+        PublicRemarks = excluded.PublicRemarks,
+        ListAgentKey = excluded.ListAgentKey,
+        ListAgentFullName = excluded.ListAgentFullName,
+        ListAgentEmail = excluded.ListAgentEmail,
+        ListAgentDirectPhone = excluded.ListAgentDirectPhone,
+        ListAgentMlsId = excluded.ListAgentMlsId,
+        ListOfficeKey = excluded.ListOfficeKey,
+        ListOfficeName = excluded.ListOfficeName,
+        ListOfficePhone = excluded.ListOfficePhone,
+        ListOfficeMlsId = excluded.ListOfficeMlsId,
+        InternetEntireListingDisplayYN = excluded.InternetEntireListingDisplayYN,
+        InternetAddressDisplayYN = excluded.InternetAddressDisplayYN,
+        OriginatingSystemKey = excluded.OriginatingSystemKey,
+        OriginatingSystemName = excluded.OriginatingSystemName,
+        WaterfrontYN = excluded.WaterfrontYN,
+        PoolPrivateYN = excluded.PoolPrivateYN,
+        GarageSpaces = excluded.GarageSpaces,
+        NewConstructionYN = excluded.NewConstructionYN,
+        Zoning = excluded.Zoning
+    WHERE excluded.ModificationTimestamp IS NOT sneak_listings.ModificationTimestamp
+       OR excluded.StandardStatus IS NOT sneak_listings.StandardStatus
+       OR excluded.ListPrice IS NOT sneak_listings.ListPrice;
 `;
 
 const deleteSql = `DELETE FROM sneak_listings WHERE ListingKey = ?;`;

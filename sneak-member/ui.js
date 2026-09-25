@@ -577,39 +577,175 @@ export function renderMemberUI() {
                 <div id="tab-widgets" class="tab-pane" style="display: none;">
                     <div class="panel">
                         <div class="panel-header">
-                            <h3>IDX Widget Management</h3>
+                            <h3>IDX Widget Configuration & Presets</h3>
                         </div>
-                        <p style="color: var(--text-secondary); font-size: 0.875rem;">
-                            Customize widget settings and configurations for your embedded property search components.
+                        <p style="color: var(--text-secondary); font-size: 0.875rem; margin-bottom: 20px;">
+                            Configure customized embeds for your website, including agent-featured listings, upcoming open houses, and pre-filtered community or price range landing pages.
                         </p>
+                        
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px;">
+                            <div style="background: #f8fafc; border: 1px solid var(--border); border-radius: 8px; padding: 18px;">
+                                <h4 style="margin: 0 0 6px 0; color: var(--text); font-size: 1rem;"><i class="fas fa-star" style="color: #f59e0b;"></i> Featured Agent Listings</h4>
+                                <p style="font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 12px;">Display listings specifically from your agent MLS ID or selected agents with your branded photo avatar and reciprocity badge.</p>
+                                <button class="btn btn-secondary btn-sm" onclick="selectPreset('featured'); switchTab('embed')">Configure Featured Embed</button>
+                            </div>
+                            <div style="background: #f8fafc; border: 1px solid var(--border); border-radius: 8px; padding: 18px;">
+                                <h4 style="margin: 0 0 6px 0; color: var(--text); font-size: 1rem;"><i class="fas fa-door-open" style="color: #10b981;"></i> Open Houses Showcase</h4>
+                                <p style="font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 12px;">Show active upcoming weekend open house listings with formatted day/time calendar tags (e.g. Open Sun 1PM-3PM).</p>
+                                <button class="btn btn-secondary btn-sm" onclick="selectPreset('openhouses'); switchTab('embed')">Configure Open Houses Embed</button>
+                            </div>
+                            <div style="background: #f8fafc; border: 1px solid var(--border); border-radius: 8px; padding: 18px;">
+                                <h4 style="margin: 0 0 6px 0; color: var(--text); font-size: 1rem;"><i class="fas fa-map-marked-alt" style="color: #2596be;"></i> Route Landing Pages</h4>
+                                <p style="font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 12px;">Auto-detect city, price range, and property type directly from WordPress/CMS URLs like <code>/homes-for-sale-in-estero-fl-1500000-to-2500000</code>.</p>
+                                <button class="btn btn-secondary btn-sm" onclick="selectPreset('landing'); switchTab('embed')">Configure Route Landing Page</button>
+                            </div>
+                            <div style="background: #f8fafc; border: 1px solid var(--border); border-radius: 8px; padding: 18px;">
+                                <h4 style="margin: 0 0 6px 0; color: var(--text); font-size: 1rem;"><i class="fas fa-search" style="color: var(--primary);"></i> Full MLS Search</h4>
+                                <p style="font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 12px;">Complete interactive map and responsive listing search for all market inventory.</p>
+                                <button class="btn btn-secondary btn-sm" onclick="selectPreset('search'); switchTab('embed')">Configure Search Embed</button>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
                 <!-- Embed Tab -->
                 <div id="tab-embed" class="tab-pane" style="display: none;">
+                    <!-- Interactive Embed Generator -->
                     <div class="panel">
                         <div class="panel-header">
-                            <h3>Full Search Embed</h3>
+                            <h3>Custom Widget & Landing Page Generator</h3>
                         </div>
-                        <p style="color: var(--text-secondary); font-size: 0.875rem;">Copy and paste this HTML snippet into any page on your authorized website.</p>
+                        <p style="color: var(--text-secondary); font-size: 0.875rem; margin-bottom: 20px;">
+                            Customize your IDX widget with agent filtering, city constraints, price ranges, or dynamic URL slug auto-detection. The HTML snippet updates live below.
+                        </p>
+
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; margin-bottom: 20px;">
+                            <div class="form-group">
+                                <label class="form-label">Widget Purpose</label>
+                                <select id="builderWidgetType" class="form-control" onchange="updateCustomEmbedCode()">
+                                    <option value="search">Full Search & Map</option>
+                                    <option value="featured">Featured Agent Listings (Photo Badge)</option>
+                                    <option value="openhouses">Upcoming Open Houses</option>
+                                    <option value="landing">Pre-Filtered City & Price Landing Page</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Agent MLS ID(s)</label>
+                                <input type="text" id="builderAgentId" class="form-control" placeholder="e.g. 633942 or 633942, N629729" oninput="updateCustomEmbedCode()">
+                                <small style="font-size: 0.72rem; color: var(--text-muted);">Leave blank for all agents, or specify MLS IDs to show only their listings.</small>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Target City</label>
+                                <input type="text" id="builderCity" class="form-control" placeholder="e.g. Fort Myers Beach or Estero" oninput="updateCustomEmbedCode()">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Property Type</label>
+                                <select id="builderPropType" class="form-control" onchange="updateCustomEmbedCode()">
+                                    <option value="">All Types (Residential, Condo, Land, etc.)</option>
+                                    <option value="sale">Residential For Sale</option>
+                                    <option value="condo">Condominium</option>
+                                    <option value="land">Residential Lots & Land</option>
+                                    <option value="rental">Residential Lease / Rental</option>
+                                    <option value="commercial">Commercial Real Estate</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Min Price ($)</label>
+                                <input type="number" id="builderMinPrice" class="form-control" placeholder="e.g. 350000 or 1500000" oninput="updateCustomEmbedCode()">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Max Price ($)</label>
+                                <input type="number" id="builderMaxPrice" class="form-control" placeholder="e.g. 500000 or 2500000" oninput="updateCustomEmbedCode()">
+                            </div>
+                        </div>
+
+                        <div style="display: flex; gap: 24px; flex-wrap: wrap; margin-bottom: 20px; padding: 12px 16px; background: #f8fafc; border-radius: 8px; border: 1px solid var(--border);">
+                            <label style="display: flex; align-items: center; gap: 8px; font-size: 0.85rem; cursor: pointer; color: var(--text);">
+                                <input type="checkbox" id="builderRouteMode" checked onchange="updateCustomEmbedCode()">
+                                <span><strong>URL Route Auto-Detection</strong> (Detects city & price from page slug like <code>/homes-for-sale-in-estero-fl-1500000-to-2500000</code>)</span>
+                            </label>
+                            <label style="display: flex; align-items: center; gap: 8px; font-size: 0.85rem; cursor: pointer; color: var(--text);">
+                                <input type="checkbox" id="builderOpenHouses" onchange="updateCustomEmbedCode()">
+                                <span><strong>Open Houses Only</strong></span>
+                            </label>
+                        </div>
+
+                        <div style="display: flex; gap: 24px; flex-wrap: wrap; margin-bottom: 20px; padding: 12px 16px; background: #f0fdf4; border-radius: 8px; border: 1px solid #bbf7d0;">
+                            <label style="display: flex; align-items: center; gap: 8px; font-size: 0.85rem; cursor: pointer; color: var(--text);">
+                                <input type="checkbox" id="builderPinOwn" checked onchange="updateCustomEmbedCode()">
+                                <span><strong>📌 Pin My Listings First</strong> (Pins your listings to the top of all search results)</span>
+                            </label>
+                        </div>
+
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px;">
+                            <div class="form-group">
+                                <label class="form-label">📌 Pin Chosen Agent MLS ID(s)</label>
+                                <input type="text" id="builderPinAgents" class="form-control" placeholder="e.g. 633942, 642811" oninput="updateCustomEmbedCode()">
+                                <small style="font-size: 0.72rem; color: var(--text-muted);">Listings from these agents will appear first before other search results.</small>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">📌 Pin Specific Listing Key(s)</label>
+                                <input type="text" id="builderPinListings" class="form-control" placeholder="e.g. 224012345, 224098765" oninput="updateCustomEmbedCode()">
+                                <small style="font-size: 0.72rem; color: var(--text-muted);">Specific listings pinned to the very top in exact priority order.</small>
+                            </div>
+                        </div>
+
+                        <div class="form-group" style="margin-bottom: 20px;">
+                            <label class="form-label">Custom Page Title / Heading (Optional)</label>
+                            <input type="text" id="builderHeading" class="form-control" placeholder="e.g. Homes for Sale in Fort Myers Beach, FL $350,000 to $500,000" oninput="updateCustomEmbedCode()">
+                        </div>
+
+                        <h4 style="margin: 0 0 8px 0; font-size: 0.95rem; color: var(--text);">Generated HTML Embed Snippet</h4>
+                        <div class="code-box" id="customGeneratedSnippet">Loading snippet...</div>
+                        <div style="display: flex; gap: 12px; margin-top: 12px;">
+                            <button class="btn btn-primary" onclick="copySnippet('customGeneratedSnippet')">Copy Custom HTML Code</button>
+                        </div>
+                    </div>
+
+                    <!-- Preset Snippets -->
+                    <div class="panel">
+                        <div class="panel-header">
+                            <h3>Full Search & Map Embed</h3>
+                        </div>
+                        <p style="color: var(--text-secondary); font-size: 0.875rem;">Standard full-page MLS property search with interactive map.</p>
                         <div class="code-box" id="embedSearchCode">Loading snippet...</div>
                         <button class="btn btn-secondary" onclick="copySnippet('embedSearchCode')">Copy HTML Code</button>
                     </div>
 
                     <div class="panel">
                         <div class="panel-header">
-                            <h3>Quick Search Bar Widget</h3>
+                            <h3>Agent Featured Listings Embed (with Headshot Avatar)</h3>
                         </div>
-                        <div class="code-box" id="embedBarCode">Loading snippet...</div>
-                        <button class="btn btn-secondary" onclick="copySnippet('embedBarCode')">Copy HTML Code</button>
+                        <p style="color: var(--text-secondary); font-size: 0.875rem;">Pre-configured to show your active and pending listings with photo branding badges.</p>
+                        <div class="code-box" id="embedFeaturedCode">Loading snippet...</div>
+                        <button class="btn btn-secondary" onclick="copySnippet('embedFeaturedCode')">Copy HTML Code</button>
                     </div>
 
                     <div class="panel">
                         <div class="panel-header">
-                            <h3>Open Houses Widget</h3>
+                            <h3>Open Houses Showcase Widget</h3>
                         </div>
+                        <p style="color: var(--text-secondary); font-size: 0.875rem;">Displays scheduled upcoming open house weekend events.</p>
                         <div class="code-box" id="embedOhCode">Loading snippet...</div>
                         <button class="btn btn-secondary" onclick="copySnippet('embedOhCode')">Copy HTML Code</button>
+                    </div>
+
+                    <div class="panel">
+                        <div class="panel-header">
+                            <h3>Route Auto-Detection Landing Page Embed</h3>
+                        </div>
+                        <p style="color: var(--text-secondary); font-size: 0.875rem;">Embed on dynamic WordPress template pages matching <code>/homes-for-sale-in-*-fl-*-to-*</code> to automatically render pre-filtered community and price results.</p>
+                        <div class="code-box" id="embedLandingCode">Loading snippet...</div>
+                        <button class="btn btn-secondary" onclick="copySnippet('embedLandingCode')">Copy HTML Code</button>
+                    </div>
+
+                    <div class="panel">
+                        <div class="panel-header">
+                            <h3>Quick Search Bar Widget</h3>
+                        </div>
+                        <p style="color: var(--text-secondary); font-size: 0.875rem;">Compact single-line search bar for hero sections.</p>
+                        <div class="code-box" id="embedBarCode">Loading snippet...</div>
+                        <button class="btn btn-secondary" onclick="copySnippet('embedBarCode')">Copy HTML Code</button>
                     </div>
                 </div>
 
@@ -884,13 +1020,155 @@ export function renderMemberUI() {
                 document.getElementById('brandPhotoUrl').value = data.branding.agent_photo_url || '';
             }
 
+            if (data.site) {
+                memberSiteKey = data.site.site_key || 'demo-ccor';
+                memberAgentMlsId = data.site.scope_value || '';
+                const agentInput = document.getElementById('builderAgentId');
+                if (agentInput && !agentInput.value && memberAgentMlsId) {
+                    agentInput.value = memberAgentMlsId;
+                }
+            }
+
+            if (data.embed?.servingHost) {
+                memberServingHost = data.embed.servingHost;
+            }
+
+            const scriptUrl = memberServingHost + '/embed.js?v=2026.09.01.7.4b3';
             if (data.embed?.snippets) {
                 document.getElementById('embedSearchCode').innerText = data.embed.snippets.search?.htmlSnippet || '';
                 document.getElementById('embedBarCode').innerText = data.embed.snippets.search_bar?.htmlSnippet || '';
                 document.getElementById('embedOhCode').innerText = data.embed.snippets.open_houses?.htmlSnippet || '';
+                const featEl = document.getElementById('embedFeaturedCode');
+                if (featEl) {
+                    featEl.innerText = data.embed.snippets.featured_agent?.htmlSnippet || ('<!-- CCOR IDX Agent Featured Listings Widget -->\n<div id="sneak-idx-featured" data-site="' + memberSiteKey + '" data-widget="search" data-featured="true" style="width:100%;max-width:100%;"></div>\n<script src="' + scriptUrl + '" data-site="' + memberSiteKey + '" data-widget="search" data-featured="true" data-target="#sneak-idx-featured" async defer><' + '/script>');
+                }
+                const landingEl = document.getElementById('embedLandingCode');
+                if (landingEl) {
+                    landingEl.innerText = data.embed.snippets.landing_page?.htmlSnippet || ('<!-- CCOR IDX Route Landing Page Widget -->\n<div id="sneak-idx-landing" data-site="' + memberSiteKey + '" data-widget="search" data-route-mode="auto" style="width:100%;max-width:100%;"></div>\n<script src="' + scriptUrl + '" data-site="' + memberSiteKey + '" data-widget="search" data-route-mode="auto" data-target="#sneak-idx-landing" async defer><' + '/script>');
+                }
             }
 
+            updateCustomEmbedCode();
             renderBilling(data.billing);
+        }
+
+        let memberSiteKey = 'demo-ccor';
+        let memberServingHost = 'https://sneak-idx-worker-staging.bonitaspringsrealtors.workers.dev';
+        let memberAgentMlsId = '';
+
+        function selectPreset(type) {
+            const wType = document.getElementById('builderWidgetType');
+            const agentInput = document.getElementById('builderAgentId');
+            const cityInput = document.getElementById('builderCity');
+            const minPInput = document.getElementById('builderMinPrice');
+            const maxPInput = document.getElementById('builderMaxPrice');
+            const propTypeInput = document.getElementById('builderPropType');
+            const ohCheck = document.getElementById('builderOpenHouses');
+            const routeCheck = document.getElementById('builderRouteMode');
+            const headingInput = document.getElementById('builderHeading');
+
+            if (type === 'featured') {
+                if (wType) wType.value = 'featured';
+                if (agentInput && !agentInput.value) agentInput.value = memberAgentMlsId || '633942';
+                if (cityInput) cityInput.value = '';
+                if (minPInput) minPInput.value = '';
+                if (maxPInput) maxPInput.value = '';
+                if (ohCheck) ohCheck.checked = false;
+                if (headingInput) headingInput.value = '';
+            } else if (type === 'openhouses') {
+                if (wType) wType.value = 'openhouses';
+                if (ohCheck) ohCheck.checked = true;
+                if (headingInput) headingInput.value = 'Upcoming Open Houses';
+            } else if (type === 'landing') {
+                if (wType) wType.value = 'landing';
+                if (cityInput && !cityInput.value) cityInput.value = 'Fort Myers Beach';
+                if (minPInput && !minPInput.value) minPInput.value = '350000';
+                if (maxPInput && !maxPInput.value) maxPInput.value = '500000';
+                if (routeCheck) routeCheck.checked = true;
+                if (headingInput) headingInput.value = 'Homes for Sale in Fort Myers Beach, FL $350,000 to $500,000';
+            } else {
+                if (wType) wType.value = 'search';
+                if (cityInput) cityInput.value = '';
+                if (minPInput) minPInput.value = '';
+                if (maxPInput) maxPInput.value = '';
+                if (ohCheck) ohCheck.checked = false;
+                if (headingInput) headingInput.value = '';
+            }
+            updateCustomEmbedCode();
+        }
+
+        function updateCustomEmbedCode() {
+            const wType = document.getElementById('builderWidgetType')?.value || 'search';
+            const agent = document.getElementById('builderAgentId')?.value?.trim();
+            const city = document.getElementById('builderCity')?.value?.trim();
+            const propType = document.getElementById('builderPropType')?.value;
+            const minPrice = document.getElementById('builderMinPrice')?.value?.trim();
+            const maxPrice = document.getElementById('builderMaxPrice')?.value?.trim();
+            const openHouses = document.getElementById('builderOpenHouses')?.checked;
+            const routeMode = document.getElementById('builderRouteMode')?.checked;
+            const heading = document.getElementById('builderHeading')?.value?.trim();
+            const pinOwn = document.getElementById('builderPinOwn')?.checked;
+            const pinAgents = document.getElementById('builderPinAgents')?.value?.trim();
+            const pinListings = document.getElementById('builderPinListings')?.value?.trim();
+
+            const scriptUrl = memberServingHost + '/embed.js?v=2026.09.01.7.4b3';
+            const containerId = 'sneak-idx-' + (wType === 'featured' ? 'featured' : (wType === 'openhouses' ? 'open-houses' : (wType === 'landing' ? 'landing' : 'search')));
+
+            let dataAttrs = 'data-site="' + escapeHtml(memberSiteKey) + '" data-widget="search" data-target="#' + containerId + '"';
+            let divAttrs = 'id="' + containerId + '" data-site="' + escapeHtml(memberSiteKey) + '" data-widget="search"';
+
+            if (wType === 'featured') {
+                dataAttrs += ' data-featured="true"';
+                divAttrs += ' data-featured="true"';
+            }
+            if (agent) {
+                dataAttrs += ' data-agent="' + escapeHtml(agent) + '"';
+                divAttrs += ' data-agent="' + escapeHtml(agent) + '"';
+            }
+            if (city) {
+                dataAttrs += ' data-city="' + escapeHtml(city) + '"';
+                divAttrs += ' data-city="' + escapeHtml(city) + '"';
+            }
+            if (propType) {
+                dataAttrs += ' data-property-type="' + escapeHtml(propType) + '"';
+                divAttrs += ' data-property-type="' + escapeHtml(propType) + '"';
+            }
+            if (minPrice) {
+                dataAttrs += ' data-min-price="' + escapeHtml(minPrice) + '"';
+                divAttrs += ' data-min-price="' + escapeHtml(minPrice) + '"';
+            }
+            if (maxPrice) {
+                dataAttrs += ' data-max-price="' + escapeHtml(maxPrice) + '"';
+                divAttrs += ' data-max-price="' + escapeHtml(maxPrice) + '"';
+            }
+            if (openHouses || wType === 'openhouses') {
+                dataAttrs += ' data-open-houses="true"';
+                divAttrs += ' data-open-houses="true"';
+            }
+            if (routeMode) {
+                dataAttrs += ' data-route-mode="auto"';
+                divAttrs += ' data-route-mode="auto"';
+            }
+            if (heading) {
+                dataAttrs += ' data-heading="' + escapeHtml(heading) + '"';
+                divAttrs += ' data-heading="' + escapeHtml(heading) + '"';
+            }
+            if (pinOwn) {
+                dataAttrs += ' data-pin-own="true"';
+                divAttrs += ' data-pin-own="true"';
+            }
+            if (pinAgents) {
+                dataAttrs += ' data-pin-agents="' + escapeHtml(pinAgents) + '"';
+                divAttrs += ' data-pin-agents="' + escapeHtml(pinAgents) + '"';
+            }
+            if (pinListings) {
+                dataAttrs += ' data-pin-listings="' + escapeHtml(pinListings) + '"';
+                divAttrs += ' data-pin-listings="' + escapeHtml(pinListings) + '"';
+            }
+
+            const code = '<!-- CCOR IDX Real Estate Widget -->\n<div ' + divAttrs + ' style="width:100%;max-width:100%;"></div>\n<script src="' + scriptUrl + '" ' + dataAttrs + ' async defer><' + '/script>';
+            const box = document.getElementById('customGeneratedSnippet');
+            if (box) box.innerText = code;
         }
 
         function switchTab(tabId) {

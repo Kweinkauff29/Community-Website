@@ -134,12 +134,12 @@ export async function recordConsumerActivity(db, {
             metadataJson, dedupeKey || null, nowIso
         ).run();
 
-        // Bump last_activity_at on sneak_consumer_users
+        // Bump last_activity_at on sneak_consumer_users (throttled to 15-minute intervals to reduce D1 row writes)
         await db.prepare(`
             UPDATE sneak_consumer_users
             SET last_activity_at = ?, updated_at = ?
-            WHERE id = ?
-        `).bind(nowIso, nowIso, userId).run();
+            WHERE id = ? AND (last_activity_at IS NULL OR last_activity_at < datetime(?, '-15 minutes'))
+        `).bind(nowIso, nowIso, userId, nowIso).run();
 
         return { success: true, eventId };
     } catch (err) {

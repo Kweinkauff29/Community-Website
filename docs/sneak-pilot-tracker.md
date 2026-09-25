@@ -55,8 +55,10 @@ Every participant must complete all verification gates before being marked **Lau
   * Authorized Embed Origin: `https://coconutcoastrealtors.org`
   * Target Test Page: `https://coconutcoastrealtors.org/idx-test/`
   * Account ID: `acc_1787583729221_cv3ma`
-  * Site ID: `site_1787583729221_rzxfa`
-  * Site Key: `ursula-weinkauff-pilot`
+  * Site ID: `site_1787583729221_rzxfa` (staging) / `site_4ab2b04f-7e43-4c58-9f79-2f6ddc5d5328` (prod)
+  * Site Key: `ursula-weinkauff-pilot` (Pilot Embed)
+  * Dedicated Website Site ID: `site_8c9b2d0f-3f5b-4e62-ba79-4e9c3e4f5061` (staging) / `site_7b8a1c9e-2e4a-4f51-a968-3d8b2d3e4f50` (prod)
+  * Dedicated Website Site Key: `ursulaweinkauff-com` (Domains: `ursulaweinkauff.com`, `www.ursulaweinkauff.com`)
   * Display Scope: `market` (Full-market MLS consumer search)
   * Featured Scope: `agent` (`633942` — Ursula Weinkauff)
   * Plan: `standard`

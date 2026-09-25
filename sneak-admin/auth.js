@@ -150,9 +150,9 @@ export async function verifyAdminSession(db, rawToken) {
 
     if (!session) return null;
 
-    // Async update last_seen_at
+    // Async update last_seen_at (throttled to 15-minute intervals to reduce D1 row writes)
     try {
-        await db.prepare("UPDATE sneak_admin_sessions SET last_seen_at = datetime('now') WHERE id = ?").bind(session.id).run();
+        await db.prepare("UPDATE sneak_admin_sessions SET last_seen_at = datetime('now') WHERE id = ? AND (last_seen_at IS NULL OR last_seen_at < datetime('now', '-15 minutes'))").bind(session.id).run();
     } catch {}
 
     return session;

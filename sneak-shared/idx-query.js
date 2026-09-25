@@ -124,7 +124,8 @@ export function buildCommonListingFilters(params, site) {
     const pool = get('pool');
     const garage = parseInt(get('garage') || get('minGarage'), 10) || null;
     const newConstruction = get('newConstruction');
-    const openHouseOnly = get('openHouse') === '1' || get('openHouseOnly') === 'true' || get('openHouse') === true;
+    const openHouseOnly = get('openHouse') === '1' || get('openHouseOnly') === 'true' || get('openHouse') === true ||
+                          get('openHouses') === '1' || get('openHouses') === 'true' || get('open_houses') === '1' || get('open_houses') === 'true';
     const priceReduced = get('priceReduced') === '1' || get('priceReduced') === 'true' || get('priceReduced') === true;
     const newListingDays = parseInt(get('newListingDays'), 10) || null;
     const zoning = (get('zoning') || '').trim();
@@ -147,18 +148,35 @@ export function buildCommonListingFilters(params, site) {
     // 2. Internet Entire Listing Display Compliance (Fail Closed)
     whereClauses.push("InternetEntireListingDisplayYN = 1");
 
-    // Optional agent or office filter narrowing for market-scoped sites
-    if (site.scope_type === 'market') {
-        const agentMlsId = get('agentMlsId');
-        if (agentMlsId) {
+    // Optional agent, featured, or office filter narrowing
+    const rawAgent = get('agentMlsId') || get('agent') || get('agents');
+    const isFeatured = get('featured') === '1' || get('featured') === 'true' || get('featuredOnly') === 'true';
+    if (rawAgent) {
+        const agentIds = String(rawAgent).split(',').map(a => a.trim()).filter(Boolean);
+        if (agentIds.length === 1) {
             whereClauses.push("ListAgentMlsId = ?");
-            bindValues.push(agentMlsId);
+            bindValues.push(agentIds[0]);
+        } else if (agentIds.length > 1) {
+            const placeholders = agentIds.map(() => '?').join(',');
+            whereClauses.push(`ListAgentMlsId IN (${placeholders})`);
+            bindValues.push(...agentIds);
         }
-        const officeMlsId = get('officeMlsId');
-        if (officeMlsId) {
-            whereClauses.push("(ListOfficeMlsId = ? OR ListOfficeKey = ?)");
-            bindValues.push(officeMlsId, officeMlsId);
+    } else if (isFeatured) {
+        const fallbackAgent = site.default_agent_mls_id || (site.scope_type === 'agent' ? site.scope_value : null);
+        if (fallbackAgent) {
+            whereClauses.push("ListAgentMlsId = ?");
+            bindValues.push(fallbackAgent);
         }
+    }
+    const agentName = get('agentName');
+    if (agentName) {
+        whereClauses.push("LOWER(ListAgentFullName) LIKE ?");
+        bindValues.push(`%${agentName.toLowerCase().trim()}%`);
+    }
+    const officeMlsId = get('officeMlsId') || get('office');
+    if (officeMlsId) {
+        whereClauses.push("(ListOfficeMlsId = ? OR ListOfficeKey = ?)");
+        bindValues.push(officeMlsId, officeMlsId);
     }
 
     // 3. Standard Status Filtering
@@ -315,7 +333,7 @@ export function buildCommonListingFilters(params, site) {
         bindValues.push(`-${newListingDays} days`);
     }
     if (openHouseOnly) {
-        whereClauses.push("ListingKey IN (SELECT DISTINCT ListingKey FROM sneak_open_houses WHERE OpenHouseStatus = 'Active' AND (OpenHouseDate IS NULL OR OpenHouseDate >= date('now')))");
+        whereClauses.push("ListingKey IN (SELECT DISTINCT ListingKey FROM sneak_open_houses WHERE (OpenHouseDate IS NULL OR OpenHouseDate >= date('now')))");
     }
     if (zoning) {
         whereClauses.push("LOWER(Zoning) = LOWER(?)");
@@ -554,11 +572,87 @@ export function buildCommonListingFilters(params, site) {
         }
     }
 
+    // Pinning configuration: pin own listings, specific agents, or specific listing keys
+    const pinnedAgents = [];
+    const pinnedListings = [];
+
+    const pinOwn = get('pinOwn') === '1' || get('pinOwn') === 'true' || get('pinOwn') === true ||
+                   get('pin_own') === '1' || get('pin_own') === 'true' || get('pin_own') === true;
+    if (pinOwn) {
+        const ownAgent = site?.default_agent_mls_id || (site?.scope_type === 'agent' ? site?.scope_value : null);
+        if (ownAgent && !pinnedAgents.includes(String(ownAgent).trim())) {
+            pinnedAgents.push(String(ownAgent).trim());
+        }
+    }
+
+    const rawPinAgent = get('pinAgent') || get('pinAgents') || get('pin_agent') || get('pin_agents');
+    if (rawPinAgent) {
+        String(rawPinAgent).split(',').map(a => a.trim()).filter(Boolean).forEach(a => {
+            if (!pinnedAgents.includes(a)) pinnedAgents.push(a);
+        });
+    }
+
+    const rawPinListings = get('pinListings') || get('pinListing') || get('pinListingKeys') || get('pin_listings');
+    if (rawPinListings) {
+        String(rawPinListings).split(',').map(k => k.trim()).filter(Boolean).forEach(k => {
+            if (!pinnedListings.includes(k)) pinnedListings.push(k);
+        });
+    }
+
     return {
         valid: true,
         whereSQL: `WHERE ${whereClauses.join(' AND ')}`,
         whereClauses,
-        bindValues
+        bindValues,
+        pinnedAgents,
+        pinnedListings
+    };
+}
+
+/**
+ * Builds parameterized SQL ORDER BY clause with pin precedence.
+ * Pinned ListingKeys come first (priority 0), followed by pinned Agent MLS IDs (priority 1),
+ * followed by standard sort order (priority 2).
+ */
+export function buildListingOrderClause(sort = 'newest', pinnedListings = [], pinnedAgents = []) {
+    let baseOrderSQL = "ModificationTimestamp DESC, ListingContractDate DESC";
+    if (sort === 'priceDesc') {
+        baseOrderSQL = "ListPrice DESC, ListingContractDate DESC";
+    } else if (sort === 'priceAsc') {
+        baseOrderSQL = "ListPrice ASC, ListingContractDate DESC";
+    } else if (sort === 'sqftDesc') {
+        baseOrderSQL = "LivingArea DESC NULLS LAST, ListPrice DESC";
+    } else if (sort === 'acresDesc') {
+        baseOrderSQL = "LotSizeAcres DESC NULLS LAST, ListPrice DESC";
+    } else if (sort === 'yearDesc') {
+        baseOrderSQL = "YearBuilt DESC NULLS LAST, ListPrice DESC";
+    } else if (sort === 'dateAsc') {
+        baseOrderSQL = "ListingContractDate ASC";
+    }
+
+    const orderBinds = [];
+    const whenClauses = [];
+
+    if (Array.isArray(pinnedListings) && pinnedListings.length > 0) {
+        const placeholders = pinnedListings.map(() => '?').join(',');
+        whenClauses.push(`WHEN ListingKey IN (${placeholders}) THEN 0`);
+        orderBinds.push(...pinnedListings);
+    }
+
+    if (Array.isArray(pinnedAgents) && pinnedAgents.length > 0) {
+        const placeholders = pinnedAgents.map(() => '?').join(',');
+        whenClauses.push(`WHEN ListAgentMlsId IN (${placeholders}) THEN 1`);
+        orderBinds.push(...pinnedAgents);
+    }
+
+    let orderSQL = `ORDER BY ${baseOrderSQL}`;
+    if (whenClauses.length > 0) {
+        orderSQL = `ORDER BY CASE ${whenClauses.join(' ')} ELSE 2 END ASC, ${baseOrderSQL}`;
+    }
+
+    return {
+        orderSQL,
+        orderBinds
     };
 }
 

@@ -54,6 +54,10 @@ export async function releaseLock(db, jobName, lockId) {
 }
 
 export async function recordSyncRun(db, runData) {
+    // Suppress writing row when status is success and zero records were modified to protect D1 write quota
+    if (runData.status === 'success' && !runData.recordsFetched && !runData.recordsUpserted && !runData.recordsRemoved) {
+        return;
+    }
     try {
         const id = `run_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
         await db.prepare(`
