@@ -5,10 +5,10 @@ import { generateEmbedSnippets } from '../sneak-admin/embed-generator.js';
 import { renderMemberUI } from '../sneak-member/ui.js';
 import { renderAdminHtml } from '../sneak-admin/ui.js';
 
-test('copied quick-search URLs use verified domains, never site-key guesses', () => {
+test('copied quick-search URLs stay on the embedding website, never guessed domains', () => {
   const embed = generateEmbedSnippets('unrelated-tenant-key', ['*.example.com', 'localhost', 'homes.example.com'], {}, {SNEAK_ENV: 'production'});
-  assert.equal(embed.searchRedirectUrl, 'https://homes.example.com/quick-search');
-  assert.match(embed.snippets.search_bar.htmlSnippet, /data-redirect-url="https:\/\/homes.example.com\/quick-search"/);
+  assert.equal(embed.searchRedirectUrl, '/quick-search');
+  assert.match(embed.snippets.search_bar.htmlSnippet, /data-redirect-url="\/quick-search"/);
   assert.doesNotMatch(embed.snippets.search_bar.htmlSnippet, /http:|unrelated-tenant-key.com|staging/);
   assert.equal(generateEmbedSnippets('tenant', []).searchRedirectUrl, '/quick-search');
 });

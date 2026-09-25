@@ -25,8 +25,8 @@ function resolveServingUrl(env = {}) {
 }
 
 export function generateEmbedSnippets(siteKey, allowedDomains = [], branding = {}, env = {}) {
-    const domain = allowedDomains.find(domain => !domain.includes('*') && domain !== 'localhost');
-    const searchRedirectUrl = domain ? `https://${domain}/quick-search` : '/quick-search';
+    // Resolve against the embedding page, preserving its domain and working protocol.
+    const searchRedirectUrl = '/quick-search';
     const servingUrl = resolveServingUrl(env);
     const scriptUrl = `${servingUrl}/embed.js?v=${EMBED_BUILD}`;
 
