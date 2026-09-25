@@ -7,6 +7,7 @@
 
 import { contactsApi, processOwnerNotifications } from '../sneak-shared/contacts.js';
 import { handleInternalMail } from './mailer.js';
+import { renderSignInConfirmation } from './sign-in.js';
 import { renderMemberUI } from './ui.js';
 import {
     requestPublicMagicLink,
@@ -93,29 +94,29 @@ export default {
                 const clientIp = request.headers.get('CF-Connecting-IP') || '127.0.0.1';
                 const ipHash = await sha256Hex(clientIp);
                 const result = await requestPublicMagicLink(env.DB, body?.email, ipHash, env);
-                return json(result);
+                return json(result, result.success === false ? (result.rateLimited ? 429 : 503) : 200);
             } catch (err) {
                 return error('Malformed request', 400);
             }
         }
 
-        // 3. Magic Link Consumption & Verification (GET /api/member/auth/verify)
+        // GET is a safe landing page. Only a deliberate same-origin POST consumes a link.
         if (path === '/api/member/auth/verify' && method === 'GET') {
-            const token = url.searchParams.get('token');
-            if (!token) return error('Missing verification token', 400);
-
-            const result = await verifyAndConsumeMagicLink(env.DB, token);
-            if (!result) {
-                return error('Invalid, expired, or already used magic link.', 401, 'InvalidToken');
-            }
-
-            const cookie = `__Host-sneak_member_session=${encodeURIComponent(result.sessionToken)}; HttpOnly; Secure; SameSite=Lax; Path=/; Max-Age=604800`;
-
-            return json({
-                success: true,
-                message: 'Authenticated successfully',
-                user: result.user
-            }, 200, { 'Set-Cookie': cookie });
+            return renderSignInConfirmation(url.searchParams.get('token'));
+        }
+        if (path === '/api/member/auth/verify' && method === 'POST') {
+            if (!validateMemberCsrf(request)) return error('CSRF verification failed',403,'Forbidden');
+            const wantsJson=(request.headers.get('Accept')||'').includes('application/json');
+            let token;
+            try {
+                token=(request.headers.get('Content-Type')||'').includes('application/json')
+                    ? (await request.json())?.token : (await request.formData()).get('token');
+            } catch { return wantsJson?error('Invalid verification request',400):renderSignInConfirmation(null,true); }
+            const result=await verifyAndConsumeMagicLink(env.DB,token);
+            if(!result) return wantsJson?error('Invalid, expired, or already used magic link.',401,'InvalidToken'):renderSignInConfirmation(null,true);
+            const cookie=`__Host-sneak_member_session=${encodeURIComponent(result.sessionToken)}; HttpOnly; Secure; SameSite=Lax; Path=/; Max-Age=604800`;
+            if(wantsJson)return json({success:true,message:'Authenticated successfully',user:result.user},200,{'Set-Cookie':cookie});
+            return new Response(null,{status:303,headers:{...SECURITY_HEADERS,'Referrer-Policy':'no-referrer','Location':'/','Cache-Control':'no-store','Set-Cookie':cookie}});
         }
 
         // 4. Member Logout (POST /api/member/auth/logout)

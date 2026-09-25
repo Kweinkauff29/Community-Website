@@ -1,3 +1,4 @@
+import { buildTenantListingScope, isListingIdxEligible, applyListingDisplayControls } from './idx-query.js';
 import { isAccountEntitled } from './entitlement.js';
 import { sendTransactionalEmail } from './email-provider.js';
 
@@ -64,9 +65,9 @@ export async function weeklyActivity(db,siteId,start,end){
  return contacts.map(c=>({...c,activity:activity.filter(e=>e.user_id===c.consumer_id)}));
 }
 
-export async function renderOwnerNotification(db,notification,site){
+export async function renderOwnerNotification(db,notification,site,env={}){
  const heading=site.site_name||'Your IDX website';
- let subject,lines;
+ let subject,lines,propertyUrl;
  if(notification.kind==='weekly'){
   const contacts=await weeklyActivity(db,site.id,notification.period_start,notification.period_end);
   subject=`Weekly IDX activity — ${heading}`;
@@ -79,11 +80,37 @@ export async function renderOwnerNotification(db,notification,site){
   subject=`New verified IDX contact — ${heading}`;lines=[`${u.email} signed in to ${heading} for the first time.`];
  }else{
   const l=await db.prepare('SELECT * FROM sneak_leads WHERE id=? AND site_id=?').bind(notification.reference_id,site.id).first();if(!l)return null;
-  subject=`New property inquiry — ${heading}`;lines=[`Name: ${l.name}`,`Email: ${l.email}`,`Phone: ${l.phone||'Not supplied'}`,`Request: ${l.lead_type}`,`Listing: ${l.listing_key||'General contact'}`,`Message: ${l.message||''}`];
+  const requestLabels={contact_agent:'Speak with an agent',schedule_tour:'Schedule a tour',property_inquiry:'Learn more about this property',contact:'Contact request',dream:'Dream home request',valuation:'Market analysis request',general:'General contact'};
+  subject=`New property inquiry — ${heading}`;
+  lines=[`Name: ${l.name}`,`Email: ${l.email}`,`Phone: ${l.phone||'Not supplied'}`,`Request: ${requestLabels[l.lead_type]||l.lead_type}`];
+  if(l.listing_key){
+   const tenant=await db.prepare('SELECT site_key,scope_type,scope_value FROM sneak_sites WHERE id=?').bind(site.id).first();
+   const scope=buildTenantListingScope(tenant||{});
+   const raw=scope.valid?await db.prepare(`SELECT * FROM sneak_listings WHERE (ListingKey=? OR ListingId=?) AND ${scope.clause} ORDER BY CASE WHEN ListingKey=? THEN 0 ELSE 1 END LIMIT 1`).bind(l.listing_key,l.listing_key,...scope.binds,l.listing_key).first():null;
+   if(isListingIdxEligible(raw)){
+    const property=applyListingDisplayControls(raw);
+    const locality=[property.City,[property.StateOrProvince,property.PostalCode].filter(Boolean).join(' ')].filter(Boolean).join(', ');
+    lines.push(`Property: ${[property.UnparsedAddress||'Address unavailable',locality].filter(Boolean).join(', ')}`);
+    if(property.ListingId)lines.push(`MLS #: ${property.ListingId}`);
+    if(property.ListPrice!=null)lines.push('Price: '+new Intl.NumberFormat('en-US',{style:'currency',currency:'USD',maximumFractionDigits:0}).format(property.ListPrice));
+    const facts=[];
+    if(property.BedroomsTotal!=null)facts.push(`${property.BedroomsTotal} beds`);
+    const baths=property.BathroomsFull!=null?property.BathroomsFull+(property.BathroomsHalf||0)/2:property.BathroomsTotalInteger;
+    if(baths!=null)facts.push(`${baths} baths`);
+    if(property.LivingArea>0)facts.push(new Intl.NumberFormat('en-US').format(property.LivingArea)+' sqft');
+    if(facts.length)lines.push(facts.join(' · '));
+    if(property.StandardStatus)lines.push(`Status: ${property.StandardStatus}`);
+    const defaultHost=env.SNEAK_ENV==='staging'?'https://sneak-idx-worker-staging.bonitaspringsrealtors.workers.dev':'https://sneak-idx-worker.bonitaspringsrealtors.workers.dev';
+    let host;try{host=new URL(env.SNEAK_SERVING_URL||defaultHost);if(host.protocol!=='https:')host=new URL(defaultHost);}catch{host=new URL(defaultHost);}
+    const link=new URL('/portal',host.origin);link.searchParams.set('site',tenant.site_key);link.searchParams.set('ccor_listing',property.ListingKey);propertyUrl=link.href;
+    lines.push('View property: '+propertyUrl);
+   }else lines.push('Property details are no longer available for this website.',`Listing reference: ${l.listing_key}`);
+  }else lines.push('Listing: General contact');
+  lines.push(`Message: ${l.message||''}`);
  }
  const dashboard='https://sneak-idx-member.bonitaspringsrealtors.workers.dev/';
  lines.push('Open your Contacts & Email dashboard: '+dashboard);
- return {subject,text:lines.join('\n'),html:`<h2>${escape(subject)}</h2>${lines.map(l=>`<p>${escape(l)}</p>`).join('')}<p><a href="${dashboard}">View contacts and activity</a></p>`};
+ return {subject,text:lines.join('\n'),html:`<h2>${escape(subject)}</h2>${lines.filter(l=>l!=='View property: '+propertyUrl).map(l=>`<p>${escape(l)}</p>`).join('')}${propertyUrl?`<p><a href="${escape(propertyUrl)}">View property details</a></p>`:''}<p><a href="${dashboard}">View contacts and activity</a></p>`};
 }
 
 export async function processOwnerNotifications({db,env,now=new Date(),dryRun=false}){
@@ -113,7 +140,7 @@ export async function processOwnerNotifications({db,env,now=new Date(),dryRun=fa
   const site=sites.find(s=>s.id===d.site_id);if(!site)continue;
   const enabled=d.kind==='signup'?site.signup_notifications:d.kind==='inquiry'?site.inquiry_notifications:site.weekly_digest;
   const recipient=await db.prepare(`SELECT u.id FROM sneak_member_users u JOIN sneak_sites s ON s.account_id=u.account_id WHERE s.id=? AND lower(u.email)=? AND u.status IN ('active','invited') AND u.role IN ('owner','admin')`).bind(d.site_id,d.recipient).first();
-  const content=enabled&&recipient?await renderOwnerNotification(db,d,site):null;
+  const content=enabled&&recipient?await renderOwnerNotification(db,d,site,env):null;
   if(!content){if(!dryRun)await db.prepare("UPDATE sneak_owner_email_deliveries SET status='cancelled',last_error='NotificationNoLongerApplicable' WHERE id=?").bind(d.id).run();continue;}
   if(dryRun)continue;
   const claim=await db.prepare(`UPDATE sneak_owner_email_deliveries SET status='sending',attempts=attempts+1,claimed_at=? WHERE id=? AND attempts=? AND (status IN ('pending','failed') OR (status='sending' AND claimed_at<?))`).bind(nowIso,d.id,d.attempts,new Date(now-15*60000).toISOString()).run();

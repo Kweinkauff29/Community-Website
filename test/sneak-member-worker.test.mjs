@@ -245,7 +245,7 @@ describe('SNEAK Member Worker & GrowthZone Alignment Suite (Phase 5.1)', () => {
 
     test('TEST 1: Public magic link request NEVER returns tokens or identifiers', async () => {
         const mockDB = createMockMemberDB();
-        const env = { SNEAK_ENV: 'staging', DB: mockDB };
+        const env = { SNEAK_ENV: 'staging', DB: mockDB, SNEAK_MAILER_SECRET:'test', MAILER:{fetch:async()=>Response.json({success:true,providerMessageId:'123'})} };
 
         const res = await worker.fetch(new Request('https://sneak-idx-member-staging.bonitaspringsrealtors.workers.dev/api/member/auth/magic-link', {
             method: 'POST',

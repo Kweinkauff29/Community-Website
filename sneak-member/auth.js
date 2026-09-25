@@ -44,12 +44,14 @@ export async function createMagicLinkRecord(db, userId, purpose = 'login', ttlSe
     const now = new Date().toISOString();
     const expiresAt = new Date(Date.now() + (ttlSeconds * 1000)).toISOString();
 
-    // Rotate: Invalidate previous unconsumed magic links for this user & purpose
-    await db.prepare(`
-        UPDATE sneak_member_magic_links
-        SET used_at = ?
-        WHERE user_id = ? AND purpose = ? AND used_at IS NULL
-    `).bind(now, userId, purpose).run();
+    // Rotate invitations, but keep unexpired login links usable if delivery is delayed.
+    if (purpose !== 'login') {
+        await db.prepare(`
+            UPDATE sneak_member_magic_links
+            SET used_at = ?
+            WHERE user_id = ? AND purpose = ? AND used_at IS NULL
+        `).bind(now, userId, purpose).run();
+    }
 
     // Insert new magic link
     await db.prepare(`
@@ -86,12 +88,12 @@ export async function requestPublicMagicLink(db, email, ipHash, env = {}) {
         try {
             const ipAttempts = await db.prepare(`
                 SELECT count(*) as count FROM sneak_member_login_attempts
-                WHERE ip_hash = ? AND attempted_at > datetime('now', '-15 minutes')
+                WHERE ip_hash = ? AND datetime(attempted_at) > datetime('now', '-15 minutes')
             `).bind(ipHash).first();
 
             const emailAttempts = await db.prepare(`
                 SELECT count(*) as count FROM sneak_member_login_attempts
-                WHERE email_hash = ? AND attempted_at > datetime('now', '-15 minutes')
+                WHERE email_hash = ? AND datetime(attempted_at) > datetime('now', '-15 minutes')
             `).bind(emailHash).first();
 
             // Record this attempt
@@ -102,7 +104,7 @@ export async function requestPublicMagicLink(db, email, ipHash, env = {}) {
             `).bind(attemptId, ipHash, emailHash, now).run();
 
             if ((ipAttempts?.count || 0) >= 30 || (emailAttempts?.count || 0) >= 10) {
-                return GENERIC_RESPONSE;
+                return {success:false,rateLimited:true,message:'Too many sign-in requests. Please wait 15 minutes before trying again.'};
             }
         } catch (err) {
             console.error('[MEMBER RATE LIMIT ERROR]', err.message);
@@ -134,14 +136,16 @@ export async function requestPublicMagicLink(db, email, ipHash, env = {}) {
                 : 'https://sneak-idx-member-staging.bonitaspringsrealtors.workers.dev';
             const baseUrl = env?.MEMBER_PORTAL_URL || defaultBaseUrl;
             const verifyUrl = `${baseUrl}/api/member/auth/verify?token=${encodeURIComponent(rawToken)}`;
-            if (isInvited) {
-                await sendInvitationEmail(env, { email: cleanEmail, inviteUrl: verifyUrl, accountName: user.account_name });
-            } else {
-                await sendMagicLinkEmail(env, { email: cleanEmail, verifyUrl, expiresMinutes: 15 });
-            }
+            const started=Date.now();
+            const delivery=isInvited
+                ? await sendInvitationEmail(env,{email:cleanEmail,inviteUrl:verifyUrl,accountName:user.account_name})
+                : await sendMagicLinkEmail(env,{email:cleanEmail,verifyUrl,expiresMinutes:15});
+            console.info(JSON.stringify({event:'member_sign_in_email',durationMs:Date.now()-started,success:delivery.success,status:delivery.status}));
+            if(!delivery.success)return {success:false,message:'The email service is temporarily unavailable. Please try again shortly.'};
         }
     } catch (err) {
         console.error('[MAGIC LINK DISPATCH ERROR]', err.message);
+        return {success:false,message:'The email service is temporarily unavailable. Please try again shortly.'};
     }
 
     return GENERIC_RESPONSE;

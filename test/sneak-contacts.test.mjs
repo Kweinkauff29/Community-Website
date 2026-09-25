@@ -150,3 +150,55 @@ test('platform BCC applies to direct and relayed mail without changing primary r
  await sendTransactionalEmail(sendingEnv,{...message,to:'TECH@berealtors.org'});assert.equal(messages.at(-1).Bcc,undefined);
  await sendTransactionalEmail({...sendingEnv,EMAIL_BCC:''},message);assert.equal(messages.at(-1).Bcc,undefined);
 });
+
+test('property inquiries resolve listing details and links, including MLS-ID references',async()=>{
+ const {sql,db}=fixture();try{
+ inquiry(sql);sql.exec("INSERT INTO sneak_listings(ListingKey,ListingId,UnparsedAddress,City,StateOrProvince,PostalCode,ListPrice,BedroomsTotal,BathroomsTotalInteger,LivingArea,StandardStatus) VALUES('internal-key','226028872','15054 Cuberra LN','BONITA SPRINGS','FL','34135',949900,3,3,2486,'Active')");
+ for(const key of ['internal-key','226028872']){
+ sql.prepare("UPDATE sneak_leads SET listing_key=?,lead_type='contact_agent',message='<script>test</script>' WHERE id='l1'").run(key);
+ const mail=await renderOwnerNotification(db,{kind:'inquiry',reference_id:'l1'},{id:'a',site_name:'Ursula'});
+ assert.match(mail.text,/15054 Cuberra LN, BONITA SPRINGS, FL 34135/);assert.match(mail.text,/MLS #: 226028872/);assert.match(mail.text,/Price: \$949,900/);assert.match(mail.text,/3 beds · 3 baths · 2,486 sqft/);assert.match(mail.text,/Request: Speak with an agent/);
+ assert.match(mail.html,/href="https:\/\/sneak-idx-worker[^\"]+site=a&amp;ccor_listing=internal-key"/);assert.doesNotMatch(mail.html,/<script>/);
+ }
+ sql.exec("UPDATE sneak_listings SET InternetAddressDisplayYN=0");let mail=await renderOwnerNotification(db,{kind:'inquiry',reference_id:'l1'},{id:'a'});assert.doesNotMatch(mail.text,/Cuberra/);assert.match(mail.text,/Address Undisclosed/);
+ sql.exec("UPDATE sneak_listings SET InternetEntireListingDisplayYN=0");mail=await renderOwnerNotification(db,{kind:'inquiry',reference_id:'l1'},{id:'a'});assert.match(mail.text,/no longer available/);assert.doesNotMatch(mail.text,/949,900|Cuberra|View property:/);
+ sql.exec("UPDATE sneak_listings SET InternetEntireListingDisplayYN=1; UPDATE sneak_sites SET scope_type='agent',scope_value='another-agent' WHERE id='a'");mail=await renderOwnerNotification(db,{kind:'inquiry',reference_id:'l1'},{id:'a'});assert.doesNotMatch(mail.text,/949,900|View property:/);
+ sql.exec('DELETE FROM sneak_listings');mail=await renderOwnerNotification(db,{kind:'inquiry',reference_id:'l1'},{id:'a'});assert.match(mail.text,/Listing reference: 226028872/);
+ }finally{sql.close();}
+});
+test('hosted property email links carry the requested listing into the search frame',async()=>{
+ const {sql,db}=fixture();try{const res=await handleHostedPortal(new Request('https://idx.example/portal?site=a&ccor_listing=internal-key'),{DB:db,SNEAK_SIGNING_SECRET:'a-long-enough-test-signing-secret'});assert.equal(res.status,200);assert.match(await res.text(),/ccor_listing=internal-key/);}finally{sql.close();}
+});
+
+test('member email previews do not consume tokens; confirmed sign-in redirects and prevents replay',async()=>{
+ const {default:worker}=await import('../sneak-member/worker.js');const auth=await import('../sneak-member/auth.js');const {sql,db}=fixture();
+ try{
+ const first=await auth.createMagicLinkRecord(db,'a','login',900);const second=await auth.createMagicLinkRecord(db,'a','login',900);
+ assert.equal(sql.prepare('SELECT count(*) n FROM sneak_member_magic_links WHERE used_at IS NULL').get().n,2);
+ for(let i=0;i<2;i++){const preview=await worker.fetch(new Request('https://member.example/api/member/auth/verify?token='+first),{DB:db});assert.equal(preview.status,200);assert.equal(preview.headers.get('Set-Cookie'),null);assert.match(await preview.text(),/method="post"/);}
+ assert.equal(sql.prepare('SELECT count(*) n FROM sneak_member_magic_links WHERE used_at IS NOT NULL').get().n,0);
+ const request=(token,origin='https://member.example')=>new Request('https://member.example/api/member/auth/verify',{method:'POST',headers:{Host:'member.example',Origin:origin,'Content-Type':'application/x-www-form-urlencoded'},body:new URLSearchParams({token})});
+ assert.equal((await worker.fetch(request(first,'https://attacker.example'),{DB:db})).status,403);
+ const signed=await worker.fetch(request(first),{DB:db});assert.equal(signed.status,303);assert.equal(signed.headers.get('Location'),'/');assert.match(signed.headers.get('Set-Cookie'),/__Host-sneak_member_session=.*HttpOnly; Secure/);
+ const replay=await worker.fetch(request(first),{DB:db});assert.equal(replay.status,401);assert.match(await replay.text(),/request another email/);
+ sql.prepare('UPDATE sneak_member_magic_links SET expires_at=? WHERE token_hash=?').run('2000-01-01T00:00:00Z',await auth.sha256Hex(second));
+ assert.equal((await worker.fetch(request(second),{DB:db})).status,401);
+ }finally{sql.close();}
+});
+test('member rate limits count only recent attempts, and email failures are not reported as sent',async()=>{
+ const auth=await import('../sneak-member/auth.js');const {sql,db}=fixture();try{
+ const hash=await auth.sha256Hex('a@example.com');const old=new Date(Date.now()-3600000).toISOString();
+ for(let i=0;i<12;i++)sql.prepare('INSERT INTO sneak_member_login_attempts(id,ip_hash,email_hash,attempted_at) VALUES(?,?,?,?)').run('old'+i,'ip',hash,old);
+ const cfg={SNEAK_MAILER_SECRET:'test',MAILER:{fetch:async()=>Response.json({success:true,providerMessageId:'123'})}};
+ assert.equal((await auth.requestPublicMagicLink(db,'a@example.com','ip',cfg)).success,true);
+ const failed=await auth.requestPublicMagicLink(db,'a@example.com','ip',{});assert.equal(failed.success,false);assert.match(failed.message,/temporarily unavailable/);
+ for(let i=0;i<10;i++)sql.prepare('INSERT INTO sneak_member_login_attempts(id,ip_hash,email_hash,attempted_at) VALUES(?,?,?,?)').run('new'+i,'ip',hash,new Date().toISOString());
+ const limited=await auth.requestPublicMagicLink(db,'a@example.com','ip',cfg);assert.equal(limited.rateLimited,true);
+ }finally{sql.close();}
+});
+test('authentication mail keeps direct links while retaining the monitoring BCC',async t=>{
+ const {sendTransactionalEmail}=await import('../sneak-shared/email-provider.js');let message;
+ t.mock.method(globalThis,'fetch',async(url,options)=>{message=JSON.parse(options.body).Messages[0];return Response.json({Messages:[{Status:'success',To:[{MessageID:'123'}]}]});});
+ await sendTransactionalEmail({MAILJET_API_KEY:'test',MAILJET_SECRET_KEY:'test',EMAIL_BCC:'tech@berealtors.org'},{to:'buyer@example.com',subject:'Sign in',html:'<a>Sign in</a>',customId:'SNEAK-IDX-MEMBER'});
+ assert.equal(message.TrackClicks,'disabled');assert.equal(message.TrackOpens,'disabled');assert.deepEqual(message.Bcc,[{Email:'tech@berealtors.org'}]);
+});

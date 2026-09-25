@@ -927,22 +927,7 @@ export function renderMemberUI() {
         }
 
         async function verifyMagicToken(token) {
-            try {
-                const res = await fetch('/api/member/auth/verify?token=' + encodeURIComponent(token));
-                if (res.status === 200) {
-                    window.history.replaceState({}, document.title, window.location.pathname);
-                    window.location.reload();
-                } else {
-                    showAuth();
-                    const msg = document.getElementById('loginMsg');
-                    msg.style.display = 'block';
-                    msg.style.background = 'rgba(239, 68, 68, 0.15)';
-                    msg.style.color = '#ef4444';
-                    msg.innerText = 'Magic link expired or already used. Please request a new one.';
-                }
-            } catch {
-                showAuth();
-            }
+            window.location.replace('/api/member/auth/verify?token=' + encodeURIComponent(token));
         }
 
         document.getElementById('magicLoginForm').addEventListener('submit', async (e) => {
@@ -961,9 +946,9 @@ export function renderMemberUI() {
                 const data = await res.json();
                 const msg = document.getElementById('loginMsg');
                 msg.style.display = 'block';
-                msg.style.background = 'rgba(16, 185, 129, 0.15)';
-                msg.style.color = '#10b981';
-                msg.innerText = data.message || 'Magic link generated! Check your email for the link.';
+                msg.style.background = res.ok ? 'rgba(16, 185, 129, 0.15)' : 'rgba(239, 68, 68, 0.15)';
+                msg.style.color = res.ok ? '#10b981' : '#ef4444';
+                msg.innerText = data.message || 'Unable to request a sign-in link. Please try again.';
             } catch {
                 alert('Failed to send magic link.');
             } finally {

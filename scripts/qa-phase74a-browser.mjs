@@ -762,7 +762,10 @@ async function runMemberEmailRequestBrowserQa() {
     check(await documentFits(page), `Member login ${viewport.name} has no horizontal overflow`);
   }
   const invalidResponse = await page.goto(`${MEMBER}/api/member/auth/verify?token=${'x'.repeat(40)}`, { waitUntil: 'domcontentloaded', timeout: 30000 });
-  check(invalidResponse?.status() === 401 && (await page.locator('body').innerText()).includes('InvalidToken'), 'Member invalid/expired magic link fails closed in browser');
+  check(invalidResponse?.status() === 200, 'Member preview does not consume a token');
+  const rejected = page.waitForResponse(response => response.request().method() === 'POST' && response.url().includes('/api/member/auth/verify'));
+  await page.getByRole('button', { name: 'Sign in', exact: true }).click();
+  check((await rejected).status() === 401 && (await page.locator('body').innerText()).includes('no longer valid'), 'Member invalid/expired magic link fails closed in browser');
   await context.close();
 }
 

@@ -65,7 +65,7 @@ check(dashboard.response.status === 401, 'Unauthenticated Admin API protection',
 const reconciliation = await request(`${ADMIN}/api/admin/accounts/not-a-real-account/reconciliation`, { headers: { Accept: 'application/json' } });
 check(reconciliation.response.status === 401, 'Unauthenticated reconciliation API protection', String(reconciliation.response.status));
 
-const memberToken = await request(`${MEMBER}/api/member/auth/verify?token=${'x'.repeat(40)}`, { headers: { Accept: 'application/json' } });
+const memberToken = await request(`${MEMBER}/api/member/auth/verify`, { method: 'POST', headers: { Origin: MEMBER, 'Content-Type': 'application/json', Accept: 'application/json' }, body: JSON.stringify({ token: 'x'.repeat(40) }) });
 check(memberToken.response.status === 401, 'Member invalid/replayed/expired-token boundary', String(memberToken.response.status));
 
 const consumerToken = await request(`${CONSUMER}/api/consumer/auth/verify?token=${'x'.repeat(40)}`);

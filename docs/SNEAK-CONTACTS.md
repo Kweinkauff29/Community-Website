@@ -25,3 +25,9 @@ Recently Viewed is a separate section below the map/listings. Embedded results p
 - `node --test test/sneak-contacts.test.mjs` exercises the full SQLite migration chain, tenant isolation, actual member-session write authorization, magic-link/exchange lifecycle, email outbox, retry cancellation, timezone/DST scheduling, lead validation/rate limits, and withheld-address handling.
 - `node scripts/qa-contact-browser.cjs --local-assets` checks Chromium and WebKit at desktop/phone widths; form submissions and sign-in email requests are intercepted. Omit the flag after deployment to verify live assets.
 - `node scripts/qa-quick-search.cjs` verifies live search dropdowns and redirects.
+
+### Inquiry details and member sign-in
+
+Property inquiry emails resolve the listing within the site’s IDX scope and include the permitted address, MLS number, price, beds, baths, area, status and a secure property link. Suppressed or unavailable listings use a reference fallback. Address display restrictions still apply. The hosted portal opens the linked property directly.
+
+Member magic-link GET requests only display a confirmation page; a same-origin POST consumes the token and redirects to the dashboard. Login resends preserve earlier unexpired links, while invitations retain rotation. Rate limits use normalized SQLite timestamps for the 15-minute window. Mailjet dispatch is immediate, reports failure to the UI and records dispatch duration without tokens or recipient addresses. Authentication messages disable click/open tracking; production BCC settings remain applied. Inbox arrival time depends on the email providers.

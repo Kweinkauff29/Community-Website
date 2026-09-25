@@ -1,0 +1,8 @@
+/** Opening an email link must not consume it: scanners and previews issue GETs. */
+export function renderSignInConfirmation(token, failed=false) {
+ const valid=typeof token==='string' && /^[a-zA-Z0-9_-]{32,256}$/.test(token);
+ const content=failed||!valid
+  ? '<h1>This sign-in link is no longer valid</h1><p>It may have expired or already been used. Open your dashboard if you are already signed in, or request another email.</p><a href="/">Open dashboard / request a sign-in link</a>'
+  : `<h1>Sign in to your IDX dashboard</h1><p>Select the button below to finish signing in. Opening or previewing this page does not use your link.</p><form method="post" action="/api/member/auth/verify"><input type="hidden" name="token" value="${token}"><button type="submit">Sign in</button></form><p><a href="/">Back to member portal</a></p>`;
+ return new Response(`<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Sign in — CCOR IDX</title><style>body{margin:0;min-height:100vh;display:grid;place-items:center;background:#0b1329;color:#e2e8f0;font:16px/1.6 system-ui}main{max-width:440px;margin:24px;padding:32px;background:#152139;border-radius:16px}h1{font-size:26px;line-height:1.3}button{background:#38bdf8;color:#082f49;border:0;border-radius:8px;padding:12px 24px;font:inherit;font-weight:700;cursor:pointer}a{color:#7dd3fc}</style></head><body><main>${content}</main></body></html>`,{status:failed||!valid?401:200,headers:{'Content-Type':'text/html;charset=utf-8','Cache-Control':'no-store','Referrer-Policy':'origin','X-Frame-Options':'DENY','Content-Security-Policy':"default-src 'none'; style-src 'unsafe-inline'; form-action 'self'; frame-ancestors 'none'"}});
+}

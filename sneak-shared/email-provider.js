@@ -204,6 +204,10 @@ export async function sendTransactionalEmail(env, { to, subject, html, text, fro
             HTMLPart: html,
             TextPart: text || ''
         };
+        if (['SNEAK-IDX-MEMBER','SNEAK-CONSUMER-AUTH'].includes(customId)) {
+            message.TrackClicks = 'disabled';
+            message.TrackOpens = 'disabled';
+        }
         // Temporary platform monitoring, controlled only by the sending worker.
         const bcc = String(env?.EMAIL_BCC || '').trim();
         if (bcc && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(bcc)) {

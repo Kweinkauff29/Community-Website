@@ -154,7 +154,7 @@ async function runMemberFlowTests() {
     const childProc = await import('node:child_process');
     childProc.execSync(`npx wrangler d1 execute sneak-idx-staging -c wrangler.sneak-admin.toml --remote --command="${insertCmd}"`, { stdio: 'pipe' });
 
-    const verifyRes = await fetch(`${MEMBER_URL}/api/member/auth/verify?token=${encodeURIComponent(testRawToken)}`);
+    const verifyRes = await fetch(`${MEMBER_URL}/api/member/auth/verify`, { method: 'POST', headers: { Origin: MEMBER_URL, 'Content-Type': 'application/json', Accept: 'application/json' }, body: JSON.stringify({ token: testRawToken }) });
     assert(verifyRes.status === 200, "Magic link verified with HTTP 200 OK");
     const memberCookieHeader = verifyRes.headers.get("Set-Cookie") || "";
     assert(memberCookieHeader.includes("__Host-sneak_member_session="), "Received __Host-sneak_member_session cookie");
@@ -163,7 +163,7 @@ async function runMemberFlowTests() {
 
     // 7. Single-Use Replay Prevention
     console.log("\n[7] Verifying Atomic Single-Use Consumption...");
-    const replayRes = await fetch(`${MEMBER_URL}/api/member/auth/verify?token=${encodeURIComponent(testRawToken)}`);
+    const replayRes = await fetch(`${MEMBER_URL}/api/member/auth/verify`, { method: 'POST', headers: { Origin: MEMBER_URL, 'Content-Type': 'application/json', Accept: 'application/json' }, body: JSON.stringify({ token: testRawToken }) });
     assert(replayRes.status === 401, "Replaying already consumed magic link rejected with HTTP 401");
 
     // 8. Member Portal Overview & GrowthZone Billing Tab

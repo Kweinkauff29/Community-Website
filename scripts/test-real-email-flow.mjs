@@ -299,7 +299,7 @@ async function runRealEmailFlowTests() {
 
     // Replay protection check on consumed invitation
     console.log("\n[7] Verifying Invitation Token Replay Protection...");
-    const fakeTokenReplay = await fetch(`${MEMBER_URL}/api/member/auth/verify?token=consumed_invitation_token_replay_check_000000000000000000000000`);
+    const fakeTokenReplay = await fetch(`${MEMBER_URL}/api/member/auth/verify`, { method: 'POST', headers: { Origin: MEMBER_URL, 'Content-Type': 'application/json', Accept: 'application/json' }, body: JSON.stringify({ token: 'consumed_invitation_token_replay_check_000000000000000000000000' }) });
     assert(fakeTokenReplay.status === 401, "Consumed/invalid invitation token correctly rejected with HTTP 401");
 
     // Stage 2: Magic Login Lifecycle (RUN 2 / RUN 3)
@@ -343,7 +343,7 @@ async function runRealEmailFlowTests() {
     });
 
     console.log("\n[9] Verifying Magic Login Token Replay Protection...");
-    const fakeLoginReplay = await fetch(`${MEMBER_URL}/api/member/auth/verify?token=consumed_login_token_replay_check_000000000000000000000000`);
+    const fakeLoginReplay = await fetch(`${MEMBER_URL}/api/member/auth/verify`, { method: 'POST', headers: { Origin: MEMBER_URL, 'Content-Type': 'application/json', Accept: 'application/json' }, body: JSON.stringify({ token: 'consumed_login_token_replay_check_000000000000000000000000' }) });
     assert(fakeLoginReplay.status === 401, "Consumed/invalid login token correctly rejected with HTTP 401");
 
     await recordCheck(adminCookie, 'email_replay_protection', 'pass', 'system', {
