@@ -4191,32 +4191,33 @@
 
       // Location resolution (City vs. Subdivision)
       const SWFL_KNOWN_CITIES = ['bonita springs', 'estero', 'naples', 'fort myers', 'ft myers', 'fort myers beach', 'cape coral', 'marco island', 'sanibel', 'captiva', 'punta gorda'];
+      if (urlSubdivision) {
+        let cleanSub = urlSubdivision.replace(/,\s*(fl|florida)$/i, '').trim();
+        if (cleanSub.includes(',')) {
+          cleanSub = cleanSub.split(',')[0].trim();
+        }
+        drawerState.subdivision = cleanSub;
+        const subInput = document.getElementById('drawerSubdivision');
+        if (subInput) subInput.value = cleanSub;
+      }
+
       if (urlLocation) {
-        const cleanLoc = urlLocation.replace(/,\s*(fl|florida)$/i, '').trim();
+        let cleanLoc = urlLocation.replace(/,\s*(fl|florida)$/i, '').trim();
         const lowerLoc = cleanLoc.toLowerCase();
-        const matchedCity = SWFL_KNOWN_CITIES.find(c => c === lowerLoc || lowerLoc.startsWith(c));
+        const matchedCity = SWFL_KNOWN_CITIES.find(c => c === lowerLoc || lowerLoc.startsWith(c) || lowerLoc === c + ', fl');
         if (matchedCity && !drawerState.cities.length) {
           const formattedCity = matchedCity.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
           drawerState.cities = [formattedCity];
           centerMapOnCity(formattedCity);
-        } else if (!urlSubdivision) {
-          drawerState.subdivision = cleanLoc;
-        }
-        const sInput = document.getElementById('searchInput');
-        if (sInput) {
-          sInput.value = urlLocation;
-          const sClear = document.getElementById('searchClearBtn');
-          if (sClear) sClear.style.display = 'block';
-        }
-      }
-
-      if (urlSubdivision) {
-        drawerState.subdivision = urlSubdivision;
-        const sInput = document.getElementById('searchInput');
-        if (sInput) {
-          sInput.value = urlSubdivision;
-          const sClear = document.getElementById('searchClearBtn');
-          if (sClear) sClear.style.display = 'block';
+        } else if (!drawerState.subdivision && !urlSubdivision) {
+          if (cleanLoc.includes(',')) {
+            const parts = cleanLoc.split(',').map(s => s.trim());
+            drawerState.subdivision = parts[0];
+          } else {
+            drawerState.subdivision = cleanLoc;
+          }
+          const subInput = document.getElementById('drawerSubdivision');
+          if (subInput) subInput.value = drawerState.subdivision;
         }
       }
 
@@ -4226,6 +4227,11 @@
           if (b.dataset.val === targetVal) b.classList.add('selected');
           else b.classList.remove('selected');
         });
+        const bedsBtn = document.getElementById('bedsBtn');
+        if (bedsBtn && Number(targetVal) > 0) {
+          bedsBtn.classList.add('has-value');
+          bedsBtn.innerText = `${targetVal}+ Beds`;
+        }
       }
 
       if (urlBaths) {
@@ -4234,6 +4240,11 @@
           if (b.dataset.val === targetVal) b.classList.add('selected');
           else b.classList.remove('selected');
         });
+        const bathsBtn = document.getElementById('bathsBtn');
+        if (bathsBtn && Number(targetVal) > 0) {
+          bathsBtn.classList.add('has-value');
+          bathsBtn.innerText = `${targetVal}+ Baths`;
+        }
       }
 
       if (urlMinPrice) {

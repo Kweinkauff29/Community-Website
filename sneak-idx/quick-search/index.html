@@ -14,6 +14,12 @@
       padding: 0;
     }
 
+    html, body {
+      overflow: hidden;
+      margin: 0;
+      padding: 0;
+    }
+
     body {
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
       background: transparent;
@@ -125,11 +131,11 @@
       left: 0;
       right: 0;
       background: #ffffff;
-      border: 1px solid #e2e8f0;
+      border: 1px solid #cbd5e1;
       border-radius: 4px;
-      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.05);
-      z-index: 9999;
-      max-height: 380px;
+      box-shadow: 0 12px 30px rgba(0, 0, 0, 0.18), 0 4px 6px rgba(0, 0, 0, 0.08);
+      z-index: 99999;
+      max-height: 300px;
       overflow-y: auto;
       display: none;
     }
@@ -635,16 +641,19 @@
         const isPriceOpen = pricePopover.classList.contains('show');
         const isBedsOpen = bedsPopover.classList.contains('show');
         const isBathsOpen = bathsPopover.classList.contains('show');
+        const isOverlay = isDropdownOpen || isPriceOpen || isBedsOpen || isBathsOpen;
 
-        let targetH = containerEl.offsetHeight || 185;
+        const baseH = containerEl.offsetHeight || 185;
+        let targetH = baseH;
+
         if (isDropdownOpen) {
-          targetH = Math.max(targetH + 280, 480);
+          targetH = Math.max(baseH + 260, 440);
         } else if (isPriceOpen) {
-          targetH = Math.max(targetH + 190, 380);
+          targetH = Math.max(baseH + 195, 380);
         } else if (isBedsOpen || isBathsOpen) {
-          targetH = Math.max(targetH + 110, 290);
+          targetH = Math.max(baseH + 115, 300);
         } else {
-          targetH = Math.max(targetH + 8, 185);
+          targetH = baseH;
         }
 
         try {
@@ -652,7 +661,9 @@
             window.parent.postMessage({
               type: 'SNEAK_RESIZE',
               siteKey: SITE_KEY,
-              height: Math.ceil(targetH)
+              height: Math.ceil(targetH),
+              baseHeight: Math.ceil(baseH),
+              isOverlay: Boolean(isOverlay)
             }, '*');
           }
         } catch (err) {}
@@ -871,17 +882,21 @@
       }
 
       function selectItem(item) {
-        inputEl.value = item.label || item.name;
-        state.location = item.name;
-        if (item.type === 'city') {
+        if (item.type === 'subdivision') {
+          state.subdivision = item.name;
+          state.city = ''; // Do NOT constrain by city so multi-jurisdiction subdivision listings match
+          state.location = item.name;
+          inputEl.value = item.name;
+        } else if (item.type === 'city') {
           state.city = item.name;
           state.subdivision = '';
-        } else if (item.type === 'subdivision') {
-          state.subdivision = item.name;
-          state.city = item.city || '';
+          state.location = item.name;
+          inputEl.value = item.name.includes(',') ? item.name : `${item.name}, FL`;
         } else {
           state.city = '';
           state.subdivision = '';
+          state.location = item.name || '';
+          inputEl.value = item.label || item.name || '';
         }
         dropdownEl.classList.remove('show');
         wrapperEl.classList.remove('qs-dropdown-open');
@@ -981,15 +996,28 @@
         const rawLoc = inputEl.value.trim();
         const params = new URLSearchParams();
 
-        // 1. Location / City / Subdivision
-        if (state.city) {
-          params.set('city', state.city);
-          params.set('location', state.city.toLowerCase());
-        } else if (state.subdivision) {
+        // 1. Location / Subdivision / City
+        // Priority 1: Explicit Subdivision selection
+        if (state.subdivision) {
           params.set('subdivision', state.subdivision);
           params.set('location', state.subdivision);
-        } else if (rawLoc) {
-          params.set('location', rawLoc);
+        } 
+        // Priority 2: Explicit City selection
+        else if (state.city) {
+          params.set('city', state.city);
+          params.set('location', state.city);
+        } 
+        // Priority 3: Raw free-text location
+        else if (rawLoc) {
+          let clean = rawLoc.replace(/,\s*(fl|florida)$/i, '').trim();
+          if (clean.includes(',')) {
+            // E.g. "Pelican Landing, Bonita Springs" -> primary token is subdivision
+            const parts = clean.split(',').map(s => s.trim());
+            params.set('subdivision', parts[0]);
+            params.set('location', parts[0]);
+          } else {
+            params.set('location', clean);
+          }
         }
 
         // 2. Price

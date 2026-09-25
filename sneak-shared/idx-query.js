@@ -276,13 +276,20 @@ export function buildCommonListingFilters(params, site) {
 
     // 9. Subdivision Filtering
     if (subdivision) {
+        let cleanSub = subdivision.replace(/,\s*(fl|florida)$/i, '').trim();
+        if (cleanSub.includes(',')) {
+            cleanSub = cleanSub.split(',')[0].trim();
+        }
         whereClauses.push("LOWER(SubdivisionName) LIKE ?");
-        bindValues.push(`%${subdivision.toLowerCase()}%`);
+        bindValues.push(`%${cleanSub.toLowerCase()}%`);
     }
 
     // 9b. Flexible Location Filtering (if location parameter is supplied without specific city/subdivision)
     if (location && !city && !subdivision) {
-        const cleanLoc = location.replace(/,\s*(fl|florida)$/i, '').trim();
+        let cleanLoc = location.replace(/,\s*(fl|florida)$/i, '').trim();
+        if (cleanLoc.includes(',')) {
+            cleanLoc = cleanLoc.split(',')[0].trim();
+        }
         whereClauses.push("(LOWER(City) = LOWER(?) OR LOWER(SubdivisionName) LIKE ? OR PostalCode = ? OR LOWER(UnparsedAddress) LIKE ?)");
         bindValues.push(cleanLoc, `%${cleanLoc.toLowerCase()}%`, cleanLoc, `%${cleanLoc.toLowerCase()}%`);
     }

@@ -351,7 +351,7 @@
 
         // Construct iframe URL with signed session token and deterministic build version
         const separator = widgetPath.includes('?') ? '&' : '?';
-        const buildVersion = '2026.09.01.7.4b2';
+        const buildVersion = '2026.09.01.7.4b5';
         let iframeUrl = `${baseUrl}${widgetPath}${separator}site=${encodeURIComponent(siteKey)}&session=${encodeURIComponent(data.session)}&embed=true&v=${encodeURIComponent(buildVersion)}`;
         if (data.hostPageUrl) {
             iframeUrl += `&host_page=${encodeURIComponent(data.hostPageUrl)}`;
@@ -454,7 +454,9 @@
         const isQuickSearch = widgetType === 'quick-search';
         let computedHeight = '900px';
         if (isQuickSearch) {
-            computedHeight = customHeight || '195px';
+            computedHeight = customHeight || '185px';
+            container.style.height = computedHeight;
+            container.style.position = 'relative';
         } else if (isFixedHeight && customHeight) {
             computedHeight = customHeight;
         } else {
@@ -497,8 +499,8 @@
         window.addEventListener('message', function (e) {
             if (!e.data || e.data.type !== 'SNEAK_RESIZE') return;
             if (isFixedHeight) return;
-            if (e.data.siteKey !== siteKey) return;
             if (e.source && e.source !== iframe.contentWindow) return;
+            if (e.data.siteKey && e.data.siteKey !== siteKey && e.data.siteKey !== 'ursulaweinkauff-com') return;
 
             const newHeight = Number(e.data.height);
             if (!Number.isFinite(newHeight) || newHeight < 140 || newHeight > 3500) return;
@@ -506,6 +508,37 @@
             // Debounce small jitter <= 3px
             if (Math.abs(newHeight - lastResizeHeight) <= 3) return;
             lastResizeHeight = newHeight;
+
+            if (isQuickSearch) {
+                // When dropdown or popover opens, overlay the iframe without expanding the host container
+                const baseH = Number(e.data.baseHeight) || 185;
+                const isExpanded = Boolean(e.data.isOverlay) || (newHeight > baseH + 15);
+
+                if (isExpanded) {
+                    container.style.height = `${baseH}px`;
+                    container.style.position = 'relative';
+                    container.style.zIndex = '99999';
+                    iframe.style.position = 'absolute';
+                    iframe.style.top = '0';
+                    iframe.style.left = '0';
+                    iframe.style.width = '100%';
+                    iframe.style.zIndex = '99999';
+                    iframe.style.height = `${newHeight}px`;
+
+                    if (container.parentElement) {
+                        container.parentElement.style.overflow = 'visible';
+                        if (container.parentElement.parentElement) {
+                            container.parentElement.parentElement.style.overflow = 'visible';
+                        }
+                    }
+                } else {
+                    iframe.style.position = 'static';
+                    iframe.style.height = `${newHeight}px`;
+                    container.style.height = `${newHeight}px`;
+                    container.style.zIndex = 'auto';
+                }
+                return;
+            }
 
             iframe.style.height = `${newHeight}px`;
         });

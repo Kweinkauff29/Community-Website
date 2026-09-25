@@ -6,9 +6,9 @@ async function run() {
     const url = c.startsWith('http') ? c : 'http://ursulaweinkauff.com/' + c.replace(/^\//, '');
     const res = await fetch(url);
     const css = await res.text();
-    const rules = css.match(/[^{}]*(?:home-search|search-weather|idx-quick-search)[^{}]*\{[^}]*\}/g) || [];
+    const rules = css.match(/[^{}]*(?:idx-quick-search-shell|home-search|search-weather)[^{}]*\{[^}]*\}/g) || [];
     if (rules.length) {
-      console.log('From', c);
+      console.log('--- From', c);
       rules.forEach(rule => console.log('  ', rule.trim()));
     }
   }

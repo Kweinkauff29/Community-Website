@@ -55,6 +55,16 @@ test('SNEAK QUICK SEARCH & LOCATION ROUTING SUITE', async (t) => {
         assert.ok(res5.bindValues.includes(800000));
         assert.ok(res5.bindValues.includes(3));
         assert.ok(res5.bindValues.includes(2));
+
+        // Test subdivision query with trailing city/state: subdivision=Pelican Landing, Bonita Springs, FL
+        const params6 = new URLSearchParams('subdivision=Pelican%20Landing,%20Bonita%20Springs,%20FL&price=300000-500000&beds=2&baths=2');
+        const res6 = buildCommonListingFilters(params6, mockSite);
+        assert.ok(res6.valid, 'query must be valid');
+        assert.ok(res6.whereClauses.some(c => c.includes('LOWER(SubdivisionName) LIKE ?')));
+        assert.ok(res6.bindValues.includes('%pelican landing%'), 'must clean trailing city/state from subdivision');
+        assert.ok(res6.bindValues.includes(300000));
+        assert.ok(res6.bindValues.includes(500000));
+        assert.ok(res6.bindValues.includes(2));
     });
 
     await t.test('2. Embed Loader: Quick Search widget type and query forwarding', () => {
@@ -63,6 +73,11 @@ test('SNEAK QUICK SEARCH & LOCATION ROUTING SUITE', async (t) => {
         // Verify quick-search widget path
         assert.ok(embedJs.includes("widgetType === 'quick-search'"), 'embed.js must recognize quick-search widget');
         assert.ok(embedJs.includes('/quick-search/'), 'embed.js must route to /quick-search/ path');
+
+        // Verify overlay logic to prevent host section height expansion
+        assert.ok(embedJs.includes('if (isQuickSearch)'), 'embed.js must have quick-search resize overlay logic');
+        assert.ok(embedJs.includes('iframe.style.position = \'absolute\''), 'embed.js must position iframe absolutely on overlay');
+        assert.ok(embedJs.includes('container.style.height = `${baseH}px`'), 'embed.js must lock container height in normal flow');
 
         // Verify parameter parsing
         assert.ok(embedJs.includes("searchParams.has('location')"), 'embed.js must parse location parameter');
@@ -108,10 +123,11 @@ test('SNEAK QUICK SEARCH & LOCATION ROUTING SUITE', async (t) => {
         assert.ok(quickSearchHtml.includes('id="bathsBtn"'), 'Must have Baths filter button');
         assert.ok(quickSearchHtml.includes('id="searchSubmitBtn"'), 'Must have Search submit button');
 
-        // Redirect logic
+        // Redirect logic: Priority 1 is subdivision
         assert.ok(quickSearchHtml.includes('http://ursulaweinkauff.com/quick-search'), 'Must default redirect to http://ursulaweinkauff.com/quick-search');
+        assert.ok(quickSearchHtml.includes('params.set(\'subdivision\', state.subdivision)'), 'Redirect must serialize subdivision with priority');
         assert.ok(quickSearchHtml.includes('params.set(\'location\''), 'Redirect must serialize location');
-        assert.ok(quickSearchHtml.includes('executeRedirect'), 'Must have executeRedirect logic');
+        assert.ok(quickSearchHtml.includes('isOverlay: Boolean(isOverlay)'), 'Must report isOverlay flag in SNEAK_RESIZE');
     });
 
     await t.test('5. Search Application UI: Pre-Filter Hydration from Quick Search Redirect', () => {
@@ -123,6 +139,10 @@ test('SNEAK QUICK SEARCH & LOCATION ROUTING SUITE', async (t) => {
         assert.ok(searchHtml.includes("urlParams.get('price')"), 'search/index.html must read price param');
         assert.ok(searchHtml.includes("urlParams.get('beds')"), 'search/index.html must read beds param');
         assert.ok(searchHtml.includes("urlParams.get('baths')"), 'search/index.html must read baths param');
+
+        // Check button text hydration
+        assert.ok(searchHtml.includes("bedsBtn.innerText = `${targetVal}+ Beds`"), 'search/index.html must hydrate beds button label');
+        assert.ok(searchHtml.includes("bathsBtn.innerText = `${targetVal}+ Baths`"), 'search/index.html must hydrate baths button label');
 
         // Check subdivision in landing banner
         assert.ok(searchHtml.includes('drawerState?.subdivision'), 'Landing banner must support subdivision');
