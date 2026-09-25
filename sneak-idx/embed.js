@@ -351,7 +351,7 @@
 
         // Construct iframe URL with signed session token and deterministic build version
         const separator = widgetPath.includes('?') ? '&' : '?';
-        const buildVersion = '2026.09.01.7.4b5';
+        const buildVersion = '2026.09.01.7.4b6';
         let iframeUrl = `${baseUrl}${widgetPath}${separator}site=${encodeURIComponent(siteKey)}&session=${encodeURIComponent(data.session)}&embed=true&v=${encodeURIComponent(buildVersion)}`;
         if (data.hostPageUrl) {
             iframeUrl += `&host_page=${encodeURIComponent(data.hostPageUrl)}`;
@@ -509,38 +509,10 @@
             if (Math.abs(newHeight - lastResizeHeight) <= 3) return;
             lastResizeHeight = newHeight;
 
-            if (isQuickSearch) {
-                // When dropdown or popover opens, overlay the iframe without expanding the host container
-                const baseH = Number(e.data.baseHeight) || 185;
-                const isExpanded = Boolean(e.data.isOverlay) || (newHeight > baseH + 15);
-
-                if (isExpanded) {
-                    container.style.height = `${baseH}px`;
-                    container.style.position = 'relative';
-                    container.style.zIndex = '99999';
-                    iframe.style.position = 'absolute';
-                    iframe.style.top = '0';
-                    iframe.style.left = '0';
-                    iframe.style.width = '100%';
-                    iframe.style.zIndex = '99999';
-                    iframe.style.height = `${newHeight}px`;
-
-                    if (container.parentElement) {
-                        container.parentElement.style.overflow = 'visible';
-                        if (container.parentElement.parentElement) {
-                            container.parentElement.parentElement.style.overflow = 'visible';
-                        }
-                    }
-                } else {
-                    iframe.style.position = 'static';
-                    iframe.style.height = `${newHeight}px`;
-                    container.style.height = `${newHeight}px`;
-                    container.style.zIndex = 'auto';
-                }
-                return;
-            }
-
             iframe.style.height = `${newHeight}px`;
+            if (container) {
+                container.style.height = `${newHeight}px`;
+            }
         });
 
     })

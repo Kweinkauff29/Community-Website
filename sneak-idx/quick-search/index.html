@@ -135,7 +135,7 @@
       border-radius: 4px;
       box-shadow: 0 12px 30px rgba(0, 0, 0, 0.18), 0 4px 6px rgba(0, 0, 0, 0.08);
       z-index: 99999;
-      max-height: 300px;
+      max-height: 350px;
       overflow-y: auto;
       display: none;
     }
@@ -647,11 +647,36 @@
         let targetH = baseH;
 
         if (isDropdownOpen) {
-          targetH = Math.max(baseH + 260, 440);
+          let needed = baseH + 310;
+          try {
+            const drRect = dropdownEl.getBoundingClientRect();
+            const contRect = containerEl.getBoundingClientRect();
+            if (drRect.height > 0) {
+              needed = Math.ceil(drRect.bottom - contRect.top) + 24;
+            }
+          } catch (e) {}
+          targetH = Math.max(baseH + 290, 480, needed);
         } else if (isPriceOpen) {
-          targetH = Math.max(baseH + 195, 380);
+          let needed = baseH + 210;
+          try {
+            const popRect = pricePopover.getBoundingClientRect();
+            const contRect = containerEl.getBoundingClientRect();
+            if (popRect.height > 0) {
+              needed = Math.ceil(popRect.bottom - contRect.top) + 24;
+            }
+          } catch (e) {}
+          targetH = Math.max(baseH + 200, 390, needed);
         } else if (isBedsOpen || isBathsOpen) {
-          targetH = Math.max(baseH + 115, 300);
+          const pop = isBedsOpen ? bedsPopover : bathsPopover;
+          let needed = baseH + 130;
+          try {
+            const popRect = pop.getBoundingClientRect();
+            const contRect = containerEl.getBoundingClientRect();
+            if (popRect.height > 0) {
+              needed = Math.ceil(popRect.bottom - contRect.top) + 24;
+            }
+          } catch (e) {}
+          targetH = Math.max(baseH + 120, 310, needed);
         } else {
           targetH = baseH;
         }
