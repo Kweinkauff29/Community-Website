@@ -110,10 +110,31 @@ export function buildCommonListingFilters(params, site) {
     const county = (get('county') || get('CountyOrParish') || '').substring(0, 200).trim();
     const postalCode = (get('postalCode') || get('zip') || get('PostalCode') || '').substring(0, 20).trim();
     const subdivision = (get('subdivision') || get('SubdivisionName') || '').substring(0, 200).trim();
-    const minPrice = parseFloat(get('minPrice')) || null;
-    const maxPrice = parseFloat(get('maxPrice')) || null;
-    const beds = parseInt(get('beds'), 10) || null;
-    const baths = parseInt(get('baths'), 10) || null;
+    const location = (get('location') || '').substring(0, 200).trim();
+
+    // Parse price parameters: minPrice, maxPrice, or combined price string (e.g. "300000-600000" or "500000")
+    let rawPrice = (get('price') || '').toString().trim();
+    let minPrice = parseFloat(get('minPrice') || get('min_price') || get('priceMin')) || null;
+    let maxPrice = parseFloat(get('maxPrice') || get('max_price') || get('priceMax')) || null;
+    if (rawPrice && !minPrice && !maxPrice) {
+        if (rawPrice.includes('-') || rawPrice.includes('_')) {
+            const parts = rawPrice.split(/[-_]/).map(p => parseFloat(p.trim().replace(/[^0-9.]/g, ''))).filter(n => !isNaN(n));
+            if (parts.length >= 2) {
+                minPrice = parts[0];
+                maxPrice = parts[1];
+            } else if (parts.length === 1) {
+                maxPrice = parts[0];
+            }
+        } else {
+            const num = parseFloat(rawPrice.replace(/[^0-9.]/g, ''));
+            if (!isNaN(num) && num > 0) {
+                maxPrice = num;
+            }
+        }
+    }
+
+    const beds = parseInt(get('beds') || get('bed') || get('minBeds'), 10) || null;
+    const baths = parseInt(get('baths') || get('bath') || get('minBaths'), 10) || null;
     const minSqft = parseFloat(get('minSqft') || get('minLivingArea')) || null;
     const maxSqft = parseFloat(get('maxSqft') || get('maxLivingArea')) || null;
     const minAcres = parseFloat(get('minAcres') || get('minLotSizeAcres')) || null;
@@ -257,6 +278,13 @@ export function buildCommonListingFilters(params, site) {
     if (subdivision) {
         whereClauses.push("LOWER(SubdivisionName) LIKE ?");
         bindValues.push(`%${subdivision.toLowerCase()}%`);
+    }
+
+    // 9b. Flexible Location Filtering (if location parameter is supplied without specific city/subdivision)
+    if (location && !city && !subdivision) {
+        const cleanLoc = location.replace(/,\s*(fl|florida)$/i, '').trim();
+        whereClauses.push("(LOWER(City) = LOWER(?) OR LOWER(SubdivisionName) LIKE ? OR PostalCode = ? OR LOWER(UnparsedAddress) LIKE ?)");
+        bindValues.push(cleanLoc, `%${cleanLoc.toLowerCase()}%`, cleanLoc, `%${cleanLoc.toLowerCase()}%`);
     }
 
     // 10. Price Range

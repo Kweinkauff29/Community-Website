@@ -49,10 +49,16 @@ export default {
             return new Response(JSON.stringify(data), { headers });
         }
 
-        // Temporary endpoint to trigger sync manually
+        // Temporary endpoints to trigger sync manually
         if (url.pathname === '/api/manual-sync') {
-            await this.scheduled(null, env, ctx);
-            return new Response('Sync Triggered', { status: 200 });
+            await this.syncListings(env);
+            await this.syncOpenHouses(env);
+            return new Response('Sync Triggered (Listings + Open Houses)', { status: 200 });
+        }
+
+        if (url.pathname === '/api/sync-listings') {
+            await this.syncListings(env);
+            return new Response('Listings synced successfully', { status: 200 });
         }
 
         if (url.pathname === '/api/sync-openhouses') {
@@ -133,8 +139,43 @@ export default {
     },
 
     async scheduled(event, env, ctx) {
-        // Daily Sync Logic
-        console.log("Starting Daily Listing Sync...");
+        // Determine current hour in Eastern Time (America/New_York)
+        const estFormatter = new Intl.DateTimeFormat('en-US', {
+            timeZone: 'America/New_York',
+            hour: 'numeric',
+            hourCycle: 'h23'
+        });
+        const currentHour = parseInt(estFormatter.format(new Date(event?.scheduledTime || Date.now())), 10);
+        console.log(`[Scheduled Sync] Triggered at ${new Date().toISOString()} (Eastern Hour: ${currentHour}:00 EST)`);
+
+        // Time window: 9 AM to 9 PM EST (9 to 21 inclusive). No sync at night.
+        if (currentHour < 9 || currentHour > 21) {
+            console.log(`[Scheduled Sync] Hour ${currentHour}:00 EST is outside 9 AM - 9 PM window. Skipping night sync (0 writes).`);
+            return;
+        }
+
+        // Open houses: Every 2 hours within 9am-9pm EST (9, 11, 13, 15, 17, 19, 21 -> 7 runs/day)
+        const OPEN_HOUSE_HOURS = [9, 11, 13, 15, 17, 19, 21];
+
+        // Listings: 3 times during 9am-9pm EST (9:00 AM, 3:00 PM, 9:00 PM EST -> 9, 15, 21 -> 3 runs/day)
+        const LISTING_HOURS = [9, 15, 21];
+
+        const shouldSyncListings = LISTING_HOURS.includes(currentHour);
+        const shouldSyncOpenHouses = OPEN_HOUSE_HOURS.includes(currentHour);
+
+        if (shouldSyncListings) {
+            console.log(`[Scheduled Sync] Starting listings sync for ${currentHour}:00 EST...`);
+            await this.syncListings(env);
+        }
+
+        if (shouldSyncOpenHouses) {
+            console.log(`[Scheduled Sync] Starting open houses sync for ${currentHour}:00 EST...`);
+            await this.syncOpenHouses(env);
+        }
+    },
+
+    async syncListings(env) {
+        console.log("Starting Listing Sync...");
         const SEL = "ListingKey,ListingId,ListPrice,UnparsedAddress,City,CountyOrParish,BedroomsTotal,BathroomsTotalInteger,LivingArea,StandardStatus,PropertyType,PropertySubType,Media,ListingContractDate,Coordinates,ModificationTimestamp,YearBuilt,LotSizeAcres,ListAgentFullName,ListOfficeName,ListOfficePhone,ListAgentMlsId";
         const baseF = "OriginatingSystemKey eq 'bsaor' and StateOrProvince eq 'FL' and (StandardStatus eq 'Active' or StandardStatus eq 'Active Under Contract' or StandardStatus eq 'Pending') and (CountyOrParish eq 'Lee' or CountyOrParish eq 'Collier') and (toupper(City) eq 'BONITA SPRINGS' or toupper(City) eq 'ESTERO' or toupper(City) eq 'NAPLES' or toupper(City) eq 'FORT MYERS' or toupper(City) eq 'FT MYERS' or toupper(City) eq 'FT. MYERS')";
 
@@ -210,10 +251,6 @@ export default {
         }
 
         console.log(`Sync Complete. Total listings synced: ${allFetchedKeys.size}`);
-
-        // Open House Sync Logic
-        console.log("Starting Open House Sync...");
-        await this.syncOpenHouses(env);
     },
 
     async syncOpenHouses(env) {

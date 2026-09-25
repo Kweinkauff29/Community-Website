@@ -45,21 +45,21 @@ export function generateEmbedSnippets(siteKey, allowedDomains = [], branding = {
             widgetType: "search_bar",
             targetId: 'sneak-idx-search-bar',
             name: "Quick Search Bar",
-            description: "Compact single-line MLS property search bar suitable for hero headers.",
-            htmlSnippet: `<!-- CCOR IDX Quick Search Bar -->
-<div id="sneak-idx-search-bar" data-site="${siteKey}" data-widget="search_bar" style="width:100%;max-width:100%;"></div>
-<script src="${scriptUrl}" data-site="${siteKey}" data-widget="search_bar" data-target="#sneak-idx-search-bar" async defer></script>`,
+            description: "Autocomplete search bar with city and subdivision suggestions, price/beds/baths filters, custom headline, and URL redirection.",
+            htmlSnippet: `<!-- CCOR IDX Quick Search Bar Widget -->
+<div id="sneak-idx-search-bar" data-site="${siteKey}" data-widget="quick-search" data-heading="Find Your Southwest Florida Dream Home" data-redirect-url="http://${siteKey}.com/quick-search" style="width:100%;max-width:100%;"></div>
+<script src="${scriptUrl}" data-site="${siteKey}" data-widget="quick-search" data-heading="Find Your Southwest Florida Dream Home" data-redirect-url="http://${siteKey}.com/quick-search" data-target="#sneak-idx-search-bar" async defer></script>`,
             recommendedWidth: "100%",
             responsive: true
         },
         {
             widgetType: "listing_grid",
             targetId: 'sneak-idx-grid',
-            name: "Listing Grid",
-            description: "Responsive grid showcasing active and pending properties.",
-            htmlSnippet: `<!-- CCOR IDX Listing Grid -->
-<div id="sneak-idx-grid" data-site="${siteKey}" data-widget="listing_grid" style="width:100%;max-width:100%;"></div>
-<script src="${scriptUrl}" data-site="${siteKey}" data-widget="listing_grid" data-target="#sneak-idx-grid" async defer></script>`,
+            name: "Listing Grid (4-Across Showcase)",
+            description: "Clean 4-across responsive property card grid showcase without map or sidebar.",
+            htmlSnippet: `<!-- CCOR IDX Listing Grid Showcase Widget -->
+<div id="sneak-idx-grid" data-site="${siteKey}" data-widget="search" data-layout="grid" style="width:100%;max-width:100%;"></div>
+<script src="${scriptUrl}" data-site="${siteKey}" data-widget="search" data-layout="grid" data-target="#sneak-idx-grid" async defer></script>`,
             recommendedWidth: "100%",
             responsive: true
         },

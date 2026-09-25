@@ -1,0 +1,1040 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SNEAK IDX — Quick Search</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      background: transparent;
+      color: #1e293b;
+      line-height: 1.4;
+      padding: 0;
+      margin: 0;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* Container matching Screenshot 2 */
+    .qs-container {
+      width: 100%;
+      max-width: 1200px;
+      margin: 0 auto;
+      background: #ffffff;
+      padding: 24px 28px 26px 28px;
+      border-radius: 4px;
+      border: 1px solid #d1d5db;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+      position: relative;
+      box-sizing: border-box;
+    }
+
+    /* Light, elegant heading */
+    .qs-heading {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      font-size: 28px;
+      font-weight: 300;
+      color: #4b5563;
+      margin: 0 0 16px 0;
+      letter-spacing: normal;
+      line-height: 1.25;
+    }
+
+    /* Search input row */
+    .qs-search-wrapper {
+      position: relative;
+      margin-bottom: 14px;
+      width: 100%;
+    }
+
+    .qs-input-row {
+      position: relative;
+      display: flex;
+      align-items: center;
+      width: 100%;
+      height: 42px;
+      background: #ffffff;
+      border: 1px solid #cbd5e1;
+      border-radius: 4px;
+      transition: border-color 0.15s ease, box-shadow 0.15s ease;
+    }
+
+    .qs-input-row:focus-within {
+      border-color: #64748b;
+      box-shadow: 0 0 0 1px #64748b;
+    }
+
+    .qs-input {
+      flex: 1;
+      height: 100%;
+      padding: 0 14px;
+      font-size: 14px;
+      font-family: Georgia, 'Times New Roman', Cambria, serif, -apple-system, sans-serif;
+      color: #1e293b;
+      background: transparent;
+      border: none;
+      outline: none;
+    }
+
+    .qs-input::placeholder {
+      font-family: Georgia, 'Times New Roman', Cambria, serif;
+      color: #6b7280;
+      font-size: 14px;
+      font-weight: 400;
+    }
+
+    .qs-caret-btn {
+      width: 36px;
+      height: 100%;
+      background: transparent;
+      border: none;
+      border-left: 1px solid #e5e7eb;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      color: #9ca3af;
+      outline: none;
+      padding: 0;
+    }
+
+    .qs-caret-btn span {
+      font-size: 11px;
+      line-height: 1;
+      color: #9ca3af;
+      transition: transform 0.2s ease;
+    }
+
+    .qs-dropdown-open .qs-caret-btn span {
+      transform: rotate(180deg);
+    }
+
+    /* Autocomplete Dropdown */
+    .qs-dropdown {
+      position: absolute;
+      top: calc(100% + 4px);
+      left: 0;
+      right: 0;
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+      border-radius: 4px;
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.05);
+      z-index: 9999;
+      max-height: 380px;
+      overflow-y: auto;
+      display: none;
+    }
+
+    .qs-dropdown.show {
+      display: block;
+    }
+
+    .qs-section-title {
+      font-size: 0.72rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: #8c9ba5;
+      padding: 10px 14px 6px;
+      background: #fafbfc;
+      border-top: 1px solid #f1f5f9;
+    }
+
+    .qs-section-title:first-child {
+      border-top: none;
+    }
+
+    .qs-item {
+      padding: 10px 14px;
+      font-size: 0.92rem;
+      color: #2d3748;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      transition: background 0.12s ease;
+    }
+
+    .qs-item:hover, .qs-item.qs-highlighted {
+      background: #f1f5f9;
+      color: #0f172a;
+    }
+
+    .qs-item-badge {
+      font-size: 0.7rem;
+      padding: 2px 6px;
+      border-radius: 4px;
+      background: #e2e8f0;
+      color: #475569;
+      text-transform: uppercase;
+      font-weight: 600;
+    }
+
+    /* Filters Row matching Screenshot 2 */
+    .qs-filters-row {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+      width: 100%;
+    }
+
+    @media (max-width: 768px) {
+      .qs-filters-row {
+        grid-template-columns: 1fr 1fr;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .qs-filters-row {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .qs-btn-dropdown-wrapper {
+      position: relative;
+    }
+
+    .qs-filter-btn {
+      width: 100%;
+      height: 42px;
+      background: #ffffff;
+      border: 1px solid #e5e7eb;
+      border-radius: 4px;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      font-size: 14px;
+      font-weight: 700;
+      color: #111827;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 5px;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      outline: none;
+      padding: 0 12px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02);
+    }
+
+    .qs-filter-btn:hover {
+      background: #f9fafb;
+      border-color: #d1d5db;
+    }
+
+    .qs-filter-btn.active {
+      border-color: #0284c7;
+      color: #0284c7;
+      background: #f0f9ff;
+    }
+
+    .qs-filter-btn .qs-btn-caret {
+      font-size: 10px;
+      line-height: 1;
+      display: inline-block;
+      margin-left: 2px;
+      color: #111827;
+      transition: transform 0.2s ease;
+    }
+
+    .qs-filter-btn.active .qs-btn-caret {
+      color: #0284c7;
+    }
+
+    .qs-open .qs-filter-btn .qs-btn-caret {
+      transform: rotate(180deg);
+    }
+
+    /* Search Submit Button - EXACT MATCH TO SCREENSHOT 2 */
+    .qs-search-btn {
+      width: 100%;
+      height: 42px;
+      background: #71717a;
+      color: #ffffff;
+      border: none;
+      border-radius: 4px;
+      font-family: Georgia, Cambria, "Times New Roman", Times, serif;
+      font-size: 15px;
+      font-weight: 400;
+      letter-spacing: 0.01em;
+      cursor: pointer;
+      transition: background 0.15s ease, transform 0.05s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      outline: none;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+    }
+
+    .qs-search-btn:hover {
+      background: #52525b;
+    }
+
+    .qs-search-btn:active {
+      transform: scale(0.99);
+    }
+
+    /* Filter Popovers */
+    .qs-popover {
+      position: absolute;
+      top: calc(100% + 6px);
+      left: 0;
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+      border-radius: 6px;
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.12), 0 8px 10px -6px rgba(0, 0, 0, 0.04);
+      z-index: 9999;
+      padding: 16px;
+      display: none;
+      min-width: 260px;
+    }
+
+    .qs-popover.show {
+      display: block;
+    }
+
+    .qs-price-popover {
+      width: 320px;
+    }
+
+    .qs-popover-title {
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: #64748b;
+      margin-bottom: 10px;
+    }
+
+    .qs-pill-group {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-bottom: 12px;
+    }
+
+    .qs-pill {
+      flex: 1 0 calc(20% - 6px);
+      min-width: 42px;
+      height: 36px;
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 4px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.88rem;
+      font-weight: 500;
+      color: #334155;
+      cursor: pointer;
+      transition: all 0.12s ease;
+    }
+
+    .qs-pill:hover {
+      background: #e2e8f0;
+    }
+
+    .qs-pill.selected {
+      background: #0284c7;
+      color: #ffffff;
+      border-color: #0284c7;
+      font-weight: 600;
+    }
+
+    .qs-price-inputs {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+
+    .qs-price-col label {
+      display: block;
+      font-size: 0.72rem;
+      font-weight: 600;
+      color: #64748b;
+      margin-bottom: 4px;
+    }
+
+    .qs-price-select {
+      width: 100%;
+      height: 36px;
+      padding: 0 8px;
+      border: 1px solid #cbd5e1;
+      border-radius: 4px;
+      font-size: 0.85rem;
+      font-family: inherit;
+      color: #1e293b;
+      background: #fff;
+    }
+
+    .qs-popover-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+      margin-top: 8px;
+      border-top: 1px solid #f1f5f9;
+      padding-top: 10px;
+    }
+
+    .qs-action-clear {
+      background: none;
+      border: none;
+      font-size: 0.82rem;
+      font-weight: 500;
+      color: #64748b;
+      cursor: pointer;
+      padding: 6px 10px;
+    }
+
+    .qs-action-clear:hover {
+      color: #ef4444;
+    }
+
+    .qs-action-apply {
+      background: #0284c7;
+      color: #fff;
+      border: none;
+      border-radius: 4px;
+      padding: 6px 14px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .qs-action-apply:hover {
+      background: #0369a1;
+    }
+  </style>
+</head>
+<body>
+  <div class="qs-container" id="quickSearchContainer">
+    <h2 class="qs-heading" id="qsHeading">Find Your Southwest Florida Dream Home</h2>
+
+    <!-- Autocomplete Search Bar -->
+    <div class="qs-search-wrapper" id="qsSearchWrapper">
+      <div class="qs-input-row">
+        <input 
+          type="text" 
+          id="qsInput" 
+          class="qs-input" 
+          placeholder="Type a city, subdivision, zip, address, or listing #" 
+          autocomplete="off"
+          spellcheck="false"
+        >
+        <button type="button" class="qs-caret-btn" id="qsCaretBtn" aria-label="Toggle location suggestions">
+          <span>▾</span>
+        </button>
+      </div>
+
+      <!-- Dropdown suggestions -->
+      <div class="qs-dropdown" id="qsDropdown">
+        <!-- Rendered dynamically -->
+      </div>
+    </div>
+
+    <!-- Filters Row matching Screenshot 2 -->
+    <div class="qs-filters-row">
+      <!-- Price Filter -->
+      <div class="qs-btn-dropdown-wrapper" id="priceDropdownWrapper">
+        <button type="button" class="qs-filter-btn" id="priceBtn">
+          <span id="priceLabel">Price</span> <span class="qs-btn-caret">▾</span>
+        </button>
+        <div class="qs-popover qs-price-popover" id="pricePopover">
+          <div class="qs-popover-title">Price Range</div>
+          <div class="qs-price-inputs">
+            <div class="qs-price-col">
+              <label for="qsMinPrice">Minimum</label>
+              <select id="qsMinPrice" class="qs-price-select">
+                <option value="">No Min</option>
+                <option value="200000">$200,000</option>
+                <option value="300000">$300,000</option>
+                <option value="400000">$400,000</option>
+                <option value="500000">$500,000</option>
+                <option value="600000">$600,000</option>
+                <option value="700000">$700,000</option>
+                <option value="800000">$800,000</option>
+                <option value="900000">$900,000</option>
+                <option value="1000000">$1,000,000</option>
+                <option value="1500000">$1,500,000</option>
+                <option value="2000000">$2,000,000</option>
+                <option value="3000000">$3,000,000</option>
+                <option value="5000000">$5,000,000</option>
+              </select>
+            </div>
+            <div class="qs-price-col">
+              <label for="qsMaxPrice">Maximum</label>
+              <select id="qsMaxPrice" class="qs-price-select">
+                <option value="">No Max</option>
+                <option value="300000">$300,000</option>
+                <option value="400000">$400,000</option>
+                <option value="500000">$500,000</option>
+                <option value="600000">$600,000</option>
+                <option value="700000">$700,000</option>
+                <option value="800000">$800,000</option>
+                <option value="900000">$900,000</option>
+                <option value="1000000">$1,000,000</option>
+                <option value="1500000">$1,500,000</option>
+                <option value="2000000">$2,000,000</option>
+                <option value="3000000">$3,000,000</option>
+                <option value="5000000">$5,000,000</option>
+                <option value="10000000">$10,000,000+</option>
+              </select>
+            </div>
+          </div>
+          <div class="qs-popover-actions">
+            <button type="button" class="qs-action-clear" id="priceClear">Reset</button>
+            <button type="button" class="qs-action-apply" id="priceApply">Apply</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Beds Filter -->
+      <div class="qs-btn-dropdown-wrapper" id="bedsDropdownWrapper">
+        <button type="button" class="qs-filter-btn" id="bedsBtn">
+          <span id="bedsLabel">Beds</span> <span class="qs-btn-caret">▾</span>
+        </button>
+        <div class="qs-popover" id="bedsPopover">
+          <div class="qs-popover-title">Bedrooms</div>
+          <div class="qs-pill-group" id="bedsPillGroup">
+            <div class="qs-pill selected" data-val="">Any</div>
+            <div class="qs-pill" data-val="1">1+</div>
+            <div class="qs-pill" data-val="2">2+</div>
+            <div class="qs-pill" data-val="3">3+</div>
+            <div class="qs-pill" data-val="4">4+</div>
+            <div class="qs-pill" data-val="5">5+</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Baths Filter -->
+      <div class="qs-btn-dropdown-wrapper" id="bathsDropdownWrapper">
+        <button type="button" class="qs-filter-btn" id="bathsBtn">
+          <span id="bathsLabel">Baths</span> <span class="qs-btn-caret">▾</span>
+        </button>
+        <div class="qs-popover" id="bathsPopover">
+          <div class="qs-popover-title">Bathrooms</div>
+          <div class="qs-pill-group" id="bathsPillGroup">
+            <div class="qs-pill selected" data-val="">Any</div>
+            <div class="qs-pill" data-val="1">1+</div>
+            <div class="qs-pill" data-val="2">2+</div>
+            <div class="qs-pill" data-val="3">3+</div>
+            <div class="qs-pill" data-val="4">4+</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Search Submit Button -->
+      <div>
+        <button type="button" class="qs-search-btn" id="searchSubmitBtn">
+          Search
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    (function() {
+      'use strict';
+
+      // 1. Parse URL & configuration parameters
+      const urlParams = new URLSearchParams(window.location.search);
+      const SITE_KEY = urlParams.get('site') || 'ursulaweinkauff-com';
+      const SNEAK_SESSION = urlParams.get('session') || '';
+      
+      // Customizable heading: defaults to "Find Your Southwest Florida Dream Home"
+      const customHeading = urlParams.get('heading') || 'Find Your Southwest Florida Dream Home';
+      const headingEl = document.getElementById('qsHeading');
+      if (headingEl) {
+        headingEl.textContent = customHeading;
+      }
+
+      // Configurable redirect target URL
+      // Defaults to http://ursulaweinkauff.com/quick-search or /quick-search
+      let REDIRECT_URL = urlParams.get('redirect_url') || urlParams.get('redirect') || 'http://ursulaweinkauff.com/quick-search';
+
+      // Determine API Host Base
+      let API_BASE = urlParams.get('api');
+      if (!API_BASE) {
+        if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+          API_BASE = 'http://127.0.0.1:8788';
+        } else {
+          API_BASE = window.location.origin;
+        }
+      }
+
+      // State Management
+      const state = {
+        query: '',
+        location: '',
+        city: '',
+        subdivision: '',
+        minPrice: '',
+        maxPrice: '',
+        beds: '',
+        baths: ''
+      };
+
+      // Recommended searches fallback (matching SNEAK Southwest Florida locations)
+      const RECOMMENDED_SEARCHES = [
+        { label: "Pelican Landing, Bonita Springs, FL", name: "Pelican Landing", city: "Bonita Springs", type: "subdivision" },
+        { label: "Bonita Bay, Bonita Springs, FL", name: "Bonita Bay", city: "Bonita Springs", type: "subdivision" },
+        { label: "Shadow Wood, Estero, FL", name: "Shadow Wood", city: "Estero", type: "subdivision" },
+        { label: "West Bay Club, Estero, FL", name: "West Bay Club", city: "Estero", type: "subdivision" },
+        { label: "The Colony, Bonita Springs, FL", name: "The Colony", city: "Bonita Springs", type: "subdivision" }
+      ];
+
+      // UI Elements
+      const containerEl = document.getElementById('quickSearchContainer');
+      const inputEl = document.getElementById('qsInput');
+      const caretBtn = document.getElementById('qsCaretBtn');
+      const dropdownEl = document.getElementById('qsDropdown');
+      const wrapperEl = document.getElementById('qsSearchWrapper');
+
+      const priceBtn = document.getElementById('priceBtn');
+      const priceLabel = document.getElementById('priceLabel');
+      const pricePopover = document.getElementById('pricePopover');
+      const priceWrapper = document.getElementById('priceDropdownWrapper');
+      const minPriceSelect = document.getElementById('qsMinPrice');
+      const maxPriceSelect = document.getElementById('qsMaxPrice');
+      const priceApplyBtn = document.getElementById('priceApply');
+      const priceClearBtn = document.getElementById('priceClear');
+
+      const bedsBtn = document.getElementById('bedsBtn');
+      const bedsLabel = document.getElementById('bedsLabel');
+      const bedsPopover = document.getElementById('bedsPopover');
+      const bedsWrapper = document.getElementById('bedsDropdownWrapper');
+      const bedsPills = document.querySelectorAll('#bedsPillGroup .qs-pill');
+
+      const bathsBtn = document.getElementById('bathsBtn');
+      const bathsLabel = document.getElementById('bathsLabel');
+      const bathsPopover = document.getElementById('bathsPopover');
+      const bathsWrapper = document.getElementById('bathsDropdownWrapper');
+      const bathsPills = document.querySelectorAll('#bathsPillGroup .qs-pill');
+
+      const searchSubmitBtn = document.getElementById('searchSubmitBtn');
+
+      let debounceTimer = null;
+      let highlightedIndex = -1;
+      let currentItems = [];
+
+      // Adaptive Height Reporting for Embed Iframe
+      function reportHeight() {
+        if (!containerEl) return;
+        const isDropdownOpen = dropdownEl.classList.contains('show');
+        const isPriceOpen = pricePopover.classList.contains('show');
+        const isBedsOpen = bedsPopover.classList.contains('show');
+        const isBathsOpen = bathsPopover.classList.contains('show');
+
+        let targetH = containerEl.offsetHeight || 185;
+        if (isDropdownOpen) {
+          targetH = Math.max(targetH + 280, 480);
+        } else if (isPriceOpen) {
+          targetH = Math.max(targetH + 190, 380);
+        } else if (isBedsOpen || isBathsOpen) {
+          targetH = Math.max(targetH + 110, 290);
+        } else {
+          targetH = Math.max(targetH + 8, 185);
+        }
+
+        try {
+          if (window.parent && window.parent !== window) {
+            window.parent.postMessage({
+              type: 'SNEAK_RESIZE',
+              siteKey: SITE_KEY,
+              height: Math.ceil(targetH)
+            }, '*');
+          }
+        } catch (err) {}
+      }
+
+      window.addEventListener('resize', reportHeight);
+      setTimeout(reportHeight, 60);
+
+      // Close all popovers
+      function closeAllPopovers(except) {
+        if (except !== pricePopover) {
+          pricePopover.classList.remove('show');
+          priceWrapper.classList.remove('qs-open');
+        }
+        if (except !== bedsPopover) {
+          bedsPopover.classList.remove('show');
+          bedsWrapper.classList.remove('qs-open');
+        }
+        if (except !== bathsPopover) {
+          bathsPopover.classList.remove('show');
+          bathsWrapper.classList.remove('qs-open');
+        }
+        if (except !== dropdownEl) {
+          dropdownEl.classList.remove('show');
+          wrapperEl.classList.remove('qs-dropdown-open');
+        }
+        reportHeight();
+      }
+
+      document.addEventListener('click', (e) => {
+        if (!e.target.closest('.qs-btn-dropdown-wrapper') && !e.target.closest('.qs-search-wrapper')) {
+          closeAllPopovers();
+        }
+      });
+
+      // Price Popover Toggling
+      priceBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const isOpen = pricePopover.classList.contains('show');
+        closeAllPopovers(isOpen ? null : pricePopover);
+        if (!isOpen) {
+          pricePopover.classList.add('show');
+          priceWrapper.classList.add('qs-open');
+          reportHeight();
+        }
+      });
+
+      priceApplyBtn.addEventListener('click', () => {
+        state.minPrice = minPriceSelect.value;
+        state.maxPrice = maxPriceSelect.value;
+        updatePriceLabel();
+        closeAllPopovers();
+      });
+
+      priceClearBtn.addEventListener('click', () => {
+        minPriceSelect.value = '';
+        maxPriceSelect.value = '';
+        state.minPrice = '';
+        state.maxPrice = '';
+        updatePriceLabel();
+        closeAllPopovers();
+      });
+
+      function updatePriceLabel() {
+        const min = state.minPrice ? parseInt(state.minPrice, 10) : null;
+        const max = state.maxPrice ? parseInt(state.maxPrice, 10) : null;
+        const fmt = (n) => n >= 1e6 ? '$' + (n / 1e6).toFixed(1) + 'M' : '$' + (n / 1e3).toFixed(0) + 'k';
+
+        if (min && max) {
+          priceLabel.textContent = `${fmt(min)} - ${fmt(max)}`;
+          priceBtn.classList.add('active');
+        } else if (min) {
+          priceLabel.textContent = `${fmt(min)}+`;
+          priceBtn.classList.add('active');
+        } else if (max) {
+          priceLabel.textContent = `Up to ${fmt(max)}`;
+          priceBtn.classList.add('active');
+        } else {
+          priceLabel.textContent = 'Price';
+          priceBtn.classList.remove('active');
+        }
+      }
+
+      // Beds Popover Toggling & Selection
+      bedsBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const isOpen = bedsPopover.classList.contains('show');
+        closeAllPopovers(isOpen ? null : bedsPopover);
+        if (!isOpen) {
+          bedsPopover.classList.add('show');
+          bedsWrapper.classList.add('qs-open');
+          reportHeight();
+        }
+      });
+
+      bedsPills.forEach(pill => {
+        pill.addEventListener('click', () => {
+          bedsPills.forEach(p => p.classList.remove('selected'));
+          pill.classList.add('selected');
+          const val = pill.dataset.val;
+          state.beds = val;
+          bedsLabel.textContent = val ? `${val}+ Beds` : 'Beds';
+          bedsBtn.classList.toggle('active', Boolean(val));
+          closeAllPopovers();
+        });
+      });
+
+      // Baths Popover Toggling & Selection
+      bathsBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const isOpen = bathsPopover.classList.contains('show');
+        closeAllPopovers(isOpen ? null : bathsPopover);
+        if (!isOpen) {
+          bathsPopover.classList.add('show');
+          bathsWrapper.classList.add('qs-open');
+          reportHeight();
+        }
+      });
+
+      bathsPills.forEach(pill => {
+        pill.addEventListener('click', () => {
+          bathsPills.forEach(p => p.classList.remove('selected'));
+          pill.classList.add('selected');
+          const val = pill.dataset.val;
+          state.baths = val;
+          bathsLabel.textContent = val ? `${val}+ Baths` : 'Baths';
+          bathsBtn.classList.toggle('active', Boolean(val));
+          closeAllPopovers();
+        });
+      });
+
+      // Location Autocomplete Fetching & Rendering
+      async function fetchLocations(query) {
+        try {
+          const authHeader = SNEAK_SESSION ? { 'Authorization': 'Bearer ' + SNEAK_SESSION, 'X-SNEAK-Session': SNEAK_SESSION } : {};
+          const qParam = query ? `&q=${encodeURIComponent(query)}` : '';
+          const res = await fetch(`${API_BASE}/idx/v1/locations?site=${encodeURIComponent(SITE_KEY)}${qParam}`, {
+            headers: { 'Accept': 'application/json', ...authHeader }
+          });
+          if (!res.ok) throw new Error('Failed to load locations');
+          return await res.json();
+        } catch (e) {
+          console.warn('[Quick Search] Location fetch fallback:', e);
+          if (!query) return { recommended: RECOMMENDED_SEARCHES };
+          return { cities: [], subdivisions: [] };
+        }
+      }
+
+      function renderDropdown(data, isFallbackRecommended = false) {
+        dropdownEl.innerHTML = '';
+        currentItems = [];
+        highlightedIndex = -1;
+
+        if (isFallbackRecommended || (!data.cities?.length && !data.subdivisions?.length)) {
+          const recommended = data.recommended || RECOMMENDED_SEARCHES;
+          if (recommended && recommended.length) {
+            const titleEl = document.createElement('div');
+            titleEl.className = 'qs-section-title';
+            titleEl.textContent = 'RECOMMENDED SEARCHES';
+            dropdownEl.appendChild(titleEl);
+
+            recommended.forEach(item => {
+              const row = createItemRow(item);
+              dropdownEl.appendChild(row);
+              currentItems.push(item);
+            });
+          } else {
+            dropdownEl.innerHTML = '<div style="padding:16px;text-align:center;color:#94a3b8;font-size:0.88rem;">No locations found. Press Search to query anyway.</div>';
+          }
+        } else {
+          // 1. Cities
+          if (data.cities && data.cities.length) {
+            const cityTitle = document.createElement('div');
+            cityTitle.className = 'qs-section-title';
+            cityTitle.textContent = 'CITY';
+            dropdownEl.appendChild(cityTitle);
+
+            data.cities.forEach(item => {
+              const row = createItemRow(item);
+              dropdownEl.appendChild(row);
+              currentItems.push(item);
+            });
+          }
+
+          // 2. Subdivisions
+          if (data.subdivisions && data.subdivisions.length) {
+            const subTitle = document.createElement('div');
+            subTitle.className = 'qs-section-title';
+            subTitle.textContent = 'SUBDIVISION';
+            dropdownEl.appendChild(subTitle);
+
+            data.subdivisions.forEach(item => {
+              const row = createItemRow(item);
+              dropdownEl.appendChild(row);
+              currentItems.push(item);
+            });
+          }
+        }
+
+        dropdownEl.classList.add('show');
+        wrapperEl.classList.add('qs-dropdown-open');
+        reportHeight();
+      }
+
+      function createItemRow(item) {
+        const row = document.createElement('div');
+        row.className = 'qs-item';
+        row.innerHTML = `
+          <span>${item.label || item.name}</span>
+          <span class="qs-item-badge">${item.type === 'city' ? 'City' : 'Subdivision'}</span>
+        `;
+        row.addEventListener('click', () => {
+          selectItem(item);
+        });
+        return row;
+      }
+
+      function selectItem(item) {
+        inputEl.value = item.label || item.name;
+        state.location = item.name;
+        if (item.type === 'city') {
+          state.city = item.name;
+          state.subdivision = '';
+        } else if (item.type === 'subdivision') {
+          state.subdivision = item.name;
+          state.city = item.city || '';
+        } else {
+          state.city = '';
+          state.subdivision = '';
+        }
+        dropdownEl.classList.remove('show');
+        wrapperEl.classList.remove('qs-dropdown-open');
+        reportHeight();
+      }
+
+      // Input Event Listeners
+      inputEl.addEventListener('focus', () => {
+        closeAllPopovers(dropdownEl);
+        const q = inputEl.value.trim();
+        if (!q) {
+          renderDropdown({ recommended: RECOMMENDED_SEARCHES }, true);
+        } else {
+          fetchLocations(q).then(data => renderDropdown(data, false));
+        }
+      });
+
+      caretBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        closeAllPopovers(dropdownEl);
+        if (dropdownEl.classList.contains('show')) {
+          dropdownEl.classList.remove('show');
+          wrapperEl.classList.remove('qs-dropdown-open');
+          reportHeight();
+        } else {
+          inputEl.focus();
+          const q = inputEl.value.trim();
+          fetchLocations(q).then(data => renderDropdown(data, !q));
+        }
+      });
+
+      inputEl.addEventListener('input', () => {
+        clearTimeout(debounceTimer);
+        const q = inputEl.value.trim();
+        state.location = q;
+        state.city = '';
+        state.subdivision = '';
+
+        debounceTimer = setTimeout(async () => {
+          if (!q) {
+            renderDropdown({ recommended: RECOMMENDED_SEARCHES }, true);
+          } else {
+            const data = await fetchLocations(q);
+            renderDropdown(data, false);
+          }
+        }, 180);
+      });
+
+      // Keyboard navigation in suggestions list
+      inputEl.addEventListener('keydown', (e) => {
+        const items = dropdownEl.querySelectorAll('.qs-item');
+        if (!dropdownEl.classList.contains('show') || !items.length) {
+          if (e.key === 'Enter') {
+            e.preventDefault();
+            executeRedirect();
+          }
+          return;
+        }
+
+        if (e.key === 'ArrowDown') {
+          e.preventDefault();
+          highlightedIndex = (highlightedIndex + 1) % items.length;
+          updateHighlight(items);
+        } else if (e.key === 'ArrowUp') {
+          e.preventDefault();
+          highlightedIndex = (highlightedIndex - 1 + items.length) % items.length;
+          updateHighlight(items);
+        } else if (e.key === 'Enter') {
+          e.preventDefault();
+          if (highlightedIndex >= 0 && currentItems[highlightedIndex]) {
+            selectItem(currentItems[highlightedIndex]);
+          } else {
+            executeRedirect();
+          }
+        } else if (e.key === 'Escape') {
+          dropdownEl.classList.remove('show');
+          wrapperEl.classList.remove('qs-dropdown-open');
+          reportHeight();
+        }
+      });
+
+      function updateHighlight(items) {
+        items.forEach((item, idx) => {
+          item.classList.toggle('qs-highlighted', idx === highlightedIndex);
+          if (idx === highlightedIndex) {
+            item.scrollIntoView({ block: 'nearest' });
+          }
+        });
+      }
+
+      // Execute Search Redirect
+      searchSubmitBtn.addEventListener('click', () => {
+        executeRedirect();
+      });
+
+      function executeRedirect() {
+        const rawLoc = inputEl.value.trim();
+        const params = new URLSearchParams();
+
+        // 1. Location / City / Subdivision
+        if (state.city) {
+          params.set('city', state.city);
+          params.set('location', state.city.toLowerCase());
+        } else if (state.subdivision) {
+          params.set('subdivision', state.subdivision);
+          params.set('location', state.subdivision);
+        } else if (rawLoc) {
+          params.set('location', rawLoc);
+        }
+
+        // 2. Price
+        if (state.minPrice && state.maxPrice) {
+          params.set('price', `${state.minPrice}-${state.maxPrice}`);
+          params.set('minPrice', state.minPrice);
+          params.set('maxPrice', state.maxPrice);
+        } else if (state.minPrice) {
+          params.set('price', state.minPrice);
+          params.set('minPrice', state.minPrice);
+        } else if (state.maxPrice) {
+          params.set('price', state.maxPrice);
+          params.set('maxPrice', state.maxPrice);
+        }
+
+        // 3. Beds
+        if (state.beds) {
+          params.set('beds', state.beds);
+        }
+
+        // 4. Baths
+        if (state.baths) {
+          params.set('baths', state.baths);
+        }
+
+        // Target URL Assembly
+        let targetBase = REDIRECT_URL;
+        const separator = targetBase.includes('?') ? '&' : '?';
+        const finalUrl = `${targetBase}${separator}${params.toString()}`;
+
+        console.log('[Quick Search] Redirecting to:', finalUrl);
+
+        // Safe top-level frame navigation
+        try {
+          if (window.top && window.top !== window) {
+            window.top.location.href = finalUrl;
+            return;
+          }
+        } catch (e) {
+          console.warn('[Quick Search] Top frame navigation blocked, navigating current window:', e);
+        }
+        window.location.href = finalUrl;
+      }
+
+    })();
+  </script>
+</body>
+</html>

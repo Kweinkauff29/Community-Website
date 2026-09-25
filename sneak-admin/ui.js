@@ -816,8 +816,7 @@ export function renderAdminHtml(env = {}) {
                     <section class="card"><div class="section-title"><h3>Client / Lead Summary</h3></div><div class="grid-stats" style="margin:0"><div class="card-stat"><h4>Authenticated Clients</h4><div class="val">\${Number(data.clientLeadSummary?.clients||0)}</div></div><div class="card-stat"><h4>Leads</h4><div class="val">\${Number(data.clientLeadSummary?.leads||0)}</div></div></div></section>
                     \${site ? \`<section class="card"><div class="section-title"><h3>IDX Site</h3><span class="badge badge-\${escapeHtml(site.status)}">\${escapeHtml(site.status)}</span></div><p><strong>\${escapeHtml(site.site_name)}</strong> · <code>\${escapeHtml(site.site_key)}</code></p><p class="muted">IDX Search Scope: <strong>\${escapeHtml(site.scope_type)}</strong> \${escapeHtml(site.scope_value || '(full market inventory)')} · Participant Agent MLS: <code>\${escapeHtml(acc.agent_mls_id || '—')}</code></p><div class="actions" style="margin-top:.7rem"><button class="btn btn-danger btn-sm" onclick="requestSiteDisable('\${escapeHtml(site.id)}','\${escapeHtml(acc.id)}')">Disable Site</button><button class="btn btn-primary btn-sm" onclick="enableSite('\${escapeHtml(site.id)}','\${escapeHtml(acc.id)}')">Enable Site</button></div></section>
                     <section class="card"><div class="section-title"><h3>Domains</h3><span class="badge">\${site.domains.length}</span></div><div>\${site.domains.map(d=>'<p><strong>'+escapeHtml(d.domain)+'</strong> · '+(d.verified===1?'Verified':'Ownership not verified')+' · '+escapeHtml(d.status)+' <button class="btn btn-secondary btn-sm" data-domain-id="'+escapeHtml(d.id)+'" data-account-id="'+escapeHtml(acc.id)+'" onclick="authorizeDomain(this.dataset.domainId,this.dataset.accountId)">Authorize</button> <button class="btn btn-danger btn-sm" data-domain-id="'+escapeHtml(d.id)+'" data-account-id="'+escapeHtml(acc.id)+'" data-domain="'+escapeHtml(d.domain)+'" onclick="requestDomainDelete(this.dataset.domainId,this.dataset.accountId,this.dataset.domain)">Remove</button></p>').join('') || '<p class="muted">No domain configured.</p>'}</div><form class="filters" onsubmit="addAdminDomain(event,'\${escapeHtml(site.id)}','\${escapeHtml(acc.id)}')" style="margin-top:.8rem"><input id="detailNewDomain" class="form-control" placeholder="www.member-site.com" required><button class="btn btn-secondary">Add Pending Domain</button></form></section>
-                    <section class="card"><div class="section-title"><h3>Branding</h3></div><form onsubmit="saveBranding(event,'\${escapeHtml(site.id)}','\${escapeHtml(acc.id)}')"><div class="field-grid"><div class="form-group"><label>Display Name</label><input id="brandName" class="form-control" value="\${escapeHtml(site.branding?.display_name||'')}"></div><div class="form-group"><label>Brokerage</label><input id="brandBrokerage" class="form-control" value="\${escapeHtml(site.branding?.brokerage||'')}"></div><div class="form-group"><label>Phone</label><input id="brandPhone" class="form-control" value="\${escapeHtml(site.branding?.phone||'')}"></div><div class="form-group"><label>Email</label><input id="brandEmail" type="email" class="form-control" value="\${escapeHtml(site.branding?.email||'')}"></div><div class="form-group"><label>Logo URL</label><input id="brandLogo" class="form-control" value="\${escapeHtml(site.branding?.logo_url||'')}"></div><div class="form-group"><label>Primary Color</label><input id="brandPrimary" class="form-control" value="\${escapeHtml(site.branding?.primary_color||'#1a365d')}"></div></div><button class="btn btn-primary">Save Branding</button></form></section>
-                    <section class="card" style="grid-column: 1 / -1;"><div class="section-title"><div><h3 style="margin:0;">Responsive Embed Code Generator & Presets</h3><p class="muted" style="margin:4px 0 0 0;">Select a preset or customize preferred agents, pinned listings, and landing page parameters.</p></div><span class="badge badge-active">\${escapeHtml(site.embed?.embedBuild || '2026.09.01.7.4b2')}</span></div>
+                    <section class="card"><div class="section-title"><h3>Branding</h3></div><form onsubmit="saveBranding(event,'\${escapeHtml(site.id)}','\${escapeHtml(acc.id)}')"><div class="field-grid"><div class="form-group"><label>Display Name</label><input id="brandName" class="form-control" value="\${escapeHtml(site.branding?.display_name||'')}"></div><div class="form-group"><label>Brokerage</label><input id="brandBrokerage" class="form-control" value="\${escapeHtml(site.branding?.brokerage||'')}"></div><div class="form-group"><label>Phone</label><input id="brandPhone" class="form-control" value="\${escapeHtml(site.branding?.phone||'')}"></div><div class="form-group"><label>Email</label><input id="brandEmail" type="email" class="form-control" value="\${escapeHtml(site.branding?.email||'')}"></div><div class="form-group"><label>Logo URL</label><input id="brandLogo" class="form-control" value="\${escapeHtml(site.branding?.logo_url||'')}"></div><div class="form-group"><label>Primary Color</label><input id="brandPrimary" class="form-control" value="\${escapeHtml(site.branding?.primary_color||'#1a365d')}"></di                    <section class="card" style="grid-column: 1 / -1;"><div class="section-title"><div><h3 style="margin:0;">Responsive Embed Code Generator & Presets</h3><p class="muted" style="margin:4px 0 0 0;">Select a preset or customize preferred agents, pinned listings, and landing page parameters.</p></div><span class="badge badge-active">\${escapeHtml(site.embed?.embedBuild || '2026.09.01.7.4b2')}</span></div>
                     <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px; margin: 1.2rem 0; background: #0b1523; padding: 16px; border-radius: 8px; border: 1px solid var(--border);">
                         <div class="form-group" style="margin:0;">
                             <label style="font-weight:600; color:#fff;">Widget Preset</label>
@@ -828,19 +827,29 @@ export function renderAdminHtml(env = {}) {
                                 <option value="landing_page">🏡 Pre-Filtered Route Landing Page</option>
                                 <option value="listing_grid">🏷️ Listing Grid (4-Across Showcase)</option>
                                 <option value="open_houses">📅 Open Houses Showcase</option>
-                                <option value="search_bar">⚡ Quick Search Bar</option>
+                                <option value="search_bar">⚡ Quick Search Bar (With Heading & Redirect)</option>
                             </select>
                             <p id="adminEmbedTypeDesc" style="font-size:0.75rem; color:#94a3b8; margin:6px 0 0 0;">Hero/featured section showcasing participant agent listings with headshot avatar and search bar.</p>
                         </div>
-                        <div class="form-group" style="margin:0;">
+                        <div class="form-group" id="adminPinAgentGroup" style="margin:0;">
                             <label style="font-weight:600; color:#fff;">Preferred Agent MLS ID(s)</label>
                             <input type="text" id="adminPinAgent" class="form-control" value="\${escapeHtml(acc.agent_mls_id || '')}" placeholder="e.g. 633942, C3242021" oninput="updateAdminSnippet('\${escapeHtml(site.site_key)}')">
                             <p style="font-size:0.75rem; color:#94a3b8; margin:6px 0 0 0;">Listings from these agents will appear first before other search results.</p>
                         </div>
-                        <div class="form-group" style="margin:0;">
+                        <div class="form-group" id="adminPinListingsGroup" style="margin:0;">
                             <label style="font-weight:600; color:#fff;">Pin Specific Listing Key(s)</label>
                             <input type="text" id="adminPinListings" class="form-control" placeholder="e.g. 224012345, 224098765" oninput="updateAdminSnippet('\${escapeHtml(site.site_key)}')">
                             <p style="font-size:0.75rem; color:#94a3b8; margin:6px 0 0 0;">Specific listing keys pinned to the very top in exact priority sequence.</p>
+                        </div>
+                        <div class="form-group" id="adminHeadingGroup" style="margin:0; display:none;">
+                            <label style="font-weight:600; color:#fff;">Custom Search Heading</label>
+                            <input type="text" id="adminCustomHeading" class="form-control" value="Find Your Southwest Florida Dream Home" placeholder="e.g. Find Your Southwest Florida Dream Home" oninput="updateAdminSnippet('\${escapeHtml(site.site_key)}')">
+                            <p style="font-size:0.75rem; color:#94a3b8; margin:6px 0 0 0;">Custom headline displayed directly above the quick search bar.</p>
+                        </div>
+                        <div class="form-group" id="adminRedirectGroup" style="margin:0; display:none;">
+                            <label style="font-weight:600; color:#fff;">Target Search Redirect URL</label>
+                            <input type="text" id="adminRedirectUrl" class="form-control" value="http://ursulaweinkauff.com/quick-search" placeholder="e.g. http://ursulaweinkauff.com/quick-search" oninput="updateAdminSnippet('\${escapeHtml(site.site_key)}')">
+                            <p style="font-size:0.75rem; color:#94a3b8; margin:6px 0 0 0;">Destination search page where queries redirect with filtered parameters.</p>
                         </div>
                     </div>
                     <p class="muted" style="margin-bottom:0.5rem;">Copy and paste the snippet below into the member's website (WordPress, Beaver Builder, Wix, etc.):</p>
@@ -884,7 +893,7 @@ export function renderAdminHtml(env = {}) {
             listing_grid: {
                 id: 'sneak-idx-grid',
                 name: 'Listing Grid Showcase',
-                desc: 'Clean 4-across responsive property card grid showcase without sidebar.',
+                desc: 'Clean 4-across responsive property card grid showcase without map or search sidebar.',
                 attrs: 'data-widget="search" data-layout="grid"'
             },
             open_houses: {
@@ -894,10 +903,10 @@ export function renderAdminHtml(env = {}) {
                 attrs: 'data-widget="search" data-open-houses="true"'
             },
             search_bar: {
-                id: 'sneak-idx-bar',
+                id: 'sneak-idx-quick-search',
                 name: 'Quick Search Bar',
-                desc: 'Compact standalone search bar that directs queries to the full search experience.',
-                attrs: 'data-widget="search" data-mode="bar"'
+                desc: 'Autocomplete search bar with city/subdivision suggestions, price/beds/baths filters, custom headline, and URL redirection.',
+                attrs: 'data-widget="quick-search"'
             }
         };
 
@@ -913,18 +922,41 @@ export function renderAdminHtml(env = {}) {
             const descEl = document.getElementById('adminEmbedTypeDesc');
             const snippetEl = document.getElementById('embedSnippet');
 
+            const isSearchBar = selectedType === 'search_bar';
+            const headingGroup = document.getElementById('adminHeadingGroup');
+            const redirectGroup = document.getElementById('adminRedirectGroup');
+            const pinAgentGroup = document.getElementById('adminPinAgentGroup');
+            const pinListingsGroup = document.getElementById('adminPinListingsGroup');
+
+            if (headingGroup) headingGroup.style.display = isSearchBar ? 'block' : 'none';
+            if (redirectGroup) redirectGroup.style.display = isSearchBar ? 'block' : 'none';
+            if (pinAgentGroup) pinAgentGroup.style.display = isSearchBar ? 'none' : 'block';
+            if (pinListingsGroup) pinListingsGroup.style.display = isSearchBar ? 'none' : 'block';
+
             const preset = ADMIN_PRESET_CONFIG[selectedType] || ADMIN_PRESET_CONFIG.search;
             if (descEl) descEl.textContent = preset.desc;
 
-            const pinAgentVal = pinAgentInput ? pinAgentInput.value.trim() : '';
-            const pinListingsVal = pinListingsInput ? pinListingsInput.value.trim() : '';
-
             let extraAttrs = '';
-            if (pinAgentVal) {
-                extraAttrs += ' data-pin-agents="' + escapeHtml(pinAgentVal) + '"';
-            }
-            if (pinListingsVal) {
-                extraAttrs += ' data-pin-listings="' + escapeHtml(pinListingsVal) + '"';
+            if (isSearchBar) {
+                const headingInput = document.getElementById('adminCustomHeading');
+                const redirectInput = document.getElementById('adminRedirectUrl');
+                const headingVal = headingInput ? headingInput.value.trim() : '';
+                const redirectVal = redirectInput ? redirectInput.value.trim() : '';
+                if (headingVal) {
+                    extraAttrs += ' data-heading="' + escapeHtml(headingVal) + '"';
+                }
+                if (redirectVal) {
+                    extraAttrs += ' data-redirect-url="' + escapeHtml(redirectVal) + '"';
+                }
+            } else {
+                const pinAgentVal = pinAgentInput ? pinAgentInput.value.trim() : '';
+                const pinListingsVal = pinListingsInput ? pinListingsInput.value.trim() : '';
+                if (pinAgentVal) {
+                    extraAttrs += ' data-pin-agents="' + escapeHtml(pinAgentVal) + '"';
+                }
+                if (pinListingsVal) {
+                    extraAttrs += ' data-pin-listings="' + escapeHtml(pinListingsVal) + '"';
+                }
             }
 
             const containerAttrs = 'id="' + preset.id + '" data-site="' + escapeHtml(siteKey) + '" ' + preset.attrs + extraAttrs + ' style="width:100%;max-width:100%;"';

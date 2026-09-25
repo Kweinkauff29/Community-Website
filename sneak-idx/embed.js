@@ -46,6 +46,15 @@
     let scriptPinOwn = currentScript.getAttribute('data-pin-own');
     let scriptPinAgent = currentScript.getAttribute('data-pin-agent') || currentScript.getAttribute('data-pin-agents');
     let scriptPinListings = currentScript.getAttribute('data-pin-listings') || currentScript.getAttribute('data-pin-listing');
+    let scriptLocation = currentScript.getAttribute('data-location');
+    let scriptSubdivision = currentScript.getAttribute('data-subdivision');
+    let scriptBeds = currentScript.getAttribute('data-beds') || currentScript.getAttribute('data-bed');
+    let scriptBaths = currentScript.getAttribute('data-baths') || currentScript.getAttribute('data-bath');
+    let scriptPrice = currentScript.getAttribute('data-price');
+    let scriptRedirectUrl = currentScript.getAttribute('data-redirect-url') || currentScript.getAttribute('data-redirect');
+    let scriptLayout = currentScript.getAttribute('data-layout');
+    let scriptHideFilters = currentScript.getAttribute('data-hide-filters');
+    let scriptMode = currentScript.getAttribute('data-mode');
 
     // Resolve container element: prefer explicit targetSelector, then preceding sibling, then standard IDs
     let containerEl = targetSelector ? document.querySelector(targetSelector) : null;
@@ -54,11 +63,13 @@
         if (prev && (prev.hasAttribute('data-site') || prev.hasAttribute('data-site-key') || (prev.id && prev.id.startsWith('sneak-idx-')))) {
             containerEl = prev;
         } else {
-            containerEl = document.getElementById('sneak-idx-landing') ||
+            containerEl = document.getElementById('sneak-idx-quick-search') ||
+                          document.getElementById('sneak-idx-search-bar') ||
+                          document.getElementById('sneak-idx-bar') ||
+                          document.getElementById('sneak-idx-grid') ||
+                          document.getElementById('sneak-idx-landing') ||
                           document.getElementById('sneak-idx-featured') ||
                           document.getElementById('sneak-idx-search') ||
-                          document.getElementById('sneak-idx-search-bar') ||
-                          document.getElementById('sneak-idx-grid') ||
                           document.getElementById('sneak-idx-open-houses');
         }
     }
@@ -66,6 +77,7 @@
         if (!siteKey) siteKey = containerEl.getAttribute('data-site') || containerEl.getAttribute('data-site-key');
         if (!widgetType) widgetType = containerEl.getAttribute('data-widget');
         if (!customHeight) customHeight = containerEl.getAttribute('data-height');
+        if (!scriptMode) scriptMode = containerEl.getAttribute('data-mode');
         if (!targetSelector && containerEl.id) targetSelector = '#' + containerEl.id;
         if (!scriptCity) scriptCity = containerEl.getAttribute('data-city');
         if (!scriptMinPrice) scriptMinPrice = containerEl.getAttribute('data-min-price');
@@ -79,6 +91,26 @@
         if (!scriptPinOwn) scriptPinOwn = containerEl.getAttribute('data-pin-own');
         if (!scriptPinAgent) scriptPinAgent = containerEl.getAttribute('data-pin-agent') || containerEl.getAttribute('data-pin-agents');
         if (!scriptPinListings) scriptPinListings = containerEl.getAttribute('data-pin-listings') || containerEl.getAttribute('data-pin-listing');
+        if (!scriptLocation) scriptLocation = containerEl.getAttribute('data-location');
+        if (!scriptSubdivision) scriptSubdivision = containerEl.getAttribute('data-subdivision');
+        if (!scriptBeds) scriptBeds = containerEl.getAttribute('data-beds') || containerEl.getAttribute('data-bed');
+        if (!scriptBaths) scriptBaths = containerEl.getAttribute('data-baths') || containerEl.getAttribute('data-bath');
+        if (!scriptPrice) scriptPrice = containerEl.getAttribute('data-price');
+        if (!scriptRedirectUrl) scriptRedirectUrl = containerEl.getAttribute('data-redirect-url') || containerEl.getAttribute('data-redirect');
+        if (!scriptLayout) scriptLayout = containerEl.getAttribute('data-layout');
+        if (!scriptHideFilters) scriptHideFilters = containerEl.getAttribute('data-hide-filters');
+    }
+
+    const isSearchBarWidget = scriptMode === 'bar' ||
+        widgetType === 'quick-search' || widgetType === 'quick_search' ||
+        widgetType === 'search-bar' || widgetType === 'search_bar' || widgetType === 'bar' ||
+        (containerEl && (containerEl.id === 'sneak-idx-search-bar' || containerEl.id === 'sneak-idx-quick-search' || containerEl.id === 'sneak-idx-bar'));
+
+    if (isSearchBarWidget) {
+        widgetType = 'quick-search';
+    } else if (widgetType === 'listing_grid' || widgetType === 'grid') {
+        scriptLayout = scriptLayout || 'grid';
+        widgetType = 'search';
     }
 
     widgetType = widgetType || 'search';
@@ -184,6 +216,9 @@
         let widgetPath = widgetRoot;
         if (widgetType === 'open_houses' || widgetType === 'open-houses') {
             widgetPath = `${widgetRoot}?type=open-houses&`;
+        } else if (widgetType === 'quick-search' || widgetType === 'quick_search' || widgetType === 'search-bar' || widgetType === 'search_bar' || widgetType === 'bar') {
+            widgetPath = isSubdirectory ? '/sneak-idx/quick-search/' : '/quick-search/';
+            if (!customHeight) customHeight = '195px';
         }
 
         // Check for parent page auth exchange code (Phase 7.3C1A)
@@ -259,9 +294,22 @@
             // Parent URL query parameters
             try {
                 const currentUrl = new URL(window.location.href);
+                if (currentUrl.searchParams.has('location')) filters.location = currentUrl.searchParams.get('location');
+                if (currentUrl.searchParams.has('subdivision')) filters.subdivision = currentUrl.searchParams.get('subdivision');
                 if (currentUrl.searchParams.has('city')) filters.city = currentUrl.searchParams.get('city');
-                if (currentUrl.searchParams.has('minPrice')) filters.minPrice = currentUrl.searchParams.get('minPrice');
-                if (currentUrl.searchParams.has('maxPrice')) filters.maxPrice = currentUrl.searchParams.get('maxPrice');
+                if (currentUrl.searchParams.has('price')) filters.price = currentUrl.searchParams.get('price');
+                if (currentUrl.searchParams.has('minPrice') || currentUrl.searchParams.has('min_price')) {
+                    filters.minPrice = currentUrl.searchParams.get('minPrice') || currentUrl.searchParams.get('min_price');
+                }
+                if (currentUrl.searchParams.has('maxPrice') || currentUrl.searchParams.has('max_price')) {
+                    filters.maxPrice = currentUrl.searchParams.get('maxPrice') || currentUrl.searchParams.get('max_price');
+                }
+                if (currentUrl.searchParams.has('beds') || currentUrl.searchParams.has('bed')) {
+                    filters.beds = currentUrl.searchParams.get('beds') || currentUrl.searchParams.get('bed');
+                }
+                if (currentUrl.searchParams.has('baths') || currentUrl.searchParams.has('bath')) {
+                    filters.baths = currentUrl.searchParams.get('baths') || currentUrl.searchParams.get('bath');
+                }
                 if (currentUrl.searchParams.has('propertyType')) filters.propertyType = currentUrl.searchParams.get('propertyType');
                 if (currentUrl.searchParams.has('agent')) filters.agent = currentUrl.searchParams.get('agent');
                 if (currentUrl.searchParams.has('agentMlsId')) filters.agent = currentUrl.searchParams.get('agentMlsId');
@@ -272,12 +320,19 @@
                 if (currentUrl.searchParams.has('pinAgent')) filters.pinAgent = currentUrl.searchParams.get('pinAgent');
                 if (currentUrl.searchParams.has('pinAgents')) filters.pinAgent = currentUrl.searchParams.get('pinAgents');
                 if (currentUrl.searchParams.has('pinListings')) filters.pinListings = currentUrl.searchParams.get('pinListings');
+                if (currentUrl.searchParams.has('layout')) filters.layout = currentUrl.searchParams.get('layout');
+                if (currentUrl.searchParams.has('hideFilters') || currentUrl.searchParams.has('hide_filters')) filters.hideFilters = '1';
             } catch {}
 
             // Script/container data attributes override
+            if (scriptLocation) filters.location = scriptLocation;
+            if (scriptSubdivision) filters.subdivision = scriptSubdivision;
             if (scriptCity) filters.city = scriptCity;
+            if (scriptPrice) filters.price = scriptPrice;
             if (scriptMinPrice) filters.minPrice = scriptMinPrice;
             if (scriptMaxPrice) filters.maxPrice = scriptMaxPrice;
+            if (scriptBeds) filters.beds = scriptBeds;
+            if (scriptBaths) filters.baths = scriptBaths;
             if (scriptPropType) filters.propertyType = scriptPropType;
             if (scriptAgent) filters.agent = scriptAgent;
             if (scriptOpenHouses === 'true' || scriptOpenHouses === '1') filters.openHouses = '1';
@@ -286,6 +341,8 @@
             if (scriptPinOwn === 'true' || scriptPinOwn === '1') filters.pinOwn = '1';
             if (scriptPinAgent) filters.pinAgent = scriptPinAgent;
             if (scriptPinListings) filters.pinListings = scriptPinListings;
+            if (scriptLayout) filters.layout = scriptLayout;
+            if (scriptHideFilters === 'true' || scriptHideFilters === '1') filters.hideFilters = '1';
 
             return filters;
         }
@@ -308,14 +365,32 @@
         if (deepListSlug) {
             iframeUrl += `&ccor_list=${encodeURIComponent(deepListSlug)}`;
         }
+        if (routeFilters.location) {
+            iframeUrl += `&location=${encodeURIComponent(routeFilters.location)}`;
+        }
+        if (routeFilters.subdivision) {
+            iframeUrl += `&subdivision=${encodeURIComponent(routeFilters.subdivision)}`;
+        }
         if (routeFilters.city) {
             iframeUrl += `&city=${encodeURIComponent(routeFilters.city)}`;
+        }
+        if (routeFilters.price) {
+            iframeUrl += `&price=${encodeURIComponent(routeFilters.price)}`;
         }
         if (routeFilters.minPrice) {
             iframeUrl += `&minPrice=${encodeURIComponent(routeFilters.minPrice)}`;
         }
         if (routeFilters.maxPrice) {
             iframeUrl += `&maxPrice=${encodeURIComponent(routeFilters.maxPrice)}`;
+        }
+        if (routeFilters.beds) {
+            iframeUrl += `&beds=${encodeURIComponent(routeFilters.beds)}`;
+        }
+        if (routeFilters.baths) {
+            iframeUrl += `&baths=${encodeURIComponent(routeFilters.baths)}`;
+        }
+        if (scriptRedirectUrl) {
+            iframeUrl += `&redirect_url=${encodeURIComponent(scriptRedirectUrl)}`;
         }
         if (routeFilters.propertyType) {
             iframeUrl += `&propertyType=${encodeURIComponent(routeFilters.propertyType)}`;
@@ -344,6 +419,12 @@
         if (routeFilters.pinListings) {
             iframeUrl += `&pinListings=${encodeURIComponent(routeFilters.pinListings)}`;
         }
+        if (routeFilters.layout) {
+            iframeUrl += `&layout=${encodeURIComponent(routeFilters.layout)}`;
+        }
+        if (routeFilters.hideFilters) {
+            iframeUrl += `&hideFilters=1`;
+        }
         if (customParams) {
             iframeUrl += `&${customParams}`;
         }
@@ -370,8 +451,11 @@
             return Math.max(900, Math.min(Math.round(viewportHeight * 0.92), 1150));
         }
 
+        const isQuickSearch = widgetType === 'quick-search';
         let computedHeight = '900px';
-        if (isFixedHeight && customHeight) {
+        if (isQuickSearch) {
+            computedHeight = customHeight || '195px';
+        } else if (isFixedHeight && customHeight) {
             computedHeight = customHeight;
         } else {
             const initialNumeric = getRecommendedSearchHeight(window.innerWidth || 1440, window.innerHeight || 900);
@@ -384,7 +468,7 @@
         iframe.title = `CCOR IDX Real Estate Search (${siteKey})`;
         iframe.style.width = '100%';
         iframe.style.height = computedHeight;
-        iframe.style.minHeight = '550px';
+        iframe.style.minHeight = isQuickSearch ? '160px' : '550px';
         iframe.style.border = 'none';
         iframe.style.display = 'block';
         iframe.style.overflow = 'hidden';
@@ -395,7 +479,7 @@
         mountContainer(container);
 
         // Parent window resize listener for non-fixed responsive embed mode
-        if (!isFixedHeight) {
+        if (!isFixedHeight && !isQuickSearch) {
             let resizeDebounceTimer = null;
             window.addEventListener('resize', function () {
                 if (resizeDebounceTimer) clearTimeout(resizeDebounceTimer);
@@ -417,7 +501,7 @@
             if (e.source && e.source !== iframe.contentWindow) return;
 
             const newHeight = Number(e.data.height);
-            if (!Number.isFinite(newHeight) || newHeight < 400 || newHeight > 3500) return;
+            if (!Number.isFinite(newHeight) || newHeight < 140 || newHeight > 3500) return;
 
             // Debounce small jitter <= 3px
             if (Math.abs(newHeight - lastResizeHeight) <= 3) return;

@@ -64,8 +64,8 @@ export default {
         // 3. Static Assets & Dynamic CSP Worker-First Handling
         if (!url.pathname.startsWith('/idx/v1/')) {
             if (env.ASSETS) {
-                // Intercept search UI HTML to dynamically attach strict frame-ancestors CSP
-                const isSearchHtml = url.pathname === '/' || url.pathname === '/search' || url.pathname === '/search/' || url.pathname.endsWith('/search/index.html') || url.pathname.endsWith('.html');
+                // Intercept search and quick-search UI HTML to dynamically attach strict frame-ancestors CSP
+                const isSearchHtml = url.pathname === '/' || url.pathname === '/search' || url.pathname === '/search/' || url.pathname.startsWith('/quick-search') || url.pathname.endsWith('/search/index.html') || url.pathname.endsWith('.html');
                 const siteKey = url.searchParams.get('site');
 
                 if (isSearchHtml && siteKey) {
@@ -110,6 +110,11 @@ export default {
             // --- ROUTE: GET /idx/v1/config ---
             if (url.pathname === '/idx/v1/config' && req.method === 'GET') {
                 return await handleGetConfig(url, site, branding, env, allowedOrigin);
+            }
+
+            // --- ROUTE: GET /idx/v1/locations (Autocomplete / Quick Search) ---
+            if ((url.pathname === '/idx/v1/locations' || url.pathname === '/idx/v1/autocomplete') && req.method === 'GET') {
+                return await handleLocations(url, site, env, allowedOrigin);
             }
 
             // --- ROUTE: GET /idx/v1/search ---
@@ -839,6 +844,89 @@ async function handleGetConfig(url, site, branding, env, allowedOrigin) {
     };
 
     return jsonResponse(configPayload, 200, allowedOrigin, 'public, max-age=300, s-maxage=600');
+}
+
+/**
+ * GET /idx/v1/locations?site=abc123&q=estero
+ * Auto-suggest endpoint for cities and subdivisions in Southwest Florida (Quick Search)
+ */
+async function handleLocations(url, site, env, allowedOrigin) {
+    const q = (url.searchParams.get('q') || '').trim();
+
+    // Curated recommended searches when query is empty (Screenshot 1)
+    const RECOMMENDED_SEARCHES = [
+        { label: "Pelican Landing, Bonita Springs, FL", name: "Pelican Landing", city: "Bonita Springs", state: "FL", type: "subdivision" },
+        { label: "Bonita Bay, Bonita Springs, FL", name: "Bonita Bay", city: "Bonita Springs", state: "FL", type: "subdivision" },
+        { label: "Shadow Wood, Estero, FL", name: "Shadow Wood", city: "Estero", state: "FL", type: "subdivision" },
+        { label: "West Bay Club, Estero, FL", name: "West Bay Club", city: "Estero", state: "FL", type: "subdivision" },
+        { label: "The Colony, Bonita Springs, FL", name: "The Colony", city: "Bonita Springs", state: "FL", type: "subdivision" }
+    ];
+
+    if (!q) {
+        return jsonResponse({
+            query: '',
+            recommended: RECOMMENDED_SEARCHES,
+            cities: [],
+            subdivisions: []
+        }, 200, allowedOrigin, 'public, max-age=600, s-maxage=1800');
+    }
+
+    if (!env.DB) {
+        return jsonResponse({ query: q, recommended: RECOMMENDED_SEARCHES, cities: [], subdivisions: [] }, 200, allowedOrigin);
+    }
+
+    try {
+        const queryTerm = q.toLowerCase();
+        const likePrefix = `${queryTerm}%`;
+        const likeContains = `%${queryTerm}%`;
+
+        // 1. Fetch distinct matching cities
+        const cityRows = await env.DB.prepare(`
+            SELECT DISTINCT City 
+            FROM sneak_listings 
+            WHERE City IS NOT NULL AND City != '' 
+              AND (LOWER(City) LIKE ? OR LOWER(City) LIKE ?)
+            ORDER BY 
+              CASE WHEN LOWER(City) LIKE ? THEN 0 ELSE 1 END,
+              City ASC 
+            LIMIT 10
+        `).bind(likePrefix, likeContains, likePrefix).all();
+
+        const cities = (cityRows.results || []).map(r => ({
+            name: r.City,
+            label: `${r.City}, FL`,
+            type: 'city'
+        }));
+
+        // 2. Fetch distinct matching subdivisions
+        const subRows = await env.DB.prepare(`
+            SELECT DISTINCT SubdivisionName, City 
+            FROM sneak_listings 
+            WHERE SubdivisionName IS NOT NULL AND SubdivisionName != '' 
+              AND (LOWER(SubdivisionName) LIKE ? OR LOWER(SubdivisionName) LIKE ?)
+            ORDER BY 
+              CASE WHEN LOWER(SubdivisionName) LIKE ? THEN 0 ELSE 1 END,
+              SubdivisionName ASC 
+            LIMIT 25
+        `).bind(likePrefix, likeContains, likePrefix).all();
+
+        const subdivisions = (subRows.results || []).map(r => ({
+            name: r.SubdivisionName,
+            city: r.City || '',
+            label: r.City ? `${r.SubdivisionName}, ${r.City}, FL` : `${r.SubdivisionName}, FL`,
+            type: 'subdivision'
+        }));
+
+        return jsonResponse({
+            query: q,
+            recommended: RECOMMENDED_SEARCHES,
+            cities,
+            subdivisions
+        }, 200, allowedOrigin, 'public, max-age=300, s-maxage=600');
+    } catch (err) {
+        console.error('Error fetching locations:', err);
+        return jsonResponse({ query: q, recommended: RECOMMENDED_SEARCHES, cities: [], subdivisions: [], error: err.message }, 500, allowedOrigin);
+    }
 }
 
 /**
