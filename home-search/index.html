@@ -1905,21 +1905,21 @@
     <div id="bar-width">
       <a href="/" class="brand-wrapper">
         <img class="ber-logo"
-          src="https://www.bonitaesterorealtors.com/wp-content/uploads/2021/08/Untitled-design-24.png" alt="BSER">
-        <div class="bser-title">BSER Lifestyles</div>
+          src="https://coconutcoastrealtors.org/wp-content/uploads/2026/04/CCOR-Horz-Logo-no-tag-clr-scaled-1-300x111.gif" alt="CCOR">
+        <div class="bser-title">Coconut Coast Lifestyles</div>
       </a>
       <ul class="navbar-expand-md">
-        <li><a href="https://bonitaspringsesterolifestyles.com/communities/">Communities</a></li>
-        <li><a href="http://bonitaspringsesterorealtorsfl.growthzoneapp.com/realtordirectory/Find">Find a REALTOR</a>
-        </li>
+        <li><a href="/open-house/">Open Houses</a></li>
         <li><a href="/home-search/">Homes For Sale</a></li>
+        <li><a href="https://coconutcoastlifestyles.com/communities/">Communities</a></li>
+        <li><a href="https://coconutcoastrealtors.org/realtor-directory/">Find a REALTOR®</a></li>
         <li><a href="/home-search/flyer-generator/">Flyer Generator</a></li>
-        <li><a href="https://bonitaspringsesterolifestyles.com/city-info/">City Info</a></li>
+        <li><a href="https://coconutcoastlifestyles.com/city-info/">City Info</a></li>
       </ul>
     </div>
   </div>
 
-  <div class="desc-banner">Listings exclusively from <strong>Bonita Springs-Estero REALTORS&reg;</strong> member agents
+  <div class="desc-banner">Listings exclusively from <strong>Coconut Coast Organization of REALTORS&reg;</strong> member agents
   </div>
 
   <!-- Compact Filter Bar -->
@@ -2505,6 +2505,8 @@
               applyClientFilters(); // applyClientFilters will handle both grid and carousel now
               showLoading(false);
               if (loader) loader.style.display = 'none';
+              const pMls = new URLSearchParams(window.location.search).get('mls');
+              if (pMls && !currentDetail) fetchListingByMls(pMls);
               return; // Success
             }
           }
@@ -3068,6 +3070,14 @@
     async function fetchListingByMls(mlsId) {
       showLoading(true);
       try {
+        const localItem = allListings.find(l => String(l.ListingId) === String(mlsId));
+        if (localItem) {
+          await MediaLoader.fetchChunk([localItem.ListingKey]);
+          openDetail(localItem);
+          showLoading(false);
+          return;
+        }
+
         const url = `${API_BASE}/api/v2/OData/bsaor/Property?$filter=ListingId eq '${mlsId}'&$select=${SEL}`;
         const res = await fetch(url);
         if (!res.ok) throw new Error('Search failed');
