@@ -32,15 +32,3 @@
 /home-search/index.html
   Cache-Control: no-cache, no-store, must-revalidate
   Pragma: no-cache
-
-/home-search/flyer-generator
-  Cache-Control: no-cache, no-store, must-revalidate
-  Pragma: no-cache
-
-/home-search/flyer-generator/
-  Cache-Control: no-cache, no-store, must-revalidate
-  Pragma: no-cache
-
-/home-search/flyer-generator/index.html
-  Cache-Control: no-cache, no-store, must-revalidate
-  Pragma: no-cache
