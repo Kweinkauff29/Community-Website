@@ -646,39 +646,23 @@
         const baseH = containerEl.offsetHeight || 185;
         let targetH = baseH;
 
-        if (isDropdownOpen) {
-          let needed = baseH + 310;
+        if (isOverlay) {
+          // Measure the actual overlay element to size exactly to content
+          const overlay = isDropdownOpen ? dropdownEl
+            : isPriceOpen ? pricePopover
+            : isBedsOpen ? bedsPopover : bathsPopover;
           try {
-            const drRect = dropdownEl.getBoundingClientRect();
+            const overlayRect = overlay.getBoundingClientRect();
             const contRect = containerEl.getBoundingClientRect();
-            if (drRect.height > 0) {
-              needed = Math.ceil(drRect.bottom - contRect.top) + 24;
+            if (overlayRect.height > 0) {
+              targetH = Math.ceil(overlayRect.bottom - contRect.top) + 16;
+            } else {
+              // Fallback: small bump if measurement unavailable
+              targetH = baseH + 60;
             }
-          } catch (e) {}
-          targetH = Math.max(baseH + 290, 480, needed);
-        } else if (isPriceOpen) {
-          let needed = baseH + 210;
-          try {
-            const popRect = pricePopover.getBoundingClientRect();
-            const contRect = containerEl.getBoundingClientRect();
-            if (popRect.height > 0) {
-              needed = Math.ceil(popRect.bottom - contRect.top) + 24;
-            }
-          } catch (e) {}
-          targetH = Math.max(baseH + 200, 390, needed);
-        } else if (isBedsOpen || isBathsOpen) {
-          const pop = isBedsOpen ? bedsPopover : bathsPopover;
-          let needed = baseH + 130;
-          try {
-            const popRect = pop.getBoundingClientRect();
-            const contRect = containerEl.getBoundingClientRect();
-            if (popRect.height > 0) {
-              needed = Math.ceil(popRect.bottom - contRect.top) + 24;
-            }
-          } catch (e) {}
-          targetH = Math.max(baseH + 120, 310, needed);
-        } else {
-          targetH = baseH;
+          } catch (e) {
+            targetH = baseH + 60;
+          }
         }
 
         try {
