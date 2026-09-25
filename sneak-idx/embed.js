@@ -214,7 +214,10 @@
         // Determine target widget path
         let widgetRoot = isSubdirectory ? '/sneak-idx/search/' : '/search/';
         let widgetPath = widgetRoot;
-        if (widgetType === 'open_houses' || widgetType === 'open-houses') {
+        if (widgetType === 'lead-capture') {
+            widgetPath = isSubdirectory ? '/sneak-idx/capture/' : '/capture/';
+            isFixedHeight = true;
+        } else if (widgetType === 'open_houses' || widgetType === 'open-houses') {
             widgetPath = `${widgetRoot}?type=open-houses&`;
         } else if (widgetType === 'quick-search' || widgetType === 'quick_search' || widgetType === 'search-bar' || widgetType === 'search_bar' || widgetType === 'bar') {
             widgetPath = isSubdirectory ? '/sneak-idx/quick-search/' : '/quick-search/';
@@ -351,7 +354,7 @@
 
         // Construct iframe URL with signed session token and deterministic build version
         const separator = widgetPath.includes('?') ? '&' : '?';
-        const buildVersion = '2026.09.25.2';
+        const buildVersion = '2026.09.25.3';
         let iframeUrl = `${baseUrl}${widgetPath}${separator}site=${encodeURIComponent(siteKey)}&session=${encodeURIComponent(data.session)}&embed=true&v=${encodeURIComponent(buildVersion)}`;
         if (data.hostPageUrl) {
             iframeUrl += `&host_page=${encodeURIComponent(data.hostPageUrl)}`;
@@ -478,7 +481,27 @@
         iframe.setAttribute('loading', 'lazy');
         iframe.setAttribute('allow', 'geolocation');
 
-        container.appendChild(iframe);
+        if (widgetType === 'lead-capture') {
+            const button=document.createElement('button');
+            button.type='button';button.textContent=scriptHeading || 'Contact / Sign in';
+            button.style.cssText='padding:12px 22px;background:#334155;color:white;border:0;border-radius:5px;font:inherit;cursor:pointer';
+            const dialog=document.createElement('dialog');
+            dialog.style.cssText='width:min(560px,95vw);height:min(760px,90vh);padding:0;border:1px solid #cbd5e1;border-radius:10px;box-shadow:0 20px 80px #0006;overflow:hidden';
+            const close=document.createElement('button');close.type='button';close.textContent='Close';close.setAttribute('aria-label','Close contact form');close.style.cssText='display:block;margin:8px 12px 0 auto;padding:6px 12px';
+            close.onclick=()=>dialog.close();button.onclick=async()=>{
+                button.disabled=true;
+                try {
+                    const refreshed=await fetch(bootstrapUrl,{headers:{Accept:'application/json'}});
+                    const fresh=await refreshed.json();
+                    if(!refreshed.ok||!fresh.session)throw Error('Unable to load contact form');
+                    const freshUrl=new URL(iframeUrl);freshUrl.searchParams.set('session',fresh.session);iframe.src=freshUrl.href;
+                    dialog.showModal();
+                } catch { button.textContent='Unable to load — try again'; }
+                finally {button.disabled=false;}
+            };
+            iframe.style.height='calc(100% - 45px)';iframe.style.minHeight='0';
+            dialog.append(close,iframe);container.append(button,dialog);
+        } else container.appendChild(iframe);
         mountContainer(container);
 
         // Parent window resize listener for non-fixed responsive embed mode

@@ -1,3 +1,4 @@
+import { contactsDashboardScript } from '../sneak-shared/contacts-ui.js';
 /**
  * sneak-member/ui.js
  * 
@@ -374,6 +375,7 @@ export function renderMemberUI() {
                 <div class="nav-item" onclick="switchTab('domains')">Website & Domains</div>
                 <div class="nav-item" onclick="switchTab('branding')">Branding</div>
                 <div class="nav-item" onclick="switchTab('widgets')">Widgets</div>
+                <div class="nav-item" onclick="switchTab('contacts')">Contacts & Email</div>
                 <div class="nav-item" onclick="switchTab('embed')">Embed Code</div>
                 <div class="nav-item" onclick="switchTab('leads')">Leads</div>
                 <div class="nav-item" onclick="switchTab('billing')">Subscription & Billing</div>
@@ -608,6 +610,7 @@ export function renderMemberUI() {
                     </div>
                 </div>
 
+<div id="tab-contacts" class="tab-pane" style="display:none"><div class="panel" id="idxContacts"></div></div>
                 <!-- Embed Tab -->
                 <div id="tab-embed" class="tab-pane" style="display: none;">
                     <!-- Interactive Embed Generator -->
@@ -625,6 +628,7 @@ export function renderMemberUI() {
                                 <select id="builderWidgetType" class="form-control" onchange="updateCustomEmbedCode()">
                                     <option value="search">Full Search & Map</option>
                                     <option value="grid">Listing Grid (4-Across Showcase)</option>
+                                    <option value="lead-capture">Contact & Sign-In Popup</option>
                                     <option value="quick-search">Quick Search Bar (Heading & Redirect)</option>
                                     <option value="featured">Featured Agent Listings (Photo Badge)</option>
                                     <option value="openhouses">Upcoming Open Houses</option>
@@ -871,6 +875,7 @@ export function renderMemberUI() {
         </div>
     </div>
 
+    <script>${contactsDashboardScript()}</script>
     <script>
         let currentAccount = null;
         let clientCurrentPage = 1;
@@ -1040,7 +1045,7 @@ export function renderMemberUI() {
                 memberServingHost = data.embed.servingHost;
             }
 
-            const scriptUrl = memberServingHost + '/embed.js?v=2026.09.25.2';
+            const scriptUrl = memberServingHost + '/embed.js?v=2026.09.25.3';
             if (data.embed?.searchRedirectUrl) document.getElementById('builderRedirect').value = data.embed.searchRedirectUrl;
             if (data.embed?.snippets) {
                 document.getElementById('embedSearchCode').innerText = data.embed.snippets.search?.htmlSnippet || '';
@@ -1119,13 +1124,17 @@ export function renderMemberUI() {
             const pinAgents = document.getElementById('builderPinAgents')?.value?.trim();
             const pinListings = document.getElementById('builderPinListings')?.value?.trim();
 
-            const scriptUrl = memberServingHost + '/embed.js?v=2026.09.25.2';
-            const containerId = wType === 'grid' ? 'sneak-idx-grid' : wType === 'quick-search' ? 'sneak-idx-search-bar' : 'sneak-idx-' + (wType === 'featured' ? 'featured' : (wType === 'openhouses' ? 'open-houses' : (wType === 'landing' ? 'landing' : 'search')));
+            const scriptUrl = memberServingHost + '/embed.js?v=2026.09.25.3';
+            const containerId = wType === 'lead-capture' ? 'sneak-idx-contact' : wType === 'grid' ? 'sneak-idx-grid' : wType === 'quick-search' ? 'sneak-idx-search-bar' : 'sneak-idx-' + (wType === 'featured' ? 'featured' : (wType === 'openhouses' ? 'open-houses' : (wType === 'landing' ? 'landing' : 'search')));
 
             let dataAttrs = 'data-site="' + escapeHtml(memberSiteKey) + '" data-widget="search" data-target="#' + containerId + '"';
             let divAttrs = 'id="' + containerId + '" data-site="' + escapeHtml(memberSiteKey) + '" data-widget="search"';
 
             document.getElementById('builderRedirectGroup').style.display = wType === 'quick-search' ? 'block' : 'none';
+            if (wType === 'lead-capture') {
+                dataAttrs = dataAttrs.replace('data-widget="search"', 'data-widget="lead-capture"');
+                divAttrs = divAttrs.replace('data-widget="search"', 'data-widget="lead-capture"');
+            }
             if (wType === 'grid') {
                 dataAttrs += ' data-layout="grid"';
                 divAttrs += ' data-layout="grid"';
@@ -1198,7 +1207,9 @@ export function renderMemberUI() {
             if (targetPane) targetPane.style.display = 'block';
             if (event && event.currentTarget) event.currentTarget.classList.add('active');
 
-            if (tabId === 'clients') {
+            if (tabId === 'contacts') {
+                window.loadIdxContacts();
+            } else if (tabId === 'clients') {
                 loadClients(1);
             } else if (tabId === 'leads') {
                 loadLeads();

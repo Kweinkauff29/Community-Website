@@ -96,7 +96,7 @@ export async function verifyIdxSessionToken(token, secret) {
  * Validates return URL against verified domains for the site in sneak_domains.
  * Prevents open redirects, javascript: schemes, and unauthorized hostnames.
  */
-export async function validateReturnUrl(db, siteId, returnUrlStr, isDev = false) {
+export async function validateReturnUrl(db, siteId, returnUrlStr, isDev = false, servingUrl = null, siteKey = null) {
     if (!returnUrlStr || typeof returnUrlStr !== 'string') return null;
 
     let parsed;
@@ -122,6 +122,13 @@ export async function validateReturnUrl(db, siteId, returnUrlStr, isDev = false)
         return null;
     }
 
+    // The platform's secure hosted portal is a supported return destination.
+    // Only its fixed route and the requesting tenant's key may be used.
+    if (servingUrl && siteKey) {
+        try {
+            if (parsed.origin === new URL(servingUrl).origin && parsed.pathname === '/portal' && parsed.searchParams.get('site') === siteKey && !parsed.username && !parsed.password) return parsed.href;
+        } catch {}
+    }
     // Verify hostname against sneak_domains (status = 'active' AND verified = 1)
     const domainsResult = await db.prepare(
         "SELECT domain FROM sneak_domains WHERE site_id = ? AND status = 'active' AND verified = 1"
@@ -185,7 +192,7 @@ export async function requestConsumerMagicLink(db, { siteKey, email, returnUrl, 
     // 2. Validate return URL
     const envName = (env?.SNEAK_ENV || 'staging').toLowerCase();
     const isDev = envName === 'development';
-    const validatedReturn = await validateReturnUrl(db, site.site_id, returnUrl, isDev);
+    const validatedReturn = await validateReturnUrl(db, site.site_id, returnUrl, isDev, env.SNEAK_SERVING_URL, site.site_key);
     if (!validatedReturn) {
         return GENERIC_RESPONSE;
     }
@@ -270,13 +277,14 @@ export async function requestConsumerMagicLink(db, { siteKey, email, returnUrl, 
     const consumerWorkerUrl = env?.CONSUMER_WORKER_URL || defaultConsumerUrl;
     const verifyUrl = `${consumerWorkerUrl}/api/consumer/auth/verify?token=${encodeURIComponent(rawToken)}`;
 
-    await sendConsumerMagicLinkEmail(env, {
+    const delivery = await sendConsumerMagicLinkEmail(env, {
         email: cleanEmail,
         verifyUrl,
         expiresMinutes: 15,
         agentName: site.display_name || site.account_name,
         brokerage: site.brokerage
     });
+    if (!delivery?.success) return {success:false,message:'Sign-in email is temporarily unavailable. Please try again shortly.'};
 
     return GENERIC_RESPONSE;
 }

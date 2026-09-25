@@ -1,3 +1,4 @@
+import { contactsDashboardScript } from '../sneak-shared/contacts-ui.js';
 /**
  * sneak-admin/ui.js
  * 
@@ -319,6 +320,7 @@ export function renderAdminHtml(env = {}) {
         <!-- Views rendered by JS -->
     </main>
 
+    <script>${contactsDashboardScript()}</script>
     <script>
         const API_BASE = '/api/admin';
         let currentAuth = false;
@@ -775,7 +777,7 @@ export function renderAdminHtml(env = {}) {
             window.accountDetailSiteEmbed = site?.embed || {};
             window.accountDetailSiteKey = site?.site_key || '';
             window.accountDetailServingHost = site?.embed?.servingHost || 'https://sneak-idx-worker.bonitaspringsrealtors.workers.dev';
-            window.accountDetailEmbedBuild = site?.embed?.embedBuild || '2026.09.25.2';
+            window.accountDetailEmbedBuild = site?.embed?.embedBuild || '2026.09.25.3';
             const ent = data.entitlement || {};
             const rec = data.reconciliation || {};
             const readiness = data.readiness || { setupProgress:{}, launchBlockers:[], checklist:[] };
@@ -816,7 +818,9 @@ export function renderAdminHtml(env = {}) {
                     <section class="card"><div class="section-title"><h3>Client / Lead Summary</h3></div><div class="grid-stats" style="margin:0"><div class="card-stat"><h4>Authenticated Clients</h4><div class="val">\${Number(data.clientLeadSummary?.clients||0)}</div></div><div class="card-stat"><h4>Leads</h4><div class="val">\${Number(data.clientLeadSummary?.leads||0)}</div></div></div></section>
                     \${site ? \`<section class="card"><div class="section-title"><h3>IDX Site</h3><span class="badge badge-\${escapeHtml(site.status)}">\${escapeHtml(site.status)}</span></div><p><strong>\${escapeHtml(site.site_name)}</strong> · <code>\${escapeHtml(site.site_key)}</code></p><p class="muted">IDX Search Scope: <strong>\${escapeHtml(site.scope_type)}</strong> \${escapeHtml(site.scope_value || '(full market inventory)')} · Participant Agent MLS: <code>\${escapeHtml(acc.agent_mls_id || '—')}</code></p><div class="actions" style="margin-top:.7rem"><button class="btn btn-danger btn-sm" onclick="requestSiteDisable('\${escapeHtml(site.id)}','\${escapeHtml(acc.id)}')">Disable Site</button><button class="btn btn-primary btn-sm" onclick="enableSite('\${escapeHtml(site.id)}','\${escapeHtml(acc.id)}')">Enable Site</button></div></section>
                     <section class="card"><div class="section-title"><h3>Domains</h3><span class="badge">\${site.domains.length}</span></div><div>\${site.domains.map(d=>'<p><strong>'+escapeHtml(d.domain)+'</strong> · '+(d.verified===1?'Verified':'Ownership not verified')+' · '+escapeHtml(d.status)+' <button class="btn btn-secondary btn-sm" data-domain-id="'+escapeHtml(d.id)+'" data-account-id="'+escapeHtml(acc.id)+'" onclick="authorizeDomain(this.dataset.domainId,this.dataset.accountId)">Authorize</button> <button class="btn btn-danger btn-sm" data-domain-id="'+escapeHtml(d.id)+'" data-account-id="'+escapeHtml(acc.id)+'" data-domain="'+escapeHtml(d.domain)+'" onclick="requestDomainDelete(this.dataset.domainId,this.dataset.accountId,this.dataset.domain)">Remove</button></p>').join('') || '<p class="muted">No domain configured.</p>'}</div><form class="filters" onsubmit="addAdminDomain(event,'\${escapeHtml(site.id)}','\${escapeHtml(acc.id)}')" style="margin-top:.8rem"><input id="detailNewDomain" class="form-control" placeholder="www.member-site.com" required><button class="btn btn-secondary">Add Pending Domain</button></form></section>
-                    <section class="card"><div class="section-title"><h3>Branding</h3></div><form onsubmit="saveBranding(event,'\${escapeHtml(site.id)}','\${escapeHtml(acc.id)}')"><div class="field-grid"><div class="form-group"><label>Display Name</label><input id="brandName" class="form-control" value="\${escapeHtml(site.branding?.display_name||'')}"></div><div class="form-group"><label>Brokerage</label><input id="brandBrokerage" class="form-control" value="\${escapeHtml(site.branding?.brokerage||'')}"></div><div class="form-group"><label>Phone</label><input id="brandPhone" class="form-control" value="\${escapeHtml(site.branding?.phone||'')}"></div><div class="form-group"><label>Email</label><input id="brandEmail" type="email" class="form-control" value="\${escapeHtml(site.branding?.email||'')}"></div><div class="form-group"><label>Logo URL</label><input id="brandLogo" class="form-control" value="\${escapeHtml(site.branding?.logo_url||'')}"></div><div class="form-group"><label>Primary Color</label><input id="brandPrimary" class="form-control" value="\${escapeHtml(site.branding?.primary_color||'#1a365d')}"></di                    <section class="card" style="grid-column: 1 / -1;"><div class="section-title"><div><h3 style="margin:0;">Responsive Embed Code Generator & Presets</h3><p class="muted" style="margin:4px 0 0 0;">Select a preset or customize preferred agents, pinned listings, and landing page parameters.</p></div><span class="badge badge-active">\${escapeHtml(site.embed?.embedBuild || '2026.09.25.2')}</span></div>
+                    <section class="card"><button class="btn btn-primary" onclick="loadIdxContacts('\${escapeHtml(acc.id)}')">Contacts & Email</button><div id="idxContacts"></div></section>
+                    <section class="card"><div class="section-title"><h3>Branding</h3></div><form onsubmit="saveBranding(event,'\${escapeHtml(site.id)}','\${escapeHtml(acc.id)}')"><div class="field-grid"><div class="form-group"><label>Display Name</label><input id="brandName" class="form-control" value="\${escapeHtml(site.branding?.display_name||'')}"></div><div class="form-group"><label>Brokerage</label><input id="brandBrokerage" class="form-control" value="\${escapeHtml(site.branding?.brokerage||'')}"></div><div class="form-group"><label>Phone</label><input id="brandPhone" class="form-control" value="\${escapeHtml(site.branding?.phone||'')}"></div><div class="form-group"><label>Email</label><input id="brandEmail" type="email" class="form-control" value="\${escapeHtml(site.branding?.email||'')}"></div><div class="form-group"><label>Logo URL</label><input id="brandLogo" class="form-control" value="\${escapeHtml(site.branding?.logo_url||'')}"></div><div class="form-group"><label>Primary Color</label><input id="brandPrimary" class="form-control" value="\${escapeHtml(site.branding?.primary_color||'#1a365d')}"></div></div><button class="btn btn-primary" type="submit">Save Branding</button></form></section>
+                    <section class="card" style="grid-column: 1 / -1;"><div class="section-title"><div><h3 style="margin:0;">Responsive Embed Code Generator & Presets</h3><p class="muted" style="margin:4px 0 0 0;">Select a preset or customize preferred agents, pinned listings, and landing page parameters.</p></div><span class="badge badge-active">\${escapeHtml(site.embed?.embedBuild || '2026.09.25.3')}</span></div>
                     <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px; margin: 1.2rem 0; background: #0b1523; padding: 16px; border-radius: 8px; border: 1px solid var(--border);">
                         <div class="form-group" style="margin:0;">
                             <label style="font-weight:600; color:#fff;">Widget Preset</label>
@@ -825,6 +829,7 @@ export function renderAdminHtml(env = {}) {
                                 <option value="pinned_listings">📌 Pinned Agent Listings (Pin Preferred Agents First)</option>
                                 <option value="search">🔍 Full Search & Map (Standard)</option>
                                 <option value="landing_page">🏡 Pre-Filtered Route Landing Page</option>
+                                <option value="lead_capture">Contact & Sign-In Popup</option>
                                 <option value="listing_grid">🏷️ Listing Grid (4-Across Showcase)</option>
                                 <option value="open_houses">📅 Open Houses Showcase</option>
                                 <option value="search_bar">⚡ Quick Search Bar (With Heading & Redirect)</option>
@@ -890,6 +895,7 @@ export function renderAdminHtml(env = {}) {
                 desc: 'Dedicated pre-filtered landing page (detects city and price from URL or attributes).',
                 attrs: 'data-widget="search" data-route-mode="auto"'
             },
+            lead_capture: {id:'sneak-idx-contact',name:'Contact & Sign-In Popup',desc:'Collect inquiries and offer secure account sign-in.',attrs:'data-widget="lead-capture"'},
             listing_grid: {
                 id: 'sneak-idx-grid',
                 name: 'Listing Grid Showcase',
@@ -913,7 +919,7 @@ export function renderAdminHtml(env = {}) {
         function updateAdminSnippet(explicitSiteKey) {
             const siteKey = explicitSiteKey || window.accountDetailSiteKey || 'ursula-weinkauff';
             const servingHost = window.accountDetailServingHost || 'https://sneak-idx-worker.bonitaspringsrealtors.workers.dev';
-            const embedBuild = window.accountDetailEmbedBuild || '2026.09.25.2';
+            const embedBuild = window.accountDetailEmbedBuild || '2026.09.25.3';
 
             const typeSelect = document.getElementById('adminEmbedType');
             const selectedType = typeSelect ? typeSelect.value : 'featured_agent';

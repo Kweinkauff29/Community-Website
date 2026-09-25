@@ -594,7 +594,7 @@ describe('CCOR IDX / SNEAK Consumer Worker & Identity (Phase 7.3C1A)', () => {
 
     test('2. Anti-Enumeration: magic link request returns identical generic response regardless of existence', async () => {
         const db = createMockConsumerDB();
-        const env = { DB: db, SNEAK_ENV: 'staging', SNEAK_SIGNING_SECRET: TEST_SIGNING_SECRET };
+        const env = { DB: db, SNEAK_ENV: 'staging', SNEAK_SIGNING_SECRET: TEST_SIGNING_SECRET, SNEAK_MAILER_SECRET: 'test-mailer', MAILER: {fetch: async () => Response.json({success:true,providerMessageId:'test-mail-id'})} };
 
         // Existing user
         const req1 = new Request('https://consumer.staging/api/consumer/auth/magic-link', {

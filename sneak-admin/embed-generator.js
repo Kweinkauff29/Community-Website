@@ -6,7 +6,7 @@
 
 const STAGING_SERVING_URL = "https://sneak-idx-worker-staging.bonitaspringsrealtors.workers.dev";
 const PRODUCTION_SERVING_URL = "https://sneak-idx-worker.bonitaspringsrealtors.workers.dev";
-const EMBED_BUILD = '2026.09.25.2';
+const EMBED_BUILD = '2026.09.25.3';
 
 function resolveServingUrl(env = {}) {
     const isProd = (env?.SNEAK_ENV || '').toLowerCase() === 'production';
@@ -31,6 +31,13 @@ export function generateEmbedSnippets(siteKey, allowedDomains = [], branding = {
     const scriptUrl = `${servingUrl}/embed.js?v=${EMBED_BUILD}`;
 
     const definitions = [
+        {
+            widgetType: 'lead_capture', targetId: 'sneak-idx-contact', name: 'Contact & Sign-In Popup',
+            description: 'A contact button opens an inquiry form and secure buyer sign-in. Contacts and notifications belong to this website account.',
+            htmlSnippet: `<div id="sneak-idx-contact"></div>
+<script src="${scriptUrl}" data-site="${siteKey}" data-widget="lead-capture" data-target="#sneak-idx-contact" async defer></script>`,
+            recommendedWidth: '100%', responsive: true
+        },
         {
             widgetType: "search",
             targetId: 'sneak-idx-search',

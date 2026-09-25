@@ -8,9 +8,10 @@ enabled = true
 head_sampling_rate = 1
 
 [vars]
+SNEAK_SERVING_URL = "https://sneak-idx-worker.bonitaspringsrealtors.workers.dev"
 SNEAK_ENV = "production"
 CONSUMER_WORKER_URL = "https://sneak-idx-consumer.bonitaspringsrealtors.workers.dev"
-CONSUMER_AUTH_ENABLED = "false"
+CONSUMER_AUTH_ENABLED = "true"
 EMAIL_ALERTS_ENABLED = "false"
 EMAIL_FROM = "CCOR Property Search <no-reply@ccorealtors.org>"
 
@@ -19,3 +20,7 @@ binding = "DB"
 database_name = "sneak-idx-production"
 database_id = "9d3c529d-a769-4ab3-9385-d9c8bc5e937d"
 migrations_dir = "migrations"
+
+[[services]]
+binding = "MAILER"
+service = "sneak-idx-member"

@@ -752,7 +752,7 @@ export async function handleRequestMagicLink(req, env, origin) {
         env
     });
 
-    return jsonResponse(result, 200, origin);
+    return jsonResponse(result, result.success === false ? 503 : 200, origin);
 }
 
 /**

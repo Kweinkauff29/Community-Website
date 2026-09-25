@@ -75,13 +75,13 @@ describe('Phase 7.4B2 production isolation and cutover safety', () => {
         }
     });
 
-    test('fresh canonical migration chain applies through 0035 with zero FK violations', () => {
+    test('fresh canonical migration chain applies through 0036 with zero FK violations', () => {
         const db = new DatabaseSync(':memory:');
         try {
             db.exec('PRAGMA foreign_keys = ON;');
             const files = fs.readdirSync(path.join(rootDir, 'migrations')).filter(name => /^\d{4}_.+\.sql$/.test(name)).sort();
             for (const file of files) db.exec(fs.readFileSync(path.join(rootDir, 'migrations', file), 'utf8'));
-            assert.equal(files.at(-1), '0035_sneak_growthzone_reconciliation_fk.sql');
+            assert.equal(files.at(-1), '0036_sneak_contacts_notifications.sql');
             assert.deepEqual(db.prepare('PRAGMA foreign_key_check').all(), []);
         } finally {
             db.close();
@@ -99,7 +99,7 @@ describe('Phase 7.4B2 production isolation and cutover safety', () => {
         const consumer = fs.readFileSync(path.join(rootDir, 'wrangler.sneak-consumer.production.toml'), 'utf8');
         const alerts = fs.readFileSync(path.join(rootDir, 'wrangler.sneak-alerts.production.toml'), 'utf8');
         const admin = fs.readFileSync(path.join(rootDir, 'wrangler.sneak-admin.production.toml'), 'utf8');
-        assert.match(consumer, /CONSUMER_AUTH_ENABLED\s*=\s*"false"/);
+        assert.match(consumer, /CONSUMER_AUTH_ENABLED\s*=\s*"true"/);
         assert.match(alerts, /EMAIL_ALERTS_ENABLED\s*=\s*"false"/);
         assert.match(admin, /GROWTHZONE_RECONCILIATION_ENABLED\s*=\s*"false"/);
         for (const source of [alerts, admin]) {
@@ -131,8 +131,8 @@ describe('Phase 7.4B2 production isolation and cutover safety', () => {
             SNEAK_SERVING_URL: 'https://sneak-idx-worker.bonitaspringsrealtors.workers.dev'
         });
         assert.equal(embed.servingHost, 'https://sneak-idx-worker.bonitaspringsrealtors.workers.dev');
-        assert.equal(embed.embedBuild, '2026.09.25.2');
-        assert.match(embed.snippets.search.htmlSnippet, /sneak-idx-worker\.bonitaspringsrealtors\.workers\.dev\/embed\.js\?v=2026\.09\.25\.2/);
+        assert.equal(embed.embedBuild, '2026.09.25.3');
+        assert.match(embed.snippets.search.htmlSnippet, /sneak-idx-worker\.bonitaspringsrealtors\.workers\.dev\/embed\.js\?v=2026\.09\.25\.3/);
     });
 
     test('all four protected legacy files remain zero-diff from origin/main', () => {

@@ -94,6 +94,8 @@
       flex: 0 0 auto;
     }
     body.is-embedded .recently-viewed-section {
+      width: 100%;
+      border-top: 1px solid var(--border);
       flex: 0 0 auto;
       padding: 6px 16px;
       margin: 6px auto 10px;
@@ -2372,6 +2374,11 @@
       }
     }
 
+    body.is-embedded.has-recently-viewed .main-container {
+      min-height: 420px;
+      flex: 1 0 420px;
+    }
+
     /* Consumer Auth & Account Modals (Phase 7.3C1A) */
     .consumer-modal-overlay {
       position: fixed;
@@ -3061,7 +3068,7 @@
   </style>
 </head>
 
-<body data-ui-build="2026.09.25.2">
+<body data-ui-build="2026.09.25.3">
 
   <!-- Loading Overlay -->
   <div class="loading-overlay" id="loadingOverlay" style="display:none">
@@ -3372,18 +3379,6 @@
     </div>
   </div>
 
-  <!-- Site-scoped Recently Viewed (Phase 7.3C3A) -->
-  <section class="recently-viewed-section" id="recentlyViewedSection" style="display:none" aria-labelledby="recentlyViewedHeading">
-    <div class="recently-viewed-header">
-      <div>
-        <h2 id="recentlyViewedHeading"><i class="far fa-clock"></i> Recently Viewed</h2>
-        <p id="recentlyViewedPrivacyLabel">Stored only in this browser while signed out.</p>
-      </div>
-      <button class="recently-viewed-clear" id="recentlyViewedClearBtn" type="button">Clear</button>
-    </div>
-    <div class="recently-viewed-track" id="recentlyViewedTrack"></div>
-  </section>
-
   <!-- Mobile / Tablet Segmented Toggle (<= 1024px) -->
   <div class="mobile-view-toggle-bar" id="mobileViewToggleBar">
     <button class="mobile-toggle-btn active" id="mobileToggleList" onclick="setMobileViewMode('list')">
@@ -3518,6 +3513,18 @@
   </div>
 
 
+  <!-- Site-scoped Recently Viewed (Phase 7.3C3A) -->
+  <section class="recently-viewed-section" id="recentlyViewedSection" style="display:none" aria-labelledby="recentlyViewedHeading">
+    <div class="recently-viewed-header">
+      <div>
+        <h2 id="recentlyViewedHeading"><i class="far fa-clock"></i> Recently Viewed</h2>
+        <p id="recentlyViewedPrivacyLabel">Stored only in this browser while signed out.</p>
+      </div>
+      <button class="recently-viewed-clear" id="recentlyViewedClearBtn" type="button">Clear</button>
+    </div>
+    <div class="recently-viewed-track" id="recentlyViewedTrack"></div>
+  </section>
+
   <!-- Property Detail Modal -->
   <div class="detail-overlay" id="detailOverlay" role="dialog" aria-modal="true" aria-labelledby="detailAddr">
     <div class="detail-modal">
@@ -3632,6 +3639,7 @@
         <label>Your Phone</label>
         <input type="tel" id="contactPhone" placeholder="(555) 000-0000">
         
+<label for="contactIntent">I would like to</label><select id="contactIntent"><option value="property_inquiry">Learn more about this property</option><option value="schedule_tour">Schedule a tour</option><option value="contact_agent">Speak with an agent</option></select>
         <label>Message</label>
         <textarea id="contactMessage" placeholder="I am interested in this property and would like more information..."></textarea>
         
@@ -3654,6 +3662,7 @@
           <label for="consumerEmailInput">Email Address</label>
           <input type="email" id="consumerEmailInput" class="consumer-input" placeholder="you@example.com" required autocomplete="email">
         </div>
+<p style="font-size:12px;color:#64748b">By signing in, you agree to share your property views, saved homes, and inquiries with this website’s real estate team so they can assist you.</p>
         <button type="submit" class="consumer-btn-primary" id="consumerSubmitBtn">
           <i class="fas fa-envelope"></i> Email me a sign-in link
         </button>
@@ -3801,7 +3810,7 @@
   <!-- CCOR IDX Plug-in Application Logic -->
   <script>
     // Telemetry & Build Identifier
-        const CCOR_IDX_UI_BUILD = '2026.09.25.2';
+        const CCOR_IDX_UI_BUILD = '2026.09.25.3';
     console.log('[CCOR IDX Plug-in] UI build:', CCOR_IDX_UI_BUILD);
 
     // XSS Hardening & URL Sanitization Helpers (Phase 7.3C1A)
@@ -4338,6 +4347,7 @@
       await loadTenantConfig();
       updateLandingBanner(urlCustomHeading, drawerState.cities[0], urlMinPrice, urlMaxPrice, currentPropertyType, urlOpenHouses, filterFeatured);
       await initConsumerAuth(initialAuthCode);
+      if (urlParams.get('signin') === '1' && !consumerUser) openConsumerAuthModal();
       await loadCompareState();
       await loadRecentlyViewed();
       triggerSearch(false);
@@ -5904,6 +5914,17 @@
 
         detailResolved = true;
         currentDetail = fullDetail;
+        const capture = tenantConfig?.leadCaptureSettings;
+        if (!consumerUser && capture?.popup_mode === 'after_views') {
+          const seenKey='idx_popup_views_'+SITE_KEY, shownKey='idx_popup_shown_'+SITE_KEY;
+          let savedViews=[];try{savedViews=JSON.parse(sessionStorage.getItem(seenKey)||'[]');}catch{}
+          const views=new Set(Array.isArray(savedViews)?savedViews:[]);
+          views.add(fullDetail.ListingKey);sessionStorage.setItem(seenKey,JSON.stringify([...views]));
+          if (views.size >= capture.popup_after_views && !sessionStorage.getItem(shownKey)) {
+            sessionStorage.setItem(shownKey,'1');setTimeout(openConsumerAuthModal,500);
+          }
+        }
+
         renderDetailRecord(fullDetail);
         setDetailActionAvailability(true);
         updateDetailCompareButton();
@@ -6202,7 +6223,7 @@
         const baseH = window.innerHeight || 900;
         const targetH = document.body.classList.contains('layout-grid-showcase')
           ? Math.ceil(mainContainer.getBoundingClientRect().bottom + window.scrollY)
-          : isRecentActive ? Math.max(docH, baseH + 185) : docH;
+          : Math.max(docH, baseH);
         try {
           window.parent.postMessage({
             type: 'SNEAK_RESIZE',
@@ -7183,7 +7204,7 @@
         email: document.getElementById('contactEmail').value.trim(),
         phone: document.getElementById('contactPhone').value.trim(),
         message: document.getElementById('contactMessage').value.trim(),
-        leadType: 'property_inquiry'
+        leadType: document.getElementById('contactIntent').value
       };
 
       try {
@@ -7359,6 +7380,7 @@
       statusEl.className = 'consumer-auth-status';
       statusEl.style.display = 'none';
 
+      // Use an HTTPS portal when the embedding website cannot receive a secure login.
       // Detect return URL from parent host / window
       let returnUrl = window.location.href;
       try {
@@ -7367,6 +7389,9 @@
         }
       } catch {}
 
+      if (!returnUrl.startsWith('https:') || new URL(returnUrl).origin === new URL(API_BASE).origin) {
+        returnUrl = new URL('/portal?site=' + encodeURIComponent(SITE_KEY), API_BASE).href;
+      }
       try {
         const res = await fetch(`${CONSUMER_API_BASE}/api/consumer/auth/magic-link`, {
           method: 'POST',
@@ -7379,6 +7404,7 @@
           })
         });
 
+        if (!res.ok) throw new Error('Email delivery unavailable');
         statusEl.className = 'consumer-auth-status success';
         statusEl.textContent = 'If an account exists or is eligible, a secure sign-in link has been sent to your email. Please check your inbox.';
         statusEl.style.display = 'block';

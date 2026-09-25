@@ -10,7 +10,7 @@ head_sampling_rate = 1
 [vars]
 SNEAK_ENV = "production"
 CONSUMER_WORKER_URL = "https://sneak-idx-consumer.bonitaspringsrealtors.workers.dev"
-CONSUMER_AUTH_ENABLED = "false"
+CONSUMER_AUTH_ENABLED = "true"
 EMAIL_ALERTS_ENABLED = "false"
 
 [assets]

@@ -5,6 +5,8 @@
  * Passwordless Magic Link Auth, and GrowthZone Billing Alignment.
  */
 
+import { contactsApi, processOwnerNotifications } from '../sneak-shared/contacts.js';
+import { handleInternalMail } from './mailer.js';
 import { renderMemberUI } from './ui.js';
 import {
     requestPublicMagicLink,
@@ -63,6 +65,8 @@ export default {
         const url = new URL(request.url);
         const path = url.pathname;
         const method = request.method.toUpperCase();
+
+        if (path === '/internal/email' && method === 'POST') return handleInternalMail(request,env);
 
         // 1. Health Check
         if (path === '/health' || (path === '/' && request.headers.get('Accept') === 'application/json')) {
@@ -157,6 +161,8 @@ export default {
             if (!validateMemberCsrf(request)) {
                 return error('CSRF verification failed', 403, 'Forbidden');
             }
+
+            if (path === '/api/member/contacts' && ['GET','PUT'].includes(method)) return contactsApi(env.DB,memberContext.account_id,request,['owner','admin'].includes(memberContext.member_role));
 
             // Route protected requests
             if (path === '/api/member/overview' && method === 'GET') {
@@ -257,5 +263,8 @@ export default {
         }
 
         return new Response('Not Found', { status: 404, headers: SECURITY_HEADERS });
+    },
+    async scheduled(event,env,ctx) {
+        ctx.waitUntil(processOwnerNotifications({db:env.DB,env}));
     }
 };

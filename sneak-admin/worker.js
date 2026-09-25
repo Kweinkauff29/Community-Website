@@ -1,3 +1,4 @@
+import { contactsApi } from '../sneak-shared/contacts.js';
 /**
  * sneak-admin/worker.js
  * 
@@ -209,6 +210,9 @@ export default {
                 const body = await request.json();
                     return await api.handleCreateAccount(db, body, actor, env);
             }
+
+            const contactsMatch=path.match(/^\/api\/admin\/accounts\/([^/]+)\/contacts$/);
+            if (contactsMatch && ['GET','PUT'].includes(method)) return contactsApi(db,contactsMatch[1],request);
 
             // /api/admin/accounts/:id
             const accMatch = path.match(/^\/api\/admin\/accounts\/([^\/]+)$/);

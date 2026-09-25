@@ -7,8 +7,12 @@ workers_dev = true
 enabled = true
 head_sampling_rate = 1
 
+[triggers]
+crons = ["*/5 * * * *"]
+
 [vars]
 SNEAK_ENV = "production"
+OWNER_NOTIFICATIONS_ENABLED = "true"
 SNEAK_SERVICE_NAME = "sneak-idx-member"
 SNEAK_SERVING_URL = "https://sneak-idx-worker.bonitaspringsrealtors.workers.dev"
 EMAIL_FROM = "CCOR IDX Plug-in <no-reply@ccorealtors.org>"

@@ -172,7 +172,19 @@ function providerFailure({ status = 'failed', errorCode = 'DeliveryFailed', retr
  * Provider configuration and every provider response are fail closed; there is
  * no simulated-success adapter in a runtime path.
  */
-export async function sendTransactionalEmail(env, { to, subject, html, text, from, customId }) {
+export async function sendTransactionalEmail(env, { to, subject, html, text, from, customId, sandbox = false }) {
+    if (env?.MAILER && env?.SNEAK_MAILER_SECRET) {
+        try {
+            const response = await env.MAILER.fetch('https://internal-mailer/internal/email', {
+                method: 'POST', headers: {'Content-Type':'application/json','Authorization':'Bearer '+env.SNEAK_MAILER_SECRET},
+                body: JSON.stringify({to,subject,html,text,customId,sandbox})
+            });
+            if (!response.ok) return providerFailure({errorCode:'MailerUnavailable',retryable:response.status>=500});
+            const result = await response.json();
+            if (result.success && !result.providerMessageId) return providerFailure({errorCode:'ProviderMessageIdMissing'});
+            return result;
+        } catch { return providerFailure({errorCode:'MailerUnavailable'}); }
+    }
     const fromStr = env?.EMAIL_FROM || env?.FROM_EMAIL || DEFAULT_FROM;
     const sender = parseFromAddress(from || fromStr, 'CCOR Property Search');
 
@@ -200,7 +212,8 @@ export async function sendTransactionalEmail(env, { to, subject, html, text, fro
                 'Content-Type': 'application/json',
                 'Authorization': auth
             },
-            body: JSON.stringify({ Messages: [message] })
+            signal: AbortSignal.timeout(15000),
+            body: JSON.stringify({ Messages: [message], ...(sandbox === true ? {SandboxMode:true} : {}) })
         });
 
         let data = {};
@@ -223,6 +236,8 @@ export async function sendTransactionalEmail(env, { to, subject, html, text, fro
                 retryable: Number(firstError?.StatusCode || 0) === 429 || Number(firstError?.StatusCode || 0) >= 500
             });
         }
+
+        if (sandbox === true) return {success:false,validated:true,status:'validated',provider:'mailjet',retryable:false,providerMessageId:null};
 
         const msgId = firstMessage?.To?.[0]?.MessageID || firstMessage?.To?.[0]?.MessageUUID;
         if (!msgId) return providerFailure({ errorCode: 'ProviderMessageIdMissing', retryable: true });

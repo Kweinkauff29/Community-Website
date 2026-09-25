@@ -20,7 +20,7 @@ import {
 } from './sneak-shared/idx-query.js';
 import { isAccountEntitled } from './sneak-shared/entitlement.js';
 
-export const SNEAK_IDX_BUILD = '2026.09.25.2';
+export const SNEAK_IDX_BUILD = '2026.09.25.3';
 
 function capabilityEnabled(value, defaultValue = true) {
     if (value === undefined || value === null || value === '') return defaultValue;
@@ -61,11 +61,13 @@ export default {
             }, 200, '*');
         }
 
+        if (url.pathname === '/portal' && req.method === 'GET') return handleHostedPortal(req,env);
+
         // 3. Static Assets & Dynamic CSP Worker-First Handling
         if (!url.pathname.startsWith('/idx/v1/')) {
             if (env.ASSETS) {
                 // Intercept search and quick-search UI HTML to dynamically attach strict frame-ancestors CSP
-                const isSearchHtml = url.pathname === '/' || url.pathname === '/search' || url.pathname === '/search/' || url.pathname.startsWith('/quick-search') || url.pathname.endsWith('/search/index.html') || url.pathname.endsWith('.html');
+                const isSearchHtml = url.pathname === '/' || url.pathname === '/search' || url.pathname === '/search/' || url.pathname.startsWith('/capture') || url.pathname.startsWith('/quick-search') || url.pathname.endsWith('/search/index.html') || url.pathname.endsWith('.html');
                 const siteKey = url.searchParams.get('site');
 
                 if (isSearchHtml && siteKey) {
@@ -378,6 +380,25 @@ export async function sanitizeMemberShareBaseUrl(db, siteId, candidate, isDev = 
  * Called directly by embed.js on the embedding member webpage.
  * Validates member Origin against sneak_domains and issues a signed session token.
  */
+export async function handleHostedPortal(req, env) {
+    const url = new URL(req.url);
+    const key = url.searchParams.get('site') || '';
+    const site = await env.DB.prepare(`SELECT s.id,s.site_key,s.status AS site_status,a.status AS account_status,
+      e.status AS entitlement_status,e.grace_until,e.expires_at FROM sneak_sites s
+      JOIN sneak_accounts a ON a.id=s.account_id LEFT JOIN sneak_account_entitlements e ON e.account_id=a.id
+      WHERE s.site_key=?`).bind(key).first();
+    if (!site || site.site_status !== 'active' || !isAccountEntitled(site.account_status,site.entitlement_status,site.grace_until,new Date(),site.expires_at)) return new Response('This property search is unavailable.',{status:403});
+    const now = Math.floor(Date.now()/1000);
+    const session = await signSessionToken({siteKey:site.site_key,siteId:site.id,origin:url.hostname,iat:now,exp:now+1200},getSigningSecret(env));
+    const frame = new URL('/search/',url.origin);
+    frame.searchParams.set('site',site.site_key);frame.searchParams.set('session',session);frame.searchParams.set('embed','true');
+    frame.searchParams.set('host_page',url.origin+'/portal?site='+encodeURIComponent(site.site_key));
+    if(url.searchParams.get('auth_code'))frame.searchParams.set('auth_code',url.searchParams.get('auth_code'));
+    if(url.searchParams.get('signin')==='1')frame.searchParams.set('signin','1');
+    const src=frame.href.replaceAll('&','&amp;').replaceAll('"','&quot;');
+    return new Response(`<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Secure Property Search</title></head><body style="margin:0"><iframe src="${src}" title="Secure property search" style="border:0;width:100%;height:100vh;display:block" allow="geolocation"></iframe><script>const u=new URL(location.href);u.searchParams.delete('auth_code');history.replaceState(null,'',u);const frame=document.querySelector('iframe');window.addEventListener('message',event=>{if(event.source!==frame.contentWindow||event.origin!==location.origin||event.data?.type!=='SNEAK_RESIZE')return;const height=Number(event.data.height);if(Number.isFinite(height)&&height>=140&&height<=3500)frame.style.height=height+'px';});</script></body></html>`,{headers:{'Content-Type':'text/html;charset=utf-8','Cache-Control':'no-store','Referrer-Policy':'no-referrer','Content-Security-Policy':"default-src 'self'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; frame-ancestors 'none'"}});
+}
+
 async function handleBootstrap(req, url, env) {
     const siteKey = url.searchParams.get('site');
     if (!siteKey) {
@@ -802,7 +823,9 @@ async function handleGetConfig(url, site, branding, env, allowedOrigin) {
         (env.SNEAK_ENV || 'staging').toLowerCase() === 'development'
     );
 
+    const captureSettings = await env.DB.prepare('SELECT popup_mode,popup_after_views FROM sneak_contact_settings WHERE site_id=?').bind(site.site_id).first();
     const configPayload = {
+        leadCaptureSettings: captureSettings || {popup_mode:'optional',popup_after_views:3},
         siteKey: site.site_key,
         siteName: site.site_name,
         displayName: branding.display_name || site.site_name || 'Real Estate Search',
@@ -1488,6 +1511,8 @@ async function handleLeadSubmission(req, site, env, ctx, allowedOrigin) {
         return jsonResponse({ error: 'InvalidJSON', message: 'Malformed JSON payload.' }, 400, allowedOrigin);
     }
 
+    if (!body || typeof body !== 'object' || ['name','email','phone','message','listingKey','leadType','sourceUrl','companyWebsite'].some(key => body[key] != null && typeof body[key] !== 'string')) return jsonResponse({error:'ValidationError',message:'Contact fields must be text.'},400,allowedOrigin);
+    if (body.companyWebsite) return jsonResponse({success:true},201,allowedOrigin);
     const name = (body.name || '').trim().substring(0, 100);
     const email = (body.email || '').trim().substring(0, 150);
     const phone = (body.phone || '').trim().substring(0, 30);
@@ -1505,6 +1530,15 @@ async function handleLeadSubmission(req, site, env, ctx, allowedOrigin) {
     if (!emailRegex.test(email)) {
         return jsonResponse({ error: 'ValidationError', message: 'Please provide a valid email address.' }, 400, allowedOrigin);
     }
+
+    // Bound inquiry spam before it can create contacts or owner email jobs.
+    const bucket = Math.floor(Date.now() / 900000);
+    const identity = site.site_id + ':' + (req.headers.get('CF-Connecting-IP') || 'unknown') + ':' + bucket;
+    const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(identity));
+    const rateKey = Array.from(new Uint8Array(digest), n => n.toString(16).padStart(2,'0')).join('');
+    const allowance = await env.DB.prepare(`INSERT INTO sneak_lead_rate_limits(id,count,expires_at) VALUES(?,1,?)
+      ON CONFLICT(id) DO UPDATE SET count=count+1 WHERE count<10 RETURNING count`).bind(rateKey,new Date((bucket+2)*900000).toISOString()).first();
+    if (!allowance) return jsonResponse({error:'RateLimited',message:'Too many requests. Please try again in 15 minutes.'},429,allowedOrigin);
 
     // If listingKey is provided, strictly validate that it exists inside the tenant's authorized scope
     if (listingKey) {
