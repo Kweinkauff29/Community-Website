@@ -1361,7 +1361,7 @@
       gap: 20px !important;
     }
 
-    @media (max-width: 1280px) {
+    @media (max-width: 1100px) {
       body.layout-grid-showcase .listings-grid,
       .main-container.layout-grid-showcase .listings-grid {
         grid-template-columns: repeat(3, 1fr) !important;
@@ -3028,10 +3028,40 @@
       .public-list-property-card img { width: 108px; height: 100%; min-height: 180px; }
       .public-list-property-body { min-width: 0; }
     }
+
+    /* Showcase presentation: shared by copied embeds and the Focus homepage. */
+    body.layout-grid-showcase { height: auto; overflow: visible; background: #fff; }
+    body.layout-grid-showcase .filters-container,
+    body.layout-grid-showcase #top-bar,
+    body.layout-grid-showcase #descBanner,
+    body.layout-grid-showcase .recently-viewed-section,
+    body.layout-grid-showcase .landing-header-banner { display: none !important; }
+    body.layout-grid-showcase .main-container { height: auto; min-height: 0; overflow: visible; }
+    body.layout-grid-showcase .main-container .listings-section { background: #fff; height: auto; overflow: visible; padding: 0 !important; }
+    body.layout-grid-showcase .main-container .listings-grid { gap: 12px !important; align-items: stretch; }
+    body.layout-grid-showcase .listing-card,
+    body.layout-grid-showcase .listing-card.listing-card-pinned { min-width: 0; border: 1px solid #ddd !important; border-radius: 4px; box-shadow: none !important; }
+    body.layout-grid-showcase .listing-card:hover { transform: none; border-color: #aaa !important; }
+    body.layout-grid-showcase .card-img-wrapper { height: auto; aspect-ratio: 16 / 9; }
+    body.layout-grid-showcase .card-content { padding: 12px 16px; gap: 4px; }
+    body.layout-grid-showcase .card-price { font-size: clamp(22px, 2.1vw, 28px); font-weight: 400; color: #363b3e; letter-spacing: normal; }
+    body.layout-grid-showcase .card-address { font-size: 16px; font-weight: 400; color: #808080; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+    body.layout-grid-showcase .card-details { font-size: 16px; color: #808080; margin: 0; }
+    body.layout-grid-showcase .card-footer-row { border: 0; padding-top: 12px; color: #aaa; font-size: 11px; }
+    body.layout-grid-showcase .card-agent-badge { width: 60px; height: 60px; bottom: 14px; right: 14px; border: 1px solid #fff; border-radius: 12px; box-shadow: 0 0 0 1px #888; }
+    body.layout-grid-showcase .pinned-badge,
+    body.layout-grid-showcase .status-badge-card.active,
+    body.layout-grid-showcase .status-badge-card.new { display: none; }
+    body.layout-grid-showcase .open-house-badge,
+    body.layout-grid-showcase .status-badge-card { top: 16px !important; left: 16px; border-radius: 0; font-size: 16px; font-weight: 400; text-transform: none; padding: 3px 7px; box-shadow: none; }
+    body.layout-grid-showcase .card-agent-name,
+    body.layout-grid-showcase .card-broker-reciprocity,
+    body.layout-grid-showcase .br-icon { color: #999; }
+    body.layout-grid-showcase .pagination-bar { margin-top: 24px; }
   </style>
 </head>
 
-<body data-ui-build="2026.09.01.7.4b2">
+<body data-ui-build="2026.09.25.1">
 
   <!-- Loading Overlay -->
   <div class="loading-overlay" id="loadingOverlay" style="display:none">
@@ -3771,7 +3801,7 @@
   <!-- CCOR IDX Plug-in Application Logic -->
   <script>
     // Telemetry & Build Identifier
-        const CCOR_IDX_UI_BUILD = '2026.09.01.7.4b2';
+        const CCOR_IDX_UI_BUILD = '2026.09.25.1';
     console.log('[CCOR IDX Plug-in] UI build:', CCOR_IDX_UI_BUILD);
 
     // XSS Hardening & URL Sanitization Helpers (Phase 7.3C1A)
@@ -4134,9 +4164,12 @@
       const urlLayout = urlParams.get('layout') || urlParams.get('mode');
       const isGridShowcase = urlLayout === 'grid' || urlLayout === 'showcase' || urlLayout === 'listing_grid';
       if (isGridShowcase) {
+        if (!urlParams.get('propertyType')) currentPropertyType = 'all';
         document.body.classList.add('layout-grid-showcase');
         document.getElementById('mainContainer')?.classList.add('layout-grid-showcase');
         isDesktopMapHidden = true;
+        const showcaseObserver = new ResizeObserver(() => updateAdaptiveEmbedHeight());
+        showcaseObserver.observe(document.getElementById('mainContainer'));
       }
 
       // Check for Hide Filters Mode
@@ -5262,7 +5295,8 @@
       try {
         const queryParams = buildFilterParams(true);
         queryParams.set('page', page);
-        queryParams.set('limit', 24);
+        queryParams.set('limit', document.body.classList.contains('layout-grid-showcase') ? 4 : 24);
+        if (document.body.classList.contains('layout-grid-showcase')) queryParams.set('status', 'All');
 
         const res = await fetch(`${API_BASE}/idx/v1/search?${queryParams.toString()}`, {
           headers: getAuthHeaders(),
@@ -5389,7 +5423,7 @@
         } else {
           detailsHtml = `
             <div class="card-details">
-              <span>${escapeHtml(item.BedroomsTotal || 0)} bd · ${escapeHtml(item.BathroomsTotalInteger || 0)} ba · ${escapeHtml((item.LivingArea || 0).toLocaleString())} sqft</span>
+              <span>${escapeHtml(item.BedroomsTotal || 0)} bd · ${escapeHtml(item.BathroomsFull != null ? Number(item.BathroomsFull) + Number(item.BathroomsHalf || 0) / 2 : item.BathroomsTotalInteger || 0)} ba · ${escapeHtml((item.LivingArea || 0).toLocaleString())} sqft</span>
             </div>
           `;
         }
@@ -5405,7 +5439,7 @@
 
         let agentPhoto = item.AgentPhotoUrl || null;
         if (!agentPhoto && tenantConfig?.agentPhotoUrl) {
-          if (item.ListAgentMlsId === '633942' || (item.ListAgentFullName && tenantConfig?.displayName && item.ListAgentFullName.toLowerCase().includes(tenantConfig.displayName.toLowerCase())) || filterFeatured || filterAgentMlsId) {
+          if ((item.ListAgentFullName && tenantConfig?.displayName && item.ListAgentFullName.toLowerCase().includes(tenantConfig.displayName.toLowerCase()))) {
             agentPhoto = tenantConfig.agentPhotoUrl;
           }
         }
@@ -5430,7 +5464,7 @@
           <div class="card-img-wrapper">
             <img src="${imgUrl}" class="card-img" loading="lazy" alt="Property">
             ${badgeHtml}
-            <div class="card-tour-badge" title="Virtual / 3D Tour"><i class="fas fa-cube"></i></div>
+            ${item.VirtualTourURLUnbranded || item.VirtualTourURLBranded ? '<div class="card-tour-badge" title="Virtual / 3D Tour"><i class="fas fa-cube"></i></div>' : ''}
             ${agentPhoto ? `<img class="card-agent-badge" src="${escapeHtml(agentPhoto)}" alt="Agent" title="${escapeHtml(item.ListAgentFullName || '')}">` : ''}
           </div>
           <div class="card-content">
@@ -6166,7 +6200,9 @@
           document.documentElement.offsetHeight
         );
         const baseH = window.innerHeight || 900;
-        const targetH = isRecentActive ? Math.max(docH, baseH + 185) : docH;
+        const targetH = document.body.classList.contains('layout-grid-showcase')
+          ? Math.ceil(mainContainer.getBoundingClientRect().bottom + window.scrollY)
+          : isRecentActive ? Math.max(docH, baseH + 185) : docH;
         try {
           window.parent.postMessage({
             type: 'SNEAK_RESIZE',

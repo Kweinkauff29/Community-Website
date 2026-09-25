@@ -624,6 +624,8 @@ export function renderMemberUI() {
                                 <label class="form-label">Widget Purpose</label>
                                 <select id="builderWidgetType" class="form-control" onchange="updateCustomEmbedCode()">
                                     <option value="search">Full Search & Map</option>
+                                    <option value="grid">Listing Grid (4-Across Showcase)</option>
+                                    <option value="quick-search">Quick Search Bar (Heading & Redirect)</option>
                                     <option value="featured">Featured Agent Listings (Photo Badge)</option>
                                     <option value="openhouses">Upcoming Open Houses</option>
                                     <option value="landing">Pre-Filtered City & Price Landing Page</option>
@@ -695,6 +697,11 @@ export function renderMemberUI() {
                             <input type="text" id="builderHeading" class="form-control" placeholder="e.g. Homes for Sale in Fort Myers Beach, FL $350,000 to $500,000" oninput="updateCustomEmbedCode()">
                         </div>
 
+                        <div class="form-group" id="builderRedirectGroup" style="display:none; margin-bottom:20px;">
+                            <label class="form-label" for="builderRedirect">Search results page URL</label>
+                            <input type="text" id="builderRedirect" class="form-control" value="/quick-search" oninput="updateCustomEmbedCode()">
+                            <small>Use a page containing your Full Search & Map widget. Search filters are carried to that page.</small>
+                        </div>
                         <h4 style="margin: 0 0 8px 0; font-size: 0.95rem; color: var(--text);">Generated HTML Embed Snippet</h4>
                         <div class="code-box" id="customGeneratedSnippet">Loading snippet...</div>
                         <div style="display: flex; gap: 12px; margin-top: 12px;">
@@ -1033,18 +1040,19 @@ export function renderMemberUI() {
                 memberServingHost = data.embed.servingHost;
             }
 
-            const scriptUrl = memberServingHost + '/embed.js?v=2026.09.01.7.4b3';
+            const scriptUrl = memberServingHost + '/embed.js?v=2026.09.25.1';
+            if (data.embed?.searchRedirectUrl) document.getElementById('builderRedirect').value = data.embed.searchRedirectUrl;
             if (data.embed?.snippets) {
                 document.getElementById('embedSearchCode').innerText = data.embed.snippets.search?.htmlSnippet || '';
                 document.getElementById('embedBarCode').innerText = data.embed.snippets.search_bar?.htmlSnippet || '';
                 document.getElementById('embedOhCode').innerText = data.embed.snippets.open_houses?.htmlSnippet || '';
                 const featEl = document.getElementById('embedFeaturedCode');
                 if (featEl) {
-                    featEl.innerText = data.embed.snippets.featured_agent?.htmlSnippet || ('<!-- CCOR IDX Agent Featured Listings Widget -->\n<div id="sneak-idx-featured" data-site="' + memberSiteKey + '" data-widget="search" data-featured="true" style="width:100%;max-width:100%;"></div>\n<script src="' + scriptUrl + '" data-site="' + memberSiteKey + '" data-widget="search" data-featured="true" data-target="#sneak-idx-featured" async defer><' + '/script>');
+                    featEl.innerText = data.embed.snippets.featured_agent?.htmlSnippet || ('<!-- CCOR IDX Agent Featured Listings Widget -->\\n<div id="sneak-idx-featured" data-site="' + memberSiteKey + '" data-widget="search" data-featured="true" style="width:100%;max-width:100%;"></div>\\n<script src="' + scriptUrl + '" data-site="' + memberSiteKey + '" data-widget="search" data-featured="true" data-target="#sneak-idx-featured" async defer><' + '/script>');
                 }
                 const landingEl = document.getElementById('embedLandingCode');
                 if (landingEl) {
-                    landingEl.innerText = data.embed.snippets.landing_page?.htmlSnippet || ('<!-- CCOR IDX Route Landing Page Widget -->\n<div id="sneak-idx-landing" data-site="' + memberSiteKey + '" data-widget="search" data-route-mode="auto" style="width:100%;max-width:100%;"></div>\n<script src="' + scriptUrl + '" data-site="' + memberSiteKey + '" data-widget="search" data-route-mode="auto" data-target="#sneak-idx-landing" async defer><' + '/script>');
+                    landingEl.innerText = data.embed.snippets.landing_page?.htmlSnippet || ('<!-- CCOR IDX Route Landing Page Widget -->\\n<div id="sneak-idx-landing" data-site="' + memberSiteKey + '" data-widget="search" data-route-mode="auto" style="width:100%;max-width:100%;"></div>\\n<script src="' + scriptUrl + '" data-site="' + memberSiteKey + '" data-widget="search" data-route-mode="auto" data-target="#sneak-idx-landing" async defer><' + '/script>');
                 }
             }
 
@@ -1111,12 +1119,24 @@ export function renderMemberUI() {
             const pinAgents = document.getElementById('builderPinAgents')?.value?.trim();
             const pinListings = document.getElementById('builderPinListings')?.value?.trim();
 
-            const scriptUrl = memberServingHost + '/embed.js?v=2026.09.01.7.4b3';
-            const containerId = 'sneak-idx-' + (wType === 'featured' ? 'featured' : (wType === 'openhouses' ? 'open-houses' : (wType === 'landing' ? 'landing' : 'search')));
+            const scriptUrl = memberServingHost + '/embed.js?v=2026.09.25.1';
+            const containerId = wType === 'grid' ? 'sneak-idx-grid' : wType === 'quick-search' ? 'sneak-idx-search-bar' : 'sneak-idx-' + (wType === 'featured' ? 'featured' : (wType === 'openhouses' ? 'open-houses' : (wType === 'landing' ? 'landing' : 'search')));
 
             let dataAttrs = 'data-site="' + escapeHtml(memberSiteKey) + '" data-widget="search" data-target="#' + containerId + '"';
             let divAttrs = 'id="' + containerId + '" data-site="' + escapeHtml(memberSiteKey) + '" data-widget="search"';
 
+            document.getElementById('builderRedirectGroup').style.display = wType === 'quick-search' ? 'block' : 'none';
+            if (wType === 'grid') {
+                dataAttrs += ' data-layout="grid"';
+                divAttrs += ' data-layout="grid"';
+            }
+            if (wType === 'quick-search') {
+                const redirect = document.getElementById('builderRedirect').value.trim() || '/quick-search';
+                dataAttrs = dataAttrs.replace('data-widget="search"', 'data-widget="quick-search"');
+                divAttrs = divAttrs.replace('data-widget="search"', 'data-widget="quick-search"');
+                dataAttrs += ' data-redirect-url="' + escapeHtml(redirect) + '"';
+                divAttrs += ' data-redirect-url="' + escapeHtml(redirect) + '"';
+            }
             if (wType === 'featured') {
                 dataAttrs += ' data-featured="true"';
                 divAttrs += ' data-featured="true"';
@@ -1166,7 +1186,7 @@ export function renderMemberUI() {
                 divAttrs += ' data-pin-listings="' + escapeHtml(pinListings) + '"';
             }
 
-            const code = '<!-- CCOR IDX Real Estate Widget -->\n<div ' + divAttrs + ' style="width:100%;max-width:100%;"></div>\n<script src="' + scriptUrl + '" ' + dataAttrs + ' async defer><' + '/script>';
+            const code = '<!-- CCOR IDX Real Estate Widget -->\\n<div ' + divAttrs + ' style="width:100%;max-width:100%;"></div>\\n<script src="' + scriptUrl + '" ' + dataAttrs + ' async defer><' + '/script>';
             const box = document.getElementById('customGeneratedSnippet');
             if (box) box.innerText = code;
         }
@@ -1578,10 +1598,14 @@ export function renderMemberUI() {
             if (res.ok) alert('Branding saved successfully!');
         });
 
-        function copySnippet(elemId) {
+        async function copySnippet(elemId) {
             const text = document.getElementById(elemId).innerText;
-            navigator.clipboard.writeText(text);
-            alert('HTML embed snippet copied to clipboard!');
+            try {
+                await navigator.clipboard.writeText(text);
+                alert('HTML embed snippet copied to clipboard!');
+            } catch {
+                alert('Clipboard unavailable. Select and copy the HTML code above.');
+            }
         }
 
         async function logout() {

@@ -351,7 +351,7 @@
 
         // Construct iframe URL with signed session token and deterministic build version
         const separator = widgetPath.includes('?') ? '&' : '?';
-        const buildVersion = '2026.09.01.7.4b6';
+        const buildVersion = '2026.09.25.1';
         let iframeUrl = `${baseUrl}${widgetPath}${separator}site=${encodeURIComponent(siteKey)}&session=${encodeURIComponent(data.session)}&embed=true&v=${encodeURIComponent(buildVersion)}`;
         if (data.hostPageUrl) {
             iframeUrl += `&host_page=${encodeURIComponent(data.hostPageUrl)}`;
@@ -452,6 +452,7 @@
         }
 
         const isQuickSearch = widgetType === 'quick-search';
+        const isShowcase = ['grid', 'showcase', 'listing_grid'].includes(routeFilters.layout);
         let computedHeight = '900px';
         if (isQuickSearch) {
             computedHeight = customHeight || '185px';
@@ -470,7 +471,7 @@
         iframe.title = `CCOR IDX Real Estate Search (${siteKey})`;
         iframe.style.width = '100%';
         iframe.style.height = computedHeight;
-        iframe.style.minHeight = isQuickSearch ? '160px' : '550px';
+        iframe.style.minHeight = isQuickSearch ? '160px' : isShowcase ? '0' : '550px';
         iframe.style.border = 'none';
         iframe.style.display = 'block';
         iframe.style.overflow = 'hidden';
@@ -481,7 +482,7 @@
         mountContainer(container);
 
         // Parent window resize listener for non-fixed responsive embed mode
-        if (!isFixedHeight && !isQuickSearch) {
+        if (!isFixedHeight && !isQuickSearch && !isShowcase) {
             let resizeDebounceTimer = null;
             window.addEventListener('resize', function () {
                 if (resizeDebounceTimer) clearTimeout(resizeDebounceTimer);
@@ -498,6 +499,7 @@
         let lastResizeHeight = 0;
         window.addEventListener('message', function (e) {
             if (!e.data || e.data.type !== 'SNEAK_RESIZE') return;
+            if (e.origin !== new URL(baseUrl).origin) return;
             if (isFixedHeight) return;
             if (e.source && e.source !== iframe.contentWindow) return;
             if (e.data.siteKey && e.data.siteKey !== siteKey && e.data.siteKey !== 'ursulaweinkauff-com') return;
@@ -509,6 +511,16 @@
             if (Math.abs(newHeight - lastResizeHeight) <= 3) return;
             lastResizeHeight = newHeight;
 
+            if (isQuickSearch) {
+                const baseH = Number(e.data.baseHeight) || newHeight;
+                container.style.height = `${baseH}px`;
+                container.style.zIndex = e.data.isOverlay ? '1000' : '';
+                iframe.style.position = 'absolute';
+                iframe.style.top = '0';
+                iframe.style.left = '0';
+                iframe.style.height = `${newHeight}px`;
+                return;
+            }
             iframe.style.height = `${newHeight}px`;
             if (container) {
                 container.style.height = `${newHeight}px`;

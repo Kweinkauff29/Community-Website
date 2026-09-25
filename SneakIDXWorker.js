@@ -20,7 +20,7 @@ import {
 } from './sneak-shared/idx-query.js';
 import { isAccountEntitled } from './sneak-shared/entitlement.js';
 
-export const SNEAK_IDX_BUILD = '2026.09.01.7.4b2';
+export const SNEAK_IDX_BUILD = '2026.09.25.1';
 
 function capabilityEnabled(value, defaultValue = true) {
     if (value === undefined || value === null || value === '') return defaultValue;
@@ -959,7 +959,7 @@ async function handleSearch(url, site, branding, env, ctx, allowedOrigin) {
     // Fetch Results
     const selectCols = `
         ListingKey, ListingId, ListPrice, OriginalListPrice, UnparsedAddress, City, StateOrProvince, PostalCode, CountyOrParish,
-        BedroomsTotal, BathroomsTotalInteger, LivingArea, StandardStatus,
+        BedroomsTotal, BathroomsTotalInteger, BathroomsFull, BathroomsHalf, LivingArea, StandardStatus,
         PropertyType, PropertySubType, PrimaryPhoto, ListingContractDate,
         Latitude, Longitude, ModificationTimestamp, YearBuilt, LotSizeAcres,
         ListAgentFullName, ListOfficeName, ListOfficePhone, ListAgentMlsId, ListOfficeMlsId, SubdivisionName,

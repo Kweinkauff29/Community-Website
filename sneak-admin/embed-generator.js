@@ -6,7 +6,7 @@
 
 const STAGING_SERVING_URL = "https://sneak-idx-worker-staging.bonitaspringsrealtors.workers.dev";
 const PRODUCTION_SERVING_URL = "https://sneak-idx-worker.bonitaspringsrealtors.workers.dev";
-const EMBED_BUILD = '2026.09.01.7.4b2';
+const EMBED_BUILD = '2026.09.25.1';
 
 function resolveServingUrl(env = {}) {
     const isProd = (env?.SNEAK_ENV || '').toLowerCase() === 'production';
@@ -25,7 +25,8 @@ function resolveServingUrl(env = {}) {
 }
 
 export function generateEmbedSnippets(siteKey, allowedDomains = [], branding = {}, env = {}) {
-    const primaryColor = branding.primary_color || '#1a365d';
+    const domain = allowedDomains.find(domain => !domain.includes('*') && domain !== 'localhost');
+    const searchRedirectUrl = domain ? `https://${domain}/quick-search` : '/quick-search';
     const servingUrl = resolveServingUrl(env);
     const scriptUrl = `${servingUrl}/embed.js?v=${EMBED_BUILD}`;
 
@@ -47,8 +48,8 @@ export function generateEmbedSnippets(siteKey, allowedDomains = [], branding = {
             name: "Quick Search Bar",
             description: "Autocomplete search bar with city and subdivision suggestions, price/beds/baths filters, custom headline, and URL redirection.",
             htmlSnippet: `<!-- CCOR IDX Quick Search Bar Widget -->
-<div id="sneak-idx-search-bar" data-site="${siteKey}" data-widget="quick-search" data-heading="Find Your Southwest Florida Dream Home" data-redirect-url="http://${siteKey}.com/quick-search" style="width:100%;max-width:100%;"></div>
-<script src="${scriptUrl}" data-site="${siteKey}" data-widget="quick-search" data-heading="Find Your Southwest Florida Dream Home" data-redirect-url="http://${siteKey}.com/quick-search" data-target="#sneak-idx-search-bar" async defer></script>`,
+<div id="sneak-idx-search-bar" data-site="${siteKey}" data-widget="quick-search" data-heading="Find Your Southwest Florida Dream Home" data-redirect-url="${searchRedirectUrl}" style="width:100%;max-width:100%;"></div>
+<script src="${scriptUrl}" data-site="${siteKey}" data-widget="quick-search" data-heading="Find Your Southwest Florida Dream Home" data-redirect-url="${searchRedirectUrl}" data-target="#sneak-idx-search-bar" async defer></script>`,
             recommendedWidth: "100%",
             responsive: true
         },
@@ -115,6 +116,7 @@ export function generateEmbedSnippets(siteKey, allowedDomains = [], branding = {
         siteKey,
         servingHost: servingUrl,
         embedBuild: EMBED_BUILD,
+        searchRedirectUrl,
         allowedDomains,
         snippets,
         installationNotes: [
