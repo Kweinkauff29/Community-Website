@@ -20,7 +20,7 @@ import {
 } from './sneak-shared/idx-query.js';
 import { isAccountEntitled } from './sneak-shared/entitlement.js';
 
-export const SNEAK_IDX_BUILD = '2026.09.25.1';
+export const SNEAK_IDX_BUILD = '2026.09.25.2';
 
 function capabilityEnabled(value, defaultValue = true) {
     if (value === undefined || value === null || value === '') return defaultValue;

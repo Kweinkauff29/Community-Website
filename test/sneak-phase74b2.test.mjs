@@ -131,8 +131,8 @@ describe('Phase 7.4B2 production isolation and cutover safety', () => {
             SNEAK_SERVING_URL: 'https://sneak-idx-worker.bonitaspringsrealtors.workers.dev'
         });
         assert.equal(embed.servingHost, 'https://sneak-idx-worker.bonitaspringsrealtors.workers.dev');
-        assert.equal(embed.embedBuild, '2026.09.25.1');
-        assert.match(embed.snippets.search.htmlSnippet, /sneak-idx-worker\.bonitaspringsrealtors\.workers\.dev\/embed\.js\?v=2026\.09\.25\.1/);
+        assert.equal(embed.embedBuild, '2026.09.25.2');
+        assert.match(embed.snippets.search.htmlSnippet, /sneak-idx-worker\.bonitaspringsrealtors\.workers\.dev\/embed\.js\?v=2026\.09\.25\.2/);
     });
 
     test('all four protected legacy files remain zero-diff from origin/main', () => {

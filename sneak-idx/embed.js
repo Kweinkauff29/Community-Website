@@ -351,7 +351,7 @@
 
         // Construct iframe URL with signed session token and deterministic build version
         const separator = widgetPath.includes('?') ? '&' : '?';
-        const buildVersion = '2026.09.25.1';
+        const buildVersion = '2026.09.25.2';
         let iframeUrl = `${baseUrl}${widgetPath}${separator}site=${encodeURIComponent(siteKey)}&session=${encodeURIComponent(data.session)}&embed=true&v=${encodeURIComponent(buildVersion)}`;
         if (data.hostPageUrl) {
             iframeUrl += `&host_page=${encodeURIComponent(data.hostPageUrl)}`;
@@ -508,7 +508,7 @@
             if (!Number.isFinite(newHeight) || newHeight < 140 || newHeight > 3500) return;
 
             // Debounce small jitter <= 3px
-            if (Math.abs(newHeight - lastResizeHeight) <= 3) return;
+            if (!isQuickSearch && Math.abs(newHeight - lastResizeHeight) <= 3) return;
             lastResizeHeight = newHeight;
 
             if (isQuickSearch) {

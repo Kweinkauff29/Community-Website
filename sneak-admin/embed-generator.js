@@ -6,7 +6,7 @@
 
 const STAGING_SERVING_URL = "https://sneak-idx-worker-staging.bonitaspringsrealtors.workers.dev";
 const PRODUCTION_SERVING_URL = "https://sneak-idx-worker.bonitaspringsrealtors.workers.dev";
-const EMBED_BUILD = '2026.09.25.1';
+const EMBED_BUILD = '2026.09.25.2';
 
 function resolveServingUrl(env = {}) {
     const isProd = (env?.SNEAK_ENV || '').toLowerCase() === 'production';

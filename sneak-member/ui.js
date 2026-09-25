@@ -1040,7 +1040,7 @@ export function renderMemberUI() {
                 memberServingHost = data.embed.servingHost;
             }
 
-            const scriptUrl = memberServingHost + '/embed.js?v=2026.09.25.1';
+            const scriptUrl = memberServingHost + '/embed.js?v=2026.09.25.2';
             if (data.embed?.searchRedirectUrl) document.getElementById('builderRedirect').value = data.embed.searchRedirectUrl;
             if (data.embed?.snippets) {
                 document.getElementById('embedSearchCode').innerText = data.embed.snippets.search?.htmlSnippet || '';
@@ -1119,7 +1119,7 @@ export function renderMemberUI() {
             const pinAgents = document.getElementById('builderPinAgents')?.value?.trim();
             const pinListings = document.getElementById('builderPinListings')?.value?.trim();
 
-            const scriptUrl = memberServingHost + '/embed.js?v=2026.09.25.1';
+            const scriptUrl = memberServingHost + '/embed.js?v=2026.09.25.2';
             const containerId = wType === 'grid' ? 'sneak-idx-grid' : wType === 'quick-search' ? 'sneak-idx-search-bar' : 'sneak-idx-' + (wType === 'featured' ? 'featured' : (wType === 'openhouses' ? 'open-houses' : (wType === 'landing' ? 'landing' : 'search')));
 
             let dataAttrs = 'data-site="' + escapeHtml(memberSiteKey) + '" data-widget="search" data-target="#' + containerId + '"';
