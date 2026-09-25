@@ -813,10 +813,74 @@ export function renderAdminHtml(env = {}) {
                     \${site ? \`<section class="card"><div class="section-title"><h3>IDX Site</h3><span class="badge badge-\${escapeHtml(site.status)}">\${escapeHtml(site.status)}</span></div><p><strong>\${escapeHtml(site.site_name)}</strong> · <code>\${escapeHtml(site.site_key)}</code></p><p class="muted">IDX Search Scope: <strong>\${escapeHtml(site.scope_type)}</strong> \${escapeHtml(site.scope_value || '(full market inventory)')} · Participant Agent MLS: <code>\${escapeHtml(acc.agent_mls_id || '—')}</code></p><div class="actions" style="margin-top:.7rem"><button class="btn btn-danger btn-sm" onclick="requestSiteDisable('\${escapeHtml(site.id)}','\${escapeHtml(acc.id)}')">Disable Site</button><button class="btn btn-primary btn-sm" onclick="enableSite('\${escapeHtml(site.id)}','\${escapeHtml(acc.id)}')">Enable Site</button></div></section>
                     <section class="card"><div class="section-title"><h3>Domains</h3><span class="badge">\${site.domains.length}</span></div><div>\${site.domains.map(d=>'<p><strong>'+escapeHtml(d.domain)+'</strong> · '+(d.verified===1?'Verified':'Ownership not verified')+' · '+escapeHtml(d.status)+' <button class="btn btn-secondary btn-sm" data-domain-id="'+escapeHtml(d.id)+'" data-account-id="'+escapeHtml(acc.id)+'" onclick="authorizeDomain(this.dataset.domainId,this.dataset.accountId)">Authorize</button> <button class="btn btn-danger btn-sm" data-domain-id="'+escapeHtml(d.id)+'" data-account-id="'+escapeHtml(acc.id)+'" data-domain="'+escapeHtml(d.domain)+'" onclick="requestDomainDelete(this.dataset.domainId,this.dataset.accountId,this.dataset.domain)">Remove</button></p>').join('') || '<p class="muted">No domain configured.</p>'}</div><form class="filters" onsubmit="addAdminDomain(event,'\${escapeHtml(site.id)}','\${escapeHtml(acc.id)}')" style="margin-top:.8rem"><input id="detailNewDomain" class="form-control" placeholder="www.member-site.com" required><button class="btn btn-secondary">Add Pending Domain</button></form></section>
                     <section class="card"><div class="section-title"><h3>Branding</h3></div><form onsubmit="saveBranding(event,'\${escapeHtml(site.id)}','\${escapeHtml(acc.id)}')"><div class="field-grid"><div class="form-group"><label>Display Name</label><input id="brandName" class="form-control" value="\${escapeHtml(site.branding?.display_name||'')}"></div><div class="form-group"><label>Brokerage</label><input id="brandBrokerage" class="form-control" value="\${escapeHtml(site.branding?.brokerage||'')}"></div><div class="form-group"><label>Phone</label><input id="brandPhone" class="form-control" value="\${escapeHtml(site.branding?.phone||'')}"></div><div class="form-group"><label>Email</label><input id="brandEmail" type="email" class="form-control" value="\${escapeHtml(site.branding?.email||'')}"></div><div class="form-group"><label>Logo URL</label><input id="brandLogo" class="form-control" value="\${escapeHtml(site.branding?.logo_url||'')}"></div><div class="form-group"><label>Primary Color</label><input id="brandPrimary" class="form-control" value="\${escapeHtml(site.branding?.primary_color||'#1a365d')}"></div></div><button class="btn btn-primary">Save Branding</button></form></section>
-                    <section class="card"><div class="section-title"><h3>Responsive Embed</h3><span class="badge badge-active">\${escapeHtml(site.embed?.embedBuild || '')}</span></div><p class="muted">\${(site.embed?.installationNotes||[]).map(escapeHtml).join(' ')}</p><div class="code-block" id="embedSnippet">\${escapeHtml(site.embed?.snippets?.search?.htmlSnippet || '')}</div><button class="btn btn-primary btn-sm" onclick="copyEmbedCode()">Copy Embed Code</button></section>\` : '<section class="card"><h3>IDX Sites</h3><p class="status-blocked">No site configured.</p></section>'}
+                    <section class="card" style="grid-column: 1 / -1;"><div class="section-title"><div><h3 style="margin:0;">Responsive Embed Code Generator & Presets</h3><p class="muted" style="margin:4px 0 0 0;">Select a preset or customize preferred agents, pinned listings, and landing page parameters.</p></div><span class="badge badge-active">\${escapeHtml(site.embed?.embedBuild || '')}</span></div>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px; margin: 1.2rem 0; background: #0b1523; padding: 16px; border-radius: 8px; border: 1px solid var(--border);">
+                        <div class="form-group" style="margin:0;">
+                            <label style="font-weight:600; color:#fff;">Widget Preset</label>
+                            <select id="adminEmbedType" class="form-control" onchange="updateAdminSnippet('\${escapeHtml(site.site_key)}')">
+                                <option value="featured_agent">⭐ Featured Agent Listings (With Headshot Avatar)</option>
+                                <option value="pinned_listings">📌 Pinned Agent Listings (Pin Preferred Agents First)</option>
+                                <option value="search">🔍 Full Search & Map (Standard)</option>
+                                <option value="landing_page">🏡 Pre-Filtered Route Landing Page</option>
+                                <option value="listing_grid">🏷️ Listing Grid (4-Across Showcase)</option>
+                                <option value="open_houses">📅 Open Houses Showcase</option>
+                                <option value="search_bar">⚡ Quick Search Bar</option>
+                            </select>
+                            <p id="adminEmbedTypeDesc" style="font-size:0.75rem; color:#94a3b8; margin:6px 0 0 0;"></p>
+                        </div>
+                        <div class="form-group" style="margin:0;">
+                            <label style="font-weight:600; color:#fff;">Preferred Agent MLS ID(s)</label>
+                            <input type="text" id="adminPinAgent" class="form-control" placeholder="e.g. 633942, C3242021" oninput="updateAdminSnippet('\${escapeHtml(site.site_key)}')">
+                            <p style="font-size:0.75rem; color:#94a3b8; margin:6px 0 0 0;">Listings from these agents will appear first before other search results.</p>
+                        </div>
+                        <div class="form-group" style="margin:0;">
+                            <label style="font-weight:600; color:#fff;">Pin Specific Listing Key(s)</label>
+                            <input type="text" id="adminPinListings" class="form-control" placeholder="e.g. 224012345, 224098765" oninput="updateAdminSnippet('\${escapeHtml(site.site_key)}')">
+                            <p style="font-size:0.75rem; color:#94a3b8; margin:6px 0 0 0;">Specific listing keys pinned to the very top in exact priority sequence.</p>
+                        </div>
+                    </div>
+                    <p class="muted" style="margin-bottom:0.5rem;">Copy and paste the snippet below into the member's website (WordPress, Beaver Builder, Wix, etc.):</p>
+                    <div class="code-block" id="embedSnippet" style="max-height: 280px; overflow-y: auto;"></div>
+                    <div class="actions" style="margin-top:0.8rem; display:flex; gap:12px; align-items:center;">
+                        <button class="btn btn-primary btn-sm" onclick="copyEmbedCode()">📋 Copy Embed Code</button>
+                        <span id="copyFeedback" class="status-ready" style="font-size:0.85rem; display:none;">Copied to clipboard!</span>
+                    </div>
+                    </section>\` : '<section class="card"><h3>IDX Sites</h3><p class="status-blocked">No site configured.</p></section>'}
                     <section class="card"><div class="section-title"><h3>Readiness Checklist</h3><span class="badge">Automated</span></div>\${(readiness.checklist||[]).map(c=>'<p class="'+(c.status==='pass'?'status-ready':'status-blocked')+'">'+(c.status==='pass'?'✓':'×')+' '+escapeHtml(c.label)+'</p>').join('')}</section>
                     <section class="card"><div class="section-title"><h3>Audit History</h3><span class="badge">Latest 50</span></div><div class="audit-list">\${(data.audit||[]).map(a=>'<div class="audit-item"><strong>'+escapeHtml(a.action)+'</strong> · '+escapeHtml(a.created_at||'')+'<br><span class="muted">'+escapeHtml(a.summary||'')+'</span></div>').join('') || '<p class="muted">No matching audit records.</p>'}</div></section>
                 </div>\`;
+            setTimeout(() => { if (typeof updateAdminSnippet === 'function') updateAdminSnippet(site?.site_key || ''); }, 0);
+        }
+
+        function updateAdminSnippet(siteKey) {
+            const embedData = window.accountDetailSiteEmbed || {};
+            const snippets = embedData.snippets || {};
+            const typeSelect = document.getElementById('adminEmbedType');
+            const selectedType = typeSelect ? typeSelect.value : 'featured_agent';
+            const pinAgentInput = document.getElementById('adminPinAgent');
+            const pinListingsInput = document.getElementById('adminPinListings');
+            const descEl = document.getElementById('adminEmbedTypeDesc');
+            const snippetEl = document.getElementById('embedSnippet');
+
+            const baseItem = snippets[selectedType] || snippets.featured_agent || snippets.search || {};
+            if (descEl && baseItem.description) {
+                descEl.textContent = baseItem.description;
+            }
+
+            let code = baseItem.htmlSnippet || '';
+            const pinAgentVal = pinAgentInput ? pinAgentInput.value.trim() : '';
+            const pinListingsVal = pinListingsInput ? pinListingsInput.value.trim() : '';
+
+            if (pinAgentVal) {
+                code = code.replace(/data-widget="[^"]+"/, \`$& data-pin-agents="\${escapeHtml(pinAgentVal)}"\`);
+            }
+            if (pinListingsVal) {
+                code = code.replace(/data-widget="[^"]+"/, \`$& data-pin-listings="\${escapeHtml(pinListingsVal)}"\`);
+            }
+
+            if (snippetEl) {
+                snippetEl.textContent = code;
+            }
         }
 
         function openImpactModal(title, message, confirmLabel, action) {
@@ -841,7 +905,19 @@ export function renderAdminHtml(env = {}) {
         async function inviteMember(e,accountId){e.preventDefault();const result=await api('/accounts/'+encodeURIComponent(accountId)+'/members',{method:'POST',body:{email:inviteEmail.value,role:'owner'}});notify(result.invitationRequested?'Invitation requested.':'Member associated; live email delivery was not confirmed.',!result.invitationRequested);await viewAccount(accountId,true);}
         async function addAdminDomain(e,siteId,accountId){e.preventDefault();await api('/sites/'+encodeURIComponent(siteId)+'/domains',{method:'POST',body:{domain:detailNewDomain.value,verified:false,status:'disabled'}});notify('Pending domain added.');await viewAccount(accountId,true);}
         async function saveBranding(e,siteId,accountId){e.preventDefault();await api('/sites/'+encodeURIComponent(siteId)+'/branding',{method:'PUT',body:{display_name:brandName.value,brokerage:brandBrokerage.value,phone:brandPhone.value,email:brandEmail.value,logo_url:brandLogo.value,primary_color:brandPrimary.value}});notify('Branding saved.');await viewAccount(accountId,true);}
-        function copyEmbedCode(){const text=document.getElementById('embedSnippet')?.innerText||'';navigator.clipboard.writeText(text).then(()=>notify('Embed code copied.')).catch(()=>notify('Select and copy the code manually.',true));}
+
+        function copyEmbedCode(){
+            const text=document.getElementById('embedSnippet')?.innerText||'';
+            if (!text) return;
+            navigator.clipboard.writeText(text).then(()=>{
+                notify('Embed code copied.');
+                const fb = document.getElementById('copyFeedback');
+                if (fb) {
+                    fb.style.display = 'inline';
+                    setTimeout(()=>{ fb.style.display='none'; }, 2500);
+                }
+            }).catch(()=>notify('Select and copy the code manually.',true));
+        }
 
         function openOnboardModal() {
             const modal=document.createElement('div');modal.className='modal-backdrop';modal.id='onboardModal';modal.innerHTML=\`<div class="modal">
