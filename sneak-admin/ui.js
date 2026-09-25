@@ -772,6 +772,10 @@ export function renderAdminHtml(env = {}) {
             if (!canRender(revision, 'account', id)) return;
             const acc = data.account;
             const site = data.sites?.[0] || null;
+            window.accountDetailSiteEmbed = site?.embed || {};
+            window.accountDetailSiteKey = site?.site_key || '';
+            window.accountDetailServingHost = site?.embed?.servingHost || 'https://sneak-idx-worker.bonitaspringsrealtors.workers.dev';
+            window.accountDetailEmbedBuild = site?.embed?.embedBuild || '2026.09.01.7.4b2';
             const ent = data.entitlement || {};
             const rec = data.reconciliation || {};
             const readiness = data.readiness || { setupProgress:{}, launchBlockers:[], checklist:[] };
@@ -813,7 +817,7 @@ export function renderAdminHtml(env = {}) {
                     \${site ? \`<section class="card"><div class="section-title"><h3>IDX Site</h3><span class="badge badge-\${escapeHtml(site.status)}">\${escapeHtml(site.status)}</span></div><p><strong>\${escapeHtml(site.site_name)}</strong> · <code>\${escapeHtml(site.site_key)}</code></p><p class="muted">IDX Search Scope: <strong>\${escapeHtml(site.scope_type)}</strong> \${escapeHtml(site.scope_value || '(full market inventory)')} · Participant Agent MLS: <code>\${escapeHtml(acc.agent_mls_id || '—')}</code></p><div class="actions" style="margin-top:.7rem"><button class="btn btn-danger btn-sm" onclick="requestSiteDisable('\${escapeHtml(site.id)}','\${escapeHtml(acc.id)}')">Disable Site</button><button class="btn btn-primary btn-sm" onclick="enableSite('\${escapeHtml(site.id)}','\${escapeHtml(acc.id)}')">Enable Site</button></div></section>
                     <section class="card"><div class="section-title"><h3>Domains</h3><span class="badge">\${site.domains.length}</span></div><div>\${site.domains.map(d=>'<p><strong>'+escapeHtml(d.domain)+'</strong> · '+(d.verified===1?'Verified':'Ownership not verified')+' · '+escapeHtml(d.status)+' <button class="btn btn-secondary btn-sm" data-domain-id="'+escapeHtml(d.id)+'" data-account-id="'+escapeHtml(acc.id)+'" onclick="authorizeDomain(this.dataset.domainId,this.dataset.accountId)">Authorize</button> <button class="btn btn-danger btn-sm" data-domain-id="'+escapeHtml(d.id)+'" data-account-id="'+escapeHtml(acc.id)+'" data-domain="'+escapeHtml(d.domain)+'" onclick="requestDomainDelete(this.dataset.domainId,this.dataset.accountId,this.dataset.domain)">Remove</button></p>').join('') || '<p class="muted">No domain configured.</p>'}</div><form class="filters" onsubmit="addAdminDomain(event,'\${escapeHtml(site.id)}','\${escapeHtml(acc.id)}')" style="margin-top:.8rem"><input id="detailNewDomain" class="form-control" placeholder="www.member-site.com" required><button class="btn btn-secondary">Add Pending Domain</button></form></section>
                     <section class="card"><div class="section-title"><h3>Branding</h3></div><form onsubmit="saveBranding(event,'\${escapeHtml(site.id)}','\${escapeHtml(acc.id)}')"><div class="field-grid"><div class="form-group"><label>Display Name</label><input id="brandName" class="form-control" value="\${escapeHtml(site.branding?.display_name||'')}"></div><div class="form-group"><label>Brokerage</label><input id="brandBrokerage" class="form-control" value="\${escapeHtml(site.branding?.brokerage||'')}"></div><div class="form-group"><label>Phone</label><input id="brandPhone" class="form-control" value="\${escapeHtml(site.branding?.phone||'')}"></div><div class="form-group"><label>Email</label><input id="brandEmail" type="email" class="form-control" value="\${escapeHtml(site.branding?.email||'')}"></div><div class="form-group"><label>Logo URL</label><input id="brandLogo" class="form-control" value="\${escapeHtml(site.branding?.logo_url||'')}"></div><div class="form-group"><label>Primary Color</label><input id="brandPrimary" class="form-control" value="\${escapeHtml(site.branding?.primary_color||'#1a365d')}"></div></div><button class="btn btn-primary">Save Branding</button></form></section>
-                    <section class="card" style="grid-column: 1 / -1;"><div class="section-title"><div><h3 style="margin:0;">Responsive Embed Code Generator & Presets</h3><p class="muted" style="margin:4px 0 0 0;">Select a preset or customize preferred agents, pinned listings, and landing page parameters.</p></div><span class="badge badge-active">\${escapeHtml(site.embed?.embedBuild || '')}</span></div>
+                    <section class="card" style="grid-column: 1 / -1;"><div class="section-title"><div><h3 style="margin:0;">Responsive Embed Code Generator & Presets</h3><p class="muted" style="margin:4px 0 0 0;">Select a preset or customize preferred agents, pinned listings, and landing page parameters.</p></div><span class="badge badge-active">\${escapeHtml(site.embed?.embedBuild || '2026.09.01.7.4b2')}</span></div>
                     <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px; margin: 1.2rem 0; background: #0b1523; padding: 16px; border-radius: 8px; border: 1px solid var(--border);">
                         <div class="form-group" style="margin:0;">
                             <label style="font-weight:600; color:#fff;">Widget Preset</label>
@@ -826,11 +830,11 @@ export function renderAdminHtml(env = {}) {
                                 <option value="open_houses">📅 Open Houses Showcase</option>
                                 <option value="search_bar">⚡ Quick Search Bar</option>
                             </select>
-                            <p id="adminEmbedTypeDesc" style="font-size:0.75rem; color:#94a3b8; margin:6px 0 0 0;"></p>
+                            <p id="adminEmbedTypeDesc" style="font-size:0.75rem; color:#94a3b8; margin:6px 0 0 0;">Hero/featured section showcasing participant agent listings with headshot avatar and search bar.</p>
                         </div>
                         <div class="form-group" style="margin:0;">
                             <label style="font-weight:600; color:#fff;">Preferred Agent MLS ID(s)</label>
-                            <input type="text" id="adminPinAgent" class="form-control" placeholder="e.g. 633942, C3242021" oninput="updateAdminSnippet('\${escapeHtml(site.site_key)}')">
+                            <input type="text" id="adminPinAgent" class="form-control" value="\${escapeHtml(acc.agent_mls_id || '')}" placeholder="e.g. 633942, C3242021" oninput="updateAdminSnippet('\${escapeHtml(site.site_key)}')">
                             <p style="font-size:0.75rem; color:#94a3b8; margin:6px 0 0 0;">Listings from these agents will appear first before other search results.</p>
                         </div>
                         <div class="form-group" style="margin:0;">
@@ -852,9 +856,56 @@ export function renderAdminHtml(env = {}) {
             setTimeout(() => { if (typeof updateAdminSnippet === 'function') updateAdminSnippet(site?.site_key || ''); }, 0);
         }
 
-        function updateAdminSnippet(siteKey) {
-            const embedData = window.accountDetailSiteEmbed || {};
-            const snippets = embedData.snippets || {};
+        const ADMIN_PRESET_CONFIG = {
+            featured_agent: {
+                id: 'sneak-idx-featured',
+                name: 'Featured Agent Listings',
+                desc: 'Hero/featured section showcasing participant agent listings with headshot avatar and search bar.',
+                attrs: 'data-widget="search" data-featured="true"'
+            },
+            pinned_listings: {
+                id: 'sneak-idx-pinned',
+                name: 'Pinned Agent Listings',
+                desc: 'Displays full search results with preferred/member listings pinned at the very top.',
+                attrs: 'data-widget="search" data-pin-own="true"'
+            },
+            search: {
+                id: 'sneak-idx-search',
+                name: 'Full Search & Map',
+                desc: 'Comprehensive property search with interactive map, filters, and list view.',
+                attrs: 'data-widget="search"'
+            },
+            landing_page: {
+                id: 'sneak-idx-landing',
+                name: 'Route Landing Page',
+                desc: 'Dedicated pre-filtered landing page (detects city and price from URL or attributes).',
+                attrs: 'data-widget="search" data-route-mode="auto"'
+            },
+            listing_grid: {
+                id: 'sneak-idx-grid',
+                name: 'Listing Grid Showcase',
+                desc: 'Clean 4-across responsive property card grid showcase without sidebar.',
+                attrs: 'data-widget="search" data-layout="grid"'
+            },
+            open_houses: {
+                id: 'sneak-idx-open-houses',
+                name: 'Open Houses Showcase',
+                desc: 'Interactive showcase filtered to upcoming weekend open houses.',
+                attrs: 'data-widget="search" data-open-houses="true"'
+            },
+            search_bar: {
+                id: 'sneak-idx-bar',
+                name: 'Quick Search Bar',
+                desc: 'Compact standalone search bar that directs queries to the full search experience.',
+                attrs: 'data-widget="search" data-mode="bar"'
+            }
+        };
+
+        function updateAdminSnippet(explicitSiteKey) {
+            const siteKey = explicitSiteKey || window.accountDetailSiteKey || 'ursula-weinkauff';
+            const servingHost = window.accountDetailServingHost || 'https://sneak-idx-worker.bonitaspringsrealtors.workers.dev';
+            const embedBuild = window.accountDetailEmbedBuild || '2026.09.01.7.4b2';
+
             const typeSelect = document.getElementById('adminEmbedType');
             const selectedType = typeSelect ? typeSelect.value : 'featured_agent';
             const pinAgentInput = document.getElementById('adminPinAgent');
@@ -862,21 +913,24 @@ export function renderAdminHtml(env = {}) {
             const descEl = document.getElementById('adminEmbedTypeDesc');
             const snippetEl = document.getElementById('embedSnippet');
 
-            const baseItem = snippets[selectedType] || snippets.featured_agent || snippets.search || {};
-            if (descEl && baseItem.description) {
-                descEl.textContent = baseItem.description;
-            }
+            const preset = ADMIN_PRESET_CONFIG[selectedType] || ADMIN_PRESET_CONFIG.search;
+            if (descEl) descEl.textContent = preset.desc;
 
-            let code = baseItem.htmlSnippet || '';
             const pinAgentVal = pinAgentInput ? pinAgentInput.value.trim() : '';
             const pinListingsVal = pinListingsInput ? pinListingsInput.value.trim() : '';
 
+            let extraAttrs = '';
             if (pinAgentVal) {
-                code = code.replace(/data-widget="[^"]+"/, \`$& data-pin-agents="\${escapeHtml(pinAgentVal)}"\`);
+                extraAttrs += ' data-pin-agents="' + escapeHtml(pinAgentVal) + '"';
             }
             if (pinListingsVal) {
-                code = code.replace(/data-widget="[^"]+"/, \`$& data-pin-listings="\${escapeHtml(pinListingsVal)}"\`);
+                extraAttrs += ' data-pin-listings="' + escapeHtml(pinListingsVal) + '"';
             }
+
+            const containerAttrs = 'id="' + preset.id + '" data-site="' + escapeHtml(siteKey) + '" ' + preset.attrs + extraAttrs + ' style="width:100%;max-width:100%;"';
+            const scriptAttrs = 'src="' + servingHost + '/embed.js?v=' + embedBuild + '" data-site="' + escapeHtml(siteKey) + '" ' + preset.attrs + extraAttrs + ' data-target="#' + preset.id + '" async defer';
+
+            const code = '<!-- CCOR IDX ' + preset.name + ' Widget -->\\n<div ' + containerAttrs + '></div>\\n<script ' + scriptAttrs + '><' + '/script>';
 
             if (snippetEl) {
                 snippetEl.textContent = code;
