@@ -8,6 +8,7 @@ enabled = true
 head_sampling_rate = 1
 
 [vars]
+EMAIL_BCC = "tech@berealtors.org"
 SNEAK_SERVING_URL = "https://sneak-idx-worker.bonitaspringsrealtors.workers.dev"
 SNEAK_ENV = "production"
 CONSUMER_WORKER_URL = "https://sneak-idx-consumer.bonitaspringsrealtors.workers.dev"

@@ -10,6 +10,8 @@ Notifications go to active or invited account owner/admin email addresses. First
 
 Apply migration `0036_sneak_contacts_notifications.sql` before deploying the serving/member workers. Existing contacts are backfilled without historical signup/inquiry emails. Weekly delivery starts with the first scheduled period ending after the settings row was created.
 
+Production email workers currently set `EMAIL_BCC = "tech@berealtors.org"` for temporary delivery monitoring, including sign-in links, inquiries, and summaries. Remove this variable to stop the copies. BCC is added only at the final Mailjet send, including relayed consumer messages; a message already addressed to that mailbox is not duplicated.
+
 The member worker reuses its configured Mailjet credentials and verified sender. Consumer authentication calls it through the `MAILER` service binding. Both workers need the same random `SNEAK_MAILER_SECRET` (a Cloudflare secret, never an embed attribute). The member worker runs the owner queue every five minutes. Failed temporary sends retry up to five times; failed or canceled delivery status is shown in the dashboard. Account/site suspension and expired entitlements stop notification delivery. Current recipient roles and notification toggles are checked again before each send.
 
 The internal `/internal/email` endpoint requires that shared secret. An internal request with `sandbox: true` performs Mailjet validation without delivery and returns `validated`, never `sent`. Production sends require a provider message ID. Do not put the shared secret or Mailjet keys in client code.

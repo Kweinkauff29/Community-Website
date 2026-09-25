@@ -8,6 +8,7 @@ enabled = true
 head_sampling_rate = 1
 
 [vars]
+EMAIL_BCC = "tech@berealtors.org"
 SNEAK_ENV = "production"
 EMAIL_ALERTS_ENABLED = "false"
 ALERTS_WORKER_URL = "https://sneak-idx-alerts.bonitaspringsrealtors.workers.dev"

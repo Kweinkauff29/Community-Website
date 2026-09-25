@@ -137,3 +137,16 @@ test('consumer health recognizes the configured mailer service without exposing 
  const response=await worker.fetch(new Request('https://consumer.example/api/consumer/version'),{MAILER:{},SNEAK_MAILER_SECRET:'private-secret',CONSUMER_AUTH_ENABLED:'true'});
  const body=await response.json();assert.equal(body.emailProviderConfigured,true);assert.equal(body.authEnabled,true);assert.doesNotMatch(JSON.stringify(body),/private-secret/);
 });
+
+test('platform BCC applies to direct and relayed mail without changing primary recipients',async t=>{
+ const {sendTransactionalEmail}=await import('../sneak-shared/email-provider.js');const messages=[];
+ t.mock.method(globalThis,'fetch',async(url,options)=>{messages.push(JSON.parse(options.body).Messages[0]);return Response.json({Messages:[{Status:'success',To:[{MessageID:'123'}]}]});});
+ const sendingEnv={MAILJET_API_KEY:'test',MAILJET_SECRET_KEY:'test',EMAIL_BCC:'tech@berealtors.org',SNEAK_MAILER_SECRET:'test-relay'};
+ const message={to:'buyer@example.com',subject:'Sign-in link',html:'<p>Sign in</p>'};
+ assert.equal((await sendTransactionalEmail(sendingEnv,message)).success,true);
+ const relayEnv={SNEAK_MAILER_SECRET:'test-relay',MAILER:{fetch:(url,options)=>handleInternalMail(new Request(url,options),sendingEnv)}};
+ assert.equal((await sendTransactionalEmail(relayEnv,message)).success,true);
+ for(const payload of messages){assert.deepEqual(payload.To,[{Email:'buyer@example.com'}]);assert.deepEqual(payload.Bcc,[{Email:'tech@berealtors.org'}]);assert.equal(payload.Cc,undefined);}
+ await sendTransactionalEmail(sendingEnv,{...message,to:'TECH@berealtors.org'});assert.equal(messages.at(-1).Bcc,undefined);
+ await sendTransactionalEmail({...sendingEnv,EMAIL_BCC:''},message);assert.equal(messages.at(-1).Bcc,undefined);
+});
