@@ -179,8 +179,22 @@ export default {
         const SEL = "ListingKey,ListingId,ListPrice,UnparsedAddress,City,CountyOrParish,BedroomsTotal,BathroomsTotalInteger,LivingArea,StandardStatus,PropertyType,PropertySubType,Media,ListingContractDate,Coordinates,ModificationTimestamp,YearBuilt,LotSizeAcres,ListAgentFullName,ListOfficeName,ListOfficePhone,ListAgentMlsId";
         const baseF = "OriginatingSystemKey eq 'bsaor' and StateOrProvince eq 'FL' and (StandardStatus eq 'Active' or StandardStatus eq 'Active Under Contract' or StandardStatus eq 'Pending') and (CountyOrParish eq 'Lee' or CountyOrParish eq 'Collier') and (toupper(City) eq 'BONITA SPRINGS' or toupper(City) eq 'ESTERO' or toupper(City) eq 'NAPLES' or toupper(City) eq 'FORT MYERS' or toupper(City) eq 'FT MYERS' or toupper(City) eq 'FT. MYERS')";
 
+        // 1. Fetch existing listing keys and modification timestamps from D1 for smart diffing
+        const existingMap = new Map();
+        try {
+            const existingRecords = await env.DB.prepare("SELECT ListingKey, ModificationTimestamp FROM listings").all();
+            for (const row of (existingRecords.results || [])) {
+                existingMap.set(row.ListingKey, row.ModificationTimestamp || '');
+            }
+            console.log(`Loaded ${existingMap.size} existing listings from D1 for diffing.`);
+        } catch (e) {
+            console.error("Failed to load existing listings for diffing, falling back to full insert:", e);
+        }
+
         const BATCH = 200;
         const allFetchedKeys = new Set();
+        let updatedCount = 0;
+        let skippedCount = 0;
         
         const p = new URLSearchParams({
             '$filter': baseF,
@@ -200,14 +214,22 @@ export default {
             const items = data.value || [];
             if (!items.length) break;
 
-            const statements = items.map(i => {
+            const statements = [];
+            for (const i of items) {
                 allFetchedKeys.add(i.ListingKey);
+
+                // Diff check: if listing already exists with identical ModificationTimestamp, skip D1 write
+                if (existingMap.has(i.ListingKey) && existingMap.get(i.ListingKey) === (i.ModificationTimestamp || '')) {
+                    skippedCount++;
+                    continue;
+                }
+
                 let photo = "";
                 if (i.Media && i.Media.length) {
                     const sorted = i.Media.sort((a, b) => (a.Order || 0) - (b.Order || 0));
                     photo = sorted[0].MediaURL || sorted[0].MediaUrl || sorted[0].MediaURLLarge || "";
                 }
-                return env.DB.prepare(`
+                statements.push(env.DB.prepare(`
                     INSERT OR REPLACE INTO listings (
                         ListingKey, ListingId, ListPrice, UnparsedAddress, City, CountyOrParish, 
                         BedroomsTotal, BathroomsTotalInteger, LivingArea, StandardStatus, 
@@ -223,10 +245,13 @@ export default {
                     i.YearBuilt || null, i.LotSizeAcres || null,
                     i.ListAgentFullName || null, i.ListOfficeName || null, i.ListOfficePhone || null,
                     i.ListAgentMlsId || null
-                );
-            });
+                ));
+                updatedCount++;
+            }
 
-            await env.DB.batch(statements);
+            if (statements.length > 0) {
+                await env.DB.batch(statements);
+            }
             
             next = data['@odata.nextLink'] || null;
             if (next && !next.includes('access_token')) {
@@ -235,22 +260,24 @@ export default {
         }
 
         // Cleanup: Remove listings in D1 that are no longer in the active OData set
-        if (allFetchedKeys.size > 0) {
-            const registeredKeys = await env.DB.prepare("SELECT ListingKey FROM listings").all();
-            const staleKeys = registeredKeys.results.filter(row => !allFetchedKeys.has(row.ListingKey));
+        if (allFetchedKeys.size > 0 && existingMap.size > 0) {
+            const staleKeys = [];
+            for (const key of existingMap.keys()) {
+                if (!allFetchedKeys.has(key)) {
+                    staleKeys.push(key);
+                }
+            }
             if (staleKeys.length > 0) {
-                const chunks = [];
                 for (let i = 0; i < staleKeys.length; i += 50) {
-                    chunks.push(staleKeys.slice(i, i + 50));
-                }
-                for (const chunk of chunks) {
+                    const chunk = staleKeys.slice(i, i + 50);
                     const placeholders = chunk.map(() => "?").join(",");
-                    await env.DB.prepare(`DELETE FROM listings WHERE ListingKey IN (${placeholders})`).bind(...chunk.map(r => r.ListingKey)).run();
+                    await env.DB.prepare(`DELETE FROM listings WHERE ListingKey IN (${placeholders})`).bind(...chunk).run();
                 }
+                console.log(`Removed ${staleKeys.length} stale listings from D1.`);
             }
         }
 
-        console.log(`Sync Complete. Total listings synced: ${allFetchedKeys.size}`);
+        console.log(`Sync Complete. Fetched: ${allFetchedKeys.size} | Updated: ${updatedCount} | Skipped unchanged: ${skippedCount}`);
     },
 
     async syncOpenHouses(env) {
@@ -301,16 +328,38 @@ export default {
             return CCOR_CITIES.includes(city) || orig.includes('bonita') || agentId.startsWith('B') || officeId.startsWith('B');
         });
 
-        const statements = filteredOhRec.map(oh => {
+        // 1. Fetch existing open houses for diffing
+        const existingMap = new Map();
+        try {
+            const existing = await env.DB.prepare("SELECT OpenHouseKey, OpenHouseStartTime, OpenHouseEndTime, OpenHouseDate, OpenHouseRemarks, length(PropertyData) as len FROM open_houses").all();
+            for (const row of (existing.results || [])) {
+                existingMap.set(row.OpenHouseKey, `${row.OpenHouseStartTime}|${row.OpenHouseEndTime}|${row.OpenHouseDate}|${row.OpenHouseRemarks}|${row.len}`);
+            }
+        } catch (e) {
+            console.error("Failed to load existing open houses for diffing:", e);
+        }
+
+        const statements = [];
+        let ohSkipped = 0;
+        let ohUpdated = 0;
+        for (const oh of filteredOhRec) {
+            const key = oh.OpenHouseKey || oh.ListingKey;
             const p = propMap.get(oh.ListingKey) || null;
-            return env.DB.prepare(`
+            const pStr = JSON.stringify(p);
+            const sig = `${oh.OpenHouseStartTime}|${oh.OpenHouseEndTime}|${oh.OpenHouseDate}|${oh.OpenHouseRemarks}|${pStr.length}`;
+            if (existingMap.has(key) && existingMap.get(key) === sig) {
+                ohSkipped++;
+                continue;
+            }
+            statements.push(env.DB.prepare(`
                 INSERT OR REPLACE INTO open_houses (
                     OpenHouseKey, ListingKey, OpenHouseStartTime, OpenHouseEndTime, OpenHouseDate, OpenHouseRemarks, PropertyData
                 ) VALUES (?, ?, ?, ?, ?, ?, ?)
             `).bind(
-                oh.OpenHouseKey || oh.ListingKey, oh.ListingKey, oh.OpenHouseStartTime, oh.OpenHouseEndTime, oh.OpenHouseDate, oh.OpenHouseRemarks, JSON.stringify(p)
-            );
-        });
+                key, oh.ListingKey, oh.OpenHouseStartTime, oh.OpenHouseEndTime, oh.OpenHouseDate, oh.OpenHouseRemarks, pStr
+            ));
+            ohUpdated++;
+        }
 
         // Batch execution in chunks of 50
         for (let i = 0; i < statements.length; i += 50) {
@@ -319,13 +368,17 @@ export default {
 
         // Cleanup: remove all open houses in DB that are not in filteredOhRec
         const validOhKeys = new Set(filteredOhRec.map(oh => oh.OpenHouseKey || oh.ListingKey));
-        const existing = await env.DB.prepare("SELECT OpenHouseKey FROM open_houses").all();
-        const staleKeys = (existing.results || []).filter(row => !validOhKeys.has(row.OpenHouseKey)).map(r => r.OpenHouseKey);
+        const staleKeys = [];
+        for (const key of existingMap.keys()) {
+            if (!validOhKeys.has(key)) {
+                staleKeys.push(key);
+            }
+        }
         for (let i = 0; i < staleKeys.length; i += 50) {
             const chunk = staleKeys.slice(i, i + 50);
             const placeholders = chunk.map(() => "?").join(",");
             await env.DB.prepare(`DELETE FROM open_houses WHERE OpenHouseKey IN (${placeholders})`).bind(...chunk).run();
         }
-        console.log(`Synced ${filteredOhRec.length} Open Houses (filtered to Bonita/Estero)`);
+        console.log(`Synced Open Houses. Total: ${filteredOhRec.length} | Updated: ${ohUpdated} | Skipped unchanged: ${ohSkipped} | Stale removed: ${staleKeys.length}`);
     }
 };
