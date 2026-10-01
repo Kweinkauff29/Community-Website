@@ -281,8 +281,8 @@ export default {
     },
 
     async syncOpenHouses(env) {
-        const EVENT_START = '2026-09-25';
-        const EVENT_END = '2026-09-27';
+        const EVENT_START = '2026-10-30';
+        const EVENT_END = '2026-11-01';
         const ohFilter = `(OpenHouseStatus eq 'Active' or OpenHouseStatus eq null) and OriginatingSystemName eq 'Bonita Springs' and OpenHouseDate ge ${EVENT_START} and OpenHouseDate le ${EVENT_END}`;
         const ohURL = `https://api.bridgedataoutput.com/api/v2/OData/bsaor/OpenHouse?$filter=${encodeURIComponent(ohFilter)}&$top=200&$orderby=OpenHouseStartTime asc&access_token=${env.BRIDGE_TOKEN}`;
         

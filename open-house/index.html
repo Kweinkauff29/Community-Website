@@ -147,6 +147,70 @@
       padding: 4px 12px
     }
 
+    .top-sponsor-card {
+      background: #ffffff;
+      border-radius: 6px;
+      padding: 6px 18px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.25);
+      margin-bottom: 12px;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .top-sponsor-card:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 14px rgba(0,0,0,0.3);
+    }
+
+    .top-sponsor-card img {
+      max-height: 48px;
+      max-width: 380px;
+      width: auto;
+      height: auto;
+      display: block;
+      object-fit: contain;
+    }
+
+    .top-sponsor-details {
+      text-align: right;
+      font-family: var(--body-font);
+      line-height: 1.25;
+      flex-shrink: 0;
+    }
+
+    .top-sponsor-kicker {
+      display: block;
+      font-size: 0.68rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      color: #1281B1;
+    }
+
+    .top-sponsor-phone {
+      display: block;
+      font-size: 1.02rem;
+      font-weight: 700;
+      color: #00305C;
+    }
+
+    .top-sponsor-phone i {
+      font-size: 0.8rem;
+      margin-right: 4px;
+      color: #1281B1;
+    }
+
+    .top-sponsor-link {
+      display: block;
+      font-size: 0.82rem;
+      font-weight: 600;
+      color: #1281B1;
+      text-decoration: underline;
+    }
+
     .event-dates {
       color: #fff;
       font-weight: 700;
@@ -1406,6 +1470,24 @@
         margin-bottom: 0 !important;
       }
 
+      .top-sponsor-card {
+        padding: 3px 12px !important;
+        margin-bottom: 0 !important;
+        justify-content: center !important;
+        background: #ffffff !important;
+        height: 40px !important;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.2) !important;
+      }
+
+      .top-sponsor-card img {
+        max-height: 34px !important;
+        max-width: 85vw !important;
+      }
+
+      .top-sponsor-details {
+        display: none !important;
+      }
+
       .event-text {
         font-size: 0.65rem !important;
         margin: 0 !important;
@@ -1858,7 +1940,7 @@
       </a>
       <div class="navbar-expand-md"
         style="font-weight:700; color:#fff; font-size:1.1rem; flex-grow:1; text-align:center; margin: 0 0 0 5px;">
-        Open House Weekend - Sept 25th - 27th
+        Open House Weekend - Oct 30th - Nov 1st
       </div>
       <div class="navbar-expand-md" style="display:flex; gap:8px;">
         <a href="https://coconutcoastopenhouses.com/home-search/" class="promo-cta blue"><i class="fas fa-search"></i>
@@ -1873,7 +1955,7 @@
   <div class="mobile-menu" id="mobileMenu">
     <div
       style="padding: 15px; text-align: center; font-weight: bold; color: #fff; border-bottom: 1px solid rgba(255,255,255,0.1); margin-bottom: 5px;">
-      Open House Weekend - Sept 25th - 27th
+      Open House Weekend - Oct 30th - Nov 1st
     </div>
     <a href="https://coconutcoastopenhouses.com/home-search/"><i class="fas fa-search"></i> Search All Homes</a>
     <a href="https://coconutcoastrealtors.org/realtor-directory/"><i class="fas fa-user-tie"></i> Find a REALTOR®</a>
@@ -1883,12 +1965,18 @@
   <div class="spacer-top"></div> <!-- Fixed Header Spacer -->
 
   <div class="event-banner">
-    <div class="event-inner" style="width: 100%; max-width: 728px; margin: 0 auto; padding: 0 10px;">
-      <a href="https://www.cigflorida.com/" target="_blank" rel="noopener" style="display:block; width:100%;">
-        <img src="assets/728x90.png"
-          onerror="this.onerror=null;this.src='https://coconutcoastrealtors.org/wp-content/uploads/2026/09/728x90-pdf.jpg';"
-          style="max-width:100%; height:auto; border-radius:4px; box-shadow:0 2px 8px rgba(0,0,0,0.2); margin-bottom:12px; display:block; margin-left:auto; margin-right:auto;"
-          alt="Chapman Insurance Group - 728x90">
+    <div class="event-inner" style="width: 100%; max-width: 820px; margin: 0 auto; padding: 0 10px;">
+      <a href="http://www.lawfirmnaples.com" target="_blank" rel="noopener" style="display:block; width:100%; text-decoration:none;">
+        <div class="top-sponsor-card">
+          <img src="assets/wwmr-logo-full.jpg"
+            onerror="this.onerror=null;this.src='https://coconutcoastrealtors.org/wp-content/uploads/2026/10/WWMR-Logo-Full-CMYK-scaled.jpg';"
+            alt="Woods, Weidenmiller, Michetti & Rudnick - Closing Attorneys">
+          <div class="top-sponsor-details">
+            <span class="top-sponsor-kicker">Presented By Real Estate Department</span>
+            <span class="top-sponsor-phone"><i class="fas fa-phone"></i> 239-325.4070</span>
+            <span class="top-sponsor-link">www.lawfirmnaples.com</span>
+          </div>
+        </div>
       </a>
     </div>
   </div>
@@ -2002,25 +2090,25 @@
     </div>
     <div class="listings-section">
       <div class="listings-grid" id="listingsGrid"></div>
-      <!-- Inline 300x600 Sponsor Ad in Listings Sidebar -->
+      <!-- Inline Sponsor Ad in Listings Sidebar -->
       <div id="sidebarAdSlot" style="display:none; padding: 15px 10px; text-align: center;">
         <p style="color: #888; font-size: 0.65rem; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px;">Sponsored</p>
-        <a href="https://www.cigflorida.com/" target="_blank" rel="noopener" style="display:inline-block;">
-          <img src="assets/300x600.png"
-            onerror="this.onerror=null;this.src='https://coconutcoastrealtors.org/wp-content/uploads/2026/09/300x600-pdf.jpg';"
-            alt="Chapman Insurance Group" 
+        <a href="http://www.lawfirmnaples.com" target="_blank" rel="noopener" style="display:inline-block;">
+          <img src="assets/wwmr-re-pic.jpg"
+            onerror="this.onerror=null;this.src='https://coconutcoastrealtors.org/wp-content/uploads/2026/10/Woods-Weidenmiller-Michetti-Rudnick-RE-pic_page-0001-scaled-e1790867979596.jpg';"
+            alt="Woods, Weidenmiller, Michetti & Rudnick - Closing Attorneys" 
             style="max-width:300px; width:100%; height:auto; border-radius:8px; box-shadow:0 4px 16px rgba(0,0,0,0.12); transition: transform 0.2s;"
             onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='translateY(0)'">
         </a>
       </div>
-      <!-- Inline 300x250 Sponsor Ad in Listings -->
+      <!-- Inline Sponsor Ad in Listings -->
       <div id="inlineAdSlot" style="display:none; padding: 15px 10px; text-align: center;">
         <p style="color: #888; font-size: 0.65rem; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px;">Sponsored</p>
-        <a href="https://www.cigflorida.com/" target="_blank" rel="noopener" style="display:inline-block;">
-          <img src="assets/300x250.png"
-            onerror="this.onerror=null;this.src='https://coconutcoastrealtors.org/wp-content/uploads/2026/09/300x250-pdf.jpg';"
-            alt="Chapman Insurance Group"
-            style="max-width:300px; width:100%; height:auto; border-radius:8px; box-shadow:0 4px 16px rgba(0,0,0,0.12); transition: transform 0.2s;"
+        <a href="http://www.lawfirmnaples.com" target="_blank" rel="noopener" style="display:inline-block;">
+          <img src="assets/wwmr-re-banner.jpg"
+            onerror="this.onerror=null;this.src='https://coconutcoastrealtors.org/wp-content/uploads/2026/10/Woods-Weidenmiller-Michetti-Rudnick-RE_page-0001-scaled-e1790868008376.jpg';"
+            alt="Woods, Weidenmiller, Michetti & Rudnick - Real Estate Closings"
+            style="max-width:320px; width:100%; height:auto; border-radius:8px; box-shadow:0 4px 16px rgba(0,0,0,0.12); transition: transform 0.2s;"
             onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='translateY(0)'">
         </a>
       </div>
@@ -2062,27 +2150,27 @@
         </div>
 
         <div style="margin-top: 25px; text-align: center; border-top: 1px solid #eee; padding-top: 20px;">
-          <h4 style="margin-bottom: 15px; font-size: 1.1rem; color: #333;">Open House Weekend - Sponsored by:</h4>
-          <a href="https://www.cigflorida.com/" target="_blank" rel="noopener">
-            <img src="assets/970x250.png"
-              onerror="this.onerror=null;this.src='https://coconutcoastrealtors.org/wp-content/uploads/2026/09/970x250-pdf.jpg';"
-              alt="Chapman Insurance Group - The Insurance That DOES"
-              style="width: 100%; max-width: 970px; height: auto; border-radius: 6px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+          <h4 style="margin-bottom: 15px; font-size: 1.1rem; color: #00305C; font-weight: 700;">Open House Weekend Sponsored By:</h4>
+          <a href="http://www.lawfirmnaples.com" target="_blank" rel="noopener" style="display:inline-block; max-width:800px; width:100%;">
+            <img src="assets/wwmr-re-banner.jpg"
+              onerror="this.onerror=null;this.src='https://coconutcoastrealtors.org/wp-content/uploads/2026/10/Woods-Weidenmiller-Michetti-Rudnick-RE_page-0001-scaled-e1790868008376.jpg';"
+              alt="Woods, Weidenmiller, Michetti & Rudnick - Upgrade Your Real Estate Closings"
+              style="width: 100%; max-width: 800px; height: auto; border-radius: 8px; box-shadow: 0 4px 16px rgba(0,0,0,0.12);">
           </a>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- Sponsor Banner - 970x250 -->
-  <div class="sponsor-banner-section" style="background: linear-gradient(135deg, #001f3d 0%, #00305c 50%, #0c4d7e 100%); padding: 30px 20px; text-align: center; border-top: 3px solid var(--accent); border-bottom: 3px solid var(--accent);">
+  <!-- Sponsor Banner Section -->
+  <div class="sponsor-banner-section" style="background: linear-gradient(135deg, #001f3d 0%, #00305c 50%, #0c4d7e 100%); padding: 35px 20px; text-align: center; border-top: 3px solid var(--accent); border-bottom: 3px solid var(--accent);">
     <div style="max-width: 970px; margin: 0 auto;">
-      <p style="color: rgba(255,255,255,0.7); font-size: 0.7rem; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 12px; font-weight: 600;">Open House Weekend Presented By</p>
-      <a href="https://www.cigflorida.com/" target="_blank" rel="noopener" style="display:block;">
-        <img src="assets/970x250.png"
-          onerror="this.onerror=null;this.src='https://coconutcoastrealtors.org/wp-content/uploads/2026/09/970x250-pdf.jpg';"
-          alt="Chapman Insurance Group - The Insurance That DOES"
-          style="width: 100%; max-width: 970px; height: auto; border-radius: 8px; box-shadow: 0 4px 20px rgba(0,0,0,0.3); transition: transform 0.2s;"
+      <p style="color: rgba(255,255,255,0.75); font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1.2px; margin-bottom: 14px; font-weight: 700;">Open House Weekend Presented By</p>
+      <a href="http://www.lawfirmnaples.com" target="_blank" rel="noopener" style="display:block;">
+        <img src="assets/wwmr-re-banner.jpg"
+          onerror="this.onerror=null;this.src='https://coconutcoastrealtors.org/wp-content/uploads/2026/10/Woods-Weidenmiller-Michetti-Rudnick-RE_page-0001-scaled-e1790868008376.jpg';"
+          alt="Woods, Weidenmiller, Michetti & Rudnick - Upgrade Your Real Estate Closings"
+          style="width: 100%; max-width: 970px; height: auto; border-radius: 8px; box-shadow: 0 6px 24px rgba(0,0,0,0.35); transition: transform 0.2s;"
           onmouseover="this.style.transform='scale(1.01)'" onmouseout="this.style.transform='scale(1)'">
       </a>
     </div>
@@ -2092,34 +2180,38 @@
   <footer class="event-footer">
     <div class="event-footer-inner">
       <div class="event-profile">
-        <a href="https://www.cigflorida.com/" target="_blank" rel="noopener" class="sponsor-logo-wrap" style="display: block; max-width: 400px; margin: 0 auto 15px;">
-          <img src="assets/CHAPman-bold-22.png"
-            onerror="this.onerror=null;this.src='https://coconutcoastrealtors.org/wp-content/uploads/2026/09/CHAPman-bold-22.png';"
-            alt="Chapman Insurance Group" style="width: 100%; height: auto;">
+        <a href="http://www.lawfirmnaples.com" target="_blank" rel="noopener" class="sponsor-logo-wrap" style="display: block; max-width: 480px; margin: 0 auto 15px; background: #ffffff; padding: 14px 24px; border-radius: 10px; box-shadow: 0 4px 20px rgba(0,0,0,0.25);">
+          <img src="assets/wwmr-logo-full.jpg"
+            onerror="this.onerror=null;this.src='https://coconutcoastrealtors.org/wp-content/uploads/2026/10/WWMR-Logo-Full-CMYK-scaled.jpg';"
+            alt="Woods, Weidenmiller, Michetti & Rudnick" style="width: 100%; height: auto; display: block;">
         </a>
         <div class="bio-content">
-          <h2>Chapman Insurance Group</h2>
-          <p style="font-size: 1.15rem; font-weight: 600; color: #85C7E3; margin-bottom: 8px;">The Insurance That DOES.</p>
-          <p>At Chapman Insurance Group, we do insurance differently. We’re your dedicated advocates for Home, Auto, Flood and Business Insurance, ensuring your policy works when it matters most. Real coverage, no surprises—because your insurance should do what it’s supposed to.</p>
-          <div class="bio-contact">
-            <span><i class="fas fa-phone"></i> <a href="tel:2394448262">(239) 444-8262</a></span>
-            <span><i class="fas fa-globe"></i> <a href="https://www.cigflorida.com/" target="_blank" rel="noopener">CIGFlorida.com</a></span>
+          <h2>Woods, Weidenmiller, Michetti & Rudnick</h2>
+          <p style="font-size: 1.15rem; font-weight: 600; color: #85C7E3; margin-bottom: 10px;">A Personal Approach to Real Estate Law • Big Firm Quality, Small Town Service.</p>
+          <p>The Real Estate Department at Woods, Weidenmiller, Michetti & Rudnick provides sophisticated legal counsel and title services for high-value residential and commercial real estate matters throughout Southwest Florida. Our attorneys represent discerning buyers and sellers, developers, investors, financial institutions, businesses, and community associations in complex transactions involving acquisitions and sales, development, financing, closings, title insurance, and related real estate matters.</p>
+          <p style="margin-top: 10px;">With a deep understanding of the Southwest Florida market and the nuances of luxury and investment property transactions, our team delivers attentive, discreet, and highly personalized service. We work closely with clients, brokers, lenders, and other professionals to anticipate issues, protect our clients’ interests, and ensure each transaction is handled with precision from contract through closing.</p>
+          <div class="bio-contact" style="margin-top: 16px;">
+            <span><i class="fas fa-phone"></i> <a href="tel:2393254070">239-325.4070</a></span>
+            <span><i class="fas fa-globe"></i> <a href="http://www.lawfirmnaples.com" target="_blank" rel="noopener">www.lawfirmnaples.com</a></span>
           </div>
         </div>
       </div>
       <div class="event-about">
         <div style="margin: 0 0 20px 0; text-align: center;">
-          <a href="https://www.cigflorida.com/" target="_blank" rel="noopener">
-            <img src="assets/300x250.png"
-              onerror="this.onerror=null;this.src='https://coconutcoastrealtors.org/wp-content/uploads/2026/09/300x250-pdf.jpg';"
-              alt="Chapman Insurance Group"
-              style="max-width:300px; width:100%; height:auto; border-radius:6px; box-shadow:0 2px 8px rgba(0,0,0,0.15)">
+          <a href="http://www.lawfirmnaples.com" target="_blank" rel="noopener">
+            <img src="assets/wwmr-re-pic.jpg"
+              onerror="this.onerror=null;this.src='https://coconutcoastrealtors.org/wp-content/uploads/2026/10/Woods-Weidenmiller-Michetti-Rudnick-RE-pic_page-0001-scaled-e1790867979596.jpg';"
+              alt="Woods, Weidenmiller, Michetti & Rudnick Attorneys"
+              style="max-width:340px; width:100%; height:auto; border-radius:8px; box-shadow:0 4px 16px rgba(0,0,0,0.25); transition: transform 0.2s;"
+              onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='translateY(0)'">
           </a>
         </div>
-        <h3>About Chapman Insurance Group</h3>
-        <p>Real coverage, no surprises—because your insurance should do what it’s supposed to. Chapman Insurance Group provides dedicated advocacy for Home, Auto, Flood, and Business insurance across Southwest Florida.</p>
-        <a href="https://www.cigflorida.com/" target="_blank" rel="noopener"><i class="fas fa-external-link-alt"></i>
-          Visit CIGFlorida.com</a>
+        <h3>Litigation & Strategic Representation</h3>
+        <p>The Litigation Department at Woods, Weidenmiller, Michetti & Rudnick provides sophisticated legal counsel and strategic representation in complex civil disputes throughout Southwest Florida and across the state. Our attorneys represent individuals, businesses, property owners, developers, and community associations in matters involving business and real estate disputes, construction litigation, condominium and homeowners association matters, insurance claims, professional liability, and other high-stakes civil litigation.</p>
+        <p style="margin-top: 10px;">With extensive experience in state and federal courts, arbitration, mediation, and administrative proceedings, our team combines big-firm experience with the responsiveness and personal attention of a boutique practice. We work closely with our clients to understand their objectives, anticipate challenges, protect their interests, and pursue practical and effective resolutions both in and out of the courtroom.</p>
+        <div style="margin-top: 16px;">
+          <a href="http://www.lawfirmnaples.com" target="_blank" rel="noopener" style="display:inline-flex; align-items:center; gap:6px; font-weight:700;"><i class="fas fa-external-link-alt"></i> Visit www.lawfirmnaples.com</a>
+        </div>
       </div>
     </div>
   </footer>
@@ -2131,10 +2223,10 @@
     <div class="spinner"></div>
     <div style="margin-top:20px; font-weight:600; color:#00305C">Loading Open Houses...</div>
     <div style="margin-top:15px; width:100%; display:flex; justify-content:center;">
-      <a href="https://www.cigflorida.com/" target="_blank" rel="noopener" style="display:block; max-width:300px; width:100%;">
-        <img src="assets/300x600.png"
-          onerror="this.onerror=null;this.src='https://coconutcoastrealtors.org/wp-content/uploads/2026/09/300x600-pdf.jpg';"
-          alt="Chapman Insurance Group - 300x600" style="width:100%; max-height:60vh; object-fit:contain; border-radius:6px; box-shadow:0 4px 16px rgba(0,0,0,0.2);">
+      <a href="http://www.lawfirmnaples.com" target="_blank" rel="noopener" style="display:block; max-width:320px; width:100%;">
+        <img src="assets/wwmr-re-pic.jpg"
+          onerror="this.onerror=null;this.src='https://coconutcoastrealtors.org/wp-content/uploads/2026/10/Woods-Weidenmiller-Michetti-Rudnick-RE-pic_page-0001-scaled-e1790867979596.jpg';"
+          alt="Woods, Weidenmiller, Michetti & Rudnick" style="width:100%; max-height:55vh; object-fit:contain; border-radius:8px; box-shadow:0 4px 16px rgba(0,0,0,0.25);">
       </a>
     </div>
   </div>
@@ -2186,8 +2278,8 @@
     const ODATA_OH = `${API_BASE}/api/v2/OData/${MLS}/OpenHouse`;
     const ODATA_PROP = `${API_BASE}/api/v2/OData/${MLS}/Property`;
     const ODATA_MEDIA = `${API_BASE}/api/v2/OData/${MLS}/Media`;
-    const EVENT_START = '2026-09-25', EVENT_END = '2026-09-27';
-    const EVENT_DAYS = ['2026-09-25', '2026-09-26', '2026-09-27'];
+    const EVENT_START = '2026-10-30', EVENT_END = '2026-11-01';
+    const EVENT_DAYS = ['2026-10-30', '2026-10-31', '2026-11-01'];
     const PROP_SEL = 'ListingKey,ListingId,UnparsedAddress,City,PostalCode,ListPrice,PropertyType,PropertySubType,BedroomsTotal,BathroomsTotalInteger,LivingArea,LotSizeAcres,YearBuilt,StandardStatus,SubdivisionName,ListAgentFullName,ListAgentEmail,ListAgentDirectPhone,ListAgentKey,ListOfficeName,ListOfficePhone,PublicRemarks,Coordinates,Media';
 
     let map, markerCluster, allMerged = [], filteredList = [], mediaCache = new Map(), currentDetail = null, detailIdx = 0;
@@ -2378,18 +2470,24 @@
       if (!list.length) { grid.innerHTML = '<div style="padding:40px;text-align:center;color:#888">No open houses match your filters.</div>'; return; }
 
       // Create inline ad card elements
-      function createAdCard(imgSrc, imgAlt, maxW) {
+      function createAdCard(imgSrc, fallbackSrc, imgAlt, maxW) {
         const adCard = document.createElement('div');
         adCard.className = 'listing-card sponsor-ad-card';
-        adCard.style.cssText = 'cursor:default; background: linear-gradient(135deg, #f0f7ff, #e8f4fd); border: 2px solid rgba(18,129,177,0.2); position: relative;';
-        adCard.innerHTML = `<div style="padding: 8px; text-align: center;">
-          <p style="color: #999; font-size: 0.6rem; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px;">Sponsored</p>
-          <a href="https://www.cigflorida.com/" target="_blank" rel="noopener" onclick="event.stopPropagation();" style="display:inline-block;">
+        adCard.style.cssText = 'cursor:default; background: linear-gradient(135deg, #f0f7ff, #e8f4fd); border: 2px solid rgba(18,129,177,0.25); position: relative;';
+        adCard.innerHTML = `<div style="padding: 10px; text-align: center;">
+          <p style="color: #64748b; font-size: 0.62rem; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px; font-weight: 700;">Open House Sponsor</p>
+          <a href="http://www.lawfirmnaples.com" target="_blank" rel="noopener" onclick="event.stopPropagation();" style="display:inline-block;">
             <img src="${imgSrc}"
-              onerror="this.onerror=null;this.src='https://coconutcoastrealtors.org/wp-content/uploads/2026/09/${imgSrc.replace('assets/','').replace('.png','')}-pdf.jpg';"
+              onerror="this.onerror=null;this.src='${fallbackSrc}';"
               alt="${imgAlt}"
-              style="max-width:${maxW}; width:100%; height:auto; border-radius:6px; box-shadow:0 2px 10px rgba(0,0,0,0.1);">
+              style="max-width:${maxW}; width:100%; height:auto; border-radius:6px; box-shadow:0 3px 12px rgba(0,0,0,0.12); transition: transform 0.2s;"
+              onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='translateY(0)'">
           </a>
+          <div style="margin-top: 8px; font-size: 0.82rem; font-weight: 700; color: #00305C;">
+            <a href="tel:2393254070" style="color:#00305C; text-decoration:none;"><i class="fas fa-phone" style="color:#1281B1; margin-right:4px;"></i>239-325.4070</a>
+            <span style="margin: 0 6px; color:#cbd5e1;">•</span>
+            <a href="http://www.lawfirmnaples.com" target="_blank" rel="noopener" style="color:#1281B1; text-decoration:underline;">lawfirmnaples.com</a>
+          </div>
         </div>`;
         adCard.onclick = (e) => e.stopPropagation();
         return adCard;
@@ -2397,8 +2495,18 @@
 
       const AD_INTERVAL = 6;
       const adCreators = [
-        () => createAdCard('assets/300x250.png', 'Chapman Insurance Group', '300px'),
-        () => createAdCard('assets/300x600.png', 'Chapman Insurance Group', '300px'),
+        () => createAdCard(
+          'assets/wwmr-re-pic.jpg',
+          'https://coconutcoastrealtors.org/wp-content/uploads/2026/10/Woods-Weidenmiller-Michetti-Rudnick-RE-pic_page-0001-scaled-e1790867979596.jpg',
+          'Woods, Weidenmiller, Michetti & Rudnick - Closing Attorneys',
+          '300px'
+        ),
+        () => createAdCard(
+          'assets/wwmr-re-banner.jpg',
+          'https://coconutcoastrealtors.org/wp-content/uploads/2026/10/Woods-Weidenmiller-Michetti-Rudnick-RE_page-0001-scaled-e1790868008376.jpg',
+          'Woods, Weidenmiller, Michetti & Rudnick - Real Estate Law',
+          '320px'
+        ),
       ];
       let adIndex = 0;
 
